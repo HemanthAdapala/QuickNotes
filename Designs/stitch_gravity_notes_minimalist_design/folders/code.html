@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gravity Notes - Folders</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#1c1b1b",
+                        "primary-container": "#1c1b1b",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "on-error-container": "#93000a",
+                        "on-background": "#1a1c1b",
+                        "on-tertiary-fixed-variant": "#474646",
+                        "surface-container-low": "#f4f3f1",
+                        "surface": "#faf9f7",
+                        "surface-bright": "#faf9f7",
+                        "surface-container-high": "#e9e8e6",
+                        "on-secondary-fixed": "#001c39",
+                        "on-tertiary-container": "#858383",
+                        "inverse-on-surface": "#f1f1ef",
+                        "tertiary-fixed": "#e5e2e1",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c4c7c7",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container": "#eeeeec",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#dadad8",
+                        "surface-container-highest": "#e3e2e0",
+                        "canvas-off-white": "#FFFEFC",
+                        "inverse-surface": "#2f3130",
+                        "surface-tint": "#5f5e5e",
+                        "secondary-fixed-dim": "#a4c9ff",
+                        "tertiary-fixed-dim": "#c9c6c5",
+                        "secondary-container": "#499dfe",
+                        "outline": "#747878",
+                        "primary-fixed-dim": "#c9c6c5",
+                        "surface-variant": "#e3e2e0",
+                        "tertiary": "#000000",
+                        "border-subtle": "#EBEBE8",
+                        "on-surface-variant": "#444748",
+                        "inverse-primary": "#c9c6c5",
+                        "secondary-fixed": "#d4e3ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#858383",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "secondary": "#005fad",
+                        "text-secondary": "#91918E",
+                        "on-primary-fixed-variant": "#474646",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#1c1b1b",
+                        "surface-taupe": "#F5F5F7",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#1a1c1b",
+                        "background": "#faf9f7",
+                        "on-secondary-fixed-variant": "#004884",
+                        "on-secondary-container": "#003462",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-desktop": "80px",
+                        "unit-sm": "8px",
+                        "unit-xs": "4px",
+                        "margin-mobile": "20px",
+                        "max-width-content": "720px",
+                        "unit-md": "16px",
+                        "unit-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "caption": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-xl": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "30px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #FFFEFC;
+            color: #1a1c1b;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .zen-mask {
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .glass-header {
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-canvas-off-white/80 dark:bg-on-tertiary-fixed/80 backdrop-blur-xl">
+<div class="flex items-center gap-unit-md">
+<button class="text-primary dark:text-primary-fixed hover:opacity-70 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-semibold tracking-tighter text-primary dark:text-primary-fixed">Gravity</h1>
+</div>
+<div class="flex items-center gap-unit-md">
+<button class="text-primary dark:text-primary-fixed hover:opacity-70 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+</div>
+</header>
+<div class="flex pt-16 min-h-screen">
+<!-- NavigationDrawer (Desktop Only) -->
+<aside class="hidden md:flex flex-col p-margin-desktop gap-unit-md h-full w-80 border-r border-border-subtle dark:border-on-tertiary-fixed-variant bg-surface dark:bg-on-tertiary-fixed fixed left-0 top-16">
+<div class="mb-unit-lg">
+<h2 class="font-headline-lg text-headline-lg text-primary dark:text-primary-fixed">Spaces</h2>
+</div>
+<nav class="flex flex-col gap-unit-sm">
+<a class="flex items-center gap-unit-md p-unit-sm rounded text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-primary-fixed transition-colors active:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>All Notes</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm rounded text-primary dark:text-primary-fixed font-semibold active:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+<span>Folders</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm rounded text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-primary-fixed transition-colors active:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="archive">archive</span>
+<span>Archive</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm rounded text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-primary-fixed transition-colors active:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+<span>Vault</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm rounded text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-primary-fixed transition-colors active:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span>Habits</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm rounded text-on-surface-variant dark:text-on-tertiary-container hover:text-primary dark:hover:text-primary-fixed transition-colors active:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Area (Canvas) -->
+<main class="flex-1 md:ml-80 px-margin-mobile md:px-margin-desktop py-unit-lg">
+<div class="max-w-[720px] mx-auto">
+<!-- Header Actions -->
+<div class="flex justify-between items-end mb-unit-lg border-b border-border-subtle pb-unit-md">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary">Folders</h2>
+<p class="font-caption text-caption text-text-secondary mt-unit-xs">Organize your thoughts into structured collections.</p>
+</div>
+<button class="flex items-center gap-unit-sm px-unit-md py-unit-sm bg-primary text-on-primary rounded-lg hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[18px]" data-icon="create_new_folder">create_new_folder</span>
+<span class="font-label-sm text-label-sm">New Folder</span>
+</button>
+</div>
+<!-- Bento Grid Layout for Folders -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-unit-md">
+<!-- Folder Card 1: Large/Featured -->
+<div class="group relative flex flex-col justify-between p-unit-lg bg-surface-taupe border border-border-subtle rounded-xl hover:border-primary transition-all duration-300">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary" data-icon="folder" style="font-variation-settings: 'FILL' 1;">folder</span>
+<span class="font-label-sm text-label-sm text-text-secondary">12 items</span>
+</div>
+<div class="mt-unit-lg">
+<h3 class="font-headline-md text-headline-md text-primary group-hover:tracking-tight transition-all">Daily Journals</h3>
+<p class="font-caption text-caption text-text-secondary mt-unit-xs">Reflections and morning pages for 2024.</p>
+</div>
+<div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-unit-xs hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Folder Card 2 -->
+<div class="group relative flex flex-col justify-between p-unit-lg bg-canvas-off-white border border-border-subtle rounded-xl hover:border-primary transition-all duration-300">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary" data-icon="folder" style="font-variation-settings: 'FILL' 1;">folder</span>
+<span class="font-label-sm text-label-sm text-text-secondary">8 items</span>
+</div>
+<div class="mt-unit-lg">
+<h3 class="font-headline-md text-headline-md text-primary group-hover:tracking-tight transition-all">Research</h3>
+<p class="font-caption text-caption text-text-secondary mt-unit-xs">Interviews, transcripts, and methodology.</p>
+</div>
+</div>
+<!-- Folder Card 3 -->
+<div class="group relative flex flex-col justify-between p-unit-lg bg-canvas-off-white border border-border-subtle rounded-xl hover:border-primary transition-all duration-300">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary" data-icon="folder" style="font-variation-settings: 'FILL' 1;">folder</span>
+<span class="font-label-sm text-label-sm text-text-secondary">24 items</span>
+</div>
+<div class="mt-unit-lg">
+<h3 class="font-headline-md text-headline-md text-primary group-hover:tracking-tight transition-all">Creative Writing</h3>
+<p class="font-caption text-caption text-text-secondary mt-unit-xs">Short stories and novel drafts.</p>
+</div>
+</div>
+<!-- Folder Card 4: Specialized UI -->
+<div class="group relative flex flex-col justify-between p-unit-lg bg-surface-container-low border border-border-subtle rounded-xl hover:border-primary transition-all duration-300">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary" data-icon="folder_special" style="font-variation-settings: 'FILL' 1;">folder_special</span>
+<span class="font-label-sm text-label-sm text-text-secondary">3 items</span>
+</div>
+<div class="mt-unit-lg">
+<h3 class="font-headline-md text-headline-md text-primary group-hover:tracking-tight transition-all">Manifestos</h3>
+<p class="font-caption text-caption text-text-secondary mt-unit-xs">Philosophical foundations of the project.</p>
+</div>
+</div>
+<!-- Folder Card 5 -->
+<div class="group relative flex flex-col justify-between p-unit-lg bg-canvas-off-white border border-border-subtle rounded-xl hover:border-primary transition-all duration-300">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary" data-icon="folder" style="font-variation-settings: 'FILL' 1;">folder</span>
+<span class="font-label-sm text-label-sm text-text-secondary">0 items</span>
+</div>
+<div class="mt-unit-lg">
+<h3 class="font-headline-md text-headline-md text-primary group-hover:tracking-tight transition-all">Archives</h3>
+<p class="font-caption text-caption text-text-secondary mt-unit-xs">Completed projects waiting for cleanup.</p>
+</div>
+</div>
+<!-- Folder Card 6: Visual Inspiration (Image Overlay Style) -->
+<div class="group relative overflow-hidden flex flex-col justify-end p-unit-lg aspect-square sm:aspect-auto border border-border-subtle rounded-xl hover:border-primary transition-all duration-300">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-10 group-hover:scale-105 transition-transform duration-700" data-alt="A clean and serene workspace with a minimalist wooden desk, a simple ceramic vase with a single branch, and soft morning sunlight streaming through a window. The aesthetic is purely minimalist with a high-key light-mode palette, using deep blacks and soft off-whites to create a tactile, premium feeling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCn6KlCq372P07BlNtCkI5vTCpz5JUwiGkZHnMoUzbFz7NU99yrzl4tmaXoWsHWZ5yGuXcS6q9keFaFNPSphT6L4d6VG9_NCg7U5GgvFM_vdGyojm8kz7k42znXzroRYYB2954MRKWGm_h9ugJ_LCwNQG3EoY9XBUEZ81o7b6Hu_XHrM2skZ3yeUmlrpMhT_3EMgFjExjOqanROQFKcmfyJc0n1YiZ1xAhkuu5kyBN1XwvEF_EQWKSFra1KrNj6D55G-0QqoHZoCYw"/>
+</div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-unit-md">
+<span class="material-symbols-outlined text-primary" data-icon="photo_library">photo_library</span>
+<span class="font-label-sm text-label-sm text-text-secondary">52 assets</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary">Inspiration Wall</h3>
+<p class="font-caption text-caption text-text-secondary mt-unit-xs">Visual cues and textures for design.</p>
+</div>
+</div>
+</div>
+<!-- Recent Activity Horizontal Scroll -->
+<div class="mt-unit-lg">
+<h4 class="font-label-sm text-label-sm text-text-secondary uppercase tracking-widest mb-unit-md">Recently Modified</h4>
+<div class="flex gap-unit-md overflow-x-auto pb-unit-md no-scrollbar">
+<div class="flex-shrink-0 w-48 p-unit-md bg-canvas-off-white border border-border-subtle rounded-lg hover:shadow-sm transition-shadow cursor-pointer">
+<span class="material-symbols-outlined text-primary text-[18px] mb-unit-xs" data-icon="article">article</span>
+<h5 class="font-body-md text-body-md font-medium truncate">Quarterly Review</h5>
+<p class="font-caption text-caption text-text-secondary">2 hours ago</p>
+</div>
+<div class="flex-shrink-0 w-48 p-unit-md bg-canvas-off-white border border-border-subtle rounded-lg hover:shadow-sm transition-shadow cursor-pointer">
+<span class="material-symbols-outlined text-primary text-[18px] mb-unit-xs" data-icon="article">article</span>
+<h5 class="font-body-md text-body-md font-medium truncate">Meeting Notes</h5>
+<p class="font-caption text-caption text-text-secondary">5 hours ago</p>
+</div>
+<div class="flex-shrink-0 w-48 p-unit-md bg-canvas-off-white border border-border-subtle rounded-lg hover:shadow-sm transition-shadow cursor-pointer">
+<span class="material-symbols-outlined text-primary text-[18px] mb-unit-xs" data-icon="article">article</span>
+<h5 class="font-body-md text-body-md font-medium truncate">Thesis Outline</h5>
+<p class="font-caption text-caption text-text-secondary">Yesterday</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 pb-safe px-margin-mobile bg-surface-taupe/90 dark:bg-tertiary-container/90 border-t border-border-subtle dark:border-on-tertiary-fixed-variant backdrop-blur-md">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container opacity-50 hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed scale-110" href="#">
+<span class="material-symbols-outlined" data-icon="folder" style="font-variation-settings: 'FILL' 1;">folder</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container opacity-50 hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="star">star</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container opacity-50 hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</a>
+</nav>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-24 right-gutter md:bottom-gutter md:right-gutter w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform active:scale-95 z-40">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<script>
+        // Micro-interaction for hover effects on cards
+        document.querySelectorAll('.group').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0px)';
+            });
+        });
+
+        // Simple focus mode toggle logic (Zen Mode)
+        document.addEventListener('keydown', (e) => {
+            if (e.metaKey && e.key === 'k') {
+                console.log('Command Bar Triggered');
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings | Gravity</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .tap-highlight-none {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .zen-mask {
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#1c1b1b",
+                        "primary-container": "#1c1b1b",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "on-error-container": "#93000a",
+                        "on-background": "#1a1c1b",
+                        "on-tertiary-fixed-variant": "#474646",
+                        "surface-container-low": "#f4f3f1",
+                        "surface": "#faf9f7",
+                        "surface-bright": "#faf9f7",
+                        "surface-container-high": "#e9e8e6",
+                        "on-secondary-fixed": "#001c39",
+                        "on-tertiary-container": "#858383",
+                        "inverse-on-surface": "#f1f1ef",
+                        "tertiary-fixed": "#e5e2e1",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c4c7c7",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container": "#eeeeec",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#dadad8",
+                        "surface-container-highest": "#e3e2e0",
+                        "canvas-off-white": "#FFFEFC",
+                        "inverse-surface": "#2f3130",
+                        "surface-tint": "#5f5e5e",
+                        "secondary-fixed-dim": "#a4c9ff",
+                        "tertiary-fixed-dim": "#c9c6c5",
+                        "secondary-container": "#499dfe",
+                        "outline": "#747878",
+                        "primary-fixed-dim": "#c9c6c5",
+                        "surface-variant": "#e3e2e0",
+                        "tertiary": "#000000",
+                        "border-subtle": "#EBEBE8",
+                        "on-surface-variant": "#444748",
+                        "inverse-primary": "#c9c6c5",
+                        "secondary-fixed": "#d4e3ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#858383",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "secondary": "#005fad",
+                        "text-secondary": "#91918E",
+                        "on-primary-fixed-variant": "#474646",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#1c1b1b",
+                        "surface-taupe": "#F5F5F7",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#1a1c1b",
+                        "background": "#faf9f7",
+                        "on-secondary-fixed-variant": "#004884",
+                        "on-secondary-container": "#003462",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-desktop": "80px",
+                        "unit-sm": "8px",
+                        "unit-xs": "4px",
+                        "margin-mobile": "20px",
+                        "max-width-content": "720px",
+                        "unit-md": "16px",
+                        "unit-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "caption": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-xl": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-canvas-off-white text-on-surface antialiased selection:bg-primary/5">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-canvas-off-white/80 backdrop-blur-xl transition-opacity duration-300">
+<div class="flex items-center gap-unit-md">
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95 transition-transform" data-icon="close">close</button>
+<h1 class="font-headline-md text-headline-md font-semibold tracking-tighter text-primary">Gravity</h1>
+</div>
+<div class="flex items-center gap-unit-md">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Settings</span>
+</div>
+</header>
+<main class="pt-24 pb-32 px-margin-mobile md:px-0">
+<div class="max-w-[720px] mx-auto">
+<!-- User Profile Section -->
+<section class="mb-unit-lg flex items-center justify-between group">
+<div class="flex items-center gap-unit-md">
+<div class="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center overflow-hidden border border-border-subtle">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A close-up portrait of a thoughtful professional man in his 30s with a clean-cut aesthetic. The lighting is soft and natural, emphasizing clarity and focus against a neutral, minimalist background of soft whites and cool greys. The image has a high-end, editorial feel that aligns with a premium, minimalist productivity application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDDbQZzHFjLe7KbAj3WunCYWwKUAItyNOmSjwEoxaZ0lZwWUGVR10nWRi2_2Qsju87gb_NkMf9lyXW-xL2K5sJWeN7U-fXtKBz1NnoHsEZ_4KEn8XE99nAUeXVp5l6BTaoAN3eL9Gs22HWHjSL4KAWxINtItIJiO7Tay0yEH-jHZKEHqJGRTnHE5nRItgTWXB5OQPuTwfPv5_cQ0y265VWgIPaXiQp8zeMGB_UZKhH3Het-6uFten02P886jXShg1g4C0wA3-XszY"/>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Julian Thorne</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Pro Account — Member since 2023</p>
+</div>
+</div>
+<button class="px-unit-md py-unit-sm rounded-lg border border-border-subtle hover:bg-surface-taupe transition-colors text-label-sm font-label-sm uppercase">Manage</button>
+</section>
+<div class="h-px bg-border-subtle w-full mb-unit-lg"></div>
+<!-- Settings Groups -->
+<div class="space-y-unit-lg">
+<!-- Workspace Group -->
+<section>
+<h3 class="font-label-sm text-label-sm text-on-tertiary-container uppercase tracking-widest mb-unit-md">Workspace</h3>
+<div class="space-y-unit-xs">
+<!-- Item -->
+<div class="flex items-center justify-between p-unit-md hover:bg-surface-taupe/50 rounded-lg transition-colors cursor-pointer group">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="palette">palette</span>
+<span class="font-body-md text-body-md">Appearance</span>
+</div>
+<div class="flex items-center gap-unit-xs">
+<span class="font-caption text-caption text-on-tertiary-container">Light Mode</span>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Item -->
+<div class="flex items-center justify-between p-unit-md hover:bg-surface-taupe/50 rounded-lg transition-colors cursor-pointer group">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="text_fields">text_fields</span>
+<span class="font-body-md text-body-md">Typography</span>
+</div>
+<div class="flex items-center gap-unit-xs">
+<span class="font-caption text-caption text-on-tertiary-container">Inter &amp; Mono</span>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Item with Toggle -->
+<div class="flex items-center justify-between p-unit-md hover:bg-surface-taupe/50 rounded-lg transition-colors cursor-pointer group">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="auto_awesome">auto_awesome</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md">Zen Focus Mode</span>
+<span class="font-caption text-caption text-on-tertiary-container">Hide all chrome while writing</span>
+</div>
+</div>
+<button class="w-10 h-5 bg-primary rounded-full relative transition-colors p-0.5" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('bg-surface-dim')">
+<div class="w-4 h-4 bg-white rounded-full transition-transform translate-x-5"></div>
+</button>
+</div>
+</div>
+</section>
+<div class="h-px bg-border-subtle/50 w-full"></div>
+<!-- Security Group -->
+<section>
+<h3 class="font-label-sm text-label-sm text-on-tertiary-container uppercase tracking-widest mb-unit-md">Security &amp; Sync</h3>
+<div class="space-y-unit-xs">
+<div class="flex items-center justify-between p-unit-md hover:bg-surface-taupe/50 rounded-lg transition-colors cursor-pointer group">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="lock">lock</span>
+<span class="font-body-md text-body-md">Vault Encryption</span>
+</div>
+<span class="font-caption text-caption text-on-tertiary-container">Enabled</span>
+</div>
+<div class="flex items-center justify-between p-unit-md hover:bg-surface-taupe/50 rounded-lg transition-colors cursor-pointer group">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="cloud_done">cloud_done</span>
+<span class="font-body-md text-body-md">Cloud Sync</span>
+</div>
+<span class="font-caption text-caption text-on-tertiary-container">Last synced 2m ago</span>
+</div>
+</div>
+</section>
+<div class="h-px bg-border-subtle/50 w-full"></div>
+<!-- Extensions Group -->
+<section>
+<div class="flex justify-between items-center mb-unit-md">
+<h3 class="font-label-sm text-label-sm text-on-tertiary-container uppercase tracking-widest">Advanced</h3>
+<span class="font-label-sm text-label-sm text-primary px-2 py-0.5 bg-surface-container rounded-sm">Beta</span>
+</div>
+<div class="space-y-unit-xs">
+<div class="flex items-center justify-between p-unit-md hover:bg-surface-taupe/50 rounded-lg transition-colors cursor-pointer group">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="terminal">terminal</span>
+<span class="font-body-md text-body-md">Developer API</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="open_in_new">open_in_new</span>
+</div>
+<div class="flex items-center justify-between p-unit-md hover:bg-surface-taupe/50 rounded-lg transition-colors cursor-pointer group">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="archive">archive</span>
+<span class="font-body-md text-body-md">Export Workspace</span>
+</div>
+<span class="font-caption text-caption text-on-tertiary-container">JSON, Markdown</span>
+</div>
+</div>
+</section>
+<section class="pt-unit-lg">
+<button class="w-full p-unit-md rounded-xl border border-error/20 text-error hover:bg-error/5 transition-colors font-semibold flex items-center justify-center gap-unit-sm group">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform" data-icon="logout">logout</span>
+                        Log Out of Gravity
+                    </button>
+<p class="mt-unit-md text-center font-caption text-caption text-on-tertiary-container">
+                        Version 2.4.0 — Made with focus in Stockholm.
+                    </p>
+</section>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Hidden on desktop, logic from Shared Components) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 pb-safe px-margin-mobile bg-surface-taupe/90 border-t border-border-subtle backdrop-blur-md">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container opacity-50 hover:opacity-100 transition-all tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container opacity-50 hover:opacity-100 transition-all tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="folder">folder</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container opacity-50 hover:opacity-100 transition-all tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="star">star</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary scale-110 tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+</a>
+</nav>
+<!-- Visual Polish: Atmosphere -->
+<div class="fixed top-0 right-0 w-[40%] h-[40%] bg-gradient-to-bl from-surface-container-low/30 to-transparent pointer-events-none -z-10 blur-3xl"></div>
+<div class="fixed bottom-0 left-0 w-[30%] h-[30%] bg-gradient-to-tr from-surface-container-high/20 to-transparent pointer-events-none -z-10 blur-2xl"></div>
+<script>
+        // Micro-interaction for toggle buttons
+        document.querySelectorAll('button[onclick^="this.classList.toggle"]').forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const circle = this.querySelector('div');
+                circle.classList.toggle('translate-x-5');
+                circle.classList.toggle('translate-x-0');
+            });
+        });
+
+        // Simple scroll behavior for Header
+        let lastScroll = 0;
+        const header = document.querySelector('header');
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            if (currentScroll <= 0) {
+                header.classList.remove('opacity-0');
+                return;
+            }
+            if (currentScroll > lastScroll && currentScroll > 100) {
+                header.classList.add('opacity-0');
+            } else {
+                header.classList.remove('opacity-0');
+            }
+            lastScroll = currentScroll;
+        });
+    </script>
+</body></html>

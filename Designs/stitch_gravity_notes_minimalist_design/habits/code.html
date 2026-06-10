@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gravity Notes | Habits</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#1c1b1b",
+                        "primary-container": "#1c1b1b",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "on-error-container": "#93000a",
+                        "on-background": "#1a1c1b",
+                        "on-tertiary-fixed-variant": "#474646",
+                        "surface-container-low": "#f4f3f1",
+                        "surface": "#faf9f7",
+                        "surface-bright": "#faf9f7",
+                        "surface-container-high": "#e9e8e6",
+                        "on-secondary-fixed": "#001c39",
+                        "on-tertiary-container": "#858383",
+                        "inverse-on-surface": "#f1f1ef",
+                        "tertiary-fixed": "#e5e2e1",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c4c7c7",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container": "#eeeeec",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#dadad8",
+                        "surface-container-highest": "#e3e2e0",
+                        "canvas-off-white": "#FFFEFC",
+                        "inverse-surface": "#2f3130",
+                        "surface-tint": "#5f5e5e",
+                        "secondary-fixed-dim": "#a4c9ff",
+                        "tertiary-fixed-dim": "#c9c6c5",
+                        "secondary-container": "#499dfe",
+                        "outline": "#747878",
+                        "primary-fixed-dim": "#c9c6c5",
+                        "surface-variant": "#e3e2e0",
+                        "tertiary": "#000000",
+                        "border-subtle": "#EBEBE8",
+                        "on-surface-variant": "#444748",
+                        "inverse-primary": "#c9c6c5",
+                        "secondary-fixed": "#d4e3ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#858383",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "secondary": "#005fad",
+                        "text-secondary": "#91918E",
+                        "on-primary-fixed-variant": "#474646",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#1c1b1b",
+                        "surface-taupe": "#F5F5F7",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#1a1c1b",
+                        "background": "#faf9f7",
+                        "on-secondary-fixed-variant": "#004884",
+                        "on-secondary-container": "#003462",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-desktop": "80px",
+                        "unit-sm": "8px",
+                        "unit-xs": "4px",
+                        "margin-mobile": "20px",
+                        "max-width-content": "720px",
+                        "unit-md": "16px",
+                        "unit-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "caption": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-xl": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "30px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            user-select: none;
+        }
+        body {
+            background-color: #FFFEFC;
+            -webkit-font-smoothing: antialiased;
+        }
+        .writing-canvas {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .tap-highlight-none {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #EBEBE8;
+        }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface selection:bg-surface-dim">
+<!-- Top AppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-canvas-off-white/80 backdrop-blur-xl transition-all duration-300">
+<div class="flex items-center gap-unit-md">
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95" data-icon="menu">menu</button>
+<h1 class="font-headline-md text-headline-md font-semibold tracking-tighter text-primary">Gravity</h1>
+</div>
+<div class="flex items-center gap-unit-md">
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95" data-icon="search">search</button>
+</div>
+</header>
+<div class="flex min-h-screen pt-16">
+<!-- Navigation Drawer (Desktop) -->
+<aside class="hidden md:flex flex-col p-margin-desktop gap-unit-md h-full w-80 fixed left-0 top-16 bg-surface border-r border-border-subtle">
+<div class="font-headline-lg text-headline-lg text-primary mb-unit-lg">Spaces</div>
+<nav class="flex flex-col gap-unit-sm">
+<a class="flex items-center gap-unit-md p-unit-sm rounded hover:text-primary transition-colors text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>All Notes</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm rounded hover:text-primary transition-colors text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+<span>Folders</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm rounded hover:text-primary transition-colors text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="archive">archive</span>
+<span>Archive</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm rounded hover:text-primary transition-colors text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+<span>Vault</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm rounded text-primary font-semibold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span>Habits</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm rounded hover:text-primary transition-colors text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Writing Canvas -->
+<main class="flex-1 px-margin-mobile md:px-0 md:ml-80 pb-32">
+<div class="writing-canvas py-unit-lg">
+<!-- Screen Header -->
+<section class="mb-unit-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
+<div class="flex justify-between items-end mb-unit-sm">
+<h2 class="font-display-xl text-display-xl text-primary tracking-tighter">Daily Intentions</h2>
+<span class="font-label-sm text-label-sm text-on-tertiary-container uppercase tracking-widest">Oct 24</span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-md leading-relaxed">Quiet persistence. These are the small things that hold the larger structure together.</p>
+</section>
+<!-- Habit Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-unit-md mb-unit-lg">
+<!-- Habit Card 1 -->
+<div class="group p-unit-lg bg-surface-taupe border border-border-subtle rounded-xl hover:border-outline-variant transition-all duration-300">
+<div class="flex justify-between items-start mb-unit-lg">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary mb-unit-xs">Deep Work</h3>
+<p class="font-caption text-caption text-on-tertiary-container">90 minute focus block</p>
+</div>
+<button class="w-10 h-10 rounded-full border border-primary flex items-center justify-center bg-primary text-white active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[20px]" data-icon="check">check</span>
+</button>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary transition-all duration-1000 w-[85%]" style="transition-delay: 200ms;"></div>
+</div>
+<div class="mt-unit-sm flex justify-between">
+<span class="font-label-sm text-label-sm text-on-tertiary-container">Current Streak</span>
+<span class="font-label-sm text-label-sm text-primary">12 Days</span>
+</div>
+</div>
+<!-- Habit Card 2 -->
+<div class="group p-unit-lg bg-surface-taupe border border-border-subtle rounded-xl hover:border-outline-variant transition-all duration-300">
+<div class="flex justify-between items-start mb-unit-lg">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary mb-unit-xs">Mindful Review</h3>
+<p class="font-caption text-caption text-on-tertiary-container">Morning notes synthesis</p>
+</div>
+<button class="w-10 h-10 rounded-full border border-border-subtle flex items-center justify-center hover:border-primary active:scale-90 transition-all">
+<span class="material-symbols-outlined text-[20px] text-primary" data-icon="circle">circle</span>
+</button>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary transition-all duration-1000 w-[40%]" style="transition-delay: 400ms;"></div>
+</div>
+<div class="mt-unit-sm flex justify-between">
+<span class="font-label-sm text-label-sm text-on-tertiary-container">Current Streak</span>
+<span class="font-label-sm text-label-sm text-primary">4 Days</span>
+</div>
+</div>
+</div>
+<!-- Monthly Overview (The "Document-like" Tracker) -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden mb-unit-lg">
+<div class="p-gutter border-b border-border-subtle flex justify-between items-center">
+<h4 class="font-body-md font-semibold text-primary">The Long View</h4>
+<div class="flex gap-unit-md">
+<span class="flex items-center gap-unit-xs font-label-sm text-label-sm text-on-tertiary-container">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Completed
+                            </span>
+<span class="flex items-center gap-unit-xs font-label-sm text-label-sm text-on-tertiary-container">
+<span class="w-2 h-2 rounded-full bg-surface-container-high"></span> Missed
+                            </span>
+</div>
+</div>
+<div class="p-gutter overflow-x-auto custom-scroll">
+<div class="flex flex-col gap-unit-sm min-w-[600px]">
+<!-- Row 1 -->
+<div class="flex items-center gap-unit-md">
+<span class="w-24 font-label-sm text-label-sm text-on-surface-variant">Movement</span>
+<div class="flex-1 grid grid-cols-31 gap-1">
+<!-- Simple logic: generate 31 dots -->
+<script>
+                                        for(let i=0; i<31; i++) {
+                                            const active = Math.random() > 0.3 ? 'bg-primary' : 'bg-surface-container-high';
+                                            document.write(`<div class="aspect-square rounded-sm ${active} opacity-80 hover:opacity-100 transition-opacity"></div>`);
+                                        }
+                                    </script>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center gap-unit-md">
+<span class="w-24 font-label-sm text-label-sm text-on-surface-variant">Writing</span>
+<div class="flex-1 grid grid-cols-31 gap-1">
+<script>
+                                        for(let i=0; i<31; i++) {
+                                            const active = Math.random() > 0.2 ? 'bg-primary' : 'bg-surface-container-high';
+                                            document.write(`<div class="aspect-square rounded-sm ${active} opacity-80 hover:opacity-100 transition-opacity"></div>`);
+                                        }
+                                    </script>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center gap-unit-md">
+<span class="w-24 font-label-sm text-label-sm text-on-surface-variant">Reading</span>
+<div class="flex-1 grid grid-cols-31 gap-1">
+<script>
+                                        for(let i=0; i<31; i++) {
+                                            const active = Math.random() > 0.5 ? 'bg-primary' : 'bg-surface-container-high';
+                                            document.write(`<div class="aspect-square rounded-sm ${active} opacity-80 hover:opacity-100 transition-opacity"></div>`);
+                                        }
+                                    </script>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-taupe p-unit-md text-center">
+<button class="font-label-sm text-label-sm text-primary hover:opacity-70 transition-opacity">Export Monthly Report (PDF)</button>
+</div>
+</section>
+<!-- Zen Quote / Atmospheric Image -->
+<section class="mt-unit-lg relative h-64 rounded-xl overflow-hidden group">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A tranquil and minimalist interior scene featuring a single white ceramic vase on a natural wood table. Soft, diffuse morning light pours through a sheer linen curtain, casting long, gentle shadows across a clean white wall. The overall mood is peaceful, orderly, and deeply intentional, reflecting a high-end minimalist design aesthetic with a palette of off-whites and warm wood tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDm9OojUNy8UzXsfALNwZHLD4b9mGJCoBBBNcfO3DWW9a8kpI2CjbED9LPdcB5vsuQu7ApLwFdwKGr6dgQIqiux4zxOO1AlhecQQKG9_OcA4431jcHVl3ec6zlOKnUz1cr7iOhh6_MMwrwXO5pfO57FO9dY8jHtpZF_48RfWUEpOHkArpdLlN0PGgT-XDdWZRS2YUGm7wN0COgLn55D4UewLv4zhlFhBrwrCTs8eAgfI4KXBRP2iOmBt2d6fmQlRreltK4SonKwEbg"/>
+<div class="absolute inset-0 bg-black/10 flex items-center justify-center p-unit-lg">
+<p class="font-headline-md text-white text-center italic tracking-tight opacity-90">"We are what we repeatedly do. Excellence, then, is not an act, but a habit."</p>
+</div>
+</section>
+</div>
+</main>
+</div>
+<!-- Bottom Nav (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 bg-surface-taupe/90 border-t border-border-subtle backdrop-blur-md pb-safe px-margin-mobile">
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 transition-all hover:opacity-100">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 transition-all hover:opacity-100">
+<span class="material-symbols-outlined" data-icon="folder">folder</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 transition-all hover:opacity-100">
+<span class="material-symbols-outlined" data-icon="star">star</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary scale-110">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 transition-all hover:opacity-100">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</nav>
+<!-- Contextual FAB -->
+<button class="fixed bottom-gutter right-gutter md:bottom-unit-lg md:right-unit-lg w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<script>
+        // Simple Micro-interaction for Habit completion
+        document.querySelectorAll('button .material-symbols-outlined').forEach(icon => {
+            if (icon.innerText === 'circle' || icon.innerText === 'check') {
+                icon.parentElement.addEventListener('click', function() {
+                    const isChecked = icon.innerText === 'check';
+                    icon.innerText = isChecked ? 'circle' : 'check';
+                    this.classList.toggle('bg-primary');
+                    this.classList.toggle('text-white');
+                    this.classList.toggle('border-primary');
+                    
+                    if (!isChecked) {
+                        // Minimalist confetti or success feel?
+                        // Just a subtle scale for now
+                        this.classList.add('scale-125');
+                        setTimeout(() => this.classList.remove('scale-125'), 200);
+                    }
+                });
+            }
+        });
+
+        // Grid styling fix for the 31 columns (Tailwind doesn't have 31 by default)
+        const style = document.createElement('style');
+        style.innerHTML = '.grid-cols-31 { grid-template-columns: repeat(31, minmax(0, 1fr)); }';
+        document.head.appendChild(style);
+    </script>
+</body></html>

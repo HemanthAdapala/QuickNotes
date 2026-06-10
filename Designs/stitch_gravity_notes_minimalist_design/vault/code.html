@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed": "#1c1b1b",
+            "primary-container": "#1c1b1b",
+            "on-secondary": "#ffffff",
+            "primary": "#000000",
+            "on-error-container": "#93000a",
+            "on-background": "#1a1c1b",
+            "on-tertiary-fixed-variant": "#474646",
+            "surface-container-low": "#f4f3f1",
+            "surface": "#faf9f7",
+            "surface-bright": "#faf9f7",
+            "surface-container-high": "#e9e8e6",
+            "on-secondary-fixed": "#001c39",
+            "on-tertiary-container": "#858383",
+            "inverse-on-surface": "#f1f1ef",
+            "tertiary-fixed": "#e5e2e1",
+            "error": "#ba1a1a",
+            "outline-variant": "#c4c7c7",
+            "primary-fixed": "#e5e2e1",
+            "surface-container": "#eeeeec",
+            "error-container": "#ffdad6",
+            "surface-dim": "#dadad8",
+            "surface-container-highest": "#e3e2e0",
+            "canvas-off-white": "#FFFEFC",
+            "inverse-surface": "#2f3130",
+            "surface-tint": "#5f5e5e",
+            "secondary-fixed-dim": "#a4c9ff",
+            "tertiary-fixed-dim": "#c9c6c5",
+            "secondary-container": "#499dfe",
+            "outline": "#747878",
+            "primary-fixed-dim": "#c9c6c5",
+            "surface-variant": "#e3e2e0",
+            "tertiary": "#000000",
+            "border-subtle": "#EBEBE8",
+            "on-surface-variant": "#444748",
+            "inverse-primary": "#c9c6c5",
+            "secondary-fixed": "#d4e3ff",
+            "surface-container-lowest": "#ffffff",
+            "on-primary-container": "#858383",
+            "on-tertiary-fixed": "#1c1b1b",
+            "secondary": "#005fad",
+            "text-secondary": "#91918E",
+            "on-primary-fixed-variant": "#474646",
+            "on-error": "#ffffff",
+            "tertiary-container": "#1c1b1b",
+            "surface-taupe": "#F5F5F7",
+            "on-primary": "#ffffff",
+            "on-surface": "#1a1c1b",
+            "background": "#faf9f7",
+            "on-secondary-fixed-variant": "#004884",
+            "on-secondary-container": "#003462",
+            "on-tertiary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "24px",
+            "margin-desktop": "80px",
+            "unit-sm": "8px",
+            "unit-xs": "4px",
+            "margin-mobile": "20px",
+            "max-width-content": "720px",
+            "unit-md": "16px",
+            "unit-lg": "32px"
+          },
+          "fontFamily": {
+            "label-sm": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "caption": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-lg": ["Inter"],
+            "headline-lg-mobile": ["Inter"],
+            "body-md": ["Inter"],
+            "display-xl": ["Inter"]
+          },
+          "fontSize": {
+            "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+            "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+            "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "body-lg": ["18px", {"lineHeight": "30px", "fontWeight": "400"}],
+            "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "headline-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "600"}],
+            "body-md": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+            "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body { background-color: #faf9f7; color: #1a1c1b; overflow-x: hidden; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+    .glass-effect { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    .writing-canvas { max-width: 720px; margin: 0 auto; }
+    .vault-locked-overlay { transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    .subtle-reveal { animation: reveal 0.8s ease-out forwards; opacity: 0; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md">
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-canvas-off-white/80 backdrop-blur-xl transition-all duration-300">
+<div class="flex items-center gap-unit-md">
+<button class="hover:opacity-70 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-semibold tracking-tighter text-primary">Gravity</h1>
+</div>
+<div class="flex items-center gap-unit-md">
+<button class="hover:opacity-70 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+</div>
+</header>
+<!-- Main Layout Container -->
+<div class="flex min-h-screen pt-16">
+<!-- Sidebar Navigation Drawer (Desktop) -->
+<aside class="hidden md:flex flex-col p-margin-desktop gap-unit-md h-full w-80 border-r border-border-subtle bg-surface sticky top-16">
+<div class="font-headline-lg text-headline-lg text-primary mb-unit-lg">Spaces</div>
+<nav class="flex flex-col gap-unit-sm">
+<a class="flex items-center gap-unit-sm py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>All Notes</span>
+</a>
+<a class="flex items-center gap-unit-sm py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span>Folders</span>
+</a>
+<a class="flex items-center gap-unit-sm py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">archive</span>
+<span>Archive</span>
+</a>
+<a class="flex items-center gap-unit-sm py-2 text-primary font-semibold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">lock</span>
+<span>Vault</span>
+</a>
+<a class="flex items-center gap-unit-sm py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span>Habits</span>
+</a>
+<div class="mt-unit-lg pt-unit-lg border-t border-border-subtle">
+<a class="flex items-center gap-unit-sm py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin-mobile md:px-gutter py-unit-lg relative">
+<!-- Locked State (The Vault Interface) -->
+<div class="absolute inset-0 z-40 bg-canvas-off-white flex flex-col items-center justify-center text-center p-gutter transition-all duration-700 opacity-100" id="vault-locked">
+<div class="mb-unit-lg subtle-reveal" style="animation-delay: 0.1s;">
+<div class="w-24 h-24 rounded-full border border-border-subtle flex items-center justify-center bg-surface-taupe mb-unit-md mx-auto">
+<span class="material-symbols-outlined text-primary text-[40px] transition-all duration-500" id="lock-icon">fingerprint</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg mb-unit-sm">Vault Encrypted</h2>
+<p class="text-on-surface-variant max-w-sm mx-auto font-body-md">Your most sensitive thoughts are protected with end-to-end encryption. Verify your identity to enter.</p>
+</div>
+<button class="px-unit-lg py-unit-md bg-primary text-on-primary font-label-sm rounded-full transition-all active:scale-95 hover:opacity-90 subtle-reveal" onclick="unlockVault()" style="animation-delay: 0.3s;">
+          UNLOCK VAULT
+        </button>
+<div class="mt-12 subtle-reveal" style="animation-delay: 0.5s;">
+<div class="flex gap-unit-sm justify-center">
+<div class="w-2 h-2 rounded-full bg-border-subtle"></div>
+<div class="w-2 h-2 rounded-full bg-border-subtle"></div>
+<div class="w-2 h-2 rounded-full bg-border-subtle"></div>
+</div>
+</div>
+</div>
+<!-- Unlocked State (Content Canvas) -->
+<div class="writing-canvas opacity-0 pointer-events-none translate-y-4 transition-all duration-700 pb-32" id="vault-content">
+<div class="mb-unit-lg border-b border-border-subtle pb-unit-md flex justify-between items-end">
+<div>
+<span class="font-label-sm text-on-tertiary-container uppercase tracking-widest">Secure Storage</span>
+<h1 class="font-display-xl text-display-xl mt-2">Personal Vault</h1>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-all p-2" onclick="lockVault()">
+<span class="material-symbols-outlined">lock_open</span>
+</button>
+</div>
+<!-- Bento Grid for Vault Items -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-unit-md">
+<!-- Item 1: Large Featured Note -->
+<div class="col-span-1 md:col-span-2 group relative bg-surface-taupe p-unit-lg border border-border-subtle rounded-xl hover:bg-surface-container-low transition-all">
+<div class="flex justify-between items-start mb-unit-md">
+<span class="font-label-sm text-on-tertiary-container">MARCH 12, 2024</span>
+<span class="material-symbols-outlined text-on-tertiary-container opacity-0 group-hover:opacity-100 transition-opacity">more_horiz</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">Strategy: The Invisible Hand</h3>
+<p class="text-on-surface-variant font-body-md line-clamp-2">In the silence of the morning, I realized that the most powerful architectures are those that remain unseen, operating as natural extensions of the user's intent...</p>
+<div class="mt-4 flex gap-2">
+<span class="px-2 py-1 bg-canvas-off-white text-on-tertiary-container font-label-sm border border-border-subtle rounded-sm">Confidential</span>
+<span class="px-2 py-1 bg-canvas-off-white text-on-tertiary-container font-label-sm border border-border-subtle rounded-sm">Vision</span>
+</div>
+</div>
+<!-- Item 2: Image/Visual Note -->
+<div class="group relative aspect-video bg-surface border border-border-subtle rounded-xl overflow-hidden">
+<img class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" data-alt="A macro photograph of white ceramic ripples on water, representing digital weightlessness and calm. The lighting is diffused and high-key, emphasizing a clean light-mode aesthetic with soft shadows and minimal black accents. The mood is tranquil, sophisticated, and focused." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqfXytppV-KXfGG7X7d7P-xREa9pxuLRC1nuSwVZoLzss8yC_eUlr7mdr6fnr0JxzY_6Yc-WrE4bqyClptkeSxCm9b47P3Vn1777a2ym3KT7-gkSoHYA22csSTsdBsnLnQg0IMgBrOLG2zLQhenXn1Mg1nwthoevN2fVIrBWuJOV6NQ4Ct7Z4h3lzU5afPUxEHB6lDmx4ar_qGdzGI2al9maZLlunkgsPvVo-uQ8IKxCPk3LWRylaR9BE7nYLpBGSJO53vnD3gAdM"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent flex flex-col justify-end p-unit-md">
+<h4 class="text-on-primary font-headline-md">Visual Identity Maps</h4>
+</div>
+</div>
+<!-- Item 3: Quick Action List -->
+<div class="bg-primary text-on-primary p-unit-lg rounded-xl flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-[32px] mb-unit-md">shield</span>
+<h3 class="font-headline-md text-headline-md leading-tight">Secure Checklist</h3>
+</div>
+<ul class="mt-4 space-y-2 font-body-md">
+<li class="flex items-center gap-2 opacity-80"><span class="material-symbols-outlined text-sm">check_circle</span> Update encryption keys</li>
+<li class="flex items-center gap-2 opacity-80"><span class="material-symbols-outlined text-sm">check_circle</span> Review login history</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">circle</span> Archive 2023 logs</li>
+</ul>
+</div>
+<!-- Item 4: Audio Transcription -->
+<div class="p-unit-lg bg-surface-taupe border border-border-subtle rounded-xl hover:border-primary/20 transition-all">
+<div class="flex items-center gap-3 mb-unit-sm">
+<span class="material-symbols-outlined text-primary">mic</span>
+<span class="font-label-sm text-on-tertiary-container">AUDIO MEMO • 02:45</span>
+</div>
+<h4 class="font-body-lg font-semibold mb-2">Thoughts on Gravity 2.0</h4>
+<div class="h-1 bg-border-subtle w-full rounded-full overflow-hidden">
+<div class="h-full bg-primary w-1/3"></div>
+</div>
+</div>
+<!-- Item 5: Small Stat/Status -->
+<div class="p-unit-lg border border-border-subtle rounded-xl flex items-center justify-between">
+<div>
+<div class="text-on-tertiary-container font-label-sm">ENCRYPTION LEVEL</div>
+<div class="font-headline-md">AES-256</div>
+</div>
+<span class="material-symbols-outlined text-on-tertiary-container">verified_user</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Mobile Navigation Shell -->
+<footer class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 bg-surface-taupe/90 backdrop-blur-md border-t border-border-subtle pb-safe px-margin-mobile">
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all active:tap-highlight-none">
+<span class="material-symbols-outlined">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all active:tap-highlight-none">
+<span class="material-symbols-outlined">folder</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all active:tap-highlight-none">
+<span class="material-symbols-outlined">star</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary scale-110 active:tap-highlight-none">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">lock</span>
+</button>
+</footer>
+<script>
+    function unlockVault() {
+      const lockIcon = document.getElementById('lock-icon');
+      const lockedDiv = document.getElementById('vault-locked');
+      const contentDiv = document.getElementById('vault-content');
+
+      // Trigger "biometric" animation
+      lockIcon.style.transform = 'scale(1.2)';
+      lockIcon.innerText = 'verified';
+      lockIcon.style.color = '#005fad';
+      
+      setTimeout(() => {
+        lockedDiv.style.opacity = '0';
+        lockedDiv.style.pointerEvents = 'none';
+        
+        contentDiv.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+        contentDiv.classList.add('opacity-100', 'translate-y-0');
+      }, 800);
+    }
+
+    function lockVault() {
+      const lockedDiv = document.getElementById('vault-locked');
+      const contentDiv = document.getElementById('vault-content');
+      const lockIcon = document.getElementById('lock-icon');
+
+      contentDiv.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+      contentDiv.classList.remove('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        lockedDiv.style.opacity = '1';
+        lockedDiv.style.pointerEvents = 'auto';
+        lockIcon.style.transform = 'scale(1)';
+        lockIcon.innerText = 'fingerprint';
+        lockIcon.style.color = 'black';
+      }, 400);
+    }
+
+    // Scroll effect for header
+    window.addEventListener('scroll', () => {
+      const header = document.querySelector('header');
+      if (window.scrollY > 20) {
+        header.classList.add('h-14', 'shadow-sm');
+      } else {
+        header.classList.remove('h-14', 'shadow-sm');
+      }
+    });
+  </script>
+</body></html>

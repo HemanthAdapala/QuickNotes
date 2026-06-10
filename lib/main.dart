@@ -1,0 +1,163 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'providers/notes_provider.dart';
+import 'views/screens/navigation_shell.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set preferred orientations and system styling overlays
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => NotesProvider()),
+      ],
+      child: const GravityNotesApp(),
+    ),
+  );
+}
+
+class GravityNotesApp extends StatefulWidget {
+  const GravityNotesApp({super.key});
+
+  @override
+  State<GravityNotesApp> createState() => _GravityNotesAppState();
+}
+
+class _GravityNotesAppState extends State<GravityNotesApp> {
+  // Store the active theme mode in local state (with system default fallback)
+  ThemeMode _themeMode = ThemeMode.system;
+
+  void _toggleTheme() {
+    setState(() {
+      if (_themeMode == ThemeMode.dark) {
+        _themeMode = ThemeMode.light;
+      } else if (_themeMode == ThemeMode.light) {
+        _themeMode = ThemeMode.dark;
+      } else {
+        // If system, toggle based on current actual view
+        final isPlatformDark = 
+            WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+        _themeMode = isPlatformDark ? ThemeMode.light : ThemeMode.dark;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Generate harmonious Gravity Playful Light ColorScheme
+    const lightColorScheme = ColorScheme.light(
+      primary: Color(0xFF6366F1), // Electric Indigo
+      onPrimary: Color(0xFFFFFFFF),
+      secondary: Color(0xFF14B8A6), // Neon Teal
+      onSecondary: Color(0xFFFFFFFF),
+      tertiary: Color(0xFFF97316), // Playful Orange
+      surface: Color(0xFFF5F3EF), // Playful Warm Surface
+      onSurface: Color(0xFF1E1B4B), // Midnight Navy
+      outline: Color(0xFF1E1B4B),
+      outlineVariant: Color(0xFFE2E8F0),
+    );
+
+    // Generate harmonious Gravity Playful Dark ColorScheme
+    const darkColorScheme = ColorScheme.dark(
+      primary: Color(0xFF818CF8), // Light Indigo
+      onPrimary: Color(0xFF0B0D17),
+      secondary: Color(0xFF2DD4BF), // Light Teal
+      onSecondary: Color(0xFF0B0D17),
+      tertiary: Color(0xFFFB923C), // Light Orange
+      surface: Color(0xFF1E1C2E), // Playful Deep Surface
+      onSurface: Color(0xFFFAF8F5), // Light Cream Text
+      outline: Color(0xFFFAF8F5),
+      outlineVariant: Color(0xFF312E81),
+    );
+
+    final lightBaseTextTheme = ThemeData.light().textTheme;
+    final darkBaseTextTheme = ThemeData.dark().textTheme;
+
+    return MaterialApp(
+      title: 'Gravity Notes',
+      debugShowCheckedModeBanner: false,
+      
+      // Light Theme configuration
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: lightColorScheme,
+        scaffoldBackgroundColor: const Color(0xFFFFFDF9), // Warm Cream Paper
+        cardColor: const Color(0xFFFDFBF7), // Soft Card Base
+        dividerColor: const Color(0xFF1E1B4B),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFFFFDF9),
+          foregroundColor: Color(0xFF1E1B4B),
+          elevation: 0,
+        ),
+        textTheme: GoogleFonts.plusJakartaSansTextTheme(
+          lightBaseTextTheme.copyWith(
+            displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
+            displayMedium: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
+            displaySmall: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
+            headlineLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            headlineSmall: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            titleLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            titleMedium: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            titleSmall: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+          ),
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFF6366F1),
+          foregroundColor: Color(0xFFFFFFFF),
+        ),
+      ),
+
+      // Dark Theme configuration
+      themeMode: _themeMode,
+
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: darkColorScheme,
+        scaffoldBackgroundColor: const Color(0xFF0B0D17), // Obsidian Night
+        cardColor: const Color(0xFF1A1C2E),
+        dividerColor: const Color(0xFF312E81),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF0B0D17),
+          foregroundColor: Color(0xFFFAF8F5),
+          elevation: 0,
+        ),
+        textTheme: GoogleFonts.plusJakartaSansTextTheme(
+          darkBaseTextTheme.copyWith(
+            displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFFFAF8F5)),
+            displayMedium: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFFFAF8F5)),
+            displaySmall: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFFFAF8F5)),
+            headlineLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            headlineSmall: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            titleLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            titleMedium: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            titleSmall: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+          ),
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFF818CF8),
+          foregroundColor: Color(0xFF0B0D17),
+        ),
+      ),
+
+      home: Builder(
+        builder: (context) {
+          final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+          return NavigationShell(
+            onThemeToggle: _toggleTheme,
+            isDarkMode: isDarkMode,
+          );
+        },
+      ),
+    );
+  }
+}

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gravity Notes - Favorites</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #FFFEFC;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .canvas-width {
+            max-width: 720px;
+        }
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .note-row:hover .note-action {
+            opacity: 1;
+        }
+        /* Custom scrollbar for Zen feel */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #EBEBE8;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#1c1b1b",
+                        "primary-container": "#1c1b1b",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "on-error-container": "#93000a",
+                        "on-background": "#1a1c1b",
+                        "on-tertiary-fixed-variant": "#474646",
+                        "surface-container-low": "#f4f3f1",
+                        "surface": "#faf9f7",
+                        "surface-bright": "#faf9f7",
+                        "surface-container-high": "#e9e8e6",
+                        "on-secondary-fixed": "#001c39",
+                        "on-tertiary-container": "#858383",
+                        "inverse-on-surface": "#f1f1ef",
+                        "tertiary-fixed": "#e5e2e1",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c4c7c7",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container": "#eeeeec",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#dadad8",
+                        "surface-container-highest": "#e3e2e0",
+                        "canvas-off-white": "#FFFEFC",
+                        "inverse-surface": "#2f3130",
+                        "surface-tint": "#5f5e5e",
+                        "secondary-fixed-dim": "#a4c9ff",
+                        "tertiary-fixed-dim": "#c9c6c5",
+                        "secondary-container": "#499dfe",
+                        "outline": "#747878",
+                        "primary-fixed-dim": "#c9c6c5",
+                        "surface-variant": "#e3e2e0",
+                        "tertiary": "#000000",
+                        "border-subtle": "#EBEBE8",
+                        "on-surface-variant": "#444748",
+                        "inverse-primary": "#c9c6c5",
+                        "secondary-fixed": "#d4e3ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#858383",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "secondary": "#005fad",
+                        "text-secondary": "#91918E",
+                        "on-primary-fixed-variant": "#474646",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#1c1b1b",
+                        "surface-taupe": "#F5F5F7",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#1a1c1b",
+                        "background": "#faf9f7",
+                        "on-secondary-fixed-variant": "#004884",
+                        "on-secondary-container": "#003462",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-desktop": "80px",
+                        "unit-sm": "8px",
+                        "unit-xs": "4px",
+                        "margin-mobile": "20px",
+                        "max-width-content": "720px",
+                        "unit-md": "16px",
+                        "unit-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "caption": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-xl": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "30px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-canvas-off-white text-on-surface">
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-canvas-off-white/80 dark:bg-on-tertiary-fixed/80 backdrop-blur-xl">
+<div class="flex items-center gap-unit-md">
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95" data-icon="menu">menu</button>
+<h1 class="font-headline-md text-headline-md font-semibold tracking-tighter text-primary">Gravity</h1>
+</div>
+<div class="flex items-center gap-unit-md">
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95" data-icon="search">search</button>
+</div>
+</header>
+<div class="flex min-h-screen pt-16 pb-20 md:pb-0">
+<!-- Sidebar Navigation (Desktop) -->
+<aside class="hidden md:flex flex-col h-screen fixed left-0 top-16 w-64 p-margin-desktop gap-unit-md border-r border-border-subtle bg-surface">
+<nav class="flex flex-col gap-unit-sm">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md text-body-md">All Notes</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+<span class="font-body-md text-body-md">Folders</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-primary font-semibold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined active-nav-icon" data-icon="star">star</span>
+<span class="font-body-md text-body-md">Favorites</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="archive">archive</span>
+<span class="font-body-md text-body-md">Archive</span>
+</a>
+<div class="mt-8 mb-2 px-3">
+<span class="font-label-sm text-label-sm text-text-secondary">SPACES</span>
+</div>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-body-md text-body-md">Habits</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full md:ml-64 flex flex-col items-center">
+<div class="canvas-width w-full px-margin-mobile md:px-0 py-unit-lg">
+<!-- Page Header -->
+<header class="mb-unit-lg">
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg mb-unit-xs">Favorites</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">Your most essential thoughts, preserved for quick access.</p>
+</header>
+<!-- Filtered List View -->
+<div class="flex flex-col gap-px bg-border-subtle rounded-xl overflow-hidden border border-border-subtle shadow-sm">
+<!-- Favorite Item 1 -->
+<div class="note-row group bg-canvas-off-white hover:bg-surface-taupe transition-colors p-unit-md flex items-center justify-between cursor-pointer">
+<div class="flex items-start gap-unit-md overflow-hidden">
+<span class="material-symbols-outlined text-primary mt-1 active-nav-icon" data-icon="star">star</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold truncate">The Architecture of Silence</span>
+<span class="font-caption text-caption text-on-surface-variant line-clamp-1">Exploration of minimalist interior design and its psychological impact...</span>
+<span class="font-label-sm text-label-sm text-text-secondary mt-1">Oct 12 • 4 min read</span>
+</div>
+</div>
+<div class="note-action opacity-0 flex items-center gap-unit-sm transition-opacity">
+<button class="p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="more_vert">more_vert</span></button>
+</div>
+</div>
+<!-- Favorite Item 2 -->
+<div class="note-row group bg-canvas-off-white hover:bg-surface-taupe transition-colors p-unit-md flex items-center justify-between cursor-pointer">
+<div class="flex items-start gap-unit-md overflow-hidden">
+<span class="material-symbols-outlined text-primary mt-1 active-nav-icon" data-icon="star">star</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold truncate">Q4 Strategic Directives</span>
+<span class="font-caption text-caption text-on-surface-variant line-clamp-1">Refining the product vision for the next quarter. Focus on user retention...</span>
+<span class="font-label-sm text-label-sm text-text-secondary mt-1">Oct 08 • 12 min read</span>
+</div>
+</div>
+<div class="note-action opacity-0 flex items-center gap-unit-sm transition-opacity">
+<button class="p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="more_vert">more_vert</span></button>
+</div>
+</div>
+<!-- Favorite Item 3 -->
+<div class="note-row group bg-canvas-off-white hover:bg-surface-taupe transition-colors p-unit-md flex items-center justify-between cursor-pointer">
+<div class="flex items-start gap-unit-md overflow-hidden">
+<span class="material-symbols-outlined text-primary mt-1 active-nav-icon" data-icon="star">star</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold truncate">Philosophy of Work-Life Blend</span>
+<span class="font-caption text-caption text-on-surface-variant line-clamp-1">Moving beyond balance to a sustainable integration of creative passions...</span>
+<span class="font-label-sm text-label-sm text-text-secondary mt-1">Sep 28 • 8 min read</span>
+</div>
+</div>
+<div class="note-action opacity-0 flex items-center gap-unit-sm transition-opacity">
+<button class="p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="more_vert">more_vert</span></button>
+</div>
+</div>
+<!-- Favorite Item 4 -->
+<div class="note-row group bg-canvas-off-white hover:bg-surface-taupe transition-colors p-unit-md flex items-center justify-between cursor-pointer">
+<div class="flex items-start gap-unit-md overflow-hidden">
+<span class="material-symbols-outlined text-primary mt-1 active-nav-icon" data-icon="star">star</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold truncate">Personal Manifesto v2.1</span>
+<span class="font-caption text-caption text-on-surface-variant line-clamp-1">Core values and long-term goals for the next decade of development...</span>
+<span class="font-label-sm text-label-sm text-text-secondary mt-1">Aug 15 • 3 min read</span>
+</div>
+</div>
+<div class="note-action opacity-0 flex items-center gap-unit-sm transition-opacity">
+<button class="p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="more_vert">more_vert</span></button>
+</div>
+</div>
+</div>
+<!-- Empty State Suggestion (Subtle) -->
+<div class="mt-unit-lg flex flex-col items-center py-unit-lg opacity-40">
+<span class="material-symbols-outlined text-[48px] mb-unit-sm" data-icon="auto_awesome_motion">auto_awesome_motion</span>
+<p class="font-label-sm text-label-sm">END OF FAVORITES</p>
+</div>
+</div>
+</main>
+</div>
+<!-- Bottom Navigation (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 pb-safe px-margin-mobile bg-surface-taupe/90 backdrop-blur-md border-t border-border-subtle rounded-t-full">
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="folder">folder</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary scale-110 transition-all" href="#">
+<span class="material-symbols-outlined active-nav-icon" data-icon="star">star</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</a>
+</nav>
+<!-- Floating Command Trigger (Zen Desktop) -->
+<div class="hidden md:flex fixed bottom-gutter right-gutter z-50">
+<button class="flex items-center gap-unit-sm px-unit-md py-3 bg-primary text-on-primary rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+<span class="font-label-sm text-label-sm">COMMAND + K</span>
+</button>
+</div>
+<script>
+        // Simple Interaction logic
+        document.querySelectorAll('.note-row').forEach(row => {
+            row.addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                    // Navigate to note logic here
+                    console.log('Opening note...');
+                }
+            });
+        });
+
+        // Keyboard Shortcut simulation
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                alert('Command Bar Triggered');
+            }
+        });
+    </script>
+</body></html>

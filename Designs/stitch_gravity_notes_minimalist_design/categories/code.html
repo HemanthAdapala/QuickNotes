@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gravity Notes | Categories</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#1c1b1b",
+                    "primary-container": "#1c1b1b",
+                    "on-secondary": "#ffffff",
+                    "primary": "#000000",
+                    "on-error-container": "#93000a",
+                    "on-background": "#1a1c1b",
+                    "on-tertiary-fixed-variant": "#474646",
+                    "surface-container-low": "#f4f3f1",
+                    "surface": "#faf9f7",
+                    "surface-bright": "#faf9f7",
+                    "surface-container-high": "#e9e8e6",
+                    "on-secondary-fixed": "#001c39",
+                    "on-tertiary-container": "#858383",
+                    "inverse-on-surface": "#f1f1ef",
+                    "tertiary-fixed": "#e5e2e1",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c4c7c7",
+                    "primary-fixed": "#e5e2e1",
+                    "surface-container": "#eeeeec",
+                    "error-container": "#ffdad6",
+                    "surface-dim": "#dadad8",
+                    "surface-container-highest": "#e3e2e0",
+                    "canvas-off-white": "#FFFEFC",
+                    "inverse-surface": "#2f3130",
+                    "surface-tint": "#5f5e5e",
+                    "secondary-fixed-dim": "#a4c9ff",
+                    "tertiary-fixed-dim": "#c9c6c5",
+                    "secondary-container": "#499dfe",
+                    "outline": "#747878",
+                    "primary-fixed-dim": "#c9c6c5",
+                    "surface-variant": "#e3e2e0",
+                    "tertiary": "#000000",
+                    "border-subtle": "#EBEBE8",
+                    "on-surface-variant": "#444748",
+                    "inverse-primary": "#c9c6c5",
+                    "secondary-fixed": "#d4e3ff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-container": "#858383",
+                    "on-tertiary-fixed": "#1c1b1b",
+                    "secondary": "#005fad",
+                    "text-secondary": "#91918E",
+                    "on-primary-fixed-variant": "#474646",
+                    "on-error": "#ffffff",
+                    "tertiary-container": "#1c1b1b",
+                    "surface-taupe": "#F5F5F7",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#1a1c1b",
+                    "background": "#faf9f7",
+                    "on-secondary-fixed-variant": "#004884",
+                    "on-secondary-container": "#003462",
+                    "on-tertiary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-desktop": "80px",
+                    "unit-sm": "8px",
+                    "unit-xs": "4px",
+                    "margin-mobile": "20px",
+                    "max-width-content": "720px",
+                    "unit-md": "16px",
+                    "unit-lg": "32px"
+            },
+            "fontFamily": {
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Inter"],
+                    "caption": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-xl": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "30px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                    "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #FFFEFC;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+        .zen-mask {
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+        .category-row:hover .count-pill {
+            background-color: #eeeeec;
+            color: #000000;
+        }
+        .tap-highlight-none {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface selection:bg-primary selection:text-white">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-canvas-off-white/80 backdrop-blur-xl transition-opacity">
+<div class="flex items-center gap-unit-md">
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95 transition-transform" data-icon="menu">menu</button>
+<h1 class="font-headline-md text-headline-md font-semibold tracking-tighter text-primary">Gravity</h1>
+</div>
+<div class="flex items-center gap-unit-md">
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95 transition-transform" data-icon="search">search</button>
+</div>
+</header>
+<!-- Navigation Drawer (Desktop Sidebar) -->
+<aside class="hidden md:flex fixed top-16 left-0 h-[calc(100vh-64px)] w-80 flex-col p-margin-desktop gap-unit-md bg-surface border-r border-border-subtle z-40">
+<h2 class="font-headline-lg text-headline-lg text-primary mb-unit-lg">Spaces</h2>
+<nav class="flex flex-col gap-unit-sm">
+<a class="flex items-center gap-unit-md p-unit-sm text-on-surface-variant hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md text-body-md">All Notes</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm text-primary font-semibold translate-x-1 transition-transform group" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+<span class="font-body-md text-body-md">Folders</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm text-on-surface-variant hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined" data-icon="archive">archive</span>
+<span class="font-body-md text-body-md">Archive</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm text-on-surface-variant hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+<span class="font-body-md text-body-md">Vault</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm text-on-surface-variant hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-body-md text-body-md">Habits</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm text-on-surface-variant hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content: Writing Canvas Hierarchy -->
+<main class="pt-24 pb-32 px-margin-mobile md:ml-80 md:px-gutter">
+<div class="max-w-[720px] mx-auto">
+<!-- Header Section -->
+<header class="mb-unit-lg">
+<p class="font-label-sm text-label-sm text-on-tertiary-container uppercase mb-unit-xs tracking-widest">Workspace</p>
+<h2 class="font-display-xl text-display-xl tracking-tighter text-primary">Folders</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-unit-sm max-w-md">Organize your thoughts into distinct intellectual containers.</p>
+</header>
+<!-- Categories List (Bento-inspired minimal list) -->
+<section class="mt-unit-lg flex flex-col border-t border-border-subtle">
+<!-- Row 1 -->
+<div class="category-row group flex items-center justify-between py-6 border-b border-border-subtle cursor-pointer hover:bg-surface-taupe/50 transition-colors px-unit-sm -mx-unit-sm rounded-lg">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-tertiary-container group-hover:text-primary transition-colors" data-icon="circle">circle</span>
+<span class="font-body-lg text-body-lg text-primary tracking-tight">Technical Research</span>
+</div>
+<div class="flex items-center gap-unit-lg">
+<span class="count-pill font-label-sm text-label-sm text-on-tertiary-container bg-surface-container py-1 px-3 rounded-full transition-all">12</span>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="category-row group flex items-center justify-between py-6 border-b border-border-subtle cursor-pointer hover:bg-surface-taupe/50 transition-colors px-unit-sm -mx-unit-sm rounded-lg">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-tertiary-container group-hover:text-primary transition-colors" data-icon="architecture">architecture</span>
+<span class="font-body-lg text-body-lg text-primary tracking-tight">Design Systems</span>
+</div>
+<div class="flex items-center gap-unit-lg">
+<span class="count-pill font-label-sm text-label-sm text-on-tertiary-container bg-surface-container py-1 px-3 rounded-full transition-all">08</span>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="category-row group flex items-center justify-between py-6 border-b border-border-subtle cursor-pointer hover:bg-surface-taupe/50 transition-colors px-unit-sm -mx-unit-sm rounded-lg">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-tertiary-container group-hover:text-primary transition-colors" data-icon="auto_stories">auto_stories</span>
+<span class="font-body-lg text-body-lg text-primary tracking-tight">Drafts &amp; Essays</span>
+</div>
+<div class="flex items-center gap-unit-lg">
+<span class="count-pill font-label-sm text-label-sm text-on-tertiary-container bg-surface-container py-1 px-3 rounded-full transition-all">34</span>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="category-row group flex items-center justify-between py-6 border-b border-border-subtle cursor-pointer hover:bg-surface-taupe/50 transition-colors px-unit-sm -mx-unit-sm rounded-lg">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-tertiary-container group-hover:text-primary transition-colors" data-icon="work">work</span>
+<span class="font-body-lg text-body-lg text-primary tracking-tight">Client Work</span>
+</div>
+<div class="flex items-center gap-unit-lg">
+<span class="count-pill font-label-sm text-label-sm text-on-tertiary-container bg-surface-container py-1 px-3 rounded-full transition-all">05</span>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Row 5 -->
+<div class="category-row group flex items-center justify-between py-6 border-b border-border-subtle cursor-pointer hover:bg-surface-taupe/50 transition-colors px-unit-sm -mx-unit-sm rounded-lg">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined text-on-tertiary-container group-hover:text-primary transition-colors" data-icon="lightbulb">lightbulb</span>
+<span class="font-body-lg text-body-lg text-primary tracking-tight">Idea Dump</span>
+</div>
+<div class="flex items-center gap-unit-lg">
+<span class="count-pill font-label-sm text-label-sm text-on-tertiary-container bg-surface-container py-1 px-3 rounded-full transition-all">142</span>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Command Bar Teaser -->
+<div class="mt-unit-lg flex justify-center">
+<button class="bg-surface-taupe border border-border-subtle px-unit-md py-unit-sm rounded flex items-center gap-unit-md group hover:bg-surface-container transition-all active:scale-95">
+<span class="font-label-sm text-label-sm text-on-tertiary-container">Press</span>
+<span class="bg-primary text-white font-label-sm text-[10px] px-1.5 py-0.5 rounded">CMD K</span>
+<span class="font-label-sm text-label-sm text-on-tertiary-container">to quickly navigate</span>
+</button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 pb-safe px-margin-mobile bg-surface-taupe/90 border-t border-border-subtle backdrop-blur-md rounded-t-full">
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary scale-110 transition-all tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="folder" style="font-variation-settings: 'FILL' 1;">folder</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="star">star</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</a>
+</nav>
+<!-- Visual Background Element (Subtle Gradient) -->
+<div class="fixed top-0 right-0 -z-10 w-1/2 h-screen bg-gradient-to-l from-surface-container-low/30 to-transparent pointer-events-none"></div>
+<script>
+        // Micro-interactions for Row Selection
+        document.querySelectorAll('.category-row').forEach(row => {
+            row.addEventListener('click', () => {
+                // Flash interaction
+                row.style.backgroundColor = '#eeeeec';
+                setTimeout(() => {
+                    row.style.backgroundColor = '';
+                }, 150);
+            });
+        });
+
+        // Command Bar Keyboard Shortcut Listener
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                alert("Search & Command Palette opened.");
+            }
+        });
+    </script>
+</body></html>

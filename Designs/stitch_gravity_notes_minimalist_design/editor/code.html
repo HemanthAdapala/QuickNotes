@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Disappearing Interface Transitions */
+        .zen-ui {
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .zen-mode-active .zen-ui {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-4px);
+        }
+
+        .floating-toolbar {
+            display: none;
+            position: absolute;
+            z-index: 100;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Writing Canvas Selection */
+        ::selection {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .cursor-blink {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Remove focus outlines for the canvas */
+        [contenteditable]:focus {
+            outline: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#1c1b1b",
+                        "primary-container": "#1c1b1b",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "on-error-container": "#93000a",
+                        "on-background": "#1a1c1b",
+                        "on-tertiary-fixed-variant": "#474646",
+                        "surface-container-low": "#f4f3f1",
+                        "surface": "#faf9f7",
+                        "surface-bright": "#faf9f7",
+                        "surface-container-high": "#e9e8e6",
+                        "on-secondary-fixed": "#001c39",
+                        "on-tertiary-container": "#858383",
+                        "inverse-on-surface": "#f1f1ef",
+                        "tertiary-fixed": "#e5e2e1",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c4c7c7",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container": "#eeeeec",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#dadad8",
+                        "surface-container-highest": "#e3e2e0",
+                        "canvas-off-white": "#FFFEFC",
+                        "inverse-surface": "#2f3130",
+                        "surface-tint": "#5f5e5e",
+                        "secondary-fixed-dim": "#a4c9ff",
+                        "tertiary-fixed-dim": "#c9c6c5",
+                        "secondary-container": "#499dfe",
+                        "outline": "#747878",
+                        "primary-fixed-dim": "#c9c6c5",
+                        "surface-variant": "#e3e2e0",
+                        "tertiary": "#000000",
+                        "border-subtle": "#EBEBE8",
+                        "on-surface-variant": "#444748",
+                        "inverse-primary": "#c9c6c5",
+                        "secondary-fixed": "#d4e3ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#858383",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "secondary": "#005fad",
+                        "text-secondary": "#91918E",
+                        "on-primary-fixed-variant": "#474646",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#1c1b1b",
+                        "surface-taupe": "#F5F5F7",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#1a1c1b",
+                        "background": "#faf9f7",
+                        "on-secondary-fixed-variant": "#004884",
+                        "on-secondary-container": "#003462",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-desktop": "80px",
+                        "unit-sm": "8px",
+                        "unit-xs": "4px",
+                        "margin-mobile": "20px",
+                        "max-width-content": "720px",
+                        "unit-md": "16px",
+                        "unit-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "caption": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-xl": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "30px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-canvas-off-white text-on-surface font-body-md overflow-x-hidden antialiased">
+<!-- Top AppBar (from JSON) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-canvas-off-white/80 backdrop-blur-xl zen-ui">
+<div class="flex items-center gap-unit-md">
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95 transition-transform" data-icon="menu">menu</button>
+<span class="font-headline-md text-headline-md font-semibold tracking-tighter text-primary">Gravity</span>
+</div>
+<div class="flex items-center gap-unit-lg">
+<nav class="hidden md:flex gap-unit-lg text-on-surface-variant font-label-sm uppercase tracking-widest text-[10px]">
+<a class="text-primary font-bold" href="#">Drafts</a>
+<a class="hover:text-primary transition-colors" href="#">Shared</a>
+<a class="hover:text-primary transition-colors" href="#">Archive</a>
+</nav>
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95 transition-transform" data-icon="search">search</button>
+</div>
+</header>
+<!-- Navigation Drawer (Predicted Hidden Overlay) -->
+<aside class="fixed top-0 left-0 h-full w-80 bg-surface border-r border-border-subtle z-[60] -translate-x-full transition-transform duration-300 flex flex-col p-margin-desktop gap-unit-md" id="nav-drawer">
+<div class="font-headline-lg text-headline-lg text-primary mb-unit-lg">Spaces</div>
+<nav class="flex flex-col gap-unit-sm">
+<a class="flex items-center gap-3 text-primary font-semibold hover:text-primary transition-colors translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span> All Notes
+            </a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span> Folders
+            </a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="archive">archive</span> Archive
+            </a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="lock">lock</span> Vault
+            </a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span> Habits
+            </a>
+<hr class="my-unit-md border-border-subtle"/>
+<a class="flex items-center gap-3 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span> Settings
+            </a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="relative pt-32 pb-40 px-margin-mobile md:px-0">
+<div class="max-w-[720px] mx-auto min-h-[707px] flex flex-col">
+<!-- Metadata Info (Zen-UI) -->
+<div class="zen-ui mb-unit-lg flex items-center gap-unit-md text-on-tertiary-container font-label-sm">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" data-icon="calendar_today">calendar_today</span> Oct 24, 2023</span>
+<span class="w-1 h-1 bg-border-subtle rounded-full"></span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" data-icon="timer">timer</span> 4 min read</span>
+<span class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">Saved to Cloud</span>
+</div>
+<!-- Title Area -->
+<h1 class="font-display-xl text-display-xl mb-unit-lg focus:outline-none placeholder-gray-300" contenteditable="true" data-placeholder="Note Title">The Architecture of Stillness</h1>
+<!-- Writing Surface -->
+<div class="font-body-lg text-body-lg text-on-surface leading-relaxed focus:outline-none min-h-[400px]" contenteditable="true" id="editor">
+<p class="mb-unit-md">The modern creative process is often interrupted by the very tools designed to facilitate it. Notifications, complex menus, and cluttered interfaces create a cognitive load that pulls the mind away from deep focus.</p>
+<p class="mb-unit-md">Gravity was conceived as an antidote to this digital friction. It is a space where the interface yields to the content. When you write, the UI evaporates. The margins expand, and the white space becomes a functional element of the workspace.</p>
+<p class="mb-unit-md italic">"Design is not just what it looks like and feels like. Design is how it works."</p>
+<p class="mb-unit-md">As we move towards more "tactile" digital experiences, we find that simplicity is not the absence of complexity, but the mastery of it. This editor uses progressive disclosure to keep you centered. Formatting tools only appear when you intend to use them.</p>
+<p class="mb-unit-md">Start typing here to feel the weightlessness...</p>
+</div>
+</div>
+</main>
+<!-- Floating Action Hub (Command Bar Trigger) -->
+<div class="zen-ui fixed bottom-unit-lg left-1/2 -translate-x-1/2 flex items-center bg-white border border-border-subtle rounded-full px-unit-md py-unit-sm shadow-sm gap-unit-md hover:shadow-md transition-all group">
+<button class="flex items-center gap-2 text-on-surface-variant font-label-sm" id="cmd-trigger">
+<span class="bg-surface-taupe px-1.5 py-0.5 rounded text-[10px] font-bold border border-border-subtle">CMD</span>
+<span class="bg-surface-taupe px-1.5 py-0.5 rounded text-[10px] font-bold border border-border-subtle">K</span>
+<span class="ml-1">Search or Actions</span>
+</button>
+<div class="h-4 w-[1px] bg-border-subtle"></div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" data-icon="add">add</button>
+</div>
+<!-- Progressive Disclosure: Floating Formatting Toolbar -->
+<div class="floating-toolbar bg-primary text-on-primary rounded-lg shadow-xl py-1.5 px-3 flex items-center gap-3" id="floating-toolbar">
+<button class="material-symbols-outlined text-[18px] hover:opacity-70" data-icon="format_bold">format_bold</button>
+<button class="material-symbols-outlined text-[18px] hover:opacity-70" data-icon="format_italic">format_italic</button>
+<button class="material-symbols-outlined text-[18px] hover:opacity-70" data-icon="link">link</button>
+<div class="h-4 w-[1px] bg-on-primary/20"></div>
+<button class="material-symbols-outlined text-[18px] hover:opacity-70" data-icon="format_h1">format_h1</button>
+<button class="material-symbols-outlined text-[18px] hover:opacity-70" data-icon="format_quote">format_quote</button>
+</div>
+<!-- Bottom Navigation (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 pb-safe px-margin-mobile bg-surface-taupe/90 backdrop-blur-md border-t border-border-subtle rounded-t-full zen-ui">
+<button class="flex flex-col items-center justify-center text-primary scale-110">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50">
+<span class="material-symbols-outlined" data-icon="folder">folder</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50">
+<span class="material-symbols-outlined" data-icon="star">star</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</nav>
+<!-- Zen Mode Script & Interactions -->
+<script>
+        const editor = document.getElementById('editor');
+        const toolbar = document.getElementById('floating-toolbar');
+        const body = document.body;
+        const menuBtn = document.querySelector('[data-icon="menu"]');
+        const navDrawer = document.getElementById('nav-drawer');
+
+        // Zen Mode Logic: Hide UI when typing
+        let typingTimer;
+        editor.addEventListener('input', () => {
+            body.classList.add('zen-mode-active');
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                body.classList.remove('zen-mode-active');
+            }, 3000);
+        });
+
+        // Toggle Drawer
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navDrawer.classList.toggle('-translate-x-full');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!navDrawer.contains(e.target) && !menuBtn.contains(e.target)) {
+                navDrawer.classList.add('-translate-x-full');
+            }
+        });
+
+        // Floating Toolbar on Selection
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            if (selection.toString().length > 0 && !selection.isCollapsed) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                
+                toolbar.style.display = 'flex';
+                toolbar.style.top = `${rect.top + window.scrollY - 50}px`;
+                toolbar.style.left = `${rect.left + (rect.width / 2) - (toolbar.offsetWidth / 2)}px`;
+            } else {
+                toolbar.style.display = 'none';
+            }
+        });
+
+        // Micro-interaction: Cursor following (Optional atmospheric touch)
+        document.addEventListener('mousemove', (e) => {
+            if (body.classList.contains('zen-mode-active')) {
+                // If in Zen mode, moving mouse could subtly bring back UI
+                // But let's keep it pure to the prompt
+            }
+        });
+
+        // Cmd+K Placeholder
+        document.getElementById('cmd-trigger').addEventListener('click', () => {
+            alert('Command Bar: [Search Notes, Export PDF, Toggle Dark Mode, Share Link]');
+        });
+
+        // Keyboard Shortcut for Zen Mode
+        document.addEventListener('keydown', (e) => {
+            if (e.metaKey && e.key === 'z') {
+                e.preventDefault();
+                body.classList.toggle('zen-mode-active');
+            }
+        });
+    </script>
+</body></html>

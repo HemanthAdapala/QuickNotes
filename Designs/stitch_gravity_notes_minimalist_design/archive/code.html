@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#1c1b1b",
+                    "primary-container": "#1c1b1b",
+                    "on-secondary": "#ffffff",
+                    "primary": "#000000",
+                    "on-error-container": "#93000a",
+                    "on-background": "#1a1c1b",
+                    "on-tertiary-fixed-variant": "#474646",
+                    "surface-container-low": "#f4f3f1",
+                    "surface": "#faf9f7",
+                    "surface-bright": "#faf9f7",
+                    "surface-container-high": "#e9e8e6",
+                    "on-secondary-fixed": "#001c39",
+                    "on-tertiary-container": "#858383",
+                    "inverse-on-surface": "#f1f1ef",
+                    "tertiary-fixed": "#e5e2e1",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c4c7c7",
+                    "primary-fixed": "#e5e2e1",
+                    "surface-container": "#eeeeec",
+                    "error-container": "#ffdad6",
+                    "surface-dim": "#dadad8",
+                    "surface-container-highest": "#e3e2e0",
+                    "canvas-off-white": "#FFFEFC",
+                    "inverse-surface": "#2f3130",
+                    "surface-tint": "#5f5e5e",
+                    "secondary-fixed-dim": "#a4c9ff",
+                    "tertiary-fixed-dim": "#c9c6c5",
+                    "secondary-container": "#499dfe",
+                    "outline": "#747878",
+                    "primary-fixed-dim": "#c9c6c5",
+                    "surface-variant": "#e3e2e0",
+                    "tertiary": "#000000",
+                    "border-subtle": "#EBEBE8",
+                    "on-surface-variant": "#444748",
+                    "inverse-primary": "#c9c6c5",
+                    "secondary-fixed": "#d4e3ff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-container": "#858383",
+                    "on-tertiary-fixed": "#1c1b1b",
+                    "secondary": "#005fad",
+                    "text-secondary": "#91918E",
+                    "on-primary-fixed-variant": "#474646",
+                    "on-error": "#ffffff",
+                    "tertiary-container": "#1c1b1b",
+                    "surface-taupe": "#F5F5F7",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#1a1c1b",
+                    "background": "#faf9f7",
+                    "on-secondary-fixed-variant": "#004884",
+                    "on-secondary-container": "#003462",
+                    "on-tertiary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-desktop": "80px",
+                    "unit-sm": "8px",
+                    "unit-xs": "4px",
+                    "margin-mobile": "20px",
+                    "max-width-content": "720px",
+                    "unit-md": "16px",
+                    "unit-lg": "32px"
+            },
+            "fontFamily": {
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Inter"],
+                    "caption": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-xl": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "30px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "34px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "26px", "fontWeight": "400"}],
+                    "display-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #FFFEFC;
+            -webkit-font-smoothing: antialiased;
+        }
+        .archive-gradient {
+            background: linear-gradient(180deg, rgba(255,254,252,0) 0%, rgba(245,245,247,0.5) 100%);
+        }
+        .hover-lift {
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-1px);
+            opacity: 0.8;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface">
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-canvas-off-white/80 backdrop-blur-xl transition-opacity">
+<div class="flex items-center gap-unit-md">
+<button class="material-symbols-outlined text-primary hover:opacity-70 transition-opacity active:scale-95">menu</button>
+<h1 class="font-headline-md text-headline-md font-semibold tracking-tighter text-primary">Gravity</h1>
+</div>
+<div class="flex items-center gap-unit-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:opacity-70 transition-opacity active:scale-95">search</button>
+</div>
+</header>
+<div class="flex min-h-screen pt-16">
+<!-- Navigation Drawer (Desktop Anchor) -->
+<aside class="hidden md:flex flex-col p-margin-desktop gap-unit-md h-full w-80 bg-surface border-r border-border-subtle sticky top-16">
+<h2 class="font-headline-lg text-headline-lg text-primary mb-unit-lg">Spaces</h2>
+<nav class="space-y-unit-sm">
+<a class="flex items-center gap-unit-md p-unit-sm text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-body-md text-body-md">All Notes</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-body-md text-body-md">Folders</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm text-primary font-semibold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">archive</span>
+<span class="font-body-md text-body-md">Archive</span>
+</a>
+<a class="flex items-center gap-unit-md p-unit-sm text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">lock</span>
+<span class="font-body-md text-body-md">Vault</span>
+</a>
+<div class="pt-unit-lg opacity-30 border-b border-border-subtle mb-unit-md"></div>
+<a class="flex items-center gap-unit-md p-unit-sm text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin-mobile md:px-margin-desktop py-unit-lg max-w-content mx-auto w-full">
+<header class="mb-unit-lg">
+<div class="flex items-center justify-between mb-unit-xs">
+<h2 class="font-display-xl text-display-xl tracking-tight text-primary">Archive</h2>
+<span class="font-label-sm text-label-sm px-unit-sm py-1 bg-surface-taupe text-on-tertiary-container rounded-sm">128 ITEMS</span>
+</div>
+<p class="font-body-md text-body-md text-on-tertiary-container">Reflecting on the thoughts of the past. A quiet space for preserved ideas.</p>
+</header>
+<!-- Archive List -->
+<section class="space-y-unit-lg">
+<!-- Group: Last Month -->
+<div class="space-y-unit-md">
+<h3 class="font-label-sm text-label-sm text-on-tertiary-container tracking-widest border-b border-border-subtle pb-unit-xs">MARCH 2024</h3>
+<div class="group relative py-unit-md border-b border-border-subtle/50 hover:bg-surface-taupe/30 px-unit-sm -mx-unit-sm transition-all rounded-lg">
+<div class="flex justify-between items-start mb-unit-xs">
+<h4 class="font-body-lg text-body-lg text-on-surface-variant group-hover:text-primary transition-colors">Digital Weightlessness: Concept Deck</h4>
+<span class="font-label-sm text-label-sm text-on-tertiary-container opacity-60">Mar 12</span>
+</div>
+<p class="font-body-md text-body-md text-on-tertiary-container line-clamp-1 opacity-70">Exploring the intersection of high-end minimalism and tactile software experiences...</p>
+<div class="mt-unit-sm flex gap-unit-xs">
+<span class="px-unit-sm py-0.5 bg-surface-container text-on-tertiary-container font-label-sm text-[10px] rounded-sm">STRATEGY</span>
+<span class="px-unit-sm py-0.5 bg-surface-container text-on-tertiary-container font-label-sm text-[10px] rounded-sm">DESIGN</span>
+</div>
+</div>
+<div class="group relative py-unit-md border-b border-border-subtle/50 hover:bg-surface-taupe/30 px-unit-sm -mx-unit-sm transition-all rounded-lg">
+<div class="flex justify-between items-start mb-unit-xs">
+<h4 class="font-body-lg text-body-lg text-on-surface-variant group-hover:text-primary transition-colors">The Architecture of Silence</h4>
+<span class="font-label-sm text-label-sm text-on-tertiary-container opacity-60">Mar 04</span>
+</div>
+<p class="font-body-md text-body-md text-on-tertiary-container line-clamp-1 opacity-70">How physical quiet impacts the neural pathways responsible for deep creative output.</p>
+</div>
+</div>
+<!-- Group: Earlier this year -->
+<div class="space-y-unit-md pt-unit-lg">
+<h3 class="font-label-sm text-label-sm text-on-tertiary-container tracking-widest border-b border-border-subtle pb-unit-xs">JANUARY 2024</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-unit-lg">
+<div class="bg-surface-taupe/50 p-unit-lg rounded-xl border border-border-subtle/30 hover:border-outline-variant transition-colors group">
+<span class="material-symbols-outlined text-on-tertiary-container mb-unit-sm group-hover:text-primary transition-colors">auto_stories</span>
+<h4 class="font-headline-md text-body-lg text-on-surface-variant mb-unit-xs group-hover:text-primary">Winter Reading List</h4>
+<p class="font-caption text-caption text-on-tertiary-container">24 curated titles across philosophy and urban planning.</p>
+<div class="mt-unit-md text-right">
+<span class="font-label-sm text-[10px] text-on-tertiary-container opacity-40 italic">Jan 15</span>
+</div>
+</div>
+<div class="bg-surface-taupe/50 p-unit-lg rounded-xl border border-border-subtle/30 hover:border-outline-variant transition-colors group">
+<span class="material-symbols-outlined text-on-tertiary-container mb-unit-sm group-hover:text-primary transition-colors">monitoring</span>
+<h4 class="font-headline-md text-body-lg text-on-surface-variant mb-unit-xs group-hover:text-primary">Project Horizon Q4</h4>
+<p class="font-caption text-caption text-on-tertiary-container">Post-mortem analysis and future trajectories for gravity-based systems.</p>
+<div class="mt-unit-md text-right">
+<span class="font-label-sm text-[10px] text-on-tertiary-container opacity-40 italic">Jan 02</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bento Style Older Content -->
+<div class="space-y-unit-md pt-unit-lg">
+<h3 class="font-label-sm text-label-sm text-on-tertiary-container tracking-widest border-b border-border-subtle pb-unit-xs">LEGACY RECORDS</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-unit-md">
+<div class="col-span-1 md:col-span-2 h-48 relative rounded-xl overflow-hidden group cursor-pointer">
+<img class="absolute inset-0 w-full h-full object-cover grayscale opacity-20 group-hover:opacity-40 transition-opacity duration-700" data-alt="A moody, high-end minimalist photograph of a single designer lamp casting soft light in a pitch-black room. The image uses a high-contrast black and white palette to convey a sense of calm and focused isolation. The lighting is extremely soft, highlighting the clean lines of the objects without harsh shadows. The aesthetic is sophisticated and silent." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-olgP6euFfrF8BgfBc8gNlqSP3FJeSA4oosQoLSTahnmqLZ6NMcd6DRpFoUjImeCy1RZ4DKtBJm7reiJ7DGaqluC5-Z8R5fUeyewWck1pvXMPg3UurBPY9ArpyksS2dvTaujXVWrQbB_5TWuH2wtgaKWZtJrujjEPYJcxixHuJvYi7oDHTtOZPS4KlQEFCTLNVNDWeI1Rr010IdD8ro6ez0baW1AMQ2SOOqk8w1NYU7wXRIYD37Ob9AevHH3zDvxUIIY1gqw0i3A"/>
+<div class="absolute inset-0 p-unit-lg flex flex-col justify-end">
+<h4 class="font-headline-md text-headline-md text-primary opacity-60 group-hover:opacity-100 transition-opacity">Visual Moodboard 2023</h4>
+<p class="font-label-sm text-label-sm text-on-tertiary-container">COLLECTION • 42 ASSETS</p>
+</div>
+</div>
+<div class="h-48 bg-surface-container-high p-unit-lg rounded-xl flex flex-col justify-between group hover:bg-surface-dim transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-primary-container opacity-20 group-hover:opacity-100 transition-opacity">draw</span>
+<div>
+<h4 class="font-body-md text-body-md text-on-surface-variant">Early Sketches</h4>
+<span class="font-label-sm text-[10px] text-on-tertiary-container">NOV 2023</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Margin for Scroll Space -->
+<div class="h-32"></div>
+</main>
+</div>
+<!-- Bottom Navigation Bar (Mobile Anchor) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 pb-safe px-margin-mobile bg-surface-taupe/90 backdrop-blur-md border-t border-border-subtle">
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">folder</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary scale-110">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">archive</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant opacity-50 hover:opacity-100 transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</nav>
+<!-- Interactive Layer: Command Bar Shortcut Visual -->
+<div class="fixed bottom-unit-lg left-1/2 -translate-x-1/2 pointer-events-none opacity-0 md:opacity-100 group">
+<div class="bg-primary text-on-primary px-unit-lg py-unit-sm rounded-full flex items-center gap-unit-md shadow-lg transform translate-y-10 group-hover:translate-y-0 transition-transform duration-300">
+<span class="font-label-sm text-label-sm">PRESS</span>
+<kbd class="font-label-sm bg-on-tertiary-fixed-variant px-1 rounded-sm">⌘</kbd>
+<kbd class="font-label-sm bg-on-tertiary-fixed-variant px-1 rounded-sm">K</kbd>
+<span class="font-label-sm text-label-sm">TO SEARCH ARCHIVE</span>
+</div>
+</div>
+<script>
+        // Micro-interaction for list item fade-in
+        document.addEventListener('DOMContentLoaded', () => {
+            const items = document.querySelectorAll('.group');
+            items.forEach((item, index) => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(10px)';
+                item.style.transition = `all 0.5s ease ${index * 0.05}s`;
+                
+                setTimeout(() => {
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                }, 100);
+            });
+        });
+
+        // Toggle Active State Logic
+        const navItems = document.querySelectorAll('nav a, nav button');
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                // For demo purposes, we don't prevent default but highlight interaction
+                console.log('Navigating to:', item.textContent.trim());
+            });
+        });
+    </script>
+</body></html>
