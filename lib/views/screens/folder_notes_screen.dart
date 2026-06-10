@@ -97,6 +97,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
               }
             } else {
               if (context.mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text("Incorrect PIN Code! Access Denied."),

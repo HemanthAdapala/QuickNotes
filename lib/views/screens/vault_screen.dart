@@ -28,6 +28,7 @@ class VaultScreen extends StatelessWidget {
           final success = await provider.unlockVault(pin);
           if (!context.mounted) return;
           if (!success) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text("Incorrect PIN! Access Denied."),
@@ -211,6 +212,7 @@ class VaultScreen extends StatelessWidget {
                     icon: const Icon(Icons.lock_open_rounded),
                     onPressed: () {
                       provider.lockVault();
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Vault re-locked")),
                       );

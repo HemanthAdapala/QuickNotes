@@ -69,6 +69,20 @@ class _NotesListScreenState extends State<NotesListScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant NotesListScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.viewType != widget.viewType) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final provider = Provider.of<NotesProvider>(context, listen: false);
+          provider.setViewType(widget.viewType);
+          provider.loadNotes();
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -87,6 +101,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
               onPressed: () {
                 Navigator.pop(ctx);
                 provider.restoreFromTrash(note.id);
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Note restored")),
                 );
@@ -119,6 +134,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
               }
             } else {
               if (context.mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text("Incorrect PIN Code! Access Denied."),
@@ -410,6 +426,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
                 onTap: () {
                   Navigator.pop(context);
                   provider.toggleArchive(note.id);
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(note.isArchived ? "Note unarchived" : "Note archived"),
@@ -424,6 +441,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
                 onTap: () {
                   Navigator.pop(context);
                   provider.trashNote(note.id);
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: const Text("Note moved to Trash"),
@@ -462,6 +480,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.startToEnd) {
             provider.togglePin(note.id);
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(note.isPinned ? "Note unpinned" : "Note pinned"),
@@ -481,6 +500,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
           onFavoriteToggle: () => provider.toggleFavorite(note.id),
           onDelete: () {
             provider.trashNote(note.id);
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text("Note moved to Trash"),

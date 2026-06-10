@@ -516,6 +516,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                                 ),
                                 onPressed: () {
                                   Provider.of<NotesProvider>(context, listen: false).restoreFromTrash(widget.note.id);
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text("Note restored"),

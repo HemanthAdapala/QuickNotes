@@ -65,13 +65,13 @@ class NotesProvider with ChangeNotifier {
     // 2. Filter by Folder
     if (_selectedFolderId != null) {
       list = list.where((n) => n.folderId == _selectedFolderId).toList();
-    } else if (_selectedCategory != "All") {
+    } else if (_currentView == NotesViewType.feed && _selectedCategory != "All") {
       // 3. Filter by Category (only if no specific folder is selected to prevent conflicts)
       list = list.where((n) => n.category == _selectedCategory).toList();
     }
 
     // 4. Filter by Tag
-    if (_selectedTag.isNotEmpty) {
+    if (_currentView == NotesViewType.feed && _selectedTag.isNotEmpty) {
       list = list.where((n) => n.tags.contains(_selectedTag)).toList();
     }
 

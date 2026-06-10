@@ -30,6 +30,7 @@ class _ExportDialogState extends State<ExportDialog> {
       );
 
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Exported successfully to: $filePath"),
@@ -49,6 +50,7 @@ class _ExportDialogState extends State<ExportDialog> {
       }
     } catch (e) {
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Export failed: $e")),
         );

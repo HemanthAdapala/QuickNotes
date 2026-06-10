@@ -51,6 +51,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   List<String> _tags = [];
   List<Map<String, dynamic>> _attachments = [];
   List<Map<String, dynamic>> _checklistItems = []; // [{'text': '...', 'done': false}]
+  List<TextEditingController> _checklistControllers = [];
 
   // Folders & Habits state
   String? _folderId;
@@ -111,6 +112,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         } catch (e) {
           _checklistItems = [];
         }
+        _checklistControllers = _checklistItems.map((item) => TextEditingController(text: item['text'] ?? "")).toList();
       } else {
         _contentController.text = widget.note!.content;
       }
@@ -182,6 +184,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _contentController.dispose();
     _tagController.dispose();
     _contentFocusNode.dispose();
+    for (final controller in _checklistControllers) {
+      controller.dispose();
+    }
     _recordTimer?.cancel();
     _zenTimer?.cancel();
     _audioRecorder.dispose();
@@ -215,10 +220,28 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   // --- Checklist operations ---
+  void _syncControllers() {
+    while (_checklistControllers.length < _checklistItems.length) {
+      final index = _checklistControllers.length;
+      final text = _checklistItems[index]['text'] ?? '';
+      _checklistControllers.add(TextEditingController(text: text));
+    }
+    while (_checklistControllers.length > _checklistItems.length) {
+      _checklistControllers.removeLast().dispose();
+    }
+    for (int i = 0; i < _checklistItems.length; i++) {
+      final text = _checklistItems[i]['text'] ?? '';
+      if (_checklistControllers[i].text != text) {
+        _checklistControllers[i].text = text;
+      }
+    }
+  }
+
   void _addChecklistItem() {
     _startZenTimer();
     setState(() {
       _checklistItems.add({'text': '', 'done': false});
+      _checklistControllers.add(TextEditingController());
       _hasChanges = true;
       _calculateCounts();
     });
@@ -227,6 +250,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   void _removeChecklistItem(int index) {
     setState(() {
       _checklistItems.removeAt(index);
+      if (index < _checklistControllers.length) {
+        _checklistControllers.removeAt(index).dispose();
+      }
       _hasChanges = true;
       _calculateCounts();
     });
@@ -279,6 +305,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         if (_checklistItems.isEmpty) {
           _checklistItems.add({'text': '', 'done': false});
         }
+        for (final c in _checklistControllers) {
+          c.dispose();
+        }
+        _checklistControllers = _checklistItems.map((item) => TextEditingController(text: item['text'] ?? "")).toList();
         _noteType = 'checklist';
       } else {
         // Convert checklist to plain text
@@ -316,6 +346,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           });
         });
       } else {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Microphone permission denied")),
         );
@@ -444,6 +475,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     if (_hasChanges && !_isSaving) {
       await _saveNote();
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Note auto-saved'),
@@ -945,26 +977,32 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           ),
         ),
         body: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
               if (_colorIndex > 0)
-                Container(
-                  height: 80,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        theme.brightness == Brightness.dark
-                            ? Colors.white.withAlpha(40)
-                            : Colors.white.withAlpha(150),
-                        Colors.transparent,
-                      ],
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 120,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          theme.brightness == Brightness.dark
+                              ? Colors.white.withAlpha(40)
+                              : Colors.white.withAlpha(150),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              // Media attachments (fades in zen mode)
+              Column(
+                children: [
+                  // Media attachments (fades in zen mode)
               AnimatedOpacity(
                 opacity: !_isPageSettled ? 0.0 : (_isZenTyping ? 0.0 : 1.0),
                 duration: const Duration(milliseconds: 300),
@@ -1252,8 +1290,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 ),
             ],
           ),
-        ),
+        ],
       ),
+    ),
+  ),
     );
   }
 
@@ -1330,13 +1370,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   // Checklist editor view builder
   Widget _buildChecklistEditor(Color textColor) {
+    if (_checklistControllers.length != _checklistItems.length) {
+      _syncControllers();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ...List.generate(_checklistItems.length, (index) {
           final item = _checklistItems[index];
           final bool isDone = item['done'] ?? false;
-          final TextEditingController itemController = TextEditingController(text: item['text'] ?? "");
+          final TextEditingController itemController = _checklistControllers[index];
 
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4.0),
