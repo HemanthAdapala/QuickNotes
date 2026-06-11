@@ -1008,27 +1008,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         body: SafeArea(
           child: Stack(
             children: [
-              if (_colorIndex > 0)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 120,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          theme.brightness == Brightness.dark
-                              ? Colors.white.withAlpha(40)
-                              : Colors.white.withAlpha(150),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
               Column(
                 children: [
                   // Media attachments (fades in zen mode)
