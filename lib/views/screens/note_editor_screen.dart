@@ -746,57 +746,162 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   Widget _buildFormattingToolbar(Color textColor, Color titleColor) {
+    final buttonColor = titleColor;
+
+    // Helper for building toolbar items
+    Widget buildToolbarButton({
+      required IconData icon,
+      required VoidCallback onPressed,
+      required String tooltip,
+    }) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        child: Tooltip(
+          message: tooltip,
+          child: IconButton(
+            icon: Icon(icon, color: buttonColor),
+            onPressed: onPressed,
+            padding: const EdgeInsets.all(8.0),
+            constraints: const BoxConstraints(),
+          ),
+        ),
+      );
+    }
+
+    Widget buildDivider() {
+      return Container(
+        width: 1,
+        height: 20,
+        margin: const EdgeInsets.symmetric(horizontal: 6.0),
+        color: buttonColor.withAlpha(45),
+      );
+    }
+
     return Container(
       height: 44,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          IconButton(
-            icon: Icon(Icons.format_bold_rounded, color: titleColor),
-            onPressed: () => _wrapSelection('**', '**'),
-            tooltip: 'Bold',
-          ),
-          IconButton(
-            icon: Icon(Icons.format_italic_rounded, color: titleColor),
-            onPressed: () => _wrapSelection('*', '*'),
-            tooltip: 'Italic',
-          ),
-          IconButton(
-            icon: Icon(Icons.format_list_bulleted_rounded, color: titleColor),
-            onPressed: () => _insertTextAtCursor('- '),
-            tooltip: 'Bullet List',
-          ),
-          IconButton(
-            icon: Icon(Icons.title_rounded, color: titleColor),
-            onPressed: () => _insertTextAtCursor('### '),
-            tooltip: 'Header',
-          ),
-          IconButton(
-            icon: Icon(Icons.link_rounded, color: titleColor),
-            onPressed: () => _wrapSelection('[', '](url)'),
-            tooltip: 'Link',
-          ),
-          Container(
-            width: 1,
-            height: 20,
-            color: titleColor.withAlpha(40),
-          ),
-          IconButton(
-            icon: Icon(Icons.camera_alt_outlined, color: titleColor),
-            onPressed: () => _pickImage(ImageSource.gallery),
-            tooltip: 'Attach Image',
-          ),
-          IconButton(
-            icon: Icon(Icons.mic_none_rounded, color: titleColor),
-            onPressed: _startRecording,
-            tooltip: 'Record Audio',
-          ),
-          IconButton(
-            icon: Icon(Icons.keyboard_hide_rounded, color: titleColor),
-            onPressed: () => _contentFocusNode.unfocus(),
-            tooltip: 'Hide Keyboard',
-          ),
-        ],
+      width: double.infinity,
+      alignment: Alignment.centerLeft,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(width: 4),
+            // Text Styles Group
+            buildToolbarButton(
+              icon: Icons.format_bold_rounded,
+              onPressed: () => _wrapSelection('**', '**'),
+              tooltip: 'Bold',
+            ),
+            buildToolbarButton(
+              icon: Icons.format_italic_rounded,
+              onPressed: () => _wrapSelection('*', '*'),
+              tooltip: 'Italic',
+            ),
+            buildToolbarButton(
+              icon: Icons.format_underlined_rounded,
+              onPressed: () => _wrapSelection('<u>', '</u>'),
+              tooltip: 'Underline',
+            ),
+            buildToolbarButton(
+              icon: Icons.format_strikethrough_rounded,
+              onPressed: () => _wrapSelection('~~', '~~'),
+              tooltip: 'Strikethrough',
+            ),
+            buildToolbarButton(
+              icon: Icons.code_rounded,
+              onPressed: () => _wrapSelection('```\n', '\n```'),
+              tooltip: 'Code Block',
+            ),
+            buildToolbarButton(
+              icon: Icons.format_quote_rounded,
+              onPressed: () => _insertTextAtCursor('> '),
+              tooltip: 'Blockquote',
+            ),
+            buildDivider(),
+
+            // Headings Group
+            buildToolbarButton(
+              icon: Icons.filter_1_rounded,
+              onPressed: () => _insertTextAtCursor('# '),
+              tooltip: 'Heading 1',
+            ),
+            buildToolbarButton(
+              icon: Icons.filter_2_rounded,
+              onPressed: () => _insertTextAtCursor('## '),
+              tooltip: 'Heading 2',
+            ),
+            buildToolbarButton(
+              icon: Icons.filter_3_rounded,
+              onPressed: () => _insertTextAtCursor('### '),
+              tooltip: 'Heading 3',
+            ),
+            buildDivider(),
+
+            // Alignments Group
+            buildToolbarButton(
+              icon: Icons.format_align_left_rounded,
+              onPressed: () => _wrapSelection('<p align="left">', '</p>'),
+              tooltip: 'Align Left',
+            ),
+            buildToolbarButton(
+              icon: Icons.format_align_center_rounded,
+              onPressed: () => _wrapSelection('<p align="center">', '</p>'),
+              tooltip: 'Align Center',
+            ),
+            buildToolbarButton(
+              icon: Icons.format_align_right_rounded,
+              onPressed: () => _wrapSelection('<p align="right">', '</p>'),
+              tooltip: 'Align Right',
+            ),
+            buildToolbarButton(
+              icon: Icons.format_align_justify_rounded,
+              onPressed: () => _wrapSelection('<p align="justify">', '</p>'),
+              tooltip: 'Align Justify',
+            ),
+            buildDivider(),
+
+            // Lists & Links Group
+            buildToolbarButton(
+              icon: Icons.format_list_bulleted_rounded,
+              onPressed: () => _insertTextAtCursor('- '),
+              tooltip: 'Bullet List',
+            ),
+            buildToolbarButton(
+              icon: Icons.format_list_numbered_rounded,
+              onPressed: () => _insertTextAtCursor('1. '),
+              tooltip: 'Numbered List',
+            ),
+            buildToolbarButton(
+              icon: Icons.link_rounded,
+              onPressed: () => _wrapSelection('[', '](url)'),
+              tooltip: 'Link',
+            ),
+            buildDivider(),
+
+            // Media Group
+            buildToolbarButton(
+              icon: Icons.camera_alt_outlined,
+              onPressed: () => _pickImage(ImageSource.gallery),
+              tooltip: 'Attach Image',
+            ),
+            buildToolbarButton(
+              icon: Icons.mic_none_rounded,
+              onPressed: _startRecording,
+              tooltip: 'Record Audio',
+            ),
+            buildDivider(),
+
+            // Keyboard Group
+            buildToolbarButton(
+              icon: Icons.keyboard_hide_rounded,
+              onPressed: () => _contentFocusNode.unfocus(),
+              tooltip: 'Hide Keyboard',
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
       ),
     );
   }

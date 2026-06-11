@@ -273,5 +273,55 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(NoteEditorScreen), findsOneWidget);
     });
+
+    testWidgets('Rich formatting toolbar and scrollable structure check', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => NotesProvider()),
+          ],
+          child: const MaterialApp(
+            home: NoteEditorScreen(),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Focus the content TextField to trigger the formatting toolbar
+      final contentFinder = find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.decoration?.hintText == 'Start writing...',
+      );
+      expect(contentFinder, findsOneWidget);
+      await tester.tap(contentFinder);
+      await tester.pump();
+
+      // Verify that the formatting toolbar with Axis.horizontal SingleChildScrollView is present
+      final horizontalScrollFinder = find.byWidgetPredicate(
+        (widget) => widget is SingleChildScrollView && widget.scrollDirection == Axis.horizontal,
+      );
+      expect(horizontalScrollFinder, findsOneWidget);
+
+      // Verify presence of formatting buttons by tooltip
+      expect(find.byTooltip('Bold'), findsOneWidget);
+      expect(find.byTooltip('Italic'), findsOneWidget);
+      expect(find.byTooltip('Underline'), findsOneWidget);
+      expect(find.byTooltip('Strikethrough'), findsOneWidget);
+      expect(find.byTooltip('Code Block'), findsOneWidget);
+      expect(find.byTooltip('Blockquote'), findsOneWidget);
+      expect(find.byTooltip('Heading 1'), findsOneWidget);
+      expect(find.byTooltip('Heading 2'), findsOneWidget);
+      expect(find.byTooltip('Heading 3'), findsOneWidget);
+      expect(find.byTooltip('Align Left'), findsOneWidget);
+      expect(find.byTooltip('Align Center'), findsOneWidget);
+      expect(find.byTooltip('Align Right'), findsOneWidget);
+      expect(find.byTooltip('Align Justify'), findsOneWidget);
+      expect(find.byTooltip('Bullet List'), findsOneWidget);
+      expect(find.byTooltip('Numbered List'), findsOneWidget);
+      expect(find.byTooltip('Link'), findsOneWidget);
+      expect(find.byTooltip('Attach Image'), findsOneWidget);
+      expect(find.byTooltip('Record Audio'), findsOneWidget);
+      expect(find.byTooltip('Hide Keyboard'), findsOneWidget);
+    });
   });
 }
