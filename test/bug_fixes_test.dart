@@ -423,5 +423,40 @@ void main() {
       final updatedMarkdown = generateMarkdownFromStyledChars(controller.styledChars);
       expect(updatedMarkdown, equals('Hello ![Image](file:///path/to/img.png?width=400) World'));
     });
+
+    test('WYSIWYG: Image caption parsing, generating, and updating', () {
+      const markdown = 'Text ![Custom Caption](file:///path/to/image.png?width=300) Text';
+      final chars = parseMarkdownToStyledChars(markdown);
+      
+      expect(chars.map((c) => c.char).join(), equals('Text \uFFFC Text'));
+      
+      final imgChar = chars[5];
+      expect(imgChar.char, equals('\uFFFC'));
+      expect(imgChar.style.imageUrl, equals('file:///path/to/image.png'));
+      expect(imgChar.style.imageWidth, equals(300.0));
+      expect(imgChar.style.imageCaption, equals('Custom Caption'));
+      
+      final generated = generateMarkdownFromStyledChars(chars);
+      expect(generated, equals(markdown));
+      
+      final controller = RichTextEditingController(markdown: markdown);
+      expect(controller.styledChars[5].style.imageCaption, equals('Custom Caption'));
+      
+      controller.styledChars[5] = StyledChar(
+        char: controller.styledChars[5].char,
+        style: controller.styledChars[5].style.copyWith(imageCaption: 'New Caption'),
+      );
+      
+      final updatedMarkdown = generateMarkdownFromStyledChars(controller.styledChars);
+      expect(updatedMarkdown, equals('Text ![New Caption](file:///path/to/image.png?width=300) Text'));
+
+      controller.styledChars[5] = StyledChar(
+        char: controller.styledChars[5].char,
+        style: controller.styledChars[5].style.copyWith(clearCaption: true),
+      );
+
+      final clearedMarkdown = generateMarkdownFromStyledChars(controller.styledChars);
+      expect(clearedMarkdown, equals('Text ![Image](file:///path/to/image.png?width=300) Text'));
+    });
   });
 }

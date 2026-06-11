@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -40,6 +41,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   final _tagController = TextEditingController();
   final _contentFocusNode = FocusNode();
   final _pageController = PageController();
+  final GlobalKey _textFieldKey = GlobalKey();
   int _currentPage = 0;
   
   int _colorIndex = 0;
@@ -347,6 +349,271 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     } catch (e) {
       debugPrint("Error picking image: $e");
     }
+  }
+
+  Future<void> _showGalleryBottomSheet(BuildContext context) async {
+    final theme = Theme.of(context);
+    final List<String> sampleUrls = [
+      'https://images.unsplash.com/photo-1517842645767-c639042777db?w=500&q=80',
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&q=80',
+      'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=500&q=80',
+      'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=500&q=80',
+      'https://images.unsplash.com/photo-1472214222541-d510753a4907?w=500&q=80',
+      'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&q=80',
+    ];
+
+    List<String> selectedPaths = [];
+
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Insert Photo",
+                          style: GoogleFonts.outfit(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (selectedPaths.isNotEmpty)
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _insertSelectedImages(selectedPaths);
+                            },
+                            child: Text(
+                              "Insert (${selectedPaths.length})",
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        itemCount: sampleUrls.length + 2,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return InkWell(
+                              onTap: () async {
+                                Navigator.pop(context);
+                                final picked = await _imagePicker.pickImage(source: ImageSource.camera);
+                                if (picked != null) {
+                                  _insertSelectedImages(['file://${picked.path}']);
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.camera_alt_outlined, size: 28),
+                                    SizedBox(height: 4),
+                                    Text("Camera", style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          } else if (index == 1) {
+                            return InkWell(
+                              onTap: () async {
+                                Navigator.pop(context);
+                                final pickedList = await _imagePicker.pickMultiImage();
+                                if (pickedList.isNotEmpty) {
+                                  _insertSelectedImages(pickedList.map((x) => 'file://${x.path}').toList());
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.photo_library_outlined, size: 28),
+                                    SizedBox(height: 4),
+                                    Text("System Gallery", style: const TextStyle(fontSize: 12), textAlign: TextAlign.center),
+                                  ],
+                                ),
+                              ),
+                            );
+                          } else {
+                            final url = sampleUrls[index - 2];
+                            final isSelected = selectedPaths.contains(url);
+                            final selectIdx = selectedPaths.indexOf(url) + 1;
+
+                            return GestureDetector(
+                              onTap: () {
+                                setSheetState(() {
+                                  if (isSelected) {
+                                    selectedPaths.remove(url);
+                                  } else {
+                                    selectedPaths.add(url);
+                                  }
+                                });
+                              },
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                        url,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => Container(
+                                          color: theme.colorScheme.surfaceContainerHighest,
+                                          child: const Icon(Icons.broken_image),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (isSelected) ...[
+                                    Positioned.fill(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black26,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: theme.colorScheme.primary, width: 3),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: CircleAvatar(
+                                        radius: 10,
+                                        backgroundColor: theme.colorScheme.primary,
+                                        child: Text(
+                                          "$selectIdx",
+                                          style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _insertSelectedImages(List<String> paths) async {
+    for (final path in paths) {
+      if (_noteType == 'text') {
+        final String markdownImage = '![Image]($path)';
+        _insertTextAtCursor(markdownImage);
+      } else {
+        setState(() {
+          _attachments.add({
+            'type': 'image',
+            'path': path.startsWith('file://') ? path.substring(7) : path,
+          });
+          _hasChanges = true;
+        });
+      }
+      await Future.delayed(const Duration(milliseconds: 350));
+    }
+  }
+
+  void _moveInlineImage(int oldIndex, Offset globalOffset) {
+    if (_contentController is! RichTextEditingController) return;
+    final controller = _contentController as RichTextEditingController;
+    
+    final renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+    
+    final renderEditable = _findRenderEditable(renderBox);
+    if (renderEditable == null) return;
+    
+    final localOffset = renderEditable.globalToLocal(globalOffset);
+    final textPosition = renderEditable.getPositionForPoint(localOffset);
+    int targetIndex = textPosition.offset;
+    
+    if (targetIndex < 0 || targetIndex > controller.styledChars.length) return;
+    
+    setState(() {
+      final char = controller.styledChars.removeAt(oldIndex);
+      int insertIdx = targetIndex;
+      if (insertIdx > oldIndex) {
+        insertIdx--;
+      }
+      insertIdx = insertIdx.clamp(0, controller.styledChars.length);
+      controller.styledChars.insert(insertIdx, char);
+      
+      final newTextStr = controller.styledChars.map((sc) => sc.char).join();
+      controller.value = TextEditingValue(
+        text: newTextStr,
+        selection: TextSelection.collapsed(offset: insertIdx),
+      );
+      _hasChanges = true;
+    });
+  }
+
+  void _hoverInlineImage(Offset globalOffset) {
+    if (_contentController is! RichTextEditingController) return;
+    final controller = _contentController as RichTextEditingController;
+    
+    final renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+    
+    final renderEditable = _findRenderEditable(renderBox);
+    if (renderEditable == null) return;
+    
+    final localOffset = renderEditable.globalToLocal(globalOffset);
+    final textPosition = renderEditable.getPositionForPoint(localOffset);
+    int targetIndex = textPosition.offset;
+    
+    if (targetIndex >= 0 && targetIndex <= controller.styledChars.length) {
+      controller.selection = TextSelection.collapsed(offset: targetIndex);
+    }
+  }
+
+  RenderEditable? _findRenderEditable(RenderObject? root) {
+    if (root is RenderEditable) return root;
+    RenderEditable? result;
+    root?.visitChildren((child) {
+      final found = _findRenderEditable(child);
+      if (found != null) {
+        result = found;
+      }
+    });
+    return result;
   }
 
   void _toggleNoteType() {
@@ -1106,7 +1373,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                     ),
                     buildToolbarButton(
                       icon: Icons.camera_alt_outlined,
-                      onPressed: () => _pickImage(ImageSource.gallery),
+                      onPressed: () => _showGalleryBottomSheet(context),
                       tooltip: 'Attach Image',
                     ),
                     buildToolbarButton(
@@ -1457,118 +1724,132 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
               // Main Writing canvas
               Expanded(
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      sliver: SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          child: Container(
-                            constraints: const BoxConstraints(maxWidth: 720),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Metadata Info row (Faded in Zen mode)
-                                AnimatedOpacity(
-                                  opacity: !_isPageSettled ? 0.0 : (_isZenTyping ? 0.0 : 1.0),
-                                  duration: const Duration(milliseconds: 300),
-                                  child: IgnorePointer(
-                                    ignoring: !_isPageSettled || _isZenTyping,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(bottom: 16.0),
-                                      child: Row(
-                                        children: [
-                                          const Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF91918E)),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            dateStr,
-                                            style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF91918E)),
+                child: DragTarget<Map<String, dynamic>>(
+                  onWillAcceptWithDetails: (details) => _noteType == 'text',
+                  onAcceptWithDetails: (details) {
+                    final data = details.data;
+                    final oldIndex = data['oldIndex'] as int;
+                    _moveInlineImage(oldIndex, details.offset);
+                  },
+                  onMove: (details) {
+                    _hoverInlineImage(details.offset);
+                  },
+                  builder: (context, candidateData, rejectedData) {
+                    return CustomScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          sliver: SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              child: Container(
+                                constraints: const BoxConstraints(maxWidth: 720),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Metadata Info row (Faded in Zen mode)
+                                    AnimatedOpacity(
+                                      opacity: !_isPageSettled ? 0.0 : (_isZenTyping ? 0.0 : 1.0),
+                                      duration: const Duration(milliseconds: 300),
+                                      child: IgnorePointer(
+                                        ignoring: !_isPageSettled || _isZenTyping,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(bottom: 16.0),
+                                          child: Row(
+                                            children: [
+                                              const Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF91918E)),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                dateStr,
+                                                style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF91918E)),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF91918E)),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                readingTime,
+                                                style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF91918E)),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 12),
-                                          const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF91918E)),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            readingTime,
-                                            style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF91918E)),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-      
-                                // Note Title input
-                                TextField(
-                                  controller: _titleController,
-                                  maxLines: 1,
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 24.0,
-                                    fontWeight: FontWeight.bold,
-                                    color: titleColor,
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText: "Note Title",
-                                    hintStyle: GoogleFonts.outfit(
-                                      fontSize: 24.0,
-                                      fontWeight: FontWeight.bold,
-                                      color: titleColor.withAlpha(80),
-                                    ),
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.zero,
-                                    filled: false,
-                                  ),
-                                ),
-                                const SizedBox(height: 12.0),
-                                _buildCategorySelector(titleColor),
-                                const SizedBox(height: 16.0),
-      
-                                // Render Checklist mode OR Markdown body OR Text editor
-                                if (_noteType == 'checklist')
-                                  _buildChecklistEditor(textColor)
-                                else if (_isPreviewMarkdown)
-                                  _buildMarkdownPreview(textColor)
-                                else
-                                  Expanded(
-                                    child: GestureDetector(
-                                      behavior: HitTestBehavior.opaque,
-                                      onTap: () {
-                                        _contentFocusNode.requestFocus();
-                                        _contentController.selection = TextSelection.collapsed(offset: _contentController.text.length);
-                                      },
-                                      child: TextField(
-                                        controller: _contentController,
-                                        focusNode: _contentFocusNode,
-                                        maxLines: null,
-                                        keyboardType: TextInputType.multiline,
-                                        textAlign: _getCurrentLineAlignment(),
-                                        style: GoogleFonts.inter(
-                                          fontSize: 18.0,
-                                          color: textColor,
-                                          height: 1.6,
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: "Start writing...",
-                                          hintStyle: GoogleFonts.inter(
-                                            fontSize: 18.0,
-                                            color: textColor.withAlpha(80),
-                                          ),
-                                          border: InputBorder.none,
-                                          contentPadding: EdgeInsets.zero,
-                                          filled: false,
                                         ),
                                       ),
                                     ),
-                                  ),
-                              ],
+          
+                                    // Note Title input
+                                    TextField(
+                                      controller: _titleController,
+                                      maxLines: 1,
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 24.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: titleColor,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: "Note Title",
+                                        hintStyle: GoogleFonts.outfit(
+                                          fontSize: 24.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: titleColor.withAlpha(80),
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.zero,
+                                        filled: false,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12.0),
+                                    _buildCategorySelector(titleColor),
+                                    const SizedBox(height: 16.0),
+          
+                                    // Render Checklist mode OR Markdown body OR Text editor
+                                    if (_noteType == 'checklist')
+                                      _buildChecklistEditor(textColor)
+                                    else if (_isPreviewMarkdown)
+                                      _buildMarkdownPreview(textColor)
+                                    else
+                                      Expanded(
+                                        child: GestureDetector(
+                                          behavior: HitTestBehavior.opaque,
+                                          onTap: () {
+                                            _contentFocusNode.requestFocus();
+                                            _contentController.selection = TextSelection.collapsed(offset: _contentController.text.length);
+                                          },
+                                          child: TextField(
+                                            key: _textFieldKey,
+                                            controller: _contentController,
+                                            focusNode: _contentFocusNode,
+                                            maxLines: null,
+                                            keyboardType: TextInputType.multiline,
+                                            textAlign: _getCurrentLineAlignment(),
+                                            style: GoogleFonts.inter(
+                                              fontSize: 18.0,
+                                              color: textColor,
+                                              height: 1.6,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: "Start writing...",
+                                              hintStyle: GoogleFonts.inter(
+                                                fontSize: 18.0,
+                                                color: textColor.withAlpha(80),
+                                              ),
+                                              border: InputBorder.none,
+                                              contentPadding: EdgeInsets.zero,
+                                              filled: false,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  ],
+                      ],
+                    );
+                  },
                 ),
               ),
 
@@ -1689,7 +1970,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 title: const Text("Attach Image"),
                 onTap: () {
                   Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
+                  _showGalleryBottomSheet(context);
                 },
               ),
               ListTile(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'fullscreen_image_viewer.dart';
 
 class Style {
   final bool bold;
@@ -16,6 +17,7 @@ class Style {
   final String? imageUrl;
   final double? imageWidth;
   final double? imageHeight;
+  final String? imageCaption;
 
   const Style({
     this.bold = false,
@@ -31,6 +33,7 @@ class Style {
     this.imageUrl,
     this.imageWidth,
     this.imageHeight,
+    this.imageCaption,
   });
 
   Style copyWith({
@@ -47,9 +50,11 @@ class Style {
     String? imageUrl,
     double? imageWidth,
     double? imageHeight,
+    String? imageCaption,
     bool clearColor = false,
     bool clearHighlight = false,
     bool clearImage = false,
+    bool clearCaption = false,
   }) {
     return Style(
       bold: bold ?? this.bold,
@@ -65,6 +70,7 @@ class Style {
       imageUrl: clearImage ? null : (imageUrl ?? this.imageUrl),
       imageWidth: clearImage ? null : (imageWidth ?? this.imageWidth),
       imageHeight: clearImage ? null : (imageHeight ?? this.imageHeight),
+      imageCaption: clearImage || clearCaption ? null : (imageCaption ?? this.imageCaption),
     );
   }
 
@@ -84,7 +90,8 @@ class Style {
         other.checked == checked &&
         other.imageUrl == imageUrl &&
         other.imageWidth == imageWidth &&
-        other.imageHeight == imageHeight;
+        other.imageHeight == imageHeight &&
+        other.imageCaption == imageCaption;
   }
 
   @override
@@ -102,6 +109,7 @@ class Style {
         imageUrl,
         imageWidth,
         imageHeight,
+        imageCaption,
       );
 }
 
@@ -150,35 +158,82 @@ class InteractiveCheckbox extends StatelessWidget {
 class ResizableImageWidget extends StatefulWidget {
   final String imagePath;
   final double initialWidth;
-  final Function(double width) onResize;
+  final String? caption;
+  final int index;
+  final Function(double width, String? caption) onUpdate;
+  final VoidCallback onDelete;
 
   const ResizableImageWidget({
     super.key,
     required this.imagePath,
     required this.initialWidth,
-    required this.onResize,
+    required this.caption,
+    required this.index,
+    required this.onUpdate,
+    required this.onDelete,
   });
 
   @override
   State<ResizableImageWidget> createState() => _ResizableImageWidgetState();
 }
 
-class _ResizableImageWidgetState extends State<ResizableImageWidget> {
+class _ResizableImageWidgetState extends State<ResizableImageWidget> with SingleTickerProviderStateMixin {
   late double _width;
   bool _showControls = false;
+  late TextEditingController _captionController;
+  
+  late AnimationController _animController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+  bool _isDeleting = false;
+
+  double _initialScaleWidth = 300.0;
 
   @override
   void initState() {
     super.initState();
     _width = widget.initialWidth;
+    _captionController = TextEditingController(text: widget.caption ?? '');
+    
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _scaleAnimation = Tween<double>(begin: 0.2, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutBack),
+    );
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeIn),
+    );
+    _animController.forward();
   }
 
   @override
   void didUpdateWidget(covariant ResizableImageWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialWidth != widget.initialWidth) {
-      _width = widget.initialWidth;
+      setState(() {
+        _width = widget.initialWidth;
+      });
     }
+    if (oldWidget.caption != widget.caption && widget.caption != _captionController.text) {
+      _captionController.text = widget.caption ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _captionController.dispose();
+    _animController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _triggerDelete() async {
+    setState(() {
+      _isDeleting = true;
+    });
+    await _animController.reverse();
+    widget.onDelete();
   }
 
   @override
@@ -187,9 +242,9 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
     final isFile = !widget.imagePath.startsWith('http://') && !widget.imagePath.startsWith('https://');
     
     final double screenWidth = MediaQuery.of(context).size.width;
-    // Gutter of 48.0 for 24px editor horizontal margins, plus 8px safe margin
     final double maxWidth = (screenWidth - 56.0).clamp(100.0, 500.0);
     final double currentWidth = _width.clamp(100.0, maxWidth);
+    final double currentHeight = currentWidth * 0.75;
 
     ImageProvider imageProvider;
     if (isFile) {
@@ -200,110 +255,315 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
       if (cleanPath.startsWith('/') && cleanPath.length > 2 && cleanPath[2] == ':') {
         cleanPath = cleanPath.substring(1);
       }
-      imageProvider = FileImage(File(cleanPath));
+      imageProvider = ResizeImage(
+        FileImage(File(cleanPath)),
+        width: currentWidth.toInt(),
+      );
     } else {
-      imageProvider = NetworkImage(widget.imagePath);
+      imageProvider = ResizeImage(
+        NetworkImage(widget.imagePath),
+        width: currentWidth.toInt(),
+      );
     }
 
-    return Column(
+    final heroTag = 'inline-image-${widget.imagePath}-${widget.index}';
+
+    Widget imageContent = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
+          onScaleStart: (details) {
+            _initialScaleWidth = _width;
+          },
+          onScaleUpdate: (details) {
+            setState(() {
+              _width = (_initialScaleWidth * details.scale).clamp(100.0, maxWidth);
+            });
+            widget.onUpdate(_width, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
+          },
           onTap: () {
             setState(() {
               _showControls = !_showControls;
             });
           },
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            decoration: BoxDecoration(
-              border: _showControls
-                  ? Border.all(color: theme.colorScheme.primary, width: 2)
-                  : null,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            constraints: BoxConstraints(
-              maxWidth: maxWidth,
-              maxHeight: 380.0, // Prevent very tall images from taking over the screen height
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image(
-                image: imageProvider,
-                width: currentWidth,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 200,
-                    height: 150,
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey),
-                        SizedBox(height: 4),
-                        Text("Error loading image", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
-                    ),
-                  );
-                },
+          child: Hero(
+            tag: heroTag,
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              decoration: BoxDecoration(
+                border: _showControls
+                    ? Border.all(color: theme.colorScheme.primary, width: 2)
+                    : null,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: _showControls
+                    ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 8, spreadRadius: 1)]
+                    : null,
+              ),
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                maxHeight: 380.0,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image(
+                  image: imageProvider,
+                  width: currentWidth,
+                  fit: BoxFit.contain,
+                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                    if (wasSynchronouslyLoaded) {
+                      return child;
+                    }
+                    return AnimatedCrossFade(
+                      firstChild: Container(
+                        width: currentWidth,
+                        height: currentHeight,
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+                      secondChild: child,
+                      crossFadeState: frame == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                      duration: const Duration(milliseconds: 300),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 200,
+                      height: 150,
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey),
+                          SizedBox(height: 4),
+                          Text("Error loading image", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),
         ),
-        if (_showControls)
+        if (widget.caption != null && widget.caption!.isNotEmpty && !_showControls)
+          Padding(
+            padding: const EdgeInsets.only(left: 4.0, bottom: 8.0, top: 2.0),
+            child: Text(
+              widget.caption!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontStyle: FontStyle.italic,
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ),
+        if (_showControls) ...[
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainer,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withAlpha(20),
+                  color: Colors.black.withOpacity(0.08),
                   blurRadius: 6,
                   offset: const Offset(0, 3),
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.photo_size_select_large_rounded, size: 18, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 140,
-                  height: 32,
-                  child: SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      trackHeight: 3,
-                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.photo_size_select_large_rounded, size: 18, color: theme.colorScheme.primary),
+                    const SizedBox(width: 4),
+                    SizedBox(
+                      width: 120,
+                      height: 32,
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 3,
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                        ),
+                        child: Slider(
+                          value: currentWidth,
+                          min: 100,
+                          max: maxWidth,
+                          onChanged: (val) {
+                            setState(() {
+                              _width = val;
+                            });
+                            widget.onUpdate(val, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
+                          },
+                        ),
+                      ),
                     ),
-                    child: Slider(
-                      value: currentWidth,
-                      min: 100,
-                      max: maxWidth,
-                      onChanged: (val) {
-                        setState(() {
-                          _width = val;
-                        });
-                        widget.onResize(val);
+                    Text(
+                      '${currentWidth.toInt()}px',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.fullscreen_rounded, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          PageRouteBuilder(
+                            opaque: false,
+                            barrierDismissible: true,
+                            pageBuilder: (context, _, __) => FullscreenImageViewer(
+                              imagePath: widget.imagePath,
+                              heroTag: heroTag,
+                            ),
+                          ),
+                        );
                       },
+                      tooltip: 'View Fullscreen',
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: Icon(Icons.delete_outline_rounded, size: 20, color: theme.colorScheme.error),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: _triggerDelete,
+                      tooltip: 'Delete Image',
+                    ),
+                  ],
                 ),
-                Text(
-                  '${currentWidth.toInt()}px',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: 220,
+                  height: 36,
+                  child: TextField(
+                    controller: _captionController,
+                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: "Add optional caption...",
+                      hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: theme.colorScheme.primary),
+                      ),
+                    ),
+                    onChanged: (val) {
+                      widget.onUpdate(_width, val.trim().isEmpty ? null : val.trim());
+                    },
                   ),
                 ),
               ],
             ),
           ),
+        ]
       ],
+    );
+
+    return AnimatedBuilder(
+      animation: _animController,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _opacityAnimation.value,
+          child: Transform.scale(
+            scale: _scaleAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: LongPressDraggable<Map<String, dynamic>>(
+        data: {
+          'oldIndex': widget.index,
+          'imagePath': widget.imagePath,
+        },
+        maxSimultaneousDrags: _showControls || _isDeleting ? 0 : 1,
+        feedback: DragFeedbackImage(
+          imageProvider: imageProvider,
+          width: currentWidth,
+        ),
+        childWhenDragging: Opacity(
+          opacity: 0.3,
+          child: IgnorePointer(
+            child: SizedBox(
+              width: currentWidth,
+              height: 120,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.colorScheme.primary.withOpacity(0.5), width: 1.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ),
+        child: imageContent,
+      ),
+    );
+  }
+}
+
+class DragFeedbackImage extends StatefulWidget {
+  final ImageProvider imageProvider;
+  final double width;
+  const DragFeedbackImage({super.key, required this.imageProvider, required this.width});
+  
+  @override
+  State<DragFeedbackImage> createState() => _DragFeedbackImageState();
+}
+
+class _DragFeedbackImageState extends State<DragFeedbackImage> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut)
+    );
+    _controller.forward();
+  }
+  
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Material(
+        elevation: 12.0,
+        borderRadius: BorderRadius.circular(12),
+        shadowColor: Colors.black54,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image(
+            image: widget.imageProvider,
+            width: widget.width,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -732,6 +992,7 @@ class RichTextEditingController extends TextEditingController {
       if (sc.style.imageUrl != null && sc.char == '\uFFFC') {
         final String url = sc.style.imageUrl!;
         final double width = sc.style.imageWidth ?? 300.0;
+        final String? caption = sc.style.imageCaption;
         final int index = i;
 
         children.add(WidgetSpan(
@@ -739,10 +1000,25 @@ class RichTextEditingController extends TextEditingController {
           child: ResizableImageWidget(
             imagePath: url,
             initialWidth: width,
-            onResize: (newWidth) {
+            caption: caption,
+            index: index,
+            onUpdate: (newWidth, newCaption) {
               styledChars[index] = StyledChar(
                 char: styledChars[index].char,
-                style: styledChars[index].style.copyWith(imageWidth: newWidth),
+                style: styledChars[index].style.copyWith(
+                  imageWidth: newWidth,
+                  imageCaption: newCaption,
+                  clearCaption: newCaption == null,
+                ),
+              );
+              notifyListeners();
+            },
+            onDelete: () {
+              styledChars.removeAt(index);
+              final newTextStr = _getTextOnly();
+              value = TextEditingValue(
+                text: newTextStr,
+                selection: TextSelection.collapsed(offset: index.clamp(0, newTextStr.length)),
               );
               notifyListeners();
             },
@@ -933,6 +1209,7 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
                 imageUrl: cleanUrl,
                 imageWidth: width,
                 imageHeight: height,
+                imageCaption: alt.isNotEmpty ? alt : null,
               ),
             ));
             idx = closeParenthesis + 1;
@@ -1018,7 +1295,8 @@ String generateInlineMarkdown(List<StyledChar> lineChars) {
         }
         urlBuffer.write(params.join('&'));
       }
-      sb.write('![Image](${urlBuffer.toString()})');
+      final altText = style.imageCaption ?? 'Image';
+      sb.write('![$altText](${urlBuffer.toString()})');
       continue;
     }
 
