@@ -10,6 +10,7 @@ import 'package:quick_notes/views/screens/navigation_shell.dart';
 import 'package:quick_notes/views/screens/note_editor_screen.dart';
 import 'package:quick_notes/views/screens/notes_list_screen.dart';
 import 'package:quick_notes/views/widgets/note_card.dart';
+import 'package:quick_notes/views/widgets/rich_text_controller.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -113,6 +114,7 @@ void main() {
 
       final TextField contentField = tester.widget(contentFinder);
       expect(contentField.decoration?.filled, isFalse);
+      await tester.pump(const Duration(seconds: 11));
     });
 
     testWidgets('Issue 2: Checklist typing check', (WidgetTester tester) async {
@@ -153,6 +155,7 @@ void main() {
       final TextField firstItemField = tester.widget(itemFinder.first);
       expect(firstItemField.decoration?.filled, isFalse);
       expect(firstItemField.controller.runtimeType, equals(TextEditingController));
+      await tester.pump(const Duration(seconds: 11));
     });
 
     testWidgets('Issue 3: Drawer Sync / unique keys check', (WidgetTester tester) async {
@@ -195,6 +198,7 @@ void main() {
 
       final NotesListScreen archiveScreen = tester.widget(archiveScreenFinder);
       expect(archiveScreen.key, const ValueKey(NotesViewType.archive));
+      await tester.pump(const Duration(seconds: 11));
     });
 
     testWidgets('Issue 4: Instant SnackBar trigger check', (WidgetTester tester) async {
@@ -241,6 +245,7 @@ void main() {
 
       expect(find.byType(SnackBar), findsOneWidget);
       expect(find.text('Note pinned'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 11));
     });
 
     testWidgets('Checking standard caret controller doesn\'t fail type checks', (WidgetTester tester) async {
@@ -272,9 +277,10 @@ void main() {
 
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(NoteEditorScreen), findsOneWidget);
+      await tester.pump(const Duration(seconds: 11));
     });
 
-    testWidgets('Rich formatting toolbar and scrollable structure check', (WidgetTester tester) async {
+    testWidgets('Rich formatting toolbar and PageView navigation check', (WidgetTester tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -296,32 +302,126 @@ void main() {
       await tester.tap(contentFinder);
       await tester.pump();
 
-      // Verify that the formatting toolbar with Axis.horizontal SingleChildScrollView is present
-      final horizontalScrollFinder = find.byWidgetPredicate(
-        (widget) => widget is SingleChildScrollView && widget.scrollDirection == Axis.horizontal,
-      );
-      expect(horizontalScrollFinder, findsOneWidget);
+      // Verify that the formatting toolbar with PageView is present
+      final pageViewFinder = find.byType(PageView);
+      expect(pageViewFinder, findsOneWidget);
 
-      // Verify presence of formatting buttons by tooltip
+      // Page 0: Text style options
       expect(find.byTooltip('Bold'), findsOneWidget);
       expect(find.byTooltip('Italic'), findsOneWidget);
       expect(find.byTooltip('Underline'), findsOneWidget);
       expect(find.byTooltip('Strikethrough'), findsOneWidget);
-      expect(find.byTooltip('Code Block'), findsOneWidget);
-      expect(find.byTooltip('Blockquote'), findsOneWidget);
+      expect(find.byTooltip('Highlight'), findsOneWidget);
+      expect(find.byTooltip('Link'), findsOneWidget);
+
+      // Find both left and right arrow buttons (Icons.play_arrow_rounded)
+      final arrowButtons = find.byIcon(Icons.play_arrow_rounded);
+      expect(arrowButtons, findsNWidgets(2));
+
+      // Tap the right arrow button (last in widget tree) to slide to Page 1
+      await tester.tap(arrowButtons.last);
+      await tester.pumpAndSettle();
+
+      // Page 1: Headings & Lists options
       expect(find.byTooltip('Heading 1'), findsOneWidget);
       expect(find.byTooltip('Heading 2'), findsOneWidget);
       expect(find.byTooltip('Heading 3'), findsOneWidget);
+      expect(find.byTooltip('Bullet List'), findsOneWidget);
+      expect(find.byTooltip('Numbered List'), findsOneWidget);
+      expect(find.byTooltip('Checklist'), findsOneWidget);
+
+      // Tap the right arrow button again to slide to Page 2
+      await tester.tap(arrowButtons.last);
+      await tester.pumpAndSettle();
+
+      // Page 2: Alignments & Actions options
       expect(find.byTooltip('Align Left'), findsOneWidget);
       expect(find.byTooltip('Align Center'), findsOneWidget);
       expect(find.byTooltip('Align Right'), findsOneWidget);
       expect(find.byTooltip('Align Justify'), findsOneWidget);
-      expect(find.byTooltip('Bullet List'), findsOneWidget);
-      expect(find.byTooltip('Numbered List'), findsOneWidget);
-      expect(find.byTooltip('Link'), findsOneWidget);
       expect(find.byTooltip('Attach Image'), findsOneWidget);
       expect(find.byTooltip('Record Audio'), findsOneWidget);
       expect(find.byTooltip('Hide Keyboard'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 11));
+    });
+
+    test('WYSIWYG: parseMarkdownToStyledChars and generateMarkdownFromStyledChars', () {
+      const markdown = '**Hello** *World* <u>under</u> ~~strike~~';
+      final chars = parseMarkdownToStyledChars(markdown);
+      expect(chars.map((c) => c.char).join(), equals('Hello World under strike'));
+
+      expect(chars[0].style.bold, isTrue);
+      expect(chars[0].style.italic, isFalse);
+      expect(chars[6].style.italic, isTrue);
+      expect(chars[6].style.bold, isFalse);
+      expect(chars[12].style.underline, isTrue);
+      expect(chars[18].style.strikethrough, isTrue);
+
+      final generated = generateMarkdownFromStyledChars(chars);
+      expect(generated, equals(markdown));
+    });
+
+    test('WYSIWYG: RichTextEditingController style toggling', () {
+      final controller = RichTextEditingController();
+      controller.text = 'Hello World';
+      
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 5);
+      controller.toggleStyleAttribute('bold');
+
+      expect(controller.styledChars[0].style.bold, isTrue);
+      expect(controller.styledChars[5].style.bold, isFalse);
+
+      final markdown = generateMarkdownFromStyledChars(controller.styledChars);
+      expect(markdown, equals('**Hello** World'));
+    });
+
+    test('WYSIWYG: RichTextEditingController checklist and alignment toggling', () {
+      final controller = RichTextEditingController();
+      controller.text = 'Checklist item';
+
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 14);
+      controller.toggleParagraphStyle('checkbox');
+
+      expect(controller.text, equals('\u2610Checklist item'));
+      expect(controller.styledChars[0].char, equals('\u2610'));
+      expect(controller.styledChars[0].style.listType, equals('checkbox'));
+
+      controller.toggleChecklistState(0);
+      expect(controller.styledChars[0].char, equals('\u2611'));
+      expect(controller.styledChars[1].style.strikethrough, isTrue);
+
+      controller.selection = const TextSelection(baseOffset: 3, extentOffset: 3);
+      controller.toggleParagraphStyle('align-center');
+      expect(controller.styledChars[3].style.align, equals(TextAlign.center));
+
+      final markdown = generateMarkdownFromStyledChars(controller.styledChars);
+      expect(markdown, contains('<p align="center">'));
+    });
+
+    test('WYSIWYG: Image parsing, generating, and resizing', () {
+      const markdown = 'Hello ![Image](file:///path/to/img.png?width=250) World';
+      final chars = parseMarkdownToStyledChars(markdown);
+      
+      expect(chars.map((c) => c.char).join(), equals('Hello \uFFFC World'));
+      
+      final imgChar = chars[6];
+      expect(imgChar.char, equals('\uFFFC'));
+      expect(imgChar.style.imageUrl, equals('file:///path/to/img.png'));
+      expect(imgChar.style.imageWidth, equals(250.0));
+      
+      final generated = generateMarkdownFromStyledChars(chars);
+      expect(generated, equals(markdown));
+      
+      final controller = RichTextEditingController(markdown: markdown);
+      expect(controller.styledChars[6].style.imageWidth, equals(250.0));
+      
+      controller.styledChars[6] = StyledChar(
+        char: controller.styledChars[6].char,
+        style: controller.styledChars[6].style.copyWith(imageWidth: 400.0),
+      );
+      
+      final updatedMarkdown = generateMarkdownFromStyledChars(controller.styledChars);
+      expect(updatedMarkdown, equals('Hello ![Image](file:///path/to/img.png?width=400) World'));
     });
   });
 }

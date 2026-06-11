@@ -16,6 +16,7 @@ import '../../providers/notes_provider.dart';
 import '../../services/vault_service.dart';
 import '../widgets/folder_selector_dialog.dart';
 import '../widgets/export_dialog.dart';
+import '../widgets/rich_text_controller.dart';
 
 class NoteEditorScreen extends StatefulWidget {
   final Note? note;
@@ -35,9 +36,11 @@ class NoteEditorScreen extends StatefulWidget {
 
 class _NoteEditorScreenState extends State<NoteEditorScreen> {
   final _titleController = TextEditingController();
-  final _contentController = TextEditingController();
+  late final TextEditingController _contentController;
   final _tagController = TextEditingController();
   final _contentFocusNode = FocusNode();
+  final _pageController = PageController();
+  int _currentPage = 0;
   
   int _colorIndex = 0;
   bool _isPinned = false;
@@ -113,8 +116,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           _checklistItems = [];
         }
         _checklistControllers = _checklistItems.map((item) => TextEditingController(text: item['text'] ?? "")).toList();
+        _contentController = TextEditingController();
       } else {
-        _contentController.text = widget.note!.content;
+        _contentController = RichTextEditingController(markdown: widget.note!.content);
+        (_contentController as RichTextEditingController).onStyleChanged = () {
+          if (mounted) setState(() {});
+        };
       }
     } else {
       _category = widget.defaultCategory;
@@ -124,6 +131,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _habitRecurrence = 'none';
       _habitStreak = 0;
       _habitLastCompleted = null;
+
+      if (_noteType == 'text') {
+        _contentController = RichTextEditingController();
+        (_contentController as RichTextEditingController).onStyleChanged = () {
+          if (mounted) setState(() {});
+        };
+      } else {
+        _contentController = TextEditingController();
+      }
     }
     _calculateCounts();
 
@@ -151,20 +167,31 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final route = ModalRoute.of(context);
       if (route != null && route.animation != null) {
-        void listener(AnimationStatus status) {
-          if (status == AnimationStatus.completed) {
-            route.animation!.removeStatusListener(listener);
-            if (mounted) {
-              setState(() {
-                _isPageSettled = true;
-              });
-              if (widget.note == null && _noteType == 'text') {
-                _contentFocusNode.requestFocus();
+        if (route.animation!.isCompleted) {
+          if (mounted) {
+            setState(() {
+              _isPageSettled = true;
+            });
+            if (widget.note == null && _noteType == 'text') {
+              _contentFocusNode.requestFocus();
+            }
+          }
+        } else {
+          void listener(AnimationStatus status) {
+            if (status == AnimationStatus.completed) {
+              route.animation!.removeStatusListener(listener);
+              if (mounted) {
+                setState(() {
+                  _isPageSettled = true;
+                });
+                if (widget.note == null && _noteType == 'text') {
+                  _contentFocusNode.requestFocus();
+                }
               }
             }
           }
+          route.animation!.addStatusListener(listener);
         }
-        route.animation!.addStatusListener(listener);
       } else {
         if (mounted) {
           setState(() {
@@ -184,6 +211,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _contentController.dispose();
     _tagController.dispose();
     _contentFocusNode.dispose();
+    _pageController.dispose();
     for (final controller in _checklistControllers) {
       controller.dispose();
     }
@@ -233,6 +261,17 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     setState(() {
       _hasChanges = true;
     });
+  }
+
+  TextAlign _getCurrentLineAlignment() {
+    if (_contentController is RichTextEditingController) {
+      final controller = _contentController as RichTextEditingController;
+      final sel = controller.selection;
+      if (sel.isValid && sel.start >= 0 && sel.start < controller.styledChars.length) {
+        return controller.styledChars[sel.start].style.align;
+      }
+    }
+    return TextAlign.left;
   }
 
   void _calculateCounts() {
@@ -327,6 +366,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 isDone = true;
               } else if (cleanLine.startsWith('-')) {
                 cleanLine = cleanLine.substring(1).trim();
+              } else if (cleanLine.startsWith('\u2610')) {
+                cleanLine = cleanLine.substring(1).trim();
+              } else if (cleanLine.startsWith('\u2611')) {
+                cleanLine = cleanLine.substring(1).trim();
+                isDone = true;
+              } else if (cleanLine.startsWith('•')) {
+                cleanLine = cleanLine.substring(1).trim();
               }
               return {'text': cleanLine, 'done': isDone};
             })
@@ -345,7 +391,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           final String prefix = item['done'] == true ? '- [x] ' : '- [ ] ';
           return '$prefix${item['text'] ?? ""}';
         }).join('\n');
-        _contentController.text = text;
+        
+        if (_contentController is RichTextEditingController) {
+          (_contentController as RichTextEditingController).setMarkdown(text);
+        } else {
+          _contentController.text = text;
+        }
         _noteType = 'text';
       }
       _hasChanges = true;
@@ -438,7 +489,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       final title = _titleController.text.trim();
       final content = _noteType == 'checklist' 
           ? jsonEncode(_checklistItems) 
-          : _contentController.text.trim();
+          : (_contentController is RichTextEditingController
+              ? generateMarkdownFromStyledChars((_contentController as RichTextEditingController).styledChars).trim()
+              : _contentController.text.trim());
 
       if (title.isEmpty && content.isEmpty) return;
 
@@ -528,6 +581,47 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   void _wrapSelection(String prefix, String suffix) {
+    if (_contentController is RichTextEditingController) {
+      final controller = _contentController as RichTextEditingController;
+      if (prefix == '**') {
+        controller.toggleStyleAttribute('bold');
+      } else if (prefix == '*') {
+        controller.toggleStyleAttribute('italic');
+      } else if (prefix == '<u>') {
+        controller.toggleStyleAttribute('underline');
+      } else if (prefix == '~~') {
+        controller.toggleStyleAttribute('strikethrough');
+      } else if (prefix == 'highlight') {
+        controller.toggleStyleAttribute('highlight', value: Colors.yellow.withAlpha(180));
+      } else if (prefix == '```\n') {
+        controller.toggleStyleAttribute('code');
+      } else if (prefix.startsWith('<p align="')) {
+        final alignName = prefix.split('"')[1];
+        controller.toggleParagraphStyle('align-$alignName');
+      } else {
+        final text = _contentController.text;
+        final selection = _contentController.selection;
+        int start = selection.start;
+        int end = selection.end;
+        if (start == -1 || end == -1) {
+          start = text.length;
+          end = start;
+        }
+        final selectedText = text.substring(start, end);
+        final replacement = '$prefix$selectedText$suffix';
+        final newText = text.replaceRange(start, end, replacement);
+        _contentController.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection(
+            baseOffset: start + prefix.length,
+            extentOffset: start + prefix.length + selectedText.length,
+          ),
+        );
+      }
+      _onContentTextChanged();
+      return;
+    }
+
     final text = _contentController.text;
     final selection = _contentController.selection;
     int start = selection.start;
@@ -553,6 +647,63 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   void _insertTextAtCursor(String textToInsert) {
+    if (_contentController is RichTextEditingController) {
+      final controller = _contentController as RichTextEditingController;
+      if (textToInsert == '> ') {
+        controller.toggleParagraphStyle('quote');
+      } else if (textToInsert == '# ') {
+        controller.toggleParagraphStyle('h1');
+      } else if (textToInsert == '## ') {
+        controller.toggleParagraphStyle('h2');
+      } else if (textToInsert == '### ') {
+        controller.toggleParagraphStyle('h3');
+      } else if (textToInsert == '- ') {
+        controller.toggleParagraphStyle('bullet');
+      } else if (textToInsert == '1. ') {
+        controller.toggleParagraphStyle('number');
+      } else if (textToInsert == '\u2610') {
+        controller.toggleParagraphStyle('checkbox');
+      } else if (textToInsert.startsWith('![') || textToInsert.contains('![')) {
+        final parsedChars = parseMarkdownToStyledChars(textToInsert);
+        final oldSel = controller.selection;
+        int start = oldSel.start;
+        int end = oldSel.end;
+        if (start == -1 || end == -1) {
+          start = controller.text.length;
+          end = start;
+        }
+
+        final newChars = List<StyledChar>.from(controller.styledChars);
+        if (end > start) {
+          newChars.removeRange(start, end);
+        }
+        newChars.insertAll(start, parsedChars);
+        controller.styledChars = newChars;
+
+        final newText = controller.styledChars.map((sc) => sc.char).join();
+        controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(offset: start + parsedChars.length),
+        );
+      } else {
+        final text = _contentController.text;
+        final selection = _contentController.selection;
+        int start = selection.start;
+        int end = selection.end;
+        if (start == -1 || end == -1) {
+          start = text.length;
+          end = start;
+        }
+        final newText = text.replaceRange(start, end, textToInsert);
+        _contentController.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(offset: start + textToInsert.length),
+        );
+      }
+      _onContentTextChanged();
+      return;
+    }
+
     final text = _contentController.text;
     final selection = _contentController.selection;
     int start = selection.start;
@@ -746,162 +897,252 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   Widget _buildFormattingToolbar(Color textColor, Color titleColor) {
+    final theme = Theme.of(context);
     final buttonColor = titleColor;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final activeStyle = (_contentController is RichTextEditingController)
+        ? (_contentController as RichTextEditingController).currentActiveStyle
+        : const Style();
 
     // Helper for building toolbar items
     Widget buildToolbarButton({
       required IconData icon,
       required VoidCallback onPressed,
       required String tooltip,
+      bool isActive = false,
     }) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 2.0),
         child: Tooltip(
           message: tooltip,
-          child: IconButton(
-            icon: Icon(icon, color: buttonColor),
-            onPressed: onPressed,
-            padding: const EdgeInsets.all(8.0),
-            constraints: const BoxConstraints(),
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: isActive ? theme.colorScheme.primary.withAlpha(40) : Colors.transparent,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(
+                icon,
+                color: isActive ? theme.colorScheme.primary : buttonColor.withAlpha(200),
+                size: 20,
+              ),
+              onPressed: onPressed,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
           ),
         ),
       );
     }
 
-    Widget buildDivider() {
-      return Container(
-        width: 1,
-        height: 20,
-        margin: const EdgeInsets.symmetric(horizontal: 6.0),
-        color: buttonColor.withAlpha(45),
+    Widget buildPageWrapper(List<Widget> children) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: children,
       );
     }
 
     return Container(
-      height: 44,
-      width: double.infinity,
-      alignment: Alignment.centerLeft,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(width: 4),
-            // Text Styles Group
-            buildToolbarButton(
-              icon: Icons.format_bold_rounded,
-              onPressed: () => _wrapSelection('**', '**'),
-              tooltip: 'Bold',
-            ),
-            buildToolbarButton(
-              icon: Icons.format_italic_rounded,
-              onPressed: () => _wrapSelection('*', '*'),
-              tooltip: 'Italic',
-            ),
-            buildToolbarButton(
-              icon: Icons.format_underlined_rounded,
-              onPressed: () => _wrapSelection('<u>', '</u>'),
-              tooltip: 'Underline',
-            ),
-            buildToolbarButton(
-              icon: Icons.format_strikethrough_rounded,
-              onPressed: () => _wrapSelection('~~', '~~'),
-              tooltip: 'Strikethrough',
-            ),
-            buildToolbarButton(
-              icon: Icons.code_rounded,
-              onPressed: () => _wrapSelection('```\n', '\n```'),
-              tooltip: 'Code Block',
-            ),
-            buildToolbarButton(
-              icon: Icons.format_quote_rounded,
-              onPressed: () => _insertTextAtCursor('> '),
-              tooltip: 'Blockquote',
-            ),
-            buildDivider(),
-
-            // Headings Group
-            buildToolbarButton(
-              icon: Icons.filter_1_rounded,
-              onPressed: () => _insertTextAtCursor('# '),
-              tooltip: 'Heading 1',
-            ),
-            buildToolbarButton(
-              icon: Icons.filter_2_rounded,
-              onPressed: () => _insertTextAtCursor('## '),
-              tooltip: 'Heading 2',
-            ),
-            buildToolbarButton(
-              icon: Icons.filter_3_rounded,
-              onPressed: () => _insertTextAtCursor('### '),
-              tooltip: 'Heading 3',
-            ),
-            buildDivider(),
-
-            // Alignments Group
-            buildToolbarButton(
-              icon: Icons.format_align_left_rounded,
-              onPressed: () => _wrapSelection('<p align="left">', '</p>'),
-              tooltip: 'Align Left',
-            ),
-            buildToolbarButton(
-              icon: Icons.format_align_center_rounded,
-              onPressed: () => _wrapSelection('<p align="center">', '</p>'),
-              tooltip: 'Align Center',
-            ),
-            buildToolbarButton(
-              icon: Icons.format_align_right_rounded,
-              onPressed: () => _wrapSelection('<p align="right">', '</p>'),
-              tooltip: 'Align Right',
-            ),
-            buildToolbarButton(
-              icon: Icons.format_align_justify_rounded,
-              onPressed: () => _wrapSelection('<p align="justify">', '</p>'),
-              tooltip: 'Align Justify',
-            ),
-            buildDivider(),
-
-            // Lists & Links Group
-            buildToolbarButton(
-              icon: Icons.format_list_bulleted_rounded,
-              onPressed: () => _insertTextAtCursor('- '),
-              tooltip: 'Bullet List',
-            ),
-            buildToolbarButton(
-              icon: Icons.format_list_numbered_rounded,
-              onPressed: () => _insertTextAtCursor('1. '),
-              tooltip: 'Numbered List',
-            ),
-            buildToolbarButton(
-              icon: Icons.link_rounded,
-              onPressed: () => _wrapSelection('[', '](url)'),
-              tooltip: 'Link',
-            ),
-            buildDivider(),
-
-            // Media Group
-            buildToolbarButton(
-              icon: Icons.camera_alt_outlined,
-              onPressed: () => _pickImage(ImageSource.gallery),
-              tooltip: 'Attach Image',
-            ),
-            buildToolbarButton(
-              icon: Icons.mic_none_rounded,
-              onPressed: _startRecording,
-              tooltip: 'Record Audio',
-            ),
-            buildDivider(),
-
-            // Keyboard Group
-            buildToolbarButton(
-              icon: Icons.keyboard_hide_rounded,
-              onPressed: () => _contentFocusNode.unfocus(),
-              tooltip: 'Hide Keyboard',
-            ),
-            const SizedBox(width: 4),
-          ],
+      height: 54,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(27),
+        border: Border.all(
+          color: buttonColor.withAlpha(25),
+          width: 1.0,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(20),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Left chevron arrow to navigate back
+          AnimatedOpacity(
+            opacity: _currentPage > 0 ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: IgnorePointer(
+              ignoring: _currentPage == 0,
+              child: IconButton(
+                icon: Transform(
+                  transform: Matrix4.rotationY(3.14159),
+                  alignment: Alignment.center,
+                  child: Icon(Icons.play_arrow_rounded, color: buttonColor.withAlpha(180)),
+                ),
+                onPressed: () {
+                  _pageController.previousPage(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+              ),
+            ),
+          ),
+          
+          // Sliding Options
+          Expanded(
+            child: SizedBox(
+              height: 44,
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (page) {
+                  setState(() {
+                    _currentPage = page;
+                  });
+                },
+                children: [
+                  // Page 0: Styles Group
+                  buildPageWrapper([
+                    buildToolbarButton(
+                      icon: Icons.format_bold_rounded,
+                      onPressed: () => _wrapSelection('**', '**'),
+                      tooltip: 'Bold',
+                      isActive: activeStyle.bold,
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.format_italic_rounded,
+                      onPressed: () => _wrapSelection('*', '*'),
+                      tooltip: 'Italic',
+                      isActive: activeStyle.italic,
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.format_underlined_rounded,
+                      onPressed: () => _wrapSelection('<u>', '</u>'),
+                      tooltip: 'Underline',
+                      isActive: activeStyle.underline,
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.format_strikethrough_rounded,
+                      onPressed: () => _wrapSelection('~~', '~~'),
+                      tooltip: 'Strikethrough',
+                      isActive: activeStyle.strikethrough,
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.border_color_rounded,
+                      onPressed: () => _wrapSelection('highlight', ''),
+                      tooltip: 'Highlight',
+                      isActive: activeStyle.highlight != null,
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.link_rounded,
+                      onPressed: () => _wrapSelection('[', '](url)'),
+                      tooltip: 'Link',
+                    ),
+                  ]),
+
+                  // Page 1: Headings & Lists Group
+                  buildPageWrapper([
+                    buildToolbarButton(
+                      icon: Icons.filter_1_rounded,
+                      onPressed: () => _insertTextAtCursor('# '),
+                      tooltip: 'Heading 1',
+                      isActive: activeStyle.heading == 'h1',
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.filter_2_rounded,
+                      onPressed: () => _insertTextAtCursor('## '),
+                      tooltip: 'Heading 2',
+                      isActive: activeStyle.heading == 'h2',
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.filter_3_rounded,
+                      onPressed: () => _insertTextAtCursor('### '),
+                      tooltip: 'Heading 3',
+                      isActive: activeStyle.heading == 'h3',
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.format_list_bulleted_rounded,
+                      onPressed: () => _insertTextAtCursor('- '),
+                      tooltip: 'Bullet List',
+                      isActive: activeStyle.listType == 'bullet',
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.format_list_numbered_rounded,
+                      onPressed: () => _insertTextAtCursor('1. '),
+                      tooltip: 'Numbered List',
+                      isActive: activeStyle.listType == 'number',
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.add_task_rounded,
+                      onPressed: () => _insertTextAtCursor('\u2610'),
+                      tooltip: 'Checklist',
+                      isActive: activeStyle.listType == 'checkbox',
+                    ),
+                  ]),
+
+                  // Page 2: Alignments & Actions Group
+                  buildPageWrapper([
+                    buildToolbarButton(
+                      icon: Icons.format_align_left_rounded,
+                      onPressed: () => _wrapSelection('<p align="left">', '</p>'),
+                      tooltip: 'Align Left',
+                      isActive: activeStyle.align == TextAlign.left,
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.format_align_center_rounded,
+                      onPressed: () => _wrapSelection('<p align="center">', '</p>'),
+                      tooltip: 'Align Center',
+                      isActive: activeStyle.align == TextAlign.center,
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.format_align_right_rounded,
+                      onPressed: () => _wrapSelection('<p align="right">', '</p>'),
+                      tooltip: 'Align Right',
+                      isActive: activeStyle.align == TextAlign.right,
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.format_align_justify_rounded,
+                      onPressed: () => _wrapSelection('<p align="justify">', '</p>'),
+                      tooltip: 'Align Justify',
+                      isActive: activeStyle.align == TextAlign.justify,
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.camera_alt_outlined,
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      tooltip: 'Attach Image',
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.mic_none_rounded,
+                      onPressed: _startRecording,
+                      tooltip: 'Record Audio',
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.keyboard_hide_rounded,
+                      onPressed: () => _contentFocusNode.unfocus(),
+                      tooltip: 'Hide Keyboard',
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+          ),
+
+          // Right chevron arrow to navigate forward
+          AnimatedOpacity(
+            opacity: _currentPage < 2 ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: IgnorePointer(
+              ignoring: _currentPage == 2,
+              child: IconButton(
+                icon: Icon(Icons.play_arrow_rounded, color: buttonColor.withAlpha(180)),
+                onPressed: () {
+                  _pageController.nextPage(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1302,6 +1543,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                         focusNode: _contentFocusNode,
                                         maxLines: null,
                                         keyboardType: TextInputType.multiline,
+                                        textAlign: _getCurrentLineAlignment(),
                                         style: GoogleFonts.inter(
                                           fontSize: 18.0,
                                           color: textColor,
@@ -1375,10 +1617,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 child: IgnorePointer(
                   ignoring: !_isPageSettled || _isZenTyping,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                    padding: _contentFocusNode.hasFocus && _noteType == 'text' && !_isPreviewMarkdown
+                        ? const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0)
+                        : const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                     decoration: BoxDecoration(
-                      color: editorBgColor,
-                      border: Border(top: BorderSide(color: titleColor.withAlpha(20))),
+                      color: _contentFocusNode.hasFocus && _noteType == 'text' && !_isPreviewMarkdown
+                          ? Colors.transparent
+                          : editorBgColor,
+                      border: _contentFocusNode.hasFocus && _noteType == 'text' && !_isPreviewMarkdown
+                          ? null
+                          : Border(top: BorderSide(color: titleColor.withAlpha(20))),
                     ),
                     child: _contentFocusNode.hasFocus && _noteType == 'text' && !_isPreviewMarkdown
                         ? _buildFormattingToolbar(textColor, titleColor)
@@ -1563,7 +1811,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       data: _contentController.text,
       selectable: true,
       imageBuilder: (uri, title, alt) {
-        final path = uri.scheme == 'file' ? uri.toFilePath() : uri.toString();
+        final cleanUri = uri.hasQuery ? uri.replace(queryParameters: {}) : uri;
+        final path = cleanUri.scheme == 'file' ? cleanUri.toFilePath() : cleanUri.toString();
         return GestureDetector(
           onTap: () {
             Navigator.push(
