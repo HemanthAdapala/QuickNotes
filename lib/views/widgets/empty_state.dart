@@ -4,7 +4,16 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/notes_provider.dart';
 
 class EmptyState extends StatelessWidget {
-  const EmptyState({super.key});
+  final String? title;
+  final String? subtitle;
+  final IconData? icon;
+
+  const EmptyState({
+    super.key,
+    this.title,
+    this.subtitle,
+    this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,19 +29,24 @@ class EmptyState extends StatelessWidget {
     Color containerColor;
 
     if (view == NotesViewType.archive) {
-      visualIcon = Icons.archive_outlined;
-      titleText = "Archive is empty";
-      subtitleText = "Move notes here to declutter your dashboard without losing them permanently.";
+      visualIcon = icon ?? Icons.archive_outlined;
+      titleText = title ?? "Archive is empty";
+      subtitleText = subtitle ?? "Move notes here to declutter your dashboard without losing them permanently.";
       containerColor = theme.colorScheme.secondaryContainer;
     } else if (view == NotesViewType.favorites) {
-      visualIcon = Icons.star_outline_rounded;
-      titleText = "No favorites yet";
-      subtitleText = "Mark important notes as favorites to gather them here in one place.";
+      visualIcon = icon ?? Icons.star_outline_rounded;
+      titleText = title ?? "No favorites yet";
+      subtitleText = subtitle ?? "Mark important notes as favorites to gather them here in one place.";
       containerColor = theme.colorScheme.tertiaryContainer;
+    } else if (view == NotesViewType.trash) {
+      visualIcon = icon ?? Icons.delete_outline_rounded;
+      titleText = title ?? "Trash is empty";
+      subtitleText = subtitle ?? "Notes you delete will appear here before being permanently purged.";
+      containerColor = theme.colorScheme.errorContainer;
     } else {
-      visualIcon = Icons.edit_document;
-      titleText = "Your thoughts are empty";
-      subtitleText = "Capture your ideas, organize tasks, and pin important memories. Tap the button below to write your first note.";
+      visualIcon = icon ?? Icons.edit_document;
+      titleText = title ?? "Your thoughts are empty";
+      subtitleText = subtitle ?? "Capture your ideas, organize tasks, and pin important memories. Tap the button below to write your first note.";
       containerColor = theme.colorScheme.primaryContainer;
     }
 

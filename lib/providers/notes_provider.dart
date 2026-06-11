@@ -53,6 +53,7 @@ class NotesProvider with ChangeNotifier {
   bool get isDarkMode => _isDarkMode;
   bool get isZenModeEnabled => _isZenModeEnabled;
   List<Folder> get folders => _folders;
+  List<Note> get trashNotes => _notes.where((n) => n.isDeleted).toList();
 
   // Filter notes in-memory dynamically based on view type, folder, category, and active tags
   List<Note> get notes {
@@ -389,6 +390,16 @@ class NotesProvider with ChangeNotifier {
     }
   }
 
+  // Import a note directly into the database
+  Future<void> importNote(Note note) async {
+    try {
+      await _dbService.insert(note);
+      await loadNotes();
+    } catch (e) {
+      debugPrint("Error importing note: $e");
+    }
+  }
+
   // Restore a deleted note (Undo action)
   Future<void> restoreNote(Note note) async {
     try {
@@ -463,6 +474,11 @@ class NotesProvider with ChangeNotifier {
     } catch (e) {
       debugPrint("Error restoring note from trash: $e");
     }
+  }
+
+  // Restore note alias for trash screen compatibility
+  Future<void> restoreNoteFromTrash(String id) async {
+    await restoreFromTrash(id);
   }
 
   // Permanently delete a note (Hard delete)

@@ -1,21 +1,17 @@
-Today's Goal:
+# SESSION
 
-Continue Quick Notes.
+## Current Goal
 
-Allowed Context:
+Fix creation note UI issue.
 
-Quick Notes only.
+## Priority
 
-Forbidden Context:
+High
 
-Gravity Notes.
+## Definition of Done
 
-Current Focus:
+- UI should look clean after change to any color
 
-Fix existing issues.
+## Notes
 
-Do not redesign.
-
-Do not migrate.
-
-Do not rename.
+Investigate before implementing.
