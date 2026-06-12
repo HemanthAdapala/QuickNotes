@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'providers/notes_provider.dart';
-import 'views/screens/navigation_shell.dart';
 import 'views/screens/splash_screen.dart';
 
 void main() {
