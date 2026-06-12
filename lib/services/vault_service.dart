@@ -27,10 +27,8 @@ class VaultService {
     try {
       return await _localAuth.authenticate(
         localizedReason: 'Scan fingerprint or face to access Secure Vault',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
       );
     } on PlatformException {
       return false;

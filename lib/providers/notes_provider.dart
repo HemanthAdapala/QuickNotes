@@ -150,7 +150,7 @@ class NotesProvider with ChangeNotifier {
       const initSettings = InitializationSettings(android: androidInit);
       
       await _notificationsPlugin.initialize(
-        initSettings,
+        settings: initSettings,
         onDidReceiveNotificationResponse: (details) {
           debugPrint("Note notification tapped. Payload ID: ${details.payload}");
         },
@@ -765,16 +765,14 @@ class NotesProvider with ChangeNotifier {
       final tzDateTime = tz.TZDateTime.from(reminderDate, tz.local);
 
       await _notificationsPlugin.zonedSchedule(
-        id,
-        "Reminder: ${note.title.isNotEmpty ? note.title : 'Untitled'}",
-        note.noteType == 'checklist' 
+        id: id,
+        title: "Reminder: ${note.title.isNotEmpty ? note.title : 'Untitled'}",
+        body: note.noteType == 'checklist' 
             ? "Your task list is waiting" 
             : (note.content.length > 50 ? "${note.content.substring(0, 50)}..." : note.content),
-        tzDateTime,
-        details,
+        scheduledDate: tzDateTime,
+        notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
         payload: note.id,
       );
       debugPrint("Scheduled alarm for note ${note.id} at $tzDateTime");
@@ -785,7 +783,7 @@ class NotesProvider with ChangeNotifier {
 
   Future<void> _cancelReminder(String noteId) async {
     try {
-      await _notificationsPlugin.cancel(noteId.hashCode);
+      await _notificationsPlugin.cancel(id: noteId.hashCode);
       debugPrint("Cancelled alarm for note $noteId");
     } catch (e) {
       debugPrint("Error cancelling alarm: $e");

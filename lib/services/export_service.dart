@@ -447,9 +447,11 @@ class ExportService {
 
   // --- Share Sheet launcher ---
   Future<void> shareFile(String filePath, String noteTitle) async {
-    await Share.shareXFiles(
-      [XFile(filePath)],
-      text: 'Sharing "$noteTitle" from QuickNotes',
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(filePath)],
+        text: 'Sharing "$noteTitle" from QuickNotes',
+      ),
     );
   }
 }

@@ -18,9 +18,11 @@ class ExportImportScreen extends StatelessWidget {
       final backupString = jsonEncode(notesMap);
       
       // Share backup file directly using Share API
-      await Share.share(
-        backupString,
-        subject: 'QuickNotes_Workspace_Backup.json',
+      await SharePlus.instance.share(
+        ShareParams(
+          text: backupString,
+          subject: 'QuickNotes_Workspace_Backup.json',
+        ),
       );
     } catch (e) {
       if (context.mounted) {
