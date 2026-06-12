@@ -516,9 +516,229 @@ void main() {
 
       await tester.pump(const Duration(milliseconds: 400));
 
-      expect(controller.text, equals('Hello\n\uFFFC\n World'));
-      expect(controller.selection.baseOffset, equals(8));
+      final paragraphFields = tester.widgetList<TextField>(find.byWidgetPredicate(
+        (w) => w is TextField && w.decoration?.hintText != 'Note Title',
+      )).toList();
+      expect(paragraphFields.length, equals(2));
+      expect(paragraphFields[0].controller?.text, equals('Hello'));
+      expect(paragraphFields[1].controller?.text, equals(' World'));
+      expect(paragraphFields[1].focusNode?.hasFocus, isTrue);
 
+      expect(find.byType(ResizableImageWidget), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 11));
+    });
+
+    testWidgets('WYSIWYG: Escape from empty ChecklistBlock to ParagraphBlock on Enter', (WidgetTester tester) async {
+      final textNote = Note(
+        id: 'test_checklist_escape_enter',
+        title: 'Checklist Escape Title',
+        content: '- [ ] Task\n',
+        tags: [],
+        attachments: [],
+        category: 'Personal',
+        noteType: 'text',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        colorValue: 0,
+      );
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => NotesProvider()),
+          ],
+          child: MaterialApp(
+            home: NoteEditorScreen(note: textNote),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(NoteEditorScreen), findsOneWidget);
+
+      final checklistFieldFinder = find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.decoration?.hintText == 'To-do item',
+      );
+      expect(checklistFieldFinder, findsOneWidget);
+
+      await tester.tap(checklistFieldFinder);
+      await tester.pump();
+
+      // Clear text to make it empty
+      await tester.enterText(checklistFieldFinder, '');
+      await tester.pump();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == 'To-do item'), findsNothing);
+      await tester.pump(const Duration(seconds: 11));
+    });
+
+    testWidgets('WYSIWYG: Escape from empty ChecklistBlock to ParagraphBlock on Backspace', (WidgetTester tester) async {
+      final textNote = Note(
+        id: 'test_checklist_escape_backspace',
+        title: 'Checklist Escape Title',
+        content: '- [ ] Task\n',
+        tags: [],
+        attachments: [],
+        category: 'Personal',
+        noteType: 'text',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        colorValue: 0,
+      );
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => NotesProvider()),
+          ],
+          child: MaterialApp(
+            home: NoteEditorScreen(note: textNote),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(NoteEditorScreen), findsOneWidget);
+
+      final checklistFieldFinder = find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.decoration?.hintText == 'To-do item',
+      );
+      expect(checklistFieldFinder, findsOneWidget);
+
+      await tester.tap(checklistFieldFinder);
+      await tester.pump();
+
+      // Clear text to make it empty
+      await tester.enterText(checklistFieldFinder, '');
+      await tester.pump();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await tester.pumpAndSettle();
+
+      expect(find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == 'To-do item'), findsNothing);
+      await tester.pump(const Duration(seconds: 11));
+    });
+
+    testWidgets('WYSIWYG: Horizontal drag resize on ResizableImageWidget', (WidgetTester tester) async {
+      final imgNote = Note(
+        id: 'test_img_resize',
+        title: 'Image Resize Title',
+        content: '![](https://example.com/pic.png?width=200)\n',
+        tags: [],
+        attachments: [],
+        category: 'Personal',
+        noteType: 'text',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        colorValue: 0,
+      );
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => NotesProvider()),
+          ],
+          child: MaterialApp(
+            home: NoteEditorScreen(note: imgNote),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(ResizableImageWidget), findsOneWidget);
+
+      // Single tap on image to show controls
+      await tester.tap(find.byType(Image));
+      await tester.pumpAndSettle();
+
+      // Verify handles are present
+      final handleFinder = find.byIcon(Icons.drag_handle_rounded);
+      expect(handleFinder, findsNWidgets(2)); // Left and right handle icons
+
+      final leftHandleCenter = tester.getCenter(handleFinder.first);
+      final rightHandleCenter = tester.getCenter(handleFinder.last);
+      expect(rightHandleCenter.dx > leftHandleCenter.dx, isTrue);
+
+      // Drag the right handle to the right by 100 pixels
+      final drag = await tester.startGesture(rightHandleCenter);
+      await drag.moveBy(const Offset(100.0, 0));
+      await tester.pump();
+      await drag.up();
+      await tester.pumpAndSettle();
+
+      // Verify widget is still present
+      expect(find.byType(ResizableImageWidget), findsOneWidget);
+      await tester.pump(const Duration(seconds: 11));
+    });
+
+    testWidgets('WYSIWYG: Image stack merging via drag-and-drop', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final imgNote = Note(
+        id: 'test_img_merge',
+        title: 'Image Merge Title',
+        content: '![](https://example.com/pic1.png?width=100)\n\n![](https://example.com/pic2.png?width=100)\n',
+        tags: [],
+        attachments: [],
+        category: 'Personal',
+        noteType: 'text',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        colorValue: 0,
+      );
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => NotesProvider()),
+          ],
+          child: MaterialApp(
+            home: NoteEditorScreen(note: imgNote),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(ResizableImageWidget), findsNWidgets(2));
+
+      final firstImage = find.byType(ResizableImageWidget).at(0);
+      final secondImage = find.byType(ResizableImageWidget).at(1);
+
+      final firstCenter = tester.getCenter(firstImage);
+      final secondCenter = tester.getCenter(secondImage);
+      print('DEBUGGING: firstCenter=$firstCenter, secondCenter=$secondCenter');
+
+      final gesture = await tester.startGesture(firstCenter);
+      await tester.pump(const Duration(milliseconds: 900));
+
+      // Recompute the second image center dynamically after layout has shifted due to childWhenDragging
+      var targetCenter = tester.getCenter(find.byType(ResizableImageWidget).at(1));
+
+      // Drag incrementally
+      final steps = 10;
+      for (int i = 1; i <= steps; i++) {
+        final point = Offset(
+          firstCenter.dx + (targetCenter.dx - firstCenter.dx) * (i / steps),
+          firstCenter.dy + (targetCenter.dy - firstCenter.dy) * (i / steps),
+        );
+        await gesture.moveTo(point);
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      // Re-query targetCenter after hover layout transitions have completed
+      targetCenter = tester.getCenter(find.byType(ResizableImageWidget).at(1));
+      await gesture.moveTo(targetCenter);
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ImageStackWidget), findsOneWidget);
       await tester.pump(const Duration(seconds: 11));
     });
   });

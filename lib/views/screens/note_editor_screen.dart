@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -18,6 +17,9 @@ import '../../services/vault_service.dart';
 import '../widgets/folder_selector_dialog.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
+import 'package:flutter/services.dart';
+import 'dart:math';
+
 
 class NoteEditorScreen extends StatefulWidget {
   final Note? note;
@@ -39,9 +41,926 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   final _titleController = TextEditingController();
   late final TextEditingController _contentController;
   final _tagController = TextEditingController();
+  List<NoteBlock> _blocks = [];
+  int _nextIdCounter = 0;
+  NoteBlock? _lastFocusedBlock;
+
+  String _generateId() {
+    final random = Random();
+    final timestamp = DateTime.now().microsecondsSinceEpoch;
+    final randVal = random.nextInt(10000);
+    return 'block_${timestamp}_${_nextIdCounter++}_$randVal';
+  }
+
+  List<NoteBlock> parseMarkdownToBlocks(String markdown) {
+    final List<NoteBlock> blocks = [];
+    if (markdown.trim().isEmpty) {
+      final newBlock = ParagraphBlock(id: _generateId());
+      _setupBlockFocusNode(newBlock.focusNode);
+      _setupBlockController(newBlock);
+      blocks.add(newBlock);
+      return blocks;
+    }
+
+    final lines = markdown.split('\n');
+    
+    bool isImageLine(String str) {
+      final imageReg = RegExp(r'^!\[(.*?)\]\((.*?)\)$');
+      return imageReg.hasMatch(str.trim());
+    }
+
+    ImageBlock parseImageBlock(String str) {
+      final imageReg = RegExp(r'^!\[(.*?)\]\((.*?)\)$');
+      final match = imageReg.firstMatch(str.trim())!;
+      final alt = match.group(1);
+      final url = match.group(2) ?? '';
+      
+      double? width;
+      String cleanUrl = url;
+      final uri = Uri.tryParse(url);
+      if (uri != null && uri.hasQuery) {
+        final wStr = uri.queryParameters['width'];
+        if (wStr != null) width = double.tryParse(wStr);
+        int qIdx = url.indexOf('?');
+        if (qIdx != -1) {
+          cleanUrl = url.substring(0, qIdx);
+        }
+      }
+      return ImageBlock(
+        id: _generateId(),
+        imageUrl: cleanUrl,
+        width: width,
+        caption: (alt != null && alt.isNotEmpty && alt != 'Image') ? alt : null,
+      );
+    }
+
+    int i = 0;
+    while (i < lines.length) {
+      final line = lines[i];
+      final trimmed = line.trim();
+
+      // Check if empty line
+      if (trimmed.isEmpty) {
+        final newBlock = ParagraphBlock(id: _generateId());
+        _setupBlockFocusNode(newBlock.focusNode);
+        _setupBlockController(newBlock);
+        blocks.add(newBlock);
+        i++;
+        continue;
+      }
+
+      // Check if divider block
+      if (trimmed == '---' || trimmed == '***' || trimmed == '___') {
+        blocks.add(DividerBlock(id: _generateId()));
+        i++;
+        continue;
+      }
+
+      // Check if heading block
+      if (trimmed.startsWith('# ')) {
+        final newBlock = HeadingBlock(id: _generateId(), level: 1, markdown: trimmed.substring(2));
+        _setupBlockFocusNode(newBlock.focusNode);
+        _setupBlockController(newBlock);
+        blocks.add(newBlock);
+        i++;
+        continue;
+      } else if (trimmed.startsWith('## ')) {
+        final newBlock = HeadingBlock(id: _generateId(), level: 2, markdown: trimmed.substring(3));
+        _setupBlockFocusNode(newBlock.focusNode);
+        _setupBlockController(newBlock);
+        blocks.add(newBlock);
+        i++;
+        continue;
+      } else if (trimmed.startsWith('### ')) {
+        final newBlock = HeadingBlock(id: _generateId(), level: 3, markdown: trimmed.substring(4));
+        _setupBlockFocusNode(newBlock.focusNode);
+        _setupBlockController(newBlock);
+        blocks.add(newBlock);
+        i++;
+        continue;
+      }
+
+      // Check if quote block
+      if (trimmed.startsWith('> ')) {
+        final newBlock = QuoteBlock(id: _generateId(), markdown: trimmed.substring(2));
+        _setupBlockFocusNode(newBlock.focusNode);
+        _setupBlockController(newBlock);
+        blocks.add(newBlock);
+        i++;
+        continue;
+      }
+
+      // Check if checklist block
+      if (trimmed.startsWith('- [ ] ')) {
+        final newBlock = ChecklistBlock(id: _generateId(), isChecked: false, markdown: trimmed.substring(6));
+        _setupBlockFocusNode(newBlock.focusNode);
+        _setupBlockController(newBlock);
+        blocks.add(newBlock);
+        i++;
+        continue;
+      } else if (trimmed.startsWith('- [x] ') || trimmed.startsWith('- [X] ')) {
+        final newBlock = ChecklistBlock(id: _generateId(), isChecked: true, markdown: trimmed.substring(6));
+        _setupBlockFocusNode(newBlock.focusNode);
+        _setupBlockController(newBlock);
+        blocks.add(newBlock);
+        i++;
+        continue;
+      }
+
+      // Check if consecutive image blocks
+      if (isImageLine(trimmed)) {
+        final List<ImageBlock> images = [];
+        images.add(parseImageBlock(trimmed));
+        i++;
+        while (i < lines.length && isImageLine(lines[i])) {
+          images.add(parseImageBlock(lines[i]));
+          i++;
+        }
+        if (images.length == 1) {
+          blocks.add(images[0]);
+        } else {
+          blocks.add(ImageStackBlock(id: _generateId(), images: images));
+        }
+        continue;
+      }
+
+      // Default to ParagraphBlock
+      final newBlock = ParagraphBlock(id: _generateId(), markdown: line);
+      _setupBlockFocusNode(newBlock.focusNode);
+      _setupBlockController(newBlock);
+      blocks.add(newBlock);
+      i++;
+    }
+
+    if (blocks.isEmpty) {
+      final newBlock = ParagraphBlock(id: _generateId());
+      _setupBlockFocusNode(newBlock.focusNode);
+      _setupBlockController(newBlock);
+      blocks.add(newBlock);
+    }
+    return blocks;
+  }
+
+  void _setupBlockFocusNode(FocusNode focusNode) {
+    focusNode.addListener(() {
+      if (focusNode.hasFocus) {
+        for (final block in _blocks) {
+          if (_getFocusNodeOfBlock(block) == focusNode) {
+            _lastFocusedBlock = block;
+            break;
+          }
+        }
+      }
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  void _setupBlockController(NoteBlock block) {
+    final controller = _getControllerOfBlock(block);
+    if (controller is RichTextEditingController) {
+      controller.onStyleChanged = () {
+        if (mounted) setState(() {});
+      };
+      controller.onReplaceImage = _showReplaceGalleryBottomSheet;
+    }
+  }
+
+  RichTextEditingController? _getControllerOfBlock(NoteBlock block) {
+    if (block is ParagraphBlock) return block.controller;
+    if (block is HeadingBlock) return block.controller;
+    if (block is QuoteBlock) return block.controller;
+    if (block is ChecklistBlock) return block.controller;
+    return null;
+  }
+
+  FocusNode? _getFocusNodeOfBlock(NoteBlock block) {
+    if (block is ParagraphBlock) return block.focusNode;
+    if (block is HeadingBlock) return block.focusNode;
+    if (block is QuoteBlock) return block.focusNode;
+    if (block is ChecklistBlock) return block.focusNode;
+    return null;
+  }
+
+  void _onBlockTextChanged(NoteBlock block) {
+    final controller = _getControllerOfBlock(block);
+    if (controller == null) return;
+
+    final text = controller.text;
+    if (text.contains('\n')) {
+      final index = _blocks.indexOf(block);
+      if (index == -1) return;
+
+      final lines = text.split('\n');
+      
+      int currentOffset = 0;
+      final List<List<StyledChar>> linesStyledChars = [];
+      for (final line in lines) {
+        final lineChars = controller.styledChars
+            .skip(currentOffset)
+            .take(line.length)
+            .toList();
+        linesStyledChars.add(lineChars);
+        currentOffset += line.length + 1; // plus 1 for the '\n'
+      }
+
+      // Update current block
+      controller.text = lines[0];
+      controller.styledChars = linesStyledChars[0];
+
+      // Create new blocks for the remaining lines
+      final List<NoteBlock> newBlocks = [];
+      for (int i = 1; i < lines.length; i++) {
+        NoteBlock newBlock;
+        if (block is ChecklistBlock) {
+          newBlock = ChecklistBlock(id: _generateId(), isChecked: false);
+        } else if (block is QuoteBlock) {
+          newBlock = QuoteBlock(id: _generateId());
+        } else {
+          newBlock = ParagraphBlock(id: _generateId());
+        }
+        
+        _setupBlockFocusNode(_getFocusNodeOfBlock(newBlock)!);
+        _setupBlockController(newBlock);
+
+        final newBlockController = _getControllerOfBlock(newBlock);
+        if (newBlockController != null) {
+          newBlockController.text = lines[i];
+          newBlockController.styledChars = linesStyledChars[i];
+        }
+        newBlocks.add(newBlock);
+      }
+
+      setState(() {
+        _blocks.insertAll(index + 1, newBlocks);
+        _hasChanges = true;
+      });
+
+      // Focus the new block right after the current one
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final firstNewBlock = newBlocks.first;
+        final fn = _getFocusNodeOfBlock(firstNewBlock);
+        final ctrl = _getControllerOfBlock(firstNewBlock);
+        if (fn != null && ctrl != null) {
+          fn.requestFocus();
+          ctrl.selection = const TextSelection.collapsed(offset: 0);
+        }
+      });
+    } else {
+      _calculateCounts();
+      _startZenTimer();
+      setState(() {
+        _hasChanges = true;
+      });
+    }
+  }
+
+  void _handleEnterKey(NoteBlock block) {
+    final index = _blocks.indexOf(block);
+    if (index == -1) return;
+
+    final controller = _getControllerOfBlock(block);
+    if (controller == null) return;
+
+    if (block is ChecklistBlock && controller.text.isEmpty) {
+      _toggleBlockType(block, ParagraphBlock);
+      return;
+    }
+
+    final selection = controller.selection;
+    final text = controller.text;
+    final styledChars = controller.styledChars;
+
+    int cursor = selection.isValid ? selection.start : text.length;
+    cursor = cursor.clamp(0, text.length);
+
+    final textBefore = text.substring(0, cursor);
+    final textAfter = text.substring(cursor);
+    final charsBefore = styledChars.take(cursor).toList();
+    final charsAfter = styledChars.skip(cursor).toList();
+
+    // Update current block
+    controller.text = textBefore;
+    controller.styledChars = charsBefore;
+
+    // Create new block
+    NoteBlock newBlock;
+    if (block is ChecklistBlock) {
+      newBlock = ChecklistBlock(id: _generateId(), isChecked: false);
+    } else if (block is QuoteBlock) {
+      newBlock = QuoteBlock(id: _generateId());
+    } else {
+      newBlock = ParagraphBlock(id: _generateId());
+    }
+
+    _setupBlockFocusNode(_getFocusNodeOfBlock(newBlock)!);
+    _setupBlockController(newBlock);
+
+    final newBlockController = _getControllerOfBlock(newBlock);
+    if (newBlockController != null) {
+      newBlockController.text = textAfter;
+      newBlockController.styledChars = charsAfter;
+    }
+
+    setState(() {
+      _blocks.insert(index + 1, newBlock);
+      _hasChanges = true;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final fn = _getFocusNodeOfBlock(newBlock);
+      final ctrl = _getControllerOfBlock(newBlock);
+      if (fn != null && ctrl != null) {
+        fn.requestFocus();
+        ctrl.selection = const TextSelection.collapsed(offset: 0);
+      }
+    });
+  }
+
+  void _handleBackspaceAtStart(NoteBlock block) {
+    if (block is ChecklistBlock && block.controller.text.isEmpty) {
+      _toggleBlockType(block, ParagraphBlock);
+      return;
+    }
+
+    final index = _blocks.indexOf(block);
+    if (index <= 0) return;
+
+    final prevBlock = _blocks[index - 1];
+
+    if (prevBlock is ImageBlock || prevBlock is ImageStackBlock || prevBlock is DividerBlock) {
+      // Delete the image/divider/stack block
+      setState(() {
+        _blocks.removeAt(index - 1);
+        _hasChanges = true;
+      });
+    } else {
+      // It's a text-based block. Merge!
+      final currentController = _getControllerOfBlock(block);
+      final prevController = _getControllerOfBlock(prevBlock);
+      if (currentController != null && prevController != null) {
+        final prevLength = prevController.text.length;
+        final mergedStyledChars = List<StyledChar>.from(prevController.styledChars)
+          ..addAll(currentController.styledChars);
+        final mergedText = prevController.text + currentController.text;
+
+        setState(() {
+          prevController.styledChars = mergedStyledChars;
+          prevController.text = mergedText;
+          _blocks.removeAt(index);
+          _hasChanges = true;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final prevFocusNode = _getFocusNodeOfBlock(prevBlock);
+          if (prevFocusNode != null) {
+            prevFocusNode.requestFocus();
+            prevController.selection = TextSelection.collapsed(offset: prevLength);
+          }
+        });
+      }
+    }
+  }
+
+  void _handleArrowUpAtStart(NoteBlock block) {
+    final index = _blocks.indexOf(block);
+    if (index <= 0) return;
+
+    for (int i = index - 1; i >= 0; i--) {
+      final b = _blocks[i];
+      final fn = _getFocusNodeOfBlock(b);
+      final ctrl = _getControllerOfBlock(b);
+      if (fn != null && ctrl != null) {
+        fn.requestFocus();
+        ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
+        break;
+      }
+    }
+  }
+
+  void _handleArrowDownAtEnd(NoteBlock block) {
+    final index = _blocks.indexOf(block);
+    if (index == -1 || index >= _blocks.length - 1) return;
+
+    for (int i = index + 1; i < _blocks.length; i++) {
+      final b = _blocks[i];
+      final fn = _getFocusNodeOfBlock(b);
+      final ctrl = _getControllerOfBlock(b);
+      if (fn != null && ctrl != null) {
+        fn.requestFocus();
+        ctrl.selection = const TextSelection.collapsed(offset: 0);
+        break;
+      }
+    }
+  }
+
+
+  void _insertParagraphAt(int index) {
+    if (index > 0 && index - 1 < _blocks.length) {
+      final prevBlock = _blocks[index - 1];
+      if (prevBlock is ParagraphBlock && prevBlock.controller.text.isEmpty) {
+        prevBlock.focusNode.requestFocus();
+        return;
+      }
+    }
+    if (index < _blocks.length) {
+      final nextBlock = _blocks[index];
+      if (nextBlock is ParagraphBlock && nextBlock.controller.text.isEmpty) {
+        nextBlock.focusNode.requestFocus();
+        return;
+      }
+    }
+
+    final newBlock = ParagraphBlock(id: _generateId());
+    _setupBlockFocusNode(newBlock.focusNode);
+    _setupBlockController(newBlock);
+    
+    setState(() {
+      _blocks.insert(index, newBlock);
+      _hasChanges = true;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      newBlock.focusNode.requestFocus();
+    });
+  }
+
+  double _getSpacingBetween(NoteBlock current, NoteBlock next) {
+    final isCurrentText = current is ParagraphBlock || current is HeadingBlock || current is QuoteBlock;
+    final isNextText = next is ParagraphBlock || next is HeadingBlock || next is QuoteBlock;
+    
+    final isCurrentChecklist = current is ChecklistBlock;
+    final isNextChecklist = next is ChecklistBlock;
+    
+    final isCurrentMedia = current is ImageBlock || current is ImageStackBlock;
+    final isNextMedia = next is ImageBlock || next is ImageStackBlock;
+
+    if (isCurrentText && isNextText) {
+      return 6.0; // Paragraph ↔ Paragraph: 6px
+    }
+    if ((isCurrentText && isNextChecklist) || (isCurrentChecklist && isNextText)) {
+      return 6.0; // Paragraph ↔ Checklist: 6px
+    }
+    if (isCurrentChecklist && isNextChecklist) {
+      return 3.0; // Checklist item ↔ Checklist item: 3px
+    }
+    if ((isCurrentMedia && !isNextMedia) || (!isCurrentMedia && isNextMedia)) {
+      return 14.0; // Media ↔ Any text/checklist block: 14px
+    }
+    if (isCurrentMedia && isNextMedia) {
+      return 14.0;
+    }
+    if (current is DividerBlock || next is DividerBlock) {
+      return 10.0;
+    }
+    return 4.0;
+  }
+
+  Widget _buildBlockWidget(NoteBlock block, Color textColor, Color titleColor) {
+    final blockWidget = _buildRawBlockWidget(block, textColor, titleColor);
+
+    return DragTarget<Map<String, dynamic>>(
+      onWillAcceptWithDetails: (details) {
+        print('DRAG_DEBUG: onWillAcceptWithDetails for target block = ${block.id} (type: ${block.runtimeType}), data = ${details.data}');
+        return details.data['imagePath'] != null;
+      },
+      onLeave: (data) {
+        print('DRAG_DEBUG: onLeave for target block = ${block.id} (type: ${block.runtimeType}), data = $data');
+      },
+      onAcceptWithDetails: (details) {
+        print('DRAG_DEBUG: onAcceptWithDetails for target block = ${block.id} (type: ${block.runtimeType}), data = ${details.data}');
+        final data = details.data;
+        final oldIndex = data['oldIndex'] as int;
+        final stackImgIdx = data['stackImageIndex'] as int?;
+        final targetIndex = _blocks.indexOf(block);
+        if (targetIndex == -1) return;
+        if (oldIndex == targetIndex) return;
+
+        setState(() {
+          // 1. Get the dragged ImageBlock
+          ImageBlock draggedImgBlock;
+          if (stackImgIdx != null) {
+            final sourceStack = _blocks[oldIndex] as ImageStackBlock;
+            draggedImgBlock = sourceStack.images[stackImgIdx];
+            sourceStack.images.removeAt(stackImgIdx);
+            if (sourceStack.images.length == 1) {
+              _blocks[oldIndex] = sourceStack.images[0];
+            }
+          } else {
+            draggedImgBlock = _blocks[oldIndex] as ImageBlock;
+            _blocks.removeAt(oldIndex);
+          }
+
+          // 2. Adjust targetIndex
+          int adjustedTargetIndex = _blocks.indexOf(block);
+          if (adjustedTargetIndex == -1) {
+            adjustedTargetIndex = targetIndex.clamp(0, _blocks.length);
+          }
+
+          // 3. Merge or insert
+          final resolvedTargetBlock = _blocks[adjustedTargetIndex];
+          if (resolvedTargetBlock is ImageBlock) {
+            final stack = ImageStackBlock(
+              id: _generateId(),
+              images: [resolvedTargetBlock, draggedImgBlock],
+            );
+            _blocks[adjustedTargetIndex] = stack;
+          } else if (resolvedTargetBlock is ImageStackBlock) {
+            resolvedTargetBlock.images.add(draggedImgBlock);
+          } else {
+            _blocks.insert(adjustedTargetIndex, draggedImgBlock);
+          }
+          _hasChanges = true;
+        });
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isHovered = candidateData.isNotEmpty;
+        final isImage = block is ImageBlock || block is ImageStackBlock;
+        
+        if (isHovered && isImage) {
+          return Stack(
+            children: [
+              blockWidget,
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2.0),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+        return blockWidget;
+      },
+    );
+  }
+
+  Widget _buildRawBlockWidget(NoteBlock block, Color textColor, Color titleColor) {
+    if (block is ParagraphBlock) {
+      return Focus(
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+              _handleEnterKey(block);
+              return KeyEventResult.handled;
+            }
+            if (event.logicalKey == LogicalKeyboardKey.backspace) {
+              final sel = block.controller.selection;
+              if (sel.isCollapsed && sel.start == 0) {
+                _handleBackspaceAtStart(block);
+                return KeyEventResult.handled;
+              }
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              final sel = block.controller.selection;
+              if (sel.isCollapsed && sel.start == 0) {
+                _handleArrowUpAtStart(block);
+                return KeyEventResult.handled;
+              }
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              final sel = block.controller.selection;
+              if (sel.isCollapsed && sel.start == block.controller.text.length) {
+                _handleArrowDownAtEnd(block);
+                return KeyEventResult.handled;
+              }
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: TextField(
+          controller: block.controller,
+          focusNode: block.focusNode,
+          maxLines: null,
+          keyboardType: TextInputType.multiline,
+          textAlign: block.controller.styledChars.isNotEmpty
+              ? block.controller.styledChars.first.style.align
+              : TextAlign.left,
+          style: GoogleFonts.inter(
+            fontSize: 18.0,
+            color: textColor,
+            height: 1.6,
+          ),
+          decoration: InputDecoration(
+            hintText: _blocks.indexOf(block) == 0 && _blocks.length == 1 ? "Start writing..." : "",
+            hintStyle: GoogleFonts.inter(
+              fontSize: 18.0,
+              color: textColor.withAlpha(80),
+            ),
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+            filled: false,
+          ),
+          onChanged: (val) => _onBlockTextChanged(block),
+        ),
+      );
+    }
+
+    if (block is HeadingBlock) {
+      double fontSize = 20.0;
+      if (block.level == 1) {
+        fontSize = 28.0;
+      } else if (block.level == 2) {
+        fontSize = 24.0;
+      } else if (block.level == 3) {
+        fontSize = 22.0;
+      }
+
+      return Focus(
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+              _handleEnterKey(block);
+              return KeyEventResult.handled;
+            }
+            if (event.logicalKey == LogicalKeyboardKey.backspace) {
+              final sel = block.controller.selection;
+              if (sel.isCollapsed && sel.start == 0) {
+                _handleBackspaceAtStart(block);
+                return KeyEventResult.handled;
+              }
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              final sel = block.controller.selection;
+              if (sel.isCollapsed && sel.start == 0) {
+                _handleArrowUpAtStart(block);
+                return KeyEventResult.handled;
+              }
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              final sel = block.controller.selection;
+              if (sel.isCollapsed && sel.start == block.controller.text.length) {
+                _handleArrowDownAtEnd(block);
+                return KeyEventResult.handled;
+              }
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: TextField(
+          controller: block.controller,
+          focusNode: block.focusNode,
+          maxLines: null,
+          keyboardType: TextInputType.multiline,
+          style: GoogleFonts.outfit(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            color: titleColor,
+          ),
+          decoration: InputDecoration(
+            hintText: "Heading ${block.level}",
+            hintStyle: GoogleFonts.outfit(
+              fontSize: fontSize,
+              fontWeight: FontWeight.bold,
+              color: titleColor.withAlpha(80),
+            ),
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+            filled: false,
+          ),
+          onChanged: (val) => _onBlockTextChanged(block),
+        ),
+      );
+    }
+
+    if (block is QuoteBlock) {
+      return Container(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              color: titleColor.withAlpha(100),
+              width: 4.0,
+            ),
+          ),
+        ),
+        padding: const EdgeInsets.only(left: 12.0),
+        margin: EdgeInsets.zero,
+        child: Focus(
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+                _handleEnterKey(block);
+                return KeyEventResult.handled;
+              }
+              if (event.logicalKey == LogicalKeyboardKey.backspace) {
+                final sel = block.controller.selection;
+                if (sel.isCollapsed && sel.start == 0) {
+                  _handleBackspaceAtStart(block);
+                  return KeyEventResult.handled;
+                }
+              }
+              if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                final sel = block.controller.selection;
+                if (sel.isCollapsed && sel.start == 0) {
+                  _handleArrowUpAtStart(block);
+                  return KeyEventResult.handled;
+                }
+              }
+              if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                final sel = block.controller.selection;
+                if (sel.isCollapsed && sel.start == block.controller.text.length) {
+                  _handleArrowDownAtEnd(block);
+                  return KeyEventResult.handled;
+                }
+              }
+            }
+            return KeyEventResult.ignored;
+          },
+          child: TextField(
+            controller: block.controller,
+            focusNode: block.focusNode,
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
+            style: GoogleFonts.inter(
+              fontSize: 18.0,
+              color: textColor.withAlpha(220),
+              fontStyle: FontStyle.italic,
+              height: 1.6,
+            ),
+            decoration: InputDecoration(
+              hintText: "Quote",
+              hintStyle: GoogleFonts.inter(
+                fontSize: 18.0,
+                color: textColor.withAlpha(80),
+                fontStyle: FontStyle.italic,
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+              filled: false,
+            ),
+            onChanged: (val) => _onBlockTextChanged(block),
+          ),
+        ),
+      );
+    }
+
+    if (block is ChecklistBlock) {
+      return Padding(
+        padding: EdgeInsets.zero,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Checkbox(
+              value: block.isChecked,
+              activeColor: Theme.of(context).colorScheme.primary,
+              onChanged: (bool? val) {
+                setState(() {
+                  block.isChecked = val ?? false;
+                  _hasChanges = true;
+                });
+              },
+            ),
+            Expanded(
+              child: Focus(
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent) {
+                    if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+                      _handleEnterKey(block);
+                      return KeyEventResult.handled;
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.backspace) {
+                      final sel = block.controller.selection;
+                      if (sel.isCollapsed && sel.start == 0) {
+                        _handleBackspaceAtStart(block);
+                        return KeyEventResult.handled;
+                      }
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                      final sel = block.controller.selection;
+                      if (sel.isCollapsed && sel.start == 0) {
+                        _handleArrowUpAtStart(block);
+                        return KeyEventResult.handled;
+                      }
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                      final sel = block.controller.selection;
+                      if (sel.isCollapsed && sel.start == block.controller.text.length) {
+                        _handleArrowDownAtEnd(block);
+                        return KeyEventResult.handled;
+                      }
+                    }
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: TextField(
+                  controller: block.controller,
+                  focusNode: block.focusNode,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  style: GoogleFonts.inter(
+                    fontSize: 16.0,
+                    color: block.isChecked ? textColor.withAlpha(120) : textColor,
+                    decoration: block.isChecked ? TextDecoration.lineThrough : null,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: "To-do item",
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    filled: false,
+                  ),
+                  onChanged: (val) => _onBlockTextChanged(block),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (block is ImageBlock) {
+      return ResizableImageWidget(
+        imagePath: block.imageUrl,
+        initialWidth: block.width,
+        caption: block.caption,
+        index: _blocks.indexOf(block),
+        onUpdate: (newWidth, newCaption) {
+          setState(() {
+            block.width = newWidth;
+            block.caption = newCaption;
+            _hasChanges = true;
+          });
+        },
+        onDelete: () {
+          setState(() {
+            _blocks.remove(block);
+            _hasChanges = true;
+          });
+        },
+        onReplace: () => _showReplaceGalleryBottomSheet(_blocks.indexOf(block)),
+      );
+    }
+
+    if (block is ImageStackBlock) {
+      return ImageStackWidget(
+        block: block,
+        textColor: textColor,
+        titleColor: titleColor,
+        index: _blocks.indexOf(block),
+        onUpdate: () {
+          setState(() {
+            _hasChanges = true;
+          });
+        },
+        onDeleteImage: (imgBlock) {
+          setState(() {
+            block.images.remove(imgBlock);
+            if (block.images.isEmpty) {
+              _blocks.remove(block);
+            } else if (block.images.length == 1) {
+              final idx = _blocks.indexOf(block);
+              if (idx != -1) {
+                _blocks[idx] = block.images[0];
+              }
+            }
+            _hasChanges = true;
+          });
+        },
+        onReplaceImage: (imgBlock, stackImageIndex) {
+          _showReplaceGalleryBottomSheet(
+            _blocks.indexOf(block),
+            stackImageIndex: stackImageIndex,
+          );
+        },
+      );
+    }
+
+    if (block is DividerBlock) {
+      return Container(
+        margin: EdgeInsets.zero,
+        child: Row(
+          children: [
+            Expanded(
+              child: Divider(
+                color: textColor.withAlpha(40),
+                thickness: 1.5,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, size: 18),
+              onPressed: () {
+                setState(() {
+                  _blocks.remove(block);
+                  _hasChanges = true;
+                });
+              },
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
   final _contentFocusNode = FocusNode();
   final _pageController = PageController();
-  final GlobalKey _textFieldKey = GlobalKey();
   int _currentPage = 0;
   
   int _colorIndex = 0;
@@ -120,12 +1039,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         _checklistControllers = _checklistItems.map((item) => TextEditingController(text: item['text'] ?? "")).toList();
         _contentController = TextEditingController();
       } else {
-        _contentController = RichTextEditingController(markdown: widget.note!.content);
-        final richCtrl = _contentController as RichTextEditingController;
-        richCtrl.onStyleChanged = () {
-          if (mounted) setState(() {});
-        };
-        richCtrl.onReplaceImage = _showReplaceGalleryBottomSheet;
+        _contentController = TextEditingController();
+        _blocks = parseMarkdownToBlocks(widget.note!.content);
       }
     } else {
       _category = widget.defaultCategory;
@@ -137,12 +1052,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _habitLastCompleted = null;
 
       if (_noteType == 'text') {
-        _contentController = RichTextEditingController();
-        final richCtrl = _contentController as RichTextEditingController;
-        richCtrl.onStyleChanged = () {
-          if (mounted) setState(() {});
-        };
-        richCtrl.onReplaceImage = _showReplaceGalleryBottomSheet;
+        _contentController = TextEditingController();
+        final firstBlock = ParagraphBlock(id: _generateId());
+        _setupBlockFocusNode(firstBlock.focusNode);
+        _setupBlockController(firstBlock);
+        _blocks = [firstBlock];
       } else {
         _contentController = TextEditingController();
       }
@@ -178,8 +1092,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             setState(() {
               _isPageSettled = true;
             });
-            if (widget.note == null && _noteType == 'text') {
-              _contentFocusNode.requestFocus();
+            if (widget.note == null && _noteType == 'text' && _blocks.isNotEmpty) {
+              final firstBlock = _blocks.first;
+              if (firstBlock is ParagraphBlock) {
+                firstBlock.focusNode.requestFocus();
+              }
             }
           }
         } else {
@@ -190,8 +1107,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 setState(() {
                   _isPageSettled = true;
                 });
-                if (widget.note == null && _noteType == 'text') {
-                  _contentFocusNode.requestFocus();
+                if (widget.note == null && _noteType == 'text' && _blocks.isNotEmpty) {
+                  final firstBlock = _blocks.first;
+                  if (firstBlock is ParagraphBlock) {
+                    firstBlock.focusNode.requestFocus();
+                  }
                 }
               }
             }
@@ -203,8 +1123,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           setState(() {
             _isPageSettled = true;
           });
-          if (widget.note == null && _noteType == 'text') {
-            _contentFocusNode.requestFocus();
+          if (widget.note == null && _noteType == 'text' && _blocks.isNotEmpty) {
+            final firstBlock = _blocks.first;
+            if (firstBlock is ParagraphBlock) {
+              firstBlock.focusNode.requestFocus();
+            }
           }
         }
       }
@@ -220,6 +1143,21 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _pageController.dispose();
     for (final controller in _checklistControllers) {
       controller.dispose();
+    }
+    for (final block in _blocks) {
+      if (block is ParagraphBlock) {
+        block.controller.dispose();
+        block.focusNode.dispose();
+      } else if (block is HeadingBlock) {
+        block.controller.dispose();
+        block.focusNode.dispose();
+      } else if (block is QuoteBlock) {
+        block.controller.dispose();
+        block.focusNode.dispose();
+      } else if (block is ChecklistBlock) {
+        block.controller.dispose();
+        block.focusNode.dispose();
+      }
     }
     _recordTimer?.cancel();
     _zenTimer?.cancel();
@@ -269,15 +1207,36 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     });
   }
 
-  TextAlign _getCurrentLineAlignment() {
-    if (_contentController is RichTextEditingController) {
-      final controller = _contentController as RichTextEditingController;
-      final sel = controller.selection;
-      if (sel.isValid && sel.start >= 0 && sel.start < controller.styledChars.length) {
-        return controller.styledChars[sel.start].style.align;
-      }
+
+  NoteBlock? get _focusedBlock {
+    for (final block in _blocks) {
+      final fn = _getFocusNodeOfBlock(block);
+      if (fn != null && fn.hasFocus) return block;
     }
-    return TextAlign.left;
+    if (_lastFocusedBlock != null && _blocks.contains(_lastFocusedBlock)) {
+      return _lastFocusedBlock;
+    }
+    for (final block in _blocks) {
+      if (block is! ImageBlock && block is! DividerBlock) return block;
+    }
+    return null;
+  }
+
+  RichTextEditingController? get _activeController {
+    final block = _focusedBlock;
+    if (block is ParagraphBlock) return block.controller;
+    if (block is HeadingBlock) return block.controller;
+    if (block is QuoteBlock) return block.controller;
+    if (block is ChecklistBlock) return block.controller;
+    return null;
+  }
+
+  bool get _anyBlockHasFocus {
+    for (final block in _blocks) {
+      final fn = _getFocusNodeOfBlock(block);
+      if (fn != null && fn.hasFocus) return true;
+    }
+    return false;
   }
 
   void _calculateCounts() {
@@ -285,7 +1244,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     if (_noteType == 'checklist') {
       text = _checklistItems.map((e) => e['text'].toString()).join(" ");
     } else {
-      text = _contentController.text.trim();
+      text = _blocks.map((b) {
+        if (b is ParagraphBlock) return b.controller.text;
+        if (b is HeadingBlock) return b.controller.text;
+        if (b is QuoteBlock) return b.controller.text;
+        if (b is ChecklistBlock) return b.controller.text;
+        return "";
+      }).join(" ").trim();
     }
     setState(() {
       _charCount = text.length;
@@ -518,8 +1483,71 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   Future<void> _insertSelectedImages(List<String> paths) async {
     for (final path in paths) {
       if (_noteType == 'text') {
-        final String markdownImage = '![Image]($path)';
-        _insertTextAtCursor(markdownImage);
+        final activeBlock = _focusedBlock;
+        if (activeBlock != null) {
+          final index = _blocks.indexOf(activeBlock);
+          if (index != -1) {
+            String textBefore = "";
+            String textAfter = "";
+            List<StyledChar> charsBefore = [];
+            List<StyledChar> charsAfter = [];
+
+            final activeController = _getControllerOfBlock(activeBlock);
+            if (activeController != null) {
+              final sel = activeController.selection;
+              final text = activeController.text;
+              final styledChars = activeController.styledChars;
+
+              int cursor = sel.isValid ? sel.start : text.length;
+              cursor = cursor.clamp(0, text.length);
+
+              textBefore = text.substring(0, cursor);
+              textAfter = text.substring(cursor);
+              charsBefore = styledChars.take(cursor).toList();
+              charsAfter = styledChars.skip(cursor).toList();
+            }
+
+            final beforeBlock = ParagraphBlock(id: _generateId());
+            _setupBlockFocusNode(beforeBlock.focusNode);
+            _setupBlockController(beforeBlock);
+            beforeBlock.controller.styledChars = charsBefore;
+            beforeBlock.controller.text = textBefore;
+
+            final imgBlock = ImageBlock(id: _generateId(), imageUrl: path);
+
+            final afterBlock = ParagraphBlock(id: _generateId());
+            _setupBlockFocusNode(afterBlock.focusNode);
+            _setupBlockController(afterBlock);
+            afterBlock.controller.styledChars = charsAfter;
+            afterBlock.controller.text = textAfter;
+
+            setState(() {
+              _blocks.removeAt(index);
+              _blocks.insert(index, beforeBlock);
+              _blocks.insert(index + 1, imgBlock);
+              _blocks.insert(index + 2, afterBlock);
+              _hasChanges = true;
+            });
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              afterBlock.focusNode.requestFocus();
+              afterBlock.controller.selection = const TextSelection.collapsed(offset: 0);
+            });
+          }
+        } else {
+          final imgBlock = ImageBlock(id: _generateId(), imageUrl: path);
+          final afterBlock = ParagraphBlock(id: _generateId());
+          _setupBlockFocusNode(afterBlock.focusNode);
+          _setupBlockController(afterBlock);
+          setState(() {
+            _blocks.add(imgBlock);
+            _blocks.add(afterBlock);
+            _hasChanges = true;
+          });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            afterBlock.focusNode.requestFocus();
+          });
+        }
       } else {
         setState(() {
           _attachments.add({
@@ -533,7 +1561,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     }
   }
 
-  Future<void> _showReplaceGalleryBottomSheet(int index) async {
+  Future<void> _showReplaceGalleryBottomSheet(int index, {int? stackImageIndex}) async {
     final theme = Theme.of(context);
     final List<String> sampleUrls = [
       'https://images.unsplash.com/photo-1517842645767-c639042777db?w=500&q=80',
@@ -581,7 +1609,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                             Navigator.pop(context);
                             final picked = await _imagePicker.pickImage(source: ImageSource.camera);
                             if (picked != null) {
-                              _replaceImage(index, 'file://${picked.path}');
+                              _replaceImage(index, 'file://${picked.path}', stackImageIndex: stackImageIndex);
                             }
                           },
                           borderRadius: BorderRadius.circular(12),
@@ -606,7 +1634,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                             Navigator.pop(context);
                             final picked = await _imagePicker.pickImage(source: ImageSource.gallery);
                             if (picked != null) {
-                              _replaceImage(index, 'file://${picked.path}');
+                              _replaceImage(index, 'file://${picked.path}', stackImageIndex: stackImageIndex);
                             }
                           },
                           borderRadius: BorderRadius.circular(12),
@@ -630,7 +1658,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         return GestureDetector(
                           onTap: () {
                             Navigator.pop(context);
-                            _replaceImage(index, url);
+                            _replaceImage(index, url, stackImageIndex: stackImageIndex);
                           },
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
@@ -656,98 +1684,40 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     );
   }
 
-  void _replaceImage(int index, String newPath) {
-    if (_contentController is RichTextEditingController) {
-      final controller = _contentController as RichTextEditingController;
-      if (index >= 0 && index < controller.styledChars.length) {
-        controller.styledChars[index] = StyledChar(
-          char: controller.styledChars[index].char,
-          style: controller.styledChars[index].style.copyWith(
-            imageUrl: newPath,
-          ),
-        );
-        final newTextStr = controller.styledChars.map((sc) => sc.char).join();
-        controller.value = TextEditingValue(
-          text: newTextStr,
-          selection: controller.selection,
-        );
+  void _replaceImage(int index, String newPath, {int? stackImageIndex}) {
+    if (index >= 0 && index < _blocks.length) {
+      final block = _blocks[index];
+      if (stackImageIndex != null && block is ImageStackBlock) {
         setState(() {
+          final oldImg = block.images[stackImageIndex];
+          block.images[stackImageIndex] = ImageBlock(
+            id: oldImg.id,
+            imageUrl: newPath,
+            width: oldImg.width,
+            caption: oldImg.caption,
+          );
+          _hasChanges = true;
+        });
+      } else if (block is ImageBlock) {
+        setState(() {
+          _blocks[index] = ImageBlock(
+            id: block.id,
+            imageUrl: newPath,
+            width: block.width,
+            caption: block.caption,
+          );
           _hasChanges = true;
         });
       }
     }
   }
 
-  void _moveInlineImage(int oldIndex, Offset globalOffset) {
-    if (_contentController is! RichTextEditingController) return;
-    final controller = _contentController as RichTextEditingController;
-    
-    final renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-    
-    final renderEditable = _findRenderEditable(renderBox);
-    if (renderEditable == null) return;
-    
-    final localOffset = renderEditable.globalToLocal(globalOffset);
-    final textPosition = renderEditable.getPositionForPoint(localOffset);
-    int targetIndex = textPosition.offset;
-    
-    if (targetIndex < 0 || targetIndex > controller.styledChars.length) return;
-    
-    setState(() {
-      final char = controller.styledChars.removeAt(oldIndex);
-      int insertIdx = targetIndex;
-      if (insertIdx > oldIndex) {
-        insertIdx--;
-      }
-      insertIdx = insertIdx.clamp(0, controller.styledChars.length);
-      controller.styledChars.insert(insertIdx, char);
-      
-      final newTextStr = controller.styledChars.map((sc) => sc.char).join();
-      controller.value = TextEditingValue(
-        text: newTextStr,
-        selection: TextSelection.collapsed(offset: insertIdx),
-      );
-      _hasChanges = true;
-    });
-  }
-
-  void _hoverInlineImage(Offset globalOffset) {
-    if (_contentController is! RichTextEditingController) return;
-    final controller = _contentController as RichTextEditingController;
-    
-    final renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-    
-    final renderEditable = _findRenderEditable(renderBox);
-    if (renderEditable == null) return;
-    
-    final localOffset = renderEditable.globalToLocal(globalOffset);
-    final textPosition = renderEditable.getPositionForPoint(localOffset);
-    int targetIndex = textPosition.offset;
-    
-    if (targetIndex >= 0 && targetIndex <= controller.styledChars.length) {
-      controller.selection = TextSelection.collapsed(offset: targetIndex);
-    }
-  }
-
-  RenderEditable? _findRenderEditable(RenderObject? root) {
-    if (root is RenderEditable) return root;
-    RenderEditable? result;
-    root?.visitChildren((child) {
-      final found = _findRenderEditable(child);
-      if (found != null) {
-        result = found;
-      }
-    });
-    return result;
-  }
-
   void _toggleNoteType() {
     setState(() {
       if (_noteType == 'text') {
         // Convert plain text to checklist
-        final lines = _contentController.text.split('\n');
+        final textContent = _blocks.map((b) => b.toMarkdown()).join('\n');
+        final lines = textContent.split('\n');
         _checklistItems = lines
             .where((line) => line.trim().isNotEmpty)
             .map((line) {
@@ -786,11 +1756,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           return '$prefix${item['text'] ?? ""}';
         }).join('\n');
         
-        if (_contentController is RichTextEditingController) {
-          (_contentController as RichTextEditingController).setMarkdown(text);
-        } else {
-          _contentController.text = text;
-        }
+        _blocks = parseMarkdownToBlocks(text);
         _noteType = 'text';
       }
       _hasChanges = true;
@@ -883,9 +1849,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       final title = _titleController.text.trim();
       final content = _noteType == 'checklist' 
           ? jsonEncode(_checklistItems) 
-          : (_contentController is RichTextEditingController
-              ? generateMarkdownFromStyledChars((_contentController as RichTextEditingController).styledChars).trim()
-              : _contentController.text.trim());
+          : _blocks.map((b) => b.toMarkdown()).join('\n').trim();
 
       if (title.isEmpty && content.isEmpty) return;
 
@@ -974,9 +1938,95 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     }
   }
 
+  void _toggleBlockType(NoteBlock block, Type targetType, {int? headingLevel, bool? isChecked}) {
+    final index = _blocks.indexOf(block);
+    if (index == -1) return;
+
+    String text = "";
+    List<StyledChar> styledChars = [];
+    TextSelection selection = const TextSelection.collapsed(offset: 0);
+
+    if (block is ParagraphBlock) {
+      text = block.controller.text;
+      styledChars = block.controller.styledChars;
+      selection = block.controller.selection;
+      block.focusNode.unfocus();
+    } else if (block is HeadingBlock) {
+      text = block.controller.text;
+      styledChars = block.controller.styledChars;
+      selection = block.controller.selection;
+      block.focusNode.unfocus();
+    } else if (block is QuoteBlock) {
+      text = block.controller.text;
+      styledChars = block.controller.styledChars;
+      selection = block.controller.selection;
+      block.focusNode.unfocus();
+    } else if (block is ChecklistBlock) {
+      text = block.controller.text;
+      styledChars = block.controller.styledChars;
+      selection = block.controller.selection;
+      block.focusNode.unfocus();
+    }
+
+    NoteBlock newBlock;
+    final id = block.id;
+
+    if (targetType == HeadingBlock) {
+      newBlock = HeadingBlock(id: id, level: headingLevel ?? 1, markdown: "");
+    } else if (targetType == QuoteBlock) {
+      newBlock = QuoteBlock(id: id, markdown: "");
+    } else if (targetType == ChecklistBlock) {
+      newBlock = ChecklistBlock(id: id, isChecked: isChecked ?? false, markdown: "");
+    } else if (targetType == DividerBlock) {
+      newBlock = DividerBlock(id: id);
+    } else {
+      newBlock = ParagraphBlock(id: id, markdown: "");
+    }
+
+    if (newBlock is ParagraphBlock) {
+      newBlock.controller.styledChars = styledChars;
+      newBlock.controller.text = text;
+      newBlock.controller.selection = selection;
+      _setupBlockFocusNode(newBlock.focusNode);
+      _setupBlockController(newBlock);
+    } else if (newBlock is HeadingBlock) {
+      newBlock.controller.styledChars = styledChars;
+      newBlock.controller.text = text;
+      newBlock.controller.selection = selection;
+      _setupBlockFocusNode(newBlock.focusNode);
+      _setupBlockController(newBlock);
+    } else if (newBlock is QuoteBlock) {
+      newBlock.controller.styledChars = styledChars;
+      newBlock.controller.text = text;
+      newBlock.controller.selection = selection;
+      _setupBlockFocusNode(newBlock.focusNode);
+      _setupBlockController(newBlock);
+    } else if (newBlock is ChecklistBlock) {
+      newBlock.controller.styledChars = styledChars;
+      newBlock.controller.text = text;
+      newBlock.controller.selection = selection;
+      _setupBlockFocusNode(newBlock.focusNode);
+      _setupBlockController(newBlock);
+    }
+
+    setState(() {
+      _blocks[index] = newBlock;
+      _hasChanges = true;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final fn = _getFocusNodeOfBlock(newBlock);
+      if (fn != null) {
+        fn.requestFocus();
+      }
+    });
+  }
+
   void _wrapSelection(String prefix, String suffix) {
-    if (_contentController is RichTextEditingController) {
-      final controller = _contentController as RichTextEditingController;
+    if (_noteType == 'text') {
+      final controller = _activeController;
+      if (controller == null) return;
+
       if (prefix == '**') {
         controller.toggleStyleAttribute('bold');
       } else if (prefix == '*') {
@@ -993,8 +2043,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         final alignName = prefix.split('"')[1];
         controller.toggleParagraphStyle('align-$alignName');
       } else {
-        final text = _contentController.text;
-        final selection = _contentController.selection;
+        final text = controller.text;
+        final selection = controller.selection;
         int start = selection.start;
         int end = selection.end;
         if (start == -1 || end == -1) {
@@ -1004,7 +2054,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         final selectedText = text.substring(start, end);
         final replacement = '$prefix$selectedText$suffix';
         final newText = text.replaceRange(start, end, replacement);
-        _contentController.value = TextEditingValue(
+        controller.value = TextEditingValue(
           text: newText,
           selection: TextSelection(
             baseOffset: start + prefix.length,
@@ -1012,7 +2062,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           ),
         );
       }
-      _onContentTextChanged();
+      _calculateCounts();
+      _startZenTimer();
+      setState(() {
+        _hasChanges = true;
+      });
       return;
     }
 
@@ -1020,16 +2074,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final selection = _contentController.selection;
     int start = selection.start;
     int end = selection.end;
-    
     if (start == -1 || end == -1) {
       start = text.length;
       end = start;
     }
-    
     final selectedText = text.substring(start, end);
     final replacement = '$prefix$selectedText$suffix';
     final newText = text.replaceRange(start, end, replacement);
-    
     _contentController.value = TextEditingValue(
       text: newText,
       selection: TextSelection(
@@ -1041,60 +2092,32 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   void _insertTextAtCursor(String textToInsert) {
-    if (_contentController is RichTextEditingController) {
-      final controller = _contentController as RichTextEditingController;
+    if (_noteType == 'text') {
+      final controller = _activeController;
+      if (controller == null) return;
+
       if (textToInsert == '> ') {
-        controller.toggleParagraphStyle('quote');
+        final block = _focusedBlock;
+        if (block != null) _toggleBlockType(block, QuoteBlock);
       } else if (textToInsert == '# ') {
-        controller.toggleParagraphStyle('h1');
+        final block = _focusedBlock;
+        if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 1);
       } else if (textToInsert == '## ') {
-        controller.toggleParagraphStyle('h2');
+        final block = _focusedBlock;
+        if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 2);
       } else if (textToInsert == '### ') {
-        controller.toggleParagraphStyle('h3');
+        final block = _focusedBlock;
+        if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 3);
       } else if (textToInsert == '- ') {
         controller.toggleParagraphStyle('bullet');
       } else if (textToInsert == '1. ') {
         controller.toggleParagraphStyle('number');
       } else if (textToInsert == '\u2610') {
-        controller.toggleParagraphStyle('checkbox');
-      } else if (textToInsert.startsWith('![') || textToInsert.contains('![')) {
-        final parsedChars = parseMarkdownToStyledChars(textToInsert);
-        final oldSel = controller.selection;
-        int start = oldSel.start;
-        int end = oldSel.end;
-        if (start == -1 || end == -1) {
-          start = controller.text.length;
-          end = start;
-        }
-
-        bool prependNewline = false;
-        if (start > 0 && controller.styledChars[start - 1].char != '\n') {
-          prependNewline = true;
-        }
-        
-        final List<StyledChar> insertBlock = [];
-        if (prependNewline) {
-          insertBlock.add(StyledChar(char: '\n', style: const Style()));
-        }
-        insertBlock.addAll(parsedChars);
-        insertBlock.add(StyledChar(char: '\n', style: const Style()));
-
-        final newChars = List<StyledChar>.from(controller.styledChars);
-        if (end > start) {
-          newChars.removeRange(start, end);
-        }
-        newChars.insertAll(start, insertBlock);
-        controller.styledChars = newChars;
-
-        final newText = controller.styledChars.map((sc) => sc.char).join();
-        final int cursorOffset = start + (prependNewline ? 1 : 0) + parsedChars.length + 1;
-        controller.value = TextEditingValue(
-          text: newText,
-          selection: TextSelection.collapsed(offset: cursorOffset.clamp(0, newText.length)),
-        );
+        final block = _focusedBlock;
+        if (block != null) _toggleBlockType(block, ChecklistBlock);
       } else {
-        final text = _contentController.text;
-        final selection = _contentController.selection;
+        final text = controller.text;
+        final selection = controller.selection;
         int start = selection.start;
         int end = selection.end;
         if (start == -1 || end == -1) {
@@ -1102,12 +2125,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           end = start;
         }
         final newText = text.replaceRange(start, end, textToInsert);
-        _contentController.value = TextEditingValue(
+        controller.value = TextEditingValue(
           text: newText,
           selection: TextSelection.collapsed(offset: start + textToInsert.length),
         );
       }
-      _onContentTextChanged();
+      _calculateCounts();
+      _startZenTimer();
+      setState(() {
+        _hasChanges = true;
+      });
       return;
     }
 
@@ -1115,12 +2142,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final selection = _contentController.selection;
     int start = selection.start;
     int end = selection.end;
-    
     if (start == -1 || end == -1) {
       start = text.length;
       end = start;
     }
-    
     final newText = text.replaceRange(start, end, textToInsert);
     _contentController.value = TextEditingValue(
       text: newText,
@@ -1523,7 +2548,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                     ),
                     buildToolbarButton(
                       icon: Icons.keyboard_hide_rounded,
-                      onPressed: () => _contentFocusNode.unfocus(),
+                      onPressed: () => FocusScope.of(context).unfocus(),
                       tooltip: 'Hide Keyboard',
                     ),
                   ]),
@@ -1869,10 +2894,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   onAcceptWithDetails: (details) {
                     final data = details.data;
                     final oldIndex = data['oldIndex'] as int;
-                    _moveInlineImage(oldIndex, details.offset);
-                  },
-                  onMove: (details) {
-                    _hoverInlineImage(details.offset);
+                    if (oldIndex != -1 && oldIndex < _blocks.length) {
+                      setState(() {
+                        final imgBlock = _blocks.removeAt(oldIndex);
+                        _blocks.add(imgBlock);
+                        _hasChanges = true;
+                      });
+                    }
                   },
                   builder: (context, candidateData, rejectedData) {
                     return CustomScrollView(
@@ -1950,35 +2978,104 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                       _buildMarkdownPreview(textColor)
                                     else
                                       Expanded(
-                                        child: GestureDetector(
-                                          behavior: HitTestBehavior.opaque,
-                                          onTap: () {
-                                            _contentFocusNode.requestFocus();
-                                            _contentController.selection = TextSelection.collapsed(offset: _contentController.text.length);
-                                          },
-                                          child: TextField(
-                                            key: _textFieldKey,
-                                            controller: _contentController,
-                                            focusNode: _contentFocusNode,
-                                            maxLines: null,
-                                            keyboardType: TextInputType.multiline,
-                                            textAlign: _getCurrentLineAlignment(),
-                                            style: GoogleFonts.inter(
-                                              fontSize: 18.0,
-                                              color: textColor,
-                                              height: 1.6,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            DragTarget<Map<String, dynamic>>(
+                                              onWillAcceptWithDetails: (details) => details.data['imagePath'] != null,
+                                              onAcceptWithDetails: (details) {
+                                                final data = details.data;
+                                                final oldIndex = data['oldIndex'] as int;
+                                                final stackImgIdx = data['stackImageIndex'] as int?;
+                                                setState(() {
+                                                  ImageBlock draggedImgBlock;
+                                                  if (stackImgIdx != null) {
+                                                    final sourceStack = _blocks[oldIndex] as ImageStackBlock;
+                                                    draggedImgBlock = sourceStack.images[stackImgIdx];
+                                                    sourceStack.images.removeAt(stackImgIdx);
+                                                    if (sourceStack.images.length == 1) {
+                                                      _blocks[oldIndex] = sourceStack.images[0];
+                                                    }
+                                                  } else {
+                                                    draggedImgBlock = _blocks[oldIndex] as ImageBlock;
+                                                    _blocks.removeAt(oldIndex);
+                                                  }
+                                                  _blocks.insert(0, draggedImgBlock);
+                                                  _hasChanges = true;
+                                                });
+                                              },
+                                              builder: (context, candidateData, rejectedData) {
+                                                final isHovered = candidateData.isNotEmpty;
+                                                return GestureDetector(
+                                                  behavior: HitTestBehavior.opaque,
+                                                  onTap: () => _insertParagraphAt(0),
+                                                  child: Container(
+                                                    height: isHovered ? 24.0 : 16.0,
+                                                    color: isHovered ? theme.colorScheme.primary.withOpacity(0.15) : Colors.transparent,
+                                                  ),
+                                                );
+                                              },
                                             ),
-                                            decoration: InputDecoration(
-                                              hintText: "Start writing...",
-                                              hintStyle: GoogleFonts.inter(
-                                                fontSize: 18.0,
-                                                color: textColor.withAlpha(80),
+                                            ...() {
+                                              final List<Widget> list = [];
+                                              for (int i = 0; i < _blocks.length; i++) {
+                                                list.add(_buildBlockWidget(_blocks[i], textColor, titleColor));
+                                                
+                                                if (i < _blocks.length - 1) {
+                                                  final spacing = _getSpacingBetween(_blocks[i], _blocks[i + 1]);
+                                                  list.add(
+                                                    DragTarget<Map<String, dynamic>>(
+                                                      onWillAcceptWithDetails: (details) => details.data['imagePath'] != null,
+                                                      onAcceptWithDetails: (details) {
+                                                        final data = details.data;
+                                                        final oldIndex = data['oldIndex'] as int;
+                                                        final stackImgIdx = data['stackImageIndex'] as int?;
+                                                        setState(() {
+                                                          ImageBlock draggedImgBlock;
+                                                          if (stackImgIdx != null) {
+                                                            final sourceStack = _blocks[oldIndex] as ImageStackBlock;
+                                                            draggedImgBlock = sourceStack.images[stackImgIdx];
+                                                            sourceStack.images.removeAt(stackImgIdx);
+                                                            if (sourceStack.images.length == 1) {
+                                                              _blocks[oldIndex] = sourceStack.images[0];
+                                                            }
+                                                          } else {
+                                                            draggedImgBlock = _blocks[oldIndex] as ImageBlock;
+                                                            _blocks.removeAt(oldIndex);
+                                                          }
+                                                          int insertIdx = i + 1;
+                                                          if (oldIndex < insertIdx && stackImgIdx == null) {
+                                                            insertIdx--;
+                                                          }
+                                                          _blocks.insert(insertIdx, draggedImgBlock);
+                                                          _hasChanges = true;
+                                                        });
+                                                      },
+                                                      builder: (context, candidateData, rejectedData) {
+                                                        final isHovered = candidateData.isNotEmpty;
+                                                        return GestureDetector(
+                                                          behavior: HitTestBehavior.opaque,
+                                                          onTap: () => _insertParagraphAt(i + 1),
+                                                          child: Container(
+                                                            height: isHovered ? 24.0 : spacing,
+                                                            color: isHovered ? theme.colorScheme.primary.withOpacity(0.15) : Colors.transparent,
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                              return list;
+                                            }(),
+                                            Expanded(
+                                              child: GestureDetector(
+                                                behavior: HitTestBehavior.opaque,
+                                                onTap: () => _insertParagraphAt(_blocks.length),
+                                                child: const SizedBox(height: 100),
                                               ),
-                                              border: InputBorder.none,
-                                              contentPadding: EdgeInsets.zero,
-                                              filled: false,
                                             ),
-                                          ),
+                                          ],
                                         ),
                                       ),
                                   ],
@@ -2038,18 +3135,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 child: IgnorePointer(
                   ignoring: !_isPageSettled || _isZenTyping,
                   child: Container(
-                    padding: _contentFocusNode.hasFocus && _noteType == 'text' && !_isPreviewMarkdown
+                    padding: _anyBlockHasFocus && _noteType == 'text' && !_isPreviewMarkdown
                         ? const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0)
                         : const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                     decoration: BoxDecoration(
-                      color: _contentFocusNode.hasFocus && _noteType == 'text' && !_isPreviewMarkdown
+                      color: _anyBlockHasFocus && _noteType == 'text' && !_isPreviewMarkdown
                           ? Colors.transparent
                           : editorBgColor,
-                      border: _contentFocusNode.hasFocus && _noteType == 'text' && !_isPreviewMarkdown
+                      border: _anyBlockHasFocus && _noteType == 'text' && !_isPreviewMarkdown
                           ? null
                           : Border(top: BorderSide(color: titleColor.withAlpha(20))),
                     ),
-                    child: _contentFocusNode.hasFocus && _noteType == 'text' && !_isPreviewMarkdown
+                    child: _anyBlockHasFocus && _noteType == 'text' && !_isPreviewMarkdown
                         ? _buildFormattingToolbar(textColor, titleColor)
                         : _buildStandardBottomPanel(editorBgColor, titleColor, textColor, theme),
                   ),
@@ -2229,7 +3326,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   Widget _buildMarkdownPreview(Color textColor) {
     final theme = Theme.of(context);
     return MarkdownBody(
-      data: _contentController.text,
+      data: _blocks.map((b) => b.toMarkdown()).join('\n'),
       selectable: true,
       imageBuilder: (uri, title, alt) {
         final cleanUri = uri.hasQuery ? uri.replace(queryParameters: {}) : uri;
@@ -2296,7 +3393,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final tempNote = Note(
       id: widget.note?.id ?? 'temp',
       title: _titleController.text.trim(),
-      content: _noteType == 'checklist' ? jsonEncode(_checklistItems) : _contentController.text.trim(),
+      content: _noteType == 'checklist' ? jsonEncode(_checklistItems) : _blocks.map((b) => b.toMarkdown()).join('\n').trim(),
       tags: _tags,
       attachments: _attachments,
       category: _category,
@@ -2500,3 +3597,250 @@ class FullScreenImageViewer extends StatelessWidget {
     );
   }
 }
+
+abstract class NoteBlock {
+  final String id;
+  NoteBlock({required this.id});
+  String toMarkdown();
+}
+
+class ParagraphBlock extends NoteBlock {
+  final RichTextEditingController controller;
+  final FocusNode focusNode;
+
+  ParagraphBlock({required super.id, String markdown = ""})
+      : controller = RichTextEditingController(markdown: markdown),
+        focusNode = FocusNode();
+
+  @override
+  String toMarkdown() {
+    return generateMarkdownFromStyledChars(controller.styledChars).trim();
+  }
+}
+
+class HeadingBlock extends NoteBlock {
+  final RichTextEditingController controller;
+  final FocusNode focusNode;
+  final int level; // 1, 2, 3
+
+  HeadingBlock({required super.id, required this.level, String markdown = ""})
+      : controller = RichTextEditingController(markdown: markdown),
+        focusNode = FocusNode();
+
+  @override
+  String toMarkdown() {
+    final prefix = '#' * level + ' ';
+    final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
+    return '$prefix$content';
+  }
+}
+
+class QuoteBlock extends NoteBlock {
+  final RichTextEditingController controller;
+  final FocusNode focusNode;
+
+  QuoteBlock({required super.id, String markdown = ""})
+      : controller = RichTextEditingController(markdown: markdown),
+        focusNode = FocusNode();
+
+  @override
+  String toMarkdown() {
+    final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
+    return '> $content';
+  }
+}
+
+class ChecklistBlock extends NoteBlock {
+  final RichTextEditingController controller;
+  final FocusNode focusNode;
+  bool isChecked;
+
+  ChecklistBlock({required super.id, required this.isChecked, String markdown = ""})
+      : controller = RichTextEditingController(markdown: markdown),
+        focusNode = FocusNode();
+
+  @override
+  String toMarkdown() {
+    final prefix = isChecked ? '- [x] ' : '- [ ] ';
+    final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
+    return '$prefix$content';
+  }
+}
+
+class ImageBlock extends NoteBlock {
+  final String imageUrl;
+  double? width;
+  String? caption;
+
+  ImageBlock({
+    required super.id,
+    required this.imageUrl,
+    this.width,
+    this.caption,
+  });
+
+  @override
+  String toMarkdown() {
+    final altText = caption ?? 'Image';
+    final urlBuffer = StringBuffer(imageUrl);
+    if (width != null) {
+      urlBuffer.write('?width=${width!.toInt()}');
+    }
+    return '![$altText](${urlBuffer.toString()})';
+  }
+}
+
+class DividerBlock extends NoteBlock {
+  DividerBlock({required super.id});
+
+  @override
+  String toMarkdown() {
+    return '---';
+  }
+}
+
+class ImageStackBlock extends NoteBlock {
+  final List<ImageBlock> images;
+
+  ImageStackBlock({required super.id, required this.images});
+
+  @override
+  String toMarkdown() {
+    return images.map((img) => img.toMarkdown()).join('\n');
+  }
+}
+
+class ImageStackWidget extends StatefulWidget {
+  final ImageStackBlock block;
+  final Color textColor;
+  final Color titleColor;
+  final int index;
+  final VoidCallback onUpdate;
+  final Function(ImageBlock) onDeleteImage;
+  final Function(ImageBlock, int) onReplaceImage;
+
+  const ImageStackWidget({
+    super.key,
+    required this.block,
+    required this.textColor,
+    required this.titleColor,
+    required this.index,
+    required this.onUpdate,
+    required this.onDeleteImage,
+    required this.onReplaceImage,
+  });
+
+  @override
+  State<ImageStackWidget> createState() => _ImageStackWidgetState();
+}
+
+class _ImageStackWidgetState extends State<ImageStackWidget> {
+  @override
+  Widget build(BuildContext context) {
+    final images = widget.block.images;
+    final List<Widget> children = [];
+
+    if (images.length == 2) {
+      children.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildItem(images[0], 0)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildItem(images[1], 1)),
+          ],
+        ),
+      );
+    } else if (images.length == 3) {
+      children.add(_buildItem(images[0], 0));
+      children.add(const SizedBox(height: 8));
+      children.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildItem(images[1], 1)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildItem(images[2], 2)),
+          ],
+        ),
+      );
+    } else if (images.length == 4) {
+      children.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildItem(images[0], 0)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildItem(images[1], 1)),
+          ],
+        ),
+      );
+      children.add(const SizedBox(height: 8));
+      children.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _buildItem(images[2], 2)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildItem(images[3], 3)),
+          ],
+        ),
+      );
+    } else {
+      for (int i = 0; i < images.length; i += 2) {
+        if (i > 0) {
+          children.add(const SizedBox(height: 8));
+        }
+        if (i + 1 < images.length) {
+          children.add(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildItem(images[i], i)),
+                const SizedBox(width: 8),
+                Expanded(child: _buildItem(images[i + 1], i + 1)),
+              ],
+            ),
+          );
+        } else {
+          children.add(_buildItem(images[i], i));
+        }
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildItem(ImageBlock img, int stackImageIndex) {
+    return ResizableImageWidget(
+      key: ValueKey(img.id),
+      imagePath: img.imageUrl,
+      initialWidth: img.width,
+      caption: img.caption,
+      index: widget.index,
+      isStacked: true,
+      stackImageIndex: stackImageIndex,
+      onUpdate: (newWidth, newCaption) {
+        setState(() {
+          img.width = newWidth;
+          img.caption = newCaption;
+        });
+        widget.onUpdate();
+      },
+      onDelete: () {
+        widget.onDeleteImage(img);
+      },
+      onReplace: () {
+        widget.onReplaceImage(img, stackImageIndex);
+      },
+    );
+  }
+}
+

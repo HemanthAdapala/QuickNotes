@@ -163,6 +163,8 @@ class ResizableImageWidget extends StatefulWidget {
   final Function(double width, String? caption) onUpdate;
   final VoidCallback onDelete;
   final VoidCallback? onReplace;
+  final bool isStacked;
+  final int? stackImageIndex;
 
   const ResizableImageWidget({
     super.key,
@@ -173,6 +175,8 @@ class ResizableImageWidget extends StatefulWidget {
     required this.onUpdate,
     required this.onDelete,
     this.onReplace,
+    this.isStacked = false,
+    this.stackImageIndex,
   });
 
   @override
@@ -188,8 +192,6 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
   bool _isDeleting = false;
-
-  double _initialScaleWidth = 300.0;
 
   @override
   void initState() {
@@ -267,6 +269,24 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
     );
   }
 
+  Widget _buildResizeHandle(ThemeData theme) {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+        ],
+      ),
+      child: const Center(
+        child: Icon(Icons.drag_handle_rounded, size: 10, color: Colors.white),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -274,8 +294,17 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
     
     final double screenWidth = MediaQuery.of(context).size.width;
     final double maxWidth = (screenWidth - 48.0).clamp(100.0, 720.0);
-    final double currentWidth = (_width ?? maxWidth).clamp(100.0, maxWidth);
-    final double currentHeight = currentWidth * 0.75;
+    final double currentWidth = widget.isStacked
+        ? double.infinity
+        : (_width ?? maxWidth).clamp(150.0, maxWidth);
+    final double currentHeight = widget.isStacked ? 180.0 : currentWidth * 0.75;
+
+    int? cacheWidth;
+    if (!widget.isStacked) {
+      cacheWidth = currentWidth.toInt();
+    } else {
+      cacheWidth = 400;
+    }
 
     ImageProvider imageProvider;
     if (isFile) {
@@ -288,16 +317,16 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
       }
       imageProvider = ResizeImage(
         FileImage(File(cleanPath)),
-        width: currentWidth.toInt(),
+        width: cacheWidth,
       );
     } else {
       imageProvider = ResizeImage(
         NetworkImage(widget.imagePath),
-        width: currentWidth.toInt(),
+        width: cacheWidth,
       );
     }
 
-    final heroTag = 'inline-image-${widget.imagePath}-${widget.index}';
+    final heroTag = 'inline-image-${widget.imagePath}-${widget.index}-${widget.stackImageIndex ?? -1}';
 
     String? displayCaption = widget.caption;
     if (displayCaption != null && displayCaption.isNotEmpty) {
@@ -311,114 +340,136 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onScaleStart: (details) {
-            _initialScaleWidth = _width ?? maxWidth;
-          },
-          onScaleUpdate: (details) {
-            setState(() {
-              _width = (_initialScaleWidth * details.scale).clamp(100.0, maxWidth);
-            });
-            widget.onUpdate(_width!, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
-          },
           onTap: () {
             setState(() {
               _showControls = !_showControls;
             });
           },
+          onDoubleTap: () {
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                opaque: false,
+                barrierDismissible: true,
+                pageBuilder: (context, _, __) => FullscreenImageViewer(
+                  imagePath: widget.imagePath,
+                  heroTag: heroTag,
+                ),
+              ),
+            );
+          },
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 8.0),
-                decoration: BoxDecoration(
-                  border: _showControls
-                      ? Border.all(color: theme.colorScheme.primary, width: 1.5)
-                      : Border.all(color: Colors.transparent, width: 1.5),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: _showControls
-                      ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.15), blurRadius: 8, spreadRadius: 1)]
-                      : null,
-                ),
-                constraints: BoxConstraints(
-                  maxWidth: maxWidth,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image(
-                    image: imageProvider,
-                    width: currentWidth,
-                    fit: BoxFit.contain,
-                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                      if (wasSynchronouslyLoaded) {
-                        return child;
-                      }
-                      return AnimatedCrossFade(
-                        firstChild: Container(
-                          width: currentWidth,
-                          height: currentHeight,
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          child: const Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+              Hero(
+                tag: heroTag,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8.0),
+                  decoration: BoxDecoration(
+                    border: _showControls
+                        ? Border.all(color: theme.colorScheme.primary, width: 2.0)
+                        : Border.all(color: Colors.transparent, width: 2.0),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: _showControls
+                        ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.15), blurRadius: 8, spreadRadius: 1)]
+                        : null,
+                  ),
+                  constraints: widget.isStacked
+                      ? const BoxConstraints.tightFor(height: 180.0)
+                      : BoxConstraints(maxWidth: maxWidth),
+                  width: widget.isStacked ? double.infinity : currentWidth,
+                  height: widget.isStacked ? 180.0 : null,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image(
+                      image: imageProvider,
+                      width: widget.isStacked ? double.infinity : currentWidth,
+                      height: widget.isStacked ? 180.0 : null,
+                      fit: widget.isStacked ? BoxFit.cover : BoxFit.contain,
+                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                        if (wasSynchronouslyLoaded) {
+                          return child;
+                        }
+                        return AnimatedCrossFade(
+                          firstChild: Container(
+                            width: widget.isStacked ? double.infinity : currentWidth,
+                            height: currentHeight,
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            child: const Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
                             ),
                           ),
-                        ),
-                        secondChild: child,
-                        crossFadeState: frame == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-                        duration: const Duration(milliseconds: 300),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 200,
-                        height: 150,
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey),
-                            SizedBox(height: 4),
-                            Text("Error loading image", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                          ],
-                        ),
-                      );
-                    },
+                          secondChild: child,
+                          crossFadeState: frame == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                          duration: const Duration(milliseconds: 300),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: widget.isStacked ? double.infinity : 200,
+                          height: 150,
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey),
+                              SizedBox(height: 4),
+                              Text("Error loading image", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
-              if (_showControls)
+              if (_showControls && !widget.isStacked) ...[
+                // Left resize handle
                 Positioned(
-                  right: -8,
-                  bottom: -8,
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.resizeLeftRight,
-                    child: GestureDetector(
-                      onPanUpdate: (details) {
-                        setState(() {
-                          _width = (currentWidth + details.delta.dx).clamp(100.0, maxWidth);
-                        });
-                        widget.onUpdate(_width!, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
-                      },
-                      child: Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.drag_handle_rounded, size: 12, color: Colors.white),
-                        ),
+                  left: -10,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.resizeLeftRight,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onPanUpdate: (details) {
+                          setState(() {
+                            _width = (currentWidth - details.delta.dx).clamp(150.0, maxWidth);
+                          });
+                          widget.onUpdate(_width!, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
+                        },
+                        child: _buildResizeHandle(theme),
                       ),
                     ),
                   ),
                 ),
+                // Right resize handle
+                Positioned(
+                  right: -10,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.resizeLeftRight,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onPanUpdate: (details) {
+                          setState(() {
+                            _width = (currentWidth + details.delta.dx).clamp(150.0, maxWidth);
+                          });
+                          widget.onUpdate(_width!, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
+                        },
+                        child: _buildResizeHandle(theme),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -472,24 +523,26 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Container(
-            width: currentWidth,
-            child: TextField(
-              controller: _captionController,
-              style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
-              decoration: InputDecoration(
-                hintText: "Add optional caption (e.g. 📍 Sunset)...",
-                hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4)),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 4),
+          if (!widget.isStacked) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: currentWidth,
+              child: TextField(
+                controller: _captionController,
+                style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: "Add optional caption (e.g. 📍 Sunset)...",
+                  hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                ),
+                onChanged: (val) {
+                  widget.onUpdate(_width ?? currentWidth, val.trim().isEmpty ? null : val.trim());
+                },
               ),
-              onChanged: (val) {
-                widget.onUpdate(_width ?? currentWidth, val.trim().isEmpty ? null : val.trim());
-              },
             ),
-          ),
+          ],
         ]
       ],
     );
@@ -508,19 +561,24 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
       child: LongPressDraggable<Map<String, dynamic>>(
         data: {
           'oldIndex': widget.index,
+          'stackImageIndex': widget.stackImageIndex,
           'imagePath': widget.imagePath,
         },
+        onDragStarted: () => print('DRAG_DEBUG: Drag started for ${widget.imagePath}'),
+        onDragCompleted: () => print('DRAG_DEBUG: Drag completed for ${widget.imagePath}'),
+        onDraggableCanceled: (velocity, offset) => print('DRAG_DEBUG: Drag canceled for ${widget.imagePath}'),
+        onDragEnd: (details) => print('DRAG_DEBUG: Drag ended for ${widget.imagePath}'),
         maxSimultaneousDrags: _showControls || _isDeleting ? 0 : 1,
         feedback: DragFeedbackImage(
           imageProvider: imageProvider,
-          width: currentWidth,
+          width: widget.isStacked ? (screenWidth - 48.0) / 2 : currentWidth,
         ),
         childWhenDragging: Opacity(
           opacity: 0.3,
           child: IgnorePointer(
             child: SizedBox(
-              width: currentWidth,
-              height: 120,
+              width: widget.isStacked ? (screenWidth - 48.0) / 2 : currentWidth,
+              height: widget.isStacked ? 180 : 120,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   border: Border.all(color: theme.colorScheme.primary.withOpacity(0.5), width: 1.5),
@@ -567,18 +625,20 @@ class _DragFeedbackImageState extends State<DragFeedbackImage> with SingleTicker
   
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scaleAnimation,
-      child: Material(
-        elevation: 12.0,
-        borderRadius: BorderRadius.circular(12),
-        shadowColor: Colors.black54,
-        child: ClipRRect(
+    return IgnorePointer(
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Material(
+          elevation: 12.0,
           borderRadius: BorderRadius.circular(12),
-          child: Image(
-            image: widget.imageProvider,
-            width: widget.width,
-            fit: BoxFit.contain,
+          shadowColor: Colors.black54,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image(
+              image: widget.imageProvider,
+              width: widget.width,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),
