@@ -345,7 +345,7 @@ class LivingTextEditingController extends TextEditingController {
           lineStyle = lineStyle.copyWith(
             fontSize: fontSize,
             fontWeight: weight,
-            color: lineStyle.color?.withOpacity(opacity),
+            color: lineStyle.color?.withValues(alpha: opacity),
           );
         } else {
           lineStyle = lineStyle.copyWith(
@@ -526,7 +526,7 @@ class _LivingCaretOverlayState extends State<LivingCaretOverlay> with SingleTick
                   return CustomPaint(
                     painter: _CaretPainter(
                       rect: caretRect,
-                      color: Theme.of(context).colorScheme.primary.withOpacity(opacity),
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: opacity),
                       cursorWidth: 2.0,
                       radius: const Radius.circular(1.0),
                     ),

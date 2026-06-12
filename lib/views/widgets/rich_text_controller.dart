@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'fullscreen_image_viewer.dart';
 
 class Style {
@@ -157,11 +157,12 @@ class InteractiveCheckbox extends StatelessWidget {
 
 class ResizableImageWidget extends StatefulWidget {
   final String imagePath;
-  final double initialWidth;
+  final double? initialWidth;
   final String? caption;
   final int index;
   final Function(double width, String? caption) onUpdate;
   final VoidCallback onDelete;
+  final VoidCallback? onReplace;
 
   const ResizableImageWidget({
     super.key,
@@ -171,6 +172,7 @@ class ResizableImageWidget extends StatefulWidget {
     required this.index,
     required this.onUpdate,
     required this.onDelete,
+    this.onReplace,
   });
 
   @override
@@ -178,7 +180,7 @@ class ResizableImageWidget extends StatefulWidget {
 }
 
 class _ResizableImageWidgetState extends State<ResizableImageWidget> with SingleTickerProviderStateMixin {
-  late double _width;
+  double? _width;
   bool _showControls = false;
   late TextEditingController _captionController;
   
@@ -236,14 +238,43 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
     widget.onDelete();
   }
 
+  Widget _buildToolbarActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    required ThemeData theme,
+    Color? color,
+  }) {
+    final textColor = color ?? theme.colorScheme.primary;
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16, color: textColor),
+      label: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        backgroundColor: (color ?? theme.colorScheme.primary).withOpacity(0.08),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isFile = !widget.imagePath.startsWith('http://') && !widget.imagePath.startsWith('https://');
     
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double maxWidth = (screenWidth - 56.0).clamp(100.0, 500.0);
-    final double currentWidth = _width.clamp(100.0, maxWidth);
+    final double maxWidth = (screenWidth - 48.0).clamp(100.0, 720.0);
+    final double currentWidth = (_width ?? maxWidth).clamp(100.0, maxWidth);
     final double currentHeight = currentWidth * 0.75;
 
     ImageProvider imageProvider;
@@ -268,95 +299,134 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
 
     final heroTag = 'inline-image-${widget.imagePath}-${widget.index}';
 
+    String? displayCaption = widget.caption;
+    if (displayCaption != null && displayCaption.isNotEmpty) {
+      if (!displayCaption.startsWith('📍')) {
+        displayCaption = '📍 $displayCaption';
+      }
+    }
+
     Widget imageContent = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
           onScaleStart: (details) {
-            _initialScaleWidth = _width;
+            _initialScaleWidth = _width ?? maxWidth;
           },
           onScaleUpdate: (details) {
             setState(() {
               _width = (_initialScaleWidth * details.scale).clamp(100.0, maxWidth);
             });
-            widget.onUpdate(_width, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
+            widget.onUpdate(_width!, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
           },
           onTap: () {
             setState(() {
               _showControls = !_showControls;
             });
           },
-          child: Hero(
-            tag: heroTag,
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              decoration: BoxDecoration(
-                border: _showControls
-                    ? Border.all(color: theme.colorScheme.primary, width: 2)
-                    : null,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: _showControls
-                    ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.3), blurRadius: 8, spreadRadius: 1)]
-                    : null,
-              ),
-              constraints: BoxConstraints(
-                maxWidth: maxWidth,
-                maxHeight: 380.0,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image(
-                  image: imageProvider,
-                  width: currentWidth,
-                  fit: BoxFit.contain,
-                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                    if (wasSynchronouslyLoaded) {
-                      return child;
-                    }
-                    return AnimatedCrossFade(
-                      firstChild: Container(
-                        width: currentWidth,
-                        height: currentHeight,
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        child: const Center(
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                decoration: BoxDecoration(
+                  border: _showControls
+                      ? Border.all(color: theme.colorScheme.primary, width: 1.5)
+                      : Border.all(color: Colors.transparent, width: 1.5),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: _showControls
+                      ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.15), blurRadius: 8, spreadRadius: 1)]
+                      : null,
+                ),
+                constraints: BoxConstraints(
+                  maxWidth: maxWidth,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image(
+                    image: imageProvider,
+                    width: currentWidth,
+                    fit: BoxFit.contain,
+                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                      if (wasSynchronouslyLoaded) {
+                        return child;
+                      }
+                      return AnimatedCrossFade(
+                        firstChild: Container(
+                          width: currentWidth,
+                          height: currentHeight,
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          child: const Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
                           ),
                         ),
-                      ),
-                      secondChild: child,
-                      crossFadeState: frame == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-                      duration: const Duration(milliseconds: 300),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 200,
-                      height: 150,
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey),
-                          SizedBox(height: 4),
-                          Text("Error loading image", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                        ],
-                      ),
-                    );
-                  },
+                        secondChild: child,
+                        crossFadeState: frame == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                        duration: const Duration(milliseconds: 300),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 200,
+                        height: 150,
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey),
+                            SizedBox(height: 4),
+                            Text("Error loading image", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
+              if (_showControls)
+                Positioned(
+                  right: -8,
+                  bottom: -8,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.resizeLeftRight,
+                    child: GestureDetector(
+                      onPanUpdate: (details) {
+                        setState(() {
+                          _width = (currentWidth + details.delta.dx).clamp(100.0, maxWidth);
+                        });
+                        widget.onUpdate(_width!, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
+                      },
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.drag_handle_rounded, size: 12, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
-        if (widget.caption != null && widget.caption!.isNotEmpty && !_showControls)
+        if (displayCaption != null && displayCaption.isNotEmpty && !_showControls)
           Padding(
-            padding: const EdgeInsets.only(left: 4.0, bottom: 8.0, top: 2.0),
+            padding: const EdgeInsets.only(left: 4.0, bottom: 8.0, top: 4.0),
             child: Text(
-              widget.caption!,
+              displayCaption,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontStyle: FontStyle.italic,
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -364,112 +434,60 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
             ),
           ),
         if (_showControls) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (widget.onReplace != null)
+                _buildToolbarActionButton(
+                  icon: Icons.sync_rounded,
+                  label: "Replace",
+                  onPressed: widget.onReplace!,
+                  theme: theme,
+                ),
+              _buildToolbarActionButton(
+                icon: Icons.fullscreen_rounded,
+                label: "Fullscreen",
+                onPressed: () {
+                  Navigator.of(context).push(
+                    PageRouteBuilder(
+                      opaque: false,
+                      barrierDismissible: true,
+                      pageBuilder: (context, _, __) => FullscreenImageViewer(
+                        imagePath: widget.imagePath,
+                        heroTag: heroTag,
+                      ),
+                    ),
+                  );
+                },
+                theme: theme,
+              ),
+              _buildToolbarActionButton(
+                icon: Icons.delete_outline_rounded,
+                label: "Delete",
+                color: theme.colorScheme.error,
+                onPressed: _triggerDelete,
+                theme: theme,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.photo_size_select_large_rounded, size: 18, color: theme.colorScheme.primary),
-                    const SizedBox(width: 4),
-                    SizedBox(
-                      width: 120,
-                      height: 32,
-                      child: SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          trackHeight: 3,
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-                        ),
-                        child: Slider(
-                          value: currentWidth,
-                          min: 100,
-                          max: maxWidth,
-                          onChanged: (val) {
-                            setState(() {
-                              _width = val;
-                            });
-                            widget.onUpdate(val, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
-                          },
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '${currentWidth.toInt()}px',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.fullscreen_rounded, size: 20),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          PageRouteBuilder(
-                            opaque: false,
-                            barrierDismissible: true,
-                            pageBuilder: (context, _, __) => FullscreenImageViewer(
-                              imagePath: widget.imagePath,
-                              heroTag: heroTag,
-                            ),
-                          ),
-                        );
-                      },
-                      tooltip: 'View Fullscreen',
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: Icon(Icons.delete_outline_rounded, size: 20, color: theme.colorScheme.error),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: _triggerDelete,
-                      tooltip: 'Delete Image',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                SizedBox(
-                  width: 220,
-                  height: 36,
-                  child: TextField(
-                    controller: _captionController,
-                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
-                    decoration: InputDecoration(
-                      hintText: "Add optional caption...",
-                      hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: theme.colorScheme.primary),
-                      ),
-                    ),
-                    onChanged: (val) {
-                      widget.onUpdate(_width, val.trim().isEmpty ? null : val.trim());
-                    },
-                  ),
-                ),
-              ],
+            width: currentWidth,
+            child: TextField(
+              controller: _captionController,
+              style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
+              decoration: InputDecoration(
+                hintText: "Add optional caption (e.g. 📍 Sunset)...",
+                hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 4),
+              ),
+              onChanged: (val) {
+                widget.onUpdate(_width ?? currentWidth, val.trim().isEmpty ? null : val.trim());
+              },
             ),
           ),
         ]
@@ -572,6 +590,7 @@ class RichTextEditingController extends TextEditingController {
   List<StyledChar> styledChars = [];
   Style currentActiveStyle = const Style();
   VoidCallback? onStyleChanged;
+  void Function(int index)? onReplaceImage;
 
   RichTextEditingController({String? markdown}) {
     if (markdown != null && markdown.isNotEmpty) {
@@ -991,12 +1010,12 @@ class RichTextEditingController extends TextEditingController {
 
       if (sc.style.imageUrl != null && sc.char == '\uFFFC') {
         final String url = sc.style.imageUrl!;
-        final double width = sc.style.imageWidth ?? 300.0;
+        final double? width = sc.style.imageWidth;
         final String? caption = sc.style.imageCaption;
         final int index = i;
 
         children.add(WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
+          alignment: PlaceholderAlignment.top,
           child: ResizableImageWidget(
             imagePath: url,
             initialWidth: width,
@@ -1022,6 +1041,7 @@ class RichTextEditingController extends TextEditingController {
               );
               notifyListeners();
             },
+            onReplace: onReplaceImage != null ? () => onReplaceImage!(index) : null,
           ),
         ));
         i++;
@@ -1209,7 +1229,7 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
                 imageUrl: cleanUrl,
                 imageWidth: width,
                 imageHeight: height,
-                imageCaption: alt.isNotEmpty ? alt : null,
+                imageCaption: (alt.isNotEmpty && alt != 'Image') ? alt : null,
               ),
             ));
             idx = closeParenthesis + 1;
@@ -1295,7 +1315,7 @@ String generateInlineMarkdown(List<StyledChar> lineChars) {
         }
         urlBuffer.write(params.join('&'));
       }
-      final altText = style.imageCaption ?? 'Image';
+      final altText = style.imageCaption ?? '';
       sb.write('![$altText](${urlBuffer.toString()})');
       continue;
     }

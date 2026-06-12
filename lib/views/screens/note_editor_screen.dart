@@ -121,9 +121,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         _contentController = TextEditingController();
       } else {
         _contentController = RichTextEditingController(markdown: widget.note!.content);
-        (_contentController as RichTextEditingController).onStyleChanged = () {
+        final richCtrl = _contentController as RichTextEditingController;
+        richCtrl.onStyleChanged = () {
           if (mounted) setState(() {});
         };
+        richCtrl.onReplaceImage = _showReplaceGalleryBottomSheet;
       }
     } else {
       _category = widget.defaultCategory;
@@ -136,9 +138,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
       if (_noteType == 'text') {
         _contentController = RichTextEditingController();
-        (_contentController as RichTextEditingController).onStyleChanged = () {
+        final richCtrl = _contentController as RichTextEditingController;
+        richCtrl.onStyleChanged = () {
           if (mounted) setState(() {});
         };
+        richCtrl.onReplaceImage = _showReplaceGalleryBottomSheet;
       } else {
         _contentController = TextEditingController();
       }
@@ -328,28 +332,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     });
   }
 
-  // --- Attachments picking ---
-  Future<void> _pickImage(ImageSource source) async {
-    try {
-      final pickedFile = await _imagePicker.pickImage(source: source);
-      if (pickedFile != null) {
-        if (_noteType == 'text') {
-          final String markdownImage = '![Image](file://${pickedFile.path})';
-          _insertTextAtCursor(markdownImage);
-        } else {
-          setState(() {
-            _attachments.add({
-              'type': 'image',
-              'path': pickedFile.path,
-            });
-            _hasChanges = true;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint("Error picking image: $e");
-    }
-  }
 
   Future<void> _showGalleryBottomSheet(BuildContext context) async {
     final theme = Theme.of(context);
@@ -548,6 +530,151 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         });
       }
       await Future.delayed(const Duration(milliseconds: 350));
+    }
+  }
+
+  Future<void> _showReplaceGalleryBottomSheet(int index) async {
+    final theme = Theme.of(context);
+    final List<String> sampleUrls = [
+      'https://images.unsplash.com/photo-1517842645767-c639042777db?w=500&q=80',
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&q=80',
+      'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=500&q=80',
+      'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=500&q=80',
+      'https://images.unsplash.com/photo-1472214222541-d510753a4907?w=500&q=80',
+      'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&q=80',
+    ];
+
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Replace Photo",
+                  style: GoogleFonts.outfit(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    itemCount: sampleUrls.length + 2,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemBuilder: (context, gridIndex) {
+                      if (gridIndex == 0) {
+                        return InkWell(
+                          onTap: () async {
+                            Navigator.pop(context);
+                            final picked = await _imagePicker.pickImage(source: ImageSource.camera);
+                            if (picked != null) {
+                              _replaceImage(index, 'file://${picked.path}');
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: theme.colorScheme.outlineVariant),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.camera_alt_outlined, size: 28),
+                                SizedBox(height: 4),
+                                Text("Camera", style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                        );
+                      } else if (gridIndex == 1) {
+                        return InkWell(
+                          onTap: () async {
+                            Navigator.pop(context);
+                            final picked = await _imagePicker.pickImage(source: ImageSource.gallery);
+                            if (picked != null) {
+                              _replaceImage(index, 'file://${picked.path}');
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: theme.colorScheme.outlineVariant),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.photo_library_outlined, size: 28),
+                                SizedBox(height: 4),
+                                Text("System Gallery", style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                        );
+                      } else {
+                        final url = sampleUrls[gridIndex - 2];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                            _replaceImage(index, url);
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              url,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: theme.colorScheme.surfaceContainerHighest,
+                                child: const Icon(Icons.broken_image),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _replaceImage(int index, String newPath) {
+    if (_contentController is RichTextEditingController) {
+      final controller = _contentController as RichTextEditingController;
+      if (index >= 0 && index < controller.styledChars.length) {
+        controller.styledChars[index] = StyledChar(
+          char: controller.styledChars[index].char,
+          style: controller.styledChars[index].style.copyWith(
+            imageUrl: newPath,
+          ),
+        );
+        final newTextStr = controller.styledChars.map((sc) => sc.char).join();
+        controller.value = TextEditingValue(
+          text: newTextStr,
+          selection: controller.selection,
+        );
+        setState(() {
+          _hasChanges = true;
+        });
+      }
     }
   }
 
@@ -940,17 +1067,30 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           end = start;
         }
 
+        bool prependNewline = false;
+        if (start > 0 && controller.styledChars[start - 1].char != '\n') {
+          prependNewline = true;
+        }
+        
+        final List<StyledChar> insertBlock = [];
+        if (prependNewline) {
+          insertBlock.add(StyledChar(char: '\n', style: const Style()));
+        }
+        insertBlock.addAll(parsedChars);
+        insertBlock.add(StyledChar(char: '\n', style: const Style()));
+
         final newChars = List<StyledChar>.from(controller.styledChars);
         if (end > start) {
           newChars.removeRange(start, end);
         }
-        newChars.insertAll(start, parsedChars);
+        newChars.insertAll(start, insertBlock);
         controller.styledChars = newChars;
 
         final newText = controller.styledChars.map((sc) => sc.char).join();
+        final int cursorOffset = start + (prependNewline ? 1 : 0) + parsedChars.length + 1;
         controller.value = TextEditingValue(
           text: newText,
-          selection: TextSelection.collapsed(offset: start + parsedChars.length),
+          selection: TextSelection.collapsed(offset: cursorOffset.clamp(0, newText.length)),
         );
       } else {
         final text = _contentController.text;

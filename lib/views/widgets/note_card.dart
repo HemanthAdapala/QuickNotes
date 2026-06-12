@@ -39,7 +39,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
 
   late AnimationController _pinController;
   late Animation<double> _pinAnimation;
-  bool _isPinning = false;
+  final bool _isPinning = false;
 
   @override
   void initState() {
@@ -212,7 +212,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: widget.note.isPinned
-            ? theme.colorScheme.primary.withOpacity(0.08)
+            ? theme.colorScheme.primary.withValues(alpha: 0.08)
             : cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
@@ -224,7 +224,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
         boxShadow: [
           if (_isPinning)
             BoxShadow(
-              color: shadowColor.withOpacity(0.3),
+              color: shadowColor.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 6),
             )

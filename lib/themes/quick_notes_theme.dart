@@ -13,15 +13,13 @@ class QuickNotesTheme {
   static const Color borderActive = Color(0xFF38383A);
 
   static ThemeData get darkTheme {
-    final baseTheme = ThemeData.dark();
-    
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: background,
       cardColor: surface,
       dividerColor: border,
-      dialogBackgroundColor: surface,
+      dialogTheme: const DialogThemeData(backgroundColor: surface),
       
       colorScheme: const ColorScheme.dark(
         primary: accent,
@@ -30,8 +28,6 @@ class QuickNotesTheme {
         onSecondary: Color(0xFF000000),
         surface: surface,
         onSurface: textPrimary,
-        background: background,
-        onBackground: textPrimary,
         outline: border,
       ),
 

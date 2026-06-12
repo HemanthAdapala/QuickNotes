@@ -399,7 +399,7 @@ void main() {
     });
 
     test('WYSIWYG: Image parsing, generating, and resizing', () {
-      const markdown = 'Hello ![Image](file:///path/to/img.png?width=250) World';
+      const markdown = 'Hello ![](file:///path/to/img.png?width=250) World';
       final chars = parseMarkdownToStyledChars(markdown);
       
       expect(chars.map((c) => c.char).join(), equals('Hello \uFFFC World'));
@@ -421,7 +421,7 @@ void main() {
       );
       
       final updatedMarkdown = generateMarkdownFromStyledChars(controller.styledChars);
-      expect(updatedMarkdown, equals('Hello ![Image](file:///path/to/img.png?width=400) World'));
+      expect(updatedMarkdown, equals('Hello ![](file:///path/to/img.png?width=400) World'));
     });
 
     test('WYSIWYG: Image caption parsing, generating, and updating', () {
@@ -456,7 +456,70 @@ void main() {
       );
 
       final clearedMarkdown = generateMarkdownFromStyledChars(controller.styledChars);
-      expect(clearedMarkdown, equals('Text ![Image](file:///path/to/image.png?width=300) Text'));
+      expect(clearedMarkdown, equals('Text ![](file:///path/to/image.png?width=300) Text'));
+    });
+
+    testWidgets('WYSIWYG: Block-level image insertion from gallery', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => NotesProvider()),
+          ],
+          child: const MaterialApp(
+            home: NoteEditorScreen(),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final contentFinder = find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.decoration?.hintText == 'Start writing...',
+      );
+      expect(contentFinder, findsOneWidget);
+      await tester.tap(contentFinder);
+      await tester.enterText(contentFinder, 'Hello World');
+      await tester.pump();
+
+      final TextField contentField = tester.widget(contentFinder);
+      final controller = contentField.controller as RichTextEditingController;
+      
+      controller.selection = const TextSelection.collapsed(offset: 5);
+      await tester.pump();
+
+      final pageViewFinder = find.byType(PageView);
+      expect(pageViewFinder, findsOneWidget);
+
+      final arrowButtons = find.byIcon(Icons.play_arrow_rounded);
+      expect(arrowButtons, findsNWidgets(2));
+
+      await tester.tap(arrowButtons.last);
+      await tester.pumpAndSettle();
+      await tester.tap(arrowButtons.last);
+      await tester.pumpAndSettle();
+
+      final attachImageFinder = find.byTooltip('Attach Image');
+      expect(attachImageFinder, findsOneWidget);
+      await tester.tap(attachImageFinder);
+      await tester.pumpAndSettle();
+
+      final networkImageFinder = find.byType(Image);
+      expect(networkImageFinder, findsWidgets);
+      
+      await tester.tap(networkImageFinder.first);
+      await tester.pump();
+
+      final insertButtonFinder = find.text('Insert (1)');
+      expect(insertButtonFinder, findsOneWidget);
+      await tester.tap(insertButtonFinder);
+      await tester.pumpAndSettle();
+
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(controller.text, equals('Hello\n\uFFFC\n World'));
+      expect(controller.selection.baseOffset, equals(8));
+
+      await tester.pump(const Duration(seconds: 11));
     });
   });
 }

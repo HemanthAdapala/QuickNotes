@@ -50,8 +50,6 @@ class TrashScreen extends StatelessWidget {
       ),
       body: Consumer<NotesProvider>(
         builder: (context, provider, child) {
-          // Temporarily set view to trash to query notes in provider
-          final oldView = provider.currentView;
           // Wait, the notes list is filtered inside the provider based on currentView.
           // Since we might be inside TrashScreen but the provider's active view isn't trash,
           // let's fetch all notes directly from the provider and filter isTrash manually!
