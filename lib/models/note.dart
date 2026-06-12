@@ -17,6 +17,7 @@ class Note {
   final DateTime updatedAt;
   final int colorValue;
   final bool isDeleted;
+  final String previewText;
   
   // Folder & Habits Expansion
   final String? folderId;
@@ -47,7 +48,88 @@ class Note {
     this.habitRecurrence = 'none',
     this.habitStreak = 0,
     this.habitLastCompleted,
-  });
+    String? previewText,
+  }) : previewText = previewText ?? _generatePreviewText(content, noteType);
+
+  static String _generatePreviewText(String content, String noteType) {
+    if (noteType == 'checklist') {
+      try {
+        final List<dynamic> items = jsonDecode(content) as List<dynamic>;
+        final lines = items
+            .map((item) => (item['text'] ?? item['title'] ?? "").toString().trim())
+            .where((text) => text.isNotEmpty)
+            .toList();
+        return lines.join('\n');
+      } catch (_) {
+        return content.trim();
+      }
+    }
+
+    final lines = content.split('\n');
+    final List<String> cleanLines = [];
+
+    for (var line in lines) {
+      var trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+
+      // Skip dividers
+      if (trimmed == '---' || trimmed == '***' || trimmed == '___') continue;
+
+      // Skip image block lines
+      final imageReg = RegExp(r'^!\[(.*?)\]\((.*?)\)$');
+      if (imageReg.hasMatch(trimmed)) continue;
+
+      // Strip headings prefix
+      if (trimmed.startsWith('#')) {
+        int hashCount = 0;
+        while (hashCount < trimmed.length && trimmed[hashCount] == '#') {
+          hashCount++;
+        }
+        if (hashCount < trimmed.length && trimmed[hashCount] == ' ') {
+          trimmed = trimmed.substring(hashCount + 1).trim();
+        }
+      }
+
+      // Strip blockquotes prefix
+      if (trimmed.startsWith('>')) {
+        int quoteCount = 0;
+        while (quoteCount < trimmed.length && trimmed[quoteCount] == '>') {
+          quoteCount++;
+        }
+        if (quoteCount < trimmed.length && trimmed[quoteCount] == ' ') {
+          trimmed = trimmed.substring(quoteCount + 1).trim();
+        } else {
+          trimmed = trimmed.substring(quoteCount).trim();
+        }
+      }
+
+      // Strip checklist prefix
+      if (trimmed.startsWith('- [ ] ') || trimmed.startsWith('- [x] ') || trimmed.startsWith('- [X] ')) {
+        trimmed = trimmed.substring(6).trim();
+      }
+
+      // Strip inline image syntax: ![alt](url) -> replace with empty string
+      trimmed = trimmed.replaceAll(RegExp(r'!\[.*?\]\((.*?)\)'), '');
+
+      // Strip HTML tags: <p>, <strong>, etc.
+      trimmed = trimmed.replaceAll(RegExp(r'<[^>]*>'), '');
+
+      // Strip link syntax: [text](url) -> keep text
+      trimmed = trimmed.replaceAllMapped(RegExp(r'\[(.*?)\]\((.*?)\)'), (match) {
+        return match.group(1) ?? '';
+      });
+
+      // Strip bold/italic/strikethrough/highlight formatting markers: **, *, __, _, ~~, ==
+      trimmed = trimmed.replaceAll(RegExp(r'\*\*|__|\*|_|~~|=='), '');
+
+      trimmed = trimmed.trim();
+      if (trimmed.isNotEmpty) {
+        cleanLines.add(trimmed);
+      }
+    }
+
+    return cleanLines.join('\n');
+  }
 
   // Convert Note to a Map for database operations (serialize lists to JSON string)
   Map<String, dynamic> toMap() {
@@ -73,6 +155,7 @@ class Note {
       'habitRecurrence': habitRecurrence,
       'habitStreak': habitStreak,
       'habitLastCompleted': habitLastCompleted?.toIso8601String(),
+      'previewText': previewText,
     };
   }
 
@@ -122,6 +205,7 @@ class Note {
       habitRecurrence: (map['habitRecurrence'] ?? 'none') as String,
       habitStreak: (map['habitStreak'] ?? 0) as int,
       habitLastCompleted: map['habitLastCompleted'] != null ? DateTime.tryParse(map['habitLastCompleted'] as String) : null,
+      previewText: map['previewText'] as String?,
     );
   }
 
@@ -151,6 +235,7 @@ class Note {
     int? habitStreak,
     DateTime? habitLastCompleted,
     bool clearHabitLastCompleted = false,
+    String? previewText,
   }) {
     return Note(
       id: id ?? this.id,
@@ -174,6 +259,7 @@ class Note {
       habitRecurrence: habitRecurrence ?? this.habitRecurrence,
       habitStreak: habitStreak ?? this.habitStreak,
       habitLastCompleted: clearHabitLastCompleted ? null : (habitLastCompleted ?? this.habitLastCompleted),
+      previewText: previewText ?? ((content != null || noteType != null) ? null : this.previewText),
     );
   }
 }

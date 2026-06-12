@@ -433,13 +433,13 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                           _buildChecklistPreview(context, widget.note.content, textColor)
                         else
                           Text(
-                            widget.note.content.isNotEmpty ? widget.note.content : "No additional text",
+                            widget.note.previewText.isNotEmpty ? widget.note.previewText : "No additional text",
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
-                              color: widget.note.content.isNotEmpty ? textColor : textColor.withAlpha(120),
+                              color: widget.note.previewText.isNotEmpty ? textColor : textColor.withAlpha(120),
                               height: 1.4,
                             ),
-                            maxLines: 6,
+                            maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                           ),
                         

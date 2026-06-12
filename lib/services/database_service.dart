@@ -22,10 +22,10 @@ class DatabaseService {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'quick_notes.db');
 
-    // Open/Create the database (version 5)
+    // Open/Create the database (version 6)
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -55,7 +55,8 @@ class DatabaseService {
         habitRecurrence TEXT,
         habitStreak INTEGER DEFAULT 0,
         habitLastCompleted TEXT,
-        isDeleted INTEGER DEFAULT 0
+        isDeleted INTEGER DEFAULT 0,
+        previewText TEXT
       )
     ''');
 
@@ -114,6 +115,13 @@ class DatabaseService {
     if (oldVersion < 5) {
       try {
         await db.execute('ALTER TABLE notes ADD COLUMN isDeleted INTEGER DEFAULT 0');
+      } catch (e) {
+        // Column may exist from previous run
+      }
+    }
+    if (oldVersion < 6) {
+      try {
+        await db.execute('ALTER TABLE notes ADD COLUMN previewText TEXT');
       } catch (e) {
         // Column may exist from previous run
       }

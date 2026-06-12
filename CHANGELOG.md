@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-06-12
+
+### Fixed
+- **Clean Plain-Text Previews**:
+  - Implemented plain-text preview generation to strip all raw Markdown styling markers (`**`, `*`, `__`, `_`, `~~`, `==`), HTML tags, checklist prefixes, links, and image block syntax.
+  - Added SQLite database migration (Schema version 6) to cache the generated preview text in a new `previewText` column for optimal rendering performance.
+  - Updated note cards to display the clean cached preview with a consistent maximum height of 3 lines.
+
 ## [1.2.0] - 2026-06-11
 
 ### Added
