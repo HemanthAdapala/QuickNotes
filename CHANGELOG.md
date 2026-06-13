@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-06-13
+
+### Changed
+- **Home Screen Redesign** (matches Figma "Starting Screen" design):
+  - Replaced `NotesListScreen` as the Home tab with a new dedicated `HomeScreen`.
+  - Displays current date, day name in large bold Outfit typeface, and "Today" label in orange accent (`#F97316`).
+  - Animated breathing bullet with a rotating writing prompt taps to open a fresh `NoteEditorScreen` via `FabMorphPageRoute`.
+  - Subtle recent-note teaser chip at the bottom shows note count and last title.
+  - Fade + slide-up entrance animation on screen load.
+- **Navigation Shell Redesign** (4-tab structure: Home → Folders → Calendar → Settings):
+  - Dark pill bottom navigation bar with floating orange `+` FAB centered above it.
+  - Spring micro-animations on each tab icon press.
+  - Calendar tab is a clean stub for future implementation.
+  - Desktop sidebar updated to match new 4-tab structure.
+  - All changes on `feature/home-redesign` branch.
+
 ## [1.3.0] - 2026-06-12
 
 ### Fixed
