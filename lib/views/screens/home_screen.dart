@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/notes_provider.dart';
 import '../../themes/app_theme.dart';
 import '../widgets/gravity_notes_nav_bar.dart';
 import '../widgets/living_writing_experience.dart';
+import '../widgets/home_prompt_view.dart';
 import 'note_editor_screen.dart';
 import 'folder_management_screen.dart';
 import 'settings_screen.dart';
@@ -85,78 +85,12 @@ class _HomeScreenState extends State<HomeScreen> {
   // ── Home tab body — exact reference layout ───────────────────────────────
 
   Widget _buildHomeBody() {
-    final now = DateTime.now();
-    final dateStr = DateFormat('MMM d').format(now);   // e.g. "Jun 13"
-    final dayStr  = DateFormat('EEEE').format(now);    // e.g. "Friday"
-
     return SafeArea(
       bottom: false, // bottom handled by nav bar + system padding
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Large top whitespace — content sits ~55 % down in design
-          const Spacer(flex: 55),
-
-          // ── Date block ────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.only(left: 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // e.g. "Jun 13"
-                Text(
-                  dateStr,
-                  style: AppTextStyles.dateSmall,
-                ),
-                const SizedBox(height: 2),
-                // e.g. "Friday"
-                Text(
-                  dayStr,
-                  style: AppTextStyles.dateLarge,
-                ),
-                const SizedBox(height: 2),
-                // "Today"
-                Text(
-                  'Today',
-                  style: AppTextStyles.dateLabel,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // ── Entry placeholder row ────────────────────────────────────
-          GestureDetector(
-            onTap: _openNewNote,
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Bullet dot — AppColors.placeholder, diameter 7
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: AppColors.placeholder,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Placeholder text
-                  Text(
-                    'what happened today?',
-                    style: AppTextStyles.entryPlaceholder,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const Spacer(flex: 45),
-        ],
+      child: HomePromptView(
+        date: DateTime.now(),
+        interactive: false,
+        onTap: _openNewNote,
       ),
     );
   }

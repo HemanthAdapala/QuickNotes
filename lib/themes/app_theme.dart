@@ -17,7 +17,7 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
 
   /// Screen background
-  static const Color background = Color(0xFFFFFFFF);
+  static const Color background = Color(0xFFF9F6E5);
 }
 
 class AppTextStyles {

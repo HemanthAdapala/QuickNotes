@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../themes/quick_notes_theme.dart';
 import 'onboarding_screen.dart';
 import 'passcode_lock_screen.dart';
-import 'home_screen_v2.dart';
+import 'home_screen.dart';
 
 
 
@@ -63,13 +63,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         onSuccess: () {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (_) => const HomeScreenV2(),
+              builder: (_) => const HomeScreen(),
             ),
           );
         },
       );
     } else {
-      nextScreen = const HomeScreenV2();
+      nextScreen = const HomeScreen();
     }
 
     if (!mounted) return;

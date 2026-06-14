@@ -16,6 +16,7 @@ import '../../models/folder.dart';
 import '../../providers/notes_provider.dart';
 import '../../services/vault_service.dart';
 import '../widgets/folder_selector_dialog.dart';
+import '../widgets/home_prompt_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
@@ -3125,6 +3126,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     );
   }
 
+  /*
   bool get _isNoteEmpty {
     final hasTitle = _titleController.text.trim().isNotEmpty;
     if (hasTitle) return false;
@@ -3143,6 +3145,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     
     return false;
   }
+  */
 
   void _showCategorySelectorDialog() {
     showDialog(
@@ -3168,95 +3171,22 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     );
   }
 
+  /*
   Widget _buildStartingScreen(ThemeData theme, bool isDark) {
-    final now = widget.note?.createdAt ?? DateTime.now();
-    final formattedDate = DateFormat('MMM d').format(now);
-    final formattedDay = DateFormat('EEEE').format(now);
-    
     return Scaffold(
       backgroundColor: const Color(0xFFF9F6E5),
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 180.0), // push down to upper-middle center
-                  // Date Headers
-                  Text(
-                    formattedDate,
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF333333),
-                    ),
-                  ),
-                  const SizedBox(height: 2.0),
-                  Text(
-                    formattedDay,
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF333333),
-                    ),
-                  ),
-                  const SizedBox(height: 5.0),
-                  Text(
-                    "Today",
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFFFFA322),
-                    ),
-                  ),
-                  const SizedBox(height: 30.0),
-                  
-                  // Text input Row
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(top: 8.0, left: 0),
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFD9D9D9),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 25.0),
-                      Expanded(
-                        child: TextField(
-                          controller: _getControllerOfBlock(_blocks[0]),
-                          focusNode: _getFocusNodeOfBlock(_blocks[0]),
-                          maxLines: null,
-                          keyboardType: TextInputType.multiline,
-                          style: GoogleFonts.inter(
-                            fontSize: 20.0,
-                            color: const Color(0xFF333333),
-                          ),
-                          decoration: InputDecoration(
-                            hintText: "what happened today?",
-                            hintStyle: GoogleFonts.inter(
-                              fontSize: 20.0,
-                              color: const Color(0xFF333333).withOpacity(0.3),
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            filled: false,
-                          ),
-                          onChanged: (val) {
-                            _onBlockTextChanged(_blocks[0]);
-                            setState(() {}); // Rebuild to transition to active screen
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            HomePromptView(
+              date: widget.note?.createdAt ?? DateTime.now(),
+              interactive: true,
+              controller: _getControllerOfBlock(_blocks[0]),
+              focusNode: _getFocusNodeOfBlock(_blocks[0]),
+              onChanged: (val) {
+                _onBlockTextChanged(_blocks[0]);
+                setState(() {}); // Rebuild to transition to active screen
+              },
             ),
             
             // Bottom navigation bar
@@ -3338,6 +3268,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       ),
     );
   }
+  */
 
   Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     final notesProvider = Provider.of<NotesProvider>(context);
@@ -4134,9 +4065,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    Widget body = _isNoteEmpty
-        ? _buildStartingScreen(theme, isDark)
-        : _buildActiveEditorScreen(theme, isDark);
+    // Always show active editor screen as the home screen handles the starting visual style
+    Widget body = _buildActiveEditorScreen(theme, isDark);
 
     if (_isRecording) {
       body = Stack(
