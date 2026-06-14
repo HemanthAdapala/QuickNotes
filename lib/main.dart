@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'providers/notes_provider.dart';
 import 'views/screens/splash_screen.dart';
 
@@ -130,6 +131,44 @@ class QuickNotesApp extends StatelessWidget {
       ),
 
       home: const SplashScreen(),
+      builder: (context, child) {
+        if (!kIsWeb) return child!;
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 600) {
+              return child!;
+            }
+            return Scaffold(
+              backgroundColor: const Color(0xFFF3F4F6),
+              body: Center(
+                child: Container(
+                  width: 402,
+                  height: 874,
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? const Color(0xFF0B0D17) : const Color(0xFFFFFDF9),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 30,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: isDarkMode ? const Color(0xFF312E81) : const Color(0xFFE2E8F0),
+                      width: 2,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: child!,
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

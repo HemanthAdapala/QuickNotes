@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Add this to your existing pubspec.yaml under the flutter: section
+# ─────────────────────────────────────────────────────────────────────────────
+
+flutter:
+  fonts:
+    - family: PlayfairDisplay
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/PlayfairDisplay-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/PlayfairDisplay-SemiBold.ttf
+          weight: 600
+
+    - family: SFProDisplay
+      fonts:
+        - asset: assets/fonts/SF-Pro-Display-Regular.otf
+          weight: 400
+        - asset: assets/fonts/SF-Pro-Display-Medium.otf
+          weight: 500
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SF Pro Display note:
+# Apple's SF Pro is system-only on iOS/macOS. For non-Apple platforms, either:
+#   • Bundle the .otf (requires Apple Developer license for distribution)
+#   • Or substitute with Inter (very close match for SF Pro) from Google Fonts
+# ─────────────────────────────────────────────────────────────────────────────

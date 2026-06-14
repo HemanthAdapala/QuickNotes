@@ -66,7 +66,7 @@ class _PasscodeLockScreenState extends State<PasscodeLockScreen> {
 
   void _onKeyPress(String digit) {
     if (_enteredPin.length >= 4) return;
-    
+
     HapticFeedback.lightImpact();
     setState(() {
       _isError = false;
@@ -120,7 +120,8 @@ class _PasscodeLockScreenState extends State<PasscodeLockScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isCancelable = widget.purpose != LockPurpose.appUnlock && widget.onCancel != null;
+    final isCancelable =
+        widget.purpose != LockPurpose.appUnlock && widget.onCancel != null;
 
     return Scaffold(
       backgroundColor: QuickNotesTheme.background,
@@ -134,7 +135,8 @@ class _PasscodeLockScreenState extends State<PasscodeLockScreen> {
                 alignment: Alignment.topLeft,
                 child: isCancelable
                     ? IconButton(
-                        icon: const Icon(Icons.close_rounded, color: QuickNotesTheme.textPrimary),
+                        icon: const Icon(Icons.close_rounded,
+                            color: QuickNotesTheme.textPrimary),
                         onPressed: widget.onCancel,
                       )
                     : const SizedBox(height: 48),
@@ -184,10 +186,13 @@ class _PasscodeLockScreenState extends State<PasscodeLockScreen> {
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: filled ? QuickNotesTheme.accent : Colors.transparent,
+                      color:
+                          filled ? QuickNotesTheme.accent : Colors.transparent,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: filled ? QuickNotesTheme.accent : QuickNotesTheme.border,
+                        color: filled
+                            ? QuickNotesTheme.accent
+                            : QuickNotesTheme.border,
                         width: 2.0,
                       ),
                     ),
@@ -256,12 +261,12 @@ class _PasscodeLockScreenState extends State<PasscodeLockScreen> {
       return const SizedBox(width: 72, height: 72);
     }
     return _KeypadButton(
+      onPressed: onPressed,
       child: Icon(
         icon,
         color: QuickNotesTheme.textPrimary,
         size: 24,
       ),
-      onPressed: onPressed,
     );
   }
 }

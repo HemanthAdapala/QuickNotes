@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'fullscreen_image_viewer.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class Style {
   final bool bold;
@@ -70,7 +71,9 @@ class Style {
       imageUrl: clearImage ? null : (imageUrl ?? this.imageUrl),
       imageWidth: clearImage ? null : (imageWidth ?? this.imageWidth),
       imageHeight: clearImage ? null : (imageHeight ?? this.imageHeight),
-      imageCaption: clearImage || clearCaption ? null : (imageCaption ?? this.imageCaption),
+      imageCaption: clearImage || clearCaption
+          ? null
+          : (imageCaption ?? this.imageCaption),
     );
   }
 
@@ -142,14 +145,22 @@ class InteractiveCheckbox extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 8.0, left: 4.0),
-        child: Icon(
-          checked ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-          size: 20,
-          color: checked 
-              ? Theme.of(context).colorScheme.primary 
-              : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-        ),
+        margin: const EdgeInsets.only(top: 8.0, right: 8.0, left: 4.0),
+        width: 10,
+        height: 10,
+        decoration: checked
+            ? const BoxDecoration(color: Color(0xFF222222))
+            : BoxDecoration(border: Border.all(color: Colors.black, width: 1.0)),
+        child: checked
+            ? Center(
+                child: SvgPicture.asset(
+                  'assets/icons/vector_check.svg',
+                  width: 6,
+                  height: 6,
+                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                ),
+              )
+            : null,
       ),
     );
   }
@@ -183,11 +194,12 @@ class ResizableImageWidget extends StatefulWidget {
   State<ResizableImageWidget> createState() => _ResizableImageWidgetState();
 }
 
-class _ResizableImageWidgetState extends State<ResizableImageWidget> with SingleTickerProviderStateMixin {
+class _ResizableImageWidgetState extends State<ResizableImageWidget>
+    with SingleTickerProviderStateMixin {
   double? _width;
   bool _showControls = false;
   late TextEditingController _captionController;
-  
+
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
@@ -198,7 +210,7 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
     super.initState();
     _width = widget.initialWidth;
     _captionController = TextEditingController(text: widget.caption ?? '');
-    
+
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -220,7 +232,8 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
         _width = widget.initialWidth;
       });
     }
-    if (oldWidget.caption != widget.caption && widget.caption != _captionController.text) {
+    if (oldWidget.caption != widget.caption &&
+        widget.caption != _captionController.text) {
       _captionController.text = widget.caption ?? '';
     }
   }
@@ -261,7 +274,8 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
       ),
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        backgroundColor: (color ?? theme.colorScheme.primary).withOpacity(0.08),
+        backgroundColor:
+            (color ?? theme.colorScheme.primary).withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -290,8 +304,9 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isFile = !widget.imagePath.startsWith('http://') && !widget.imagePath.startsWith('https://');
-    
+    final isFile = !widget.imagePath.startsWith('http://') &&
+        !widget.imagePath.startsWith('https://');
+
     final double screenWidth = MediaQuery.of(context).size.width;
     final double maxWidth = (screenWidth - 48.0).clamp(100.0, 720.0);
     final double currentWidth = widget.isStacked
@@ -312,7 +327,9 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
       if (cleanPath.startsWith('file://')) {
         cleanPath = cleanPath.substring(7);
       }
-      if (cleanPath.startsWith('/') && cleanPath.length > 2 && cleanPath[2] == ':') {
+      if (cleanPath.startsWith('/') &&
+          cleanPath.length > 2 &&
+          cleanPath[2] == ':') {
         cleanPath = cleanPath.substring(1);
       }
       imageProvider = ResizeImage(
@@ -326,7 +343,8 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
       );
     }
 
-    final heroTag = 'inline-image-${widget.imagePath}-${widget.index}-${widget.stackImageIndex ?? -1}';
+    final heroTag =
+        'inline-image-${widget.imagePath}-${widget.index}-${widget.stackImageIndex ?? -1}';
 
     String? displayCaption = widget.caption;
     if (displayCaption != null && displayCaption.isNotEmpty) {
@@ -366,11 +384,18 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
                   margin: const EdgeInsets.symmetric(vertical: 8.0),
                   decoration: BoxDecoration(
                     border: _showControls
-                        ? Border.all(color: theme.colorScheme.primary, width: 2.0)
+                        ? Border.all(
+                            color: theme.colorScheme.primary, width: 2.0)
                         : Border.all(color: Colors.transparent, width: 2.0),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: _showControls
-                        ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.15), blurRadius: 8, spreadRadius: 1)]
+                        ? [
+                            BoxShadow(
+                                color: theme.colorScheme.primary
+                                    .withValues(alpha: 0.15),
+                                blurRadius: 8,
+                                spreadRadius: 1)
+                          ]
                         : null,
                   ),
                   constraints: widget.isStacked
@@ -385,25 +410,31 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
                       width: widget.isStacked ? double.infinity : currentWidth,
                       height: widget.isStacked ? 180.0 : null,
                       fit: widget.isStacked ? BoxFit.cover : BoxFit.contain,
-                      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                      frameBuilder:
+                          (context, child, frame, wasSynchronouslyLoaded) {
                         if (wasSynchronouslyLoaded) {
                           return child;
                         }
                         return AnimatedCrossFade(
                           firstChild: Container(
-                            width: widget.isStacked ? double.infinity : currentWidth,
+                            width: widget.isStacked
+                                ? double.infinity
+                                : currentWidth,
                             height: currentHeight,
                             color: theme.colorScheme.surfaceContainerHighest,
                             child: const Center(
                               child: SizedBox(
                                 width: 24,
                                 height: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               ),
                             ),
                           ),
                           secondChild: child,
-                          crossFadeState: frame == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                          crossFadeState: frame == null
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
                           duration: const Duration(milliseconds: 300),
                         );
                       },
@@ -415,9 +446,12 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
                           child: const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey),
+                              Icon(Icons.broken_image_outlined,
+                                  size: 40, color: Colors.grey),
                               SizedBox(height: 4),
-                              Text("Error loading image", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                              Text("Error loading image",
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey)),
                             ],
                           ),
                         );
@@ -439,9 +473,14 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
                         behavior: HitTestBehavior.opaque,
                         onPanUpdate: (details) {
                           setState(() {
-                            _width = (currentWidth - details.delta.dx).clamp(150.0, maxWidth);
+                            _width = (currentWidth - details.delta.dx)
+                                .clamp(150.0, maxWidth);
                           });
-                          widget.onUpdate(_width!, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
+                          widget.onUpdate(
+                              _width!,
+                              _captionController.text.trim().isEmpty
+                                  ? null
+                                  : _captionController.text.trim());
                         },
                         child: _buildResizeHandle(theme),
                       ),
@@ -460,9 +499,14 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
                         behavior: HitTestBehavior.opaque,
                         onPanUpdate: (details) {
                           setState(() {
-                            _width = (currentWidth + details.delta.dx).clamp(150.0, maxWidth);
+                            _width = (currentWidth + details.delta.dx)
+                                .clamp(150.0, maxWidth);
                           });
-                          widget.onUpdate(_width!, _captionController.text.trim().isEmpty ? null : _captionController.text.trim());
+                          widget.onUpdate(
+                              _width!,
+                              _captionController.text.trim().isEmpty
+                                  ? null
+                                  : _captionController.text.trim());
                         },
                         child: _buildResizeHandle(theme),
                       ),
@@ -473,14 +517,16 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
             ],
           ),
         ),
-        if (displayCaption != null && displayCaption.isNotEmpty && !_showControls)
+        if (displayCaption != null &&
+            displayCaption.isNotEmpty &&
+            !_showControls)
           Padding(
             padding: const EdgeInsets.only(left: 4.0, bottom: 8.0, top: 4.0),
             child: Text(
               displayCaption,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontStyle: FontStyle.italic,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ),
@@ -525,20 +571,23 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
           ),
           if (!widget.isStacked) ...[
             const SizedBox(height: 8),
-            Container(
+            SizedBox(
               width: currentWidth,
               child: TextField(
                 controller: _captionController,
                 style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
                 decoration: InputDecoration(
                   hintText: "Add optional caption (e.g. 📍 Sunset)...",
-                  hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                  hintStyle: TextStyle(
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.4)),
                   border: InputBorder.none,
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 4),
                 ),
                 onChanged: (val) {
-                  widget.onUpdate(_width ?? currentWidth, val.trim().isEmpty ? null : val.trim());
+                  widget.onUpdate(_width ?? currentWidth,
+                      val.trim().isEmpty ? null : val.trim());
                 },
               ),
             ),
@@ -564,10 +613,14 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
           'stackImageIndex': widget.stackImageIndex,
           'imagePath': widget.imagePath,
         },
-        onDragStarted: () => print('DRAG_DEBUG: Drag started for ${widget.imagePath}'),
-        onDragCompleted: () => print('DRAG_DEBUG: Drag completed for ${widget.imagePath}'),
-        onDraggableCanceled: (velocity, offset) => print('DRAG_DEBUG: Drag canceled for ${widget.imagePath}'),
-        onDragEnd: (details) => print('DRAG_DEBUG: Drag ended for ${widget.imagePath}'),
+        onDragStarted: () =>
+            print('DRAG_DEBUG: Drag started for ${widget.imagePath}'),
+        onDragCompleted: () =>
+            print('DRAG_DEBUG: Drag completed for ${widget.imagePath}'),
+        onDraggableCanceled: (velocity, offset) =>
+            print('DRAG_DEBUG: Drag canceled for ${widget.imagePath}'),
+        onDragEnd: (details) =>
+            print('DRAG_DEBUG: Drag ended for ${widget.imagePath}'),
         maxSimultaneousDrags: _showControls || _isDeleting ? 0 : 1,
         feedback: DragFeedbackImage(
           imageProvider: imageProvider,
@@ -581,7 +634,9 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
               height: widget.isStacked ? 180 : 120,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  border: Border.all(color: theme.colorScheme.primary.withOpacity(0.5), width: 1.5),
+                  border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                      width: 1.5),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -597,32 +652,34 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> with Single
 class DragFeedbackImage extends StatefulWidget {
   final ImageProvider imageProvider;
   final double width;
-  const DragFeedbackImage({super.key, required this.imageProvider, required this.width});
-  
+  const DragFeedbackImage(
+      {super.key, required this.imageProvider, required this.width});
+
   @override
   State<DragFeedbackImage> createState() => _DragFeedbackImageState();
 }
 
-class _DragFeedbackImageState extends State<DragFeedbackImage> with SingleTickerProviderStateMixin {
+class _DragFeedbackImageState extends State<DragFeedbackImage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  
+
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 250));
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut)
-    );
+        CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
     _controller.forward();
   }
-  
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
@@ -674,51 +731,90 @@ class RichTextEditingController extends TextEditingController {
   @override
   set text(String newText) {
     // Setting text directly replaces the whole document with normal style
-    styledChars = newText.split('').map((char) => StyledChar(char: char, style: const Style())).toList();
+    styledChars = newText
+        .split('')
+        .map((char) => StyledChar(char: char, style: const Style()))
+        .toList();
     super.text = newText;
   }
 
   // Helper to check if style has an attribute
   bool _hasAttribute(Style style, String attribute, dynamic value) {
     switch (attribute) {
-      case 'bold': return style.bold;
-      case 'italic': return style.italic;
-      case 'underline': return style.underline;
-      case 'strikethrough': return style.strikethrough;
-      case 'h1': return style.heading == 'h1';
-      case 'h2': return style.heading == 'h2';
-      case 'h3': return style.heading == 'h3';
-      case 'bullet': return style.listType == 'bullet';
-      case 'number': return style.listType == 'number';
-      case 'checkbox': return style.listType == 'checkbox';
-      case 'color': return style.color == value;
-      case 'highlight': return style.highlight == value;
-      default: return false;
+      case 'bold':
+        return style.bold;
+      case 'italic':
+        return style.italic;
+      case 'underline':
+        return style.underline;
+      case 'strikethrough':
+        return style.strikethrough;
+      case 'h1':
+        return style.heading == 'h1';
+      case 'h2':
+        return style.heading == 'h2';
+      case 'h3':
+        return style.heading == 'h3';
+      case 'bullet':
+        return style.listType == 'bullet';
+      case 'number':
+        return style.listType == 'number';
+      case 'checkbox':
+        return style.listType == 'checkbox';
+      case 'color':
+        return style.color == value;
+      case 'highlight':
+        return style.highlight == value;
+      default:
+        return false;
     }
   }
 
   // Helper to toggle attribute
   Style _toggleAttribute(Style style, String attribute, dynamic value) {
     switch (attribute) {
-      case 'bold': return style.copyWith(bold: !style.bold);
-      case 'italic': return style.copyWith(italic: !style.italic);
-      case 'underline': return style.copyWith(underline: !style.underline);
-      case 'strikethrough': return style.copyWith(strikethrough: !style.strikethrough);
-      case 'color': return style.copyWith(color: style.color == value ? null : value, clearColor: style.color == value);
-      case 'highlight': return style.copyWith(highlight: style.highlight == value ? null : value, clearHighlight: style.highlight == value);
-      default: return style;
+      case 'bold':
+        return style.copyWith(bold: !style.bold);
+      case 'italic':
+        return style.copyWith(italic: !style.italic);
+      case 'underline':
+        return style.copyWith(underline: !style.underline);
+      case 'strikethrough':
+        return style.copyWith(strikethrough: !style.strikethrough);
+      case 'color':
+        return style.copyWith(
+            color: style.color == value ? null : value,
+            clearColor: style.color == value);
+      case 'highlight':
+        return style.copyWith(
+            highlight: style.highlight == value ? null : value,
+            clearHighlight: style.highlight == value);
+      default:
+        return style;
     }
   }
 
-  Style _setAttribute(Style style, String attribute, bool enable, dynamic value) {
+  Style _setAttribute(
+      Style style, String attribute, bool enable, dynamic value) {
     switch (attribute) {
-      case 'bold': return style.copyWith(bold: enable);
-      case 'italic': return style.copyWith(italic: enable);
-      case 'underline': return style.copyWith(underline: enable);
-      case 'strikethrough': return style.copyWith(strikethrough: enable);
-      case 'color': return enable ? style.copyWith(color: value) : style.copyWith(clearColor: true);
-      case 'highlight': return enable ? style.copyWith(highlight: value) : style.copyWith(clearHighlight: true);
-      default: return style;
+      case 'bold':
+        return style.copyWith(bold: enable);
+      case 'italic':
+        return style.copyWith(italic: enable);
+      case 'underline':
+        return style.copyWith(underline: enable);
+      case 'strikethrough':
+        return style.copyWith(strikethrough: enable);
+      case 'color':
+        return enable
+            ? style.copyWith(color: value)
+            : style.copyWith(clearColor: true);
+      case 'highlight':
+        return enable
+            ? style.copyWith(highlight: value)
+            : style.copyWith(clearHighlight: true);
+      default:
+        return style;
     }
   }
 
@@ -728,7 +824,8 @@ class RichTextEditingController extends TextEditingController {
 
     if (sel.isCollapsed) {
       // Toggle for next character typed
-      currentActiveStyle = _toggleAttribute(currentActiveStyle, attribute, value);
+      currentActiveStyle =
+          _toggleAttribute(currentActiveStyle, attribute, value);
       if (onStyleChanged != null) onStyleChanged!();
     } else {
       // Check if all characters in selection have this attribute
@@ -748,7 +845,8 @@ class RichTextEditingController extends TextEditingController {
         if (i >= 0 && i < styledChars.length) {
           styledChars[i] = StyledChar(
             char: styledChars[i].char,
-            style: _setAttribute(styledChars[i].style, attribute, enable, value),
+            style:
+                _setAttribute(styledChars[i].style, attribute, enable, value),
           );
         }
       }
@@ -760,16 +858,16 @@ class RichTextEditingController extends TextEditingController {
     final List<LineRange> ranges = [];
     final textStr = text;
     int start = 0;
-    
+
     while (start <= textStr.length) {
       int end = textStr.indexOf('\n', start);
       if (end == -1) {
         end = textStr.length;
       }
-      
+
       final selStart = sel.start;
       final selEnd = sel.end;
-      
+
       bool overlap = false;
       if (selStart == selEnd) {
         overlap = (selStart >= start && selStart <= end);
@@ -778,11 +876,11 @@ class RichTextEditingController extends TextEditingController {
         final int minEnd = selEnd < end ? selEnd : end;
         overlap = maxStart <= minEnd;
       }
-      
+
       if (overlap) {
         ranges.add(LineRange(start, end));
       }
-      
+
       if (end == textStr.length) break;
       start = end + 1;
     }
@@ -804,15 +902,21 @@ class RichTextEditingController extends TextEditingController {
       final line = lines[i];
       final lineStart = line.start;
 
-      final existingStyle = lineStart < newChars.length 
-          ? newChars[lineStart].style 
+      final existingStyle = lineStart < newChars.length
+          ? newChars[lineStart].style
           : const Style();
 
-      if (styleName == 'bullet' || styleName == 'checkbox' || styleName == 'number' || styleName == 'quote') {
-        bool hasBullet = lineStart < newChars.length && newChars[lineStart].char == '•';
-        bool hasCheckbox = lineStart < newChars.length && 
-            (newChars[lineStart].char == '\u2610' || newChars[lineStart].char == '\u2611');
-        bool hasQuote = lineStart < newChars.length && newChars[lineStart].char == '›';
+      if (styleName == 'bullet' ||
+          styleName == 'checkbox' ||
+          styleName == 'number' ||
+          styleName == 'quote') {
+        bool hasBullet =
+            lineStart < newChars.length && newChars[lineStart].char == '•';
+        bool hasCheckbox = lineStart < newChars.length &&
+            (newChars[lineStart].char == '\u2610' ||
+                newChars[lineStart].char == '\u2611');
+        bool hasQuote =
+            lineStart < newChars.length && newChars[lineStart].char == '›';
 
         // Remove existing prefix if any
         if (hasBullet || hasCheckbox || hasQuote) {
@@ -827,7 +931,8 @@ class RichTextEditingController extends TextEditingController {
         if (styleName == 'bullet' && existingStyle.listType != 'bullet') {
           newListType = 'bullet';
           prefixChar = '•';
-        } else if (styleName == 'checkbox' && existingStyle.listType != 'checkbox') {
+        } else if (styleName == 'checkbox' &&
+            existingStyle.listType != 'checkbox') {
           newListType = 'checkbox';
           prefixChar = '\u2610';
         } else if (styleName == 'quote' && existingStyle.listType != 'quote') {
@@ -836,15 +941,18 @@ class RichTextEditingController extends TextEditingController {
         }
 
         if (prefixChar.isNotEmpty) {
-          final newStyle = existingStyle.copyWith(listType: newListType, checked: false);
-          newChars.insert(lineStart, StyledChar(char: prefixChar, style: newStyle));
+          final newStyle =
+              existingStyle.copyWith(listType: newListType, checked: false);
+          newChars.insert(
+              lineStart, StyledChar(char: prefixChar, style: newStyle));
           if (oldSel.start > lineStart) selectionStartShift++;
           if (oldSel.end > lineStart) selectionEndShift++;
         }
 
         // Apply updated list type styles to the rest of the line characters
         int currentLineEnd = lineStart;
-        while (currentLineEnd < newChars.length && newChars[currentLineEnd].char != '\n') {
+        while (currentLineEnd < newChars.length &&
+            newChars[currentLineEnd].char != '\n') {
           currentLineEnd++;
         }
 
@@ -852,15 +960,18 @@ class RichTextEditingController extends TextEditingController {
           if (j < newChars.length) {
             newChars[j] = StyledChar(
               char: newChars[j].char,
-              style: newChars[j].style.copyWith(listType: newListType, checked: false, strikethrough: false),
+              style: newChars[j].style.copyWith(
+                  listType: newListType, checked: false, strikethrough: false),
             );
           }
         }
       } else if (styleName == 'h1' || styleName == 'h2' || styleName == 'h3') {
-        final targetHeading = existingStyle.heading == styleName ? 'normal' : styleName;
-        
+        final targetHeading =
+            existingStyle.heading == styleName ? 'normal' : styleName;
+
         int currentLineEnd = lineStart;
-        while (currentLineEnd < newChars.length && newChars[currentLineEnd].char != '\n') {
+        while (currentLineEnd < newChars.length &&
+            newChars[currentLineEnd].char != '\n') {
           currentLineEnd++;
         }
 
@@ -874,8 +985,10 @@ class RichTextEditingController extends TextEditingController {
         }
       } else if (styleName.startsWith('align-')) {
         TextAlign targetAlign = TextAlign.left;
-        if (styleName == 'align-center') targetAlign = TextAlign.center;
-        else if (styleName == 'align-right') targetAlign = TextAlign.right;
+        if (styleName == 'align-center') {
+          targetAlign = TextAlign.center;
+        } else if (styleName == 'align-right')
+          targetAlign = TextAlign.right;
         else if (styleName == 'align-justify') targetAlign = TextAlign.justify;
 
         if (existingStyle.align == targetAlign) {
@@ -883,7 +996,8 @@ class RichTextEditingController extends TextEditingController {
         }
 
         int currentLineEnd = lineStart;
-        while (currentLineEnd < newChars.length && newChars[currentLineEnd].char != '\n') {
+        while (currentLineEnd < newChars.length &&
+            newChars[currentLineEnd].char != '\n') {
           currentLineEnd++;
         }
 
@@ -901,12 +1015,15 @@ class RichTextEditingController extends TextEditingController {
     styledChars = newChars;
     final newTextStr = _getTextOnly();
 
-    final newSelStart = (oldSel.start + selectionStartShift).clamp(0, newTextStr.length);
-    final newSelEnd = (oldSel.end + selectionEndShift).clamp(0, newTextStr.length);
+    final newSelStart =
+        (oldSel.start + selectionStartShift).clamp(0, newTextStr.length);
+    final newSelEnd =
+        (oldSel.end + selectionEndShift).clamp(0, newTextStr.length);
 
     value = TextEditingValue(
       text: newTextStr,
-      selection: TextSelection(baseOffset: newSelStart, extentOffset: newSelEnd),
+      selection:
+          TextSelection(baseOffset: newSelStart, extentOffset: newSelEnd),
     );
     notifyListeners();
   }
@@ -923,7 +1040,8 @@ class RichTextEditingController extends TextEditingController {
           lineStart--;
         }
         int lineEnd = index;
-        while (lineEnd < styledChars.length && styledChars[lineEnd].char != '\n') {
+        while (
+            lineEnd < styledChars.length && styledChars[lineEnd].char != '\n') {
           lineEnd++;
         }
 
@@ -939,9 +1057,9 @@ class RichTextEditingController extends TextEditingController {
             newChars[j] = StyledChar(
               char: newChars[j].char,
               style: newChars[j].style.copyWith(
-                strikethrough: newChecked,
-                checked: newChecked,
-              ),
+                    strikethrough: newChecked,
+                    checked: newChecked,
+                  ),
             );
           }
         }
@@ -991,18 +1109,19 @@ class RichTextEditingController extends TextEditingController {
       Style baseStyle = currentActiveStyle;
       if (diffStart > 0 && diffStart - 1 < styledChars.length) {
         baseStyle = styledChars[diffStart - 1].style.copyWith(
-          bold: currentActiveStyle.bold,
-          italic: currentActiveStyle.italic,
-          underline: currentActiveStyle.underline,
-          strikethrough: currentActiveStyle.strikethrough,
-          color: currentActiveStyle.color,
-          highlight: currentActiveStyle.highlight,
-          clearColor: currentActiveStyle.color == null,
-          clearHighlight: currentActiveStyle.highlight == null,
-        );
+              bold: currentActiveStyle.bold,
+              italic: currentActiveStyle.italic,
+              underline: currentActiveStyle.underline,
+              strikethrough: currentActiveStyle.strikethrough,
+              color: currentActiveStyle.color,
+              highlight: currentActiveStyle.highlight,
+              clearColor: currentActiveStyle.color == null,
+              clearHighlight: currentActiveStyle.highlight == null,
+            );
       }
 
-      final bool isNewlineInsert = (diffEndNew - diffStart == 1) && newText[diffStart] == '\n';
+      final bool isNewlineInsert =
+          (diffEndNew - diffStart == 1) && newText[diffStart] == '\n';
 
       final List<StyledChar> insertedStyledChars = [];
       if (isNewlineInsert) {
@@ -1010,29 +1129,35 @@ class RichTextEditingController extends TextEditingController {
 
         if (baseStyle.listType == 'bullet') {
           insertedStyledChars.add(StyledChar(char: '•', style: baseStyle));
-          newText = newText.substring(0, diffStart + 1) + '•' + newText.substring(diffStart + 1);
+          newText =
+              '${newText.substring(0, diffStart + 1)}•${newText.substring(diffStart + 1)}';
           diffEndNew++;
 
           finalValue = TextEditingValue(
             text: newText,
-            selection: TextSelection.collapsed(offset: newValue.selection.baseOffset + 1),
+            selection: TextSelection.collapsed(
+                offset: newValue.selection.baseOffset + 1),
           );
         } else if (baseStyle.listType == 'checkbox') {
           final checkboxStyle = baseStyle.copyWith(checked: false);
-          insertedStyledChars.add(StyledChar(char: '\u2610', style: checkboxStyle));
-          newText = newText.substring(0, diffStart + 1) + '\u2610' + newText.substring(diffStart + 1);
+          insertedStyledChars
+              .add(StyledChar(char: '\u2610', style: checkboxStyle));
+          newText =
+              '${newText.substring(0, diffStart + 1)}\u2610${newText.substring(diffStart + 1)}';
           diffEndNew++;
 
           finalValue = TextEditingValue(
             text: newText,
-            selection: TextSelection.collapsed(offset: newValue.selection.baseOffset + 1),
+            selection: TextSelection.collapsed(
+                offset: newValue.selection.baseOffset + 1),
           );
         } else {
           baseStyle = baseStyle.copyWith(heading: 'normal');
         }
       } else {
         for (int i = diffStart; i < diffEndNew; i++) {
-          insertedStyledChars.add(StyledChar(char: newText[i], style: baseStyle));
+          insertedStyledChars
+              .add(StyledChar(char: newText[i], style: baseStyle));
         }
       }
 
@@ -1044,9 +1169,11 @@ class RichTextEditingController extends TextEditingController {
     }
 
     super.value = finalValue;
-    
+
     // Update active toolbar style state to match character style at cursor when collapsed
-    if (selection.isCollapsed && selection.start >= 0 && selection.start < styledChars.length) {
+    if (selection.isCollapsed &&
+        selection.start >= 0 &&
+        selection.start < styledChars.length) {
       currentActiveStyle = styledChars[selection.start].style;
     }
   }
@@ -1085,10 +1212,10 @@ class RichTextEditingController extends TextEditingController {
               styledChars[index] = StyledChar(
                 char: styledChars[index].char,
                 style: styledChars[index].style.copyWith(
-                  imageWidth: newWidth,
-                  imageCaption: newCaption,
-                  clearCaption: newCaption == null,
-                ),
+                      imageWidth: newWidth,
+                      imageCaption: newCaption,
+                      clearCaption: newCaption == null,
+                    ),
               );
               notifyListeners();
             },
@@ -1097,11 +1224,13 @@ class RichTextEditingController extends TextEditingController {
               final newTextStr = _getTextOnly();
               value = TextEditingValue(
                 text: newTextStr,
-                selection: TextSelection.collapsed(offset: index.clamp(0, newTextStr.length)),
+                selection: TextSelection.collapsed(
+                    offset: index.clamp(0, newTextStr.length)),
               );
               notifyListeners();
             },
-            onReplace: onReplaceImage != null ? () => onReplaceImage!(index) : null,
+            onReplace:
+                onReplaceImage != null ? () => onReplaceImage!(index) : null,
           ),
         ));
         i++;
@@ -1122,10 +1251,10 @@ class RichTextEditingController extends TextEditingController {
         final currentStyle = sc.style;
         i++;
 
-        while (i < styledChars.length && 
-               styledChars[i].char != '\u2610' && 
-               styledChars[i].char != '\u2611' &&
-               styledChars[i].style == currentStyle) {
+        while (i < styledChars.length &&
+            styledChars[i].char != '\u2610' &&
+            styledChars[i].char != '\u2611' &&
+            styledChars[i].style == currentStyle) {
           i++;
         }
 
@@ -1140,7 +1269,8 @@ class RichTextEditingController extends TextEditingController {
 
         if (currentStyle.underline && currentStyle.strikethrough) {
           runStyle = runStyle.copyWith(
-            decoration: TextDecoration.combine([TextDecoration.underline, TextDecoration.lineThrough]),
+            decoration: TextDecoration.combine(
+                [TextDecoration.underline, TextDecoration.lineThrough]),
           );
         } else if (currentStyle.underline) {
           runStyle = runStyle.copyWith(decoration: TextDecoration.underline);
@@ -1227,20 +1357,20 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
     if (line.startsWith('- [ ] ')) {
       listType = 'checkbox';
       checked = false;
-      line = '\u2610' + line.substring(6);
+      line = '\u2610${line.substring(6)}';
     } else if (line.startsWith('- [x] ') || line.startsWith('- [X] ')) {
       listType = 'checkbox';
       checked = true;
-      line = '\u2611' + line.substring(6);
+      line = '\u2611${line.substring(6)}';
     } else if (line.startsWith('- ')) {
       listType = 'bullet';
-      line = '•' + line.substring(2);
+      line = '•${line.substring(2)}';
     } else if (line.startsWith('* ')) {
       listType = 'bullet';
-      line = '•' + line.substring(2);
+      line = '•${line.substring(2)}';
     } else if (line.startsWith('> ')) {
       listType = 'quote';
-      line = '›' + line.substring(2);
+      line = '›${line.substring(2)}';
     }
 
     int idx = 0;
@@ -1252,7 +1382,9 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
     while (idx < line.length) {
       if (line[idx] == '!' && idx + 1 < line.length && line[idx + 1] == '[') {
         int closeBracket = line.indexOf(']', idx + 2);
-        if (closeBracket != -1 && closeBracket + 1 < line.length && line[closeBracket + 1] == '(') {
+        if (closeBracket != -1 &&
+            closeBracket + 1 < line.length &&
+            line[closeBracket + 1] == '(') {
           int closeParenthesis = line.indexOf(')', closeBracket + 2);
           if (closeParenthesis != -1) {
             final alt = line.substring(idx + 2, closeBracket);
@@ -1298,19 +1430,24 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
         }
       }
 
-      if (idx + 1 < line.length && (line.substring(idx, idx + 2) == '**' || line.substring(idx, idx + 2) == '__')) {
+      if (idx + 1 < line.length &&
+          (line.substring(idx, idx + 2) == '**' ||
+              line.substring(idx, idx + 2) == '__')) {
         bold = !bold;
         idx += 2;
       } else if (line[idx] == '*' || line[idx] == '_') {
         italic = !italic;
         idx += 1;
-      } else if (idx + 2 < line.length && line.substring(idx, idx + 3) == '<u>') {
+      } else if (idx + 2 < line.length &&
+          line.substring(idx, idx + 3) == '<u>') {
         underline = true;
         idx += 3;
-      } else if (idx + 3 < line.length && line.substring(idx, idx + 4) == '</u>') {
+      } else if (idx + 3 < line.length &&
+          line.substring(idx, idx + 4) == '</u>') {
         underline = false;
         idx += 4;
-      } else if (idx + 1 < line.length && line.substring(idx, idx + 2) == '~~') {
+      } else if (idx + 1 < line.length &&
+          line.substring(idx, idx + 2) == '~~') {
         strikethrough = !strikethrough;
         idx += 2;
       } else {
@@ -1358,10 +1495,22 @@ String generateInlineMarkdown(List<StyledChar> lineChars) {
     final char = lineChars[i].char;
 
     if (style.imageUrl != null && char == '\uFFFC') {
-      if (bold) { sb.write('**'); bold = false; }
-      if (italic) { sb.write('*'); italic = false; }
-      if (underline) { sb.write('</u>'); underline = false; }
-      if (strikethrough) { sb.write('~~'); strikethrough = false; }
+      if (bold) {
+        sb.write('**');
+        bold = false;
+      }
+      if (italic) {
+        sb.write('*');
+        italic = false;
+      }
+      if (underline) {
+        sb.write('</u>');
+        underline = false;
+      }
+      if (strikethrough) {
+        sb.write('~~');
+        strikethrough = false;
+      }
 
       final urlBuffer = StringBuffer(style.imageUrl!);
       if (style.imageWidth != null || style.imageHeight != null) {

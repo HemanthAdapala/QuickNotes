@@ -9,7 +9,6 @@ import 'note_editor_screen.dart';
 import '../widgets/living_writing_experience.dart';
 import 'folder_notes_screen.dart';
 
-
 class FolderManagementScreen extends StatefulWidget {
   final VoidCallback onMenuTap;
   final ValueChanged<int>? onNavigateToTab;
@@ -51,11 +50,13 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
     Rect cardBounds = Rect.zero;
     if (box != null) {
       final position = box.localToGlobal(Offset.zero);
-      cardBounds = Rect.fromLTWH(position.dx, position.dy, box.size.width, box.size.height);
+      cardBounds = Rect.fromLTWH(
+          position.dx, position.dy, box.size.width, box.size.height);
     } else {
       // Fallback in case box is null
       final size = MediaQuery.of(context).size;
-      cardBounds = Rect.fromLTWH(size.width / 4, size.height / 4, size.width / 2, size.height / 2);
+      cardBounds = Rect.fromLTWH(
+          size.width / 4, size.height / 4, size.width / 2, size.height / 2);
     }
 
     // Reset tapped state after starting navigate so returning back doesn't show tapped state
@@ -79,90 +80,91 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
       builder: (context) {
         final theme = Theme.of(context);
         final provider = Provider.of<NotesProvider>(context, listen: false);
-        final hierarchical = FolderUtils.getHierarchicalFolders(provider.folders);
+        final hierarchical =
+            FolderUtils.getHierarchicalFolders(provider.folders);
 
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: theme.colorScheme.surface,
-              title: Text(
-                "New Folder",
-                style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _folderController,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: "Folder Name",
-                      border: OutlineInputBorder(),
-                    ),
+        return StatefulBuilder(builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: theme.colorScheme.surface,
+            title: Text(
+              "New Folder",
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _folderController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: "Folder Name",
+                    border: OutlineInputBorder(),
                   ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String?>(
-                    initialValue: selectedParentId,
-                    decoration: const InputDecoration(
-                      labelText: "Parent Folder (Optional)",
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: [
-                      const DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text("None (Root Folder)"),
-                      ),
-                      ...hierarchical.map((item) {
-                        final folder = item.folder;
-                        final depth = item.depth;
-                        final indent = "  " * depth;
-                        final prefix = depth > 0 ? "└─ " : "";
-                        return DropdownMenuItem<String?>(
-                          value: folder.id,
-                          child: Text(
-                            "$indent$prefix${folder.name}",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }),
-                    ],
-                    onChanged: (val) {
-                      setDialogState(() {
-                        selectedParentId = val;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    _folderController.clear();
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Cancel"),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    final name = _folderController.text.trim();
-                    if (name.isNotEmpty) {
-                      Provider.of<NotesProvider>(context, listen: false).createFolder(
-                        name,
-                        parentId: selectedParentId,
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String?>(
+                  initialValue: selectedParentId,
+                  decoration: const InputDecoration(
+                    labelText: "Parent Folder (Optional)",
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text("None (Root Folder)"),
+                    ),
+                    ...hierarchical.map((item) {
+                      final folder = item.folder;
+                      final depth = item.depth;
+                      final indent = "  " * depth;
+                      final prefix = depth > 0 ? "└─ " : "";
+                      return DropdownMenuItem<String?>(
+                        value: folder.id,
+                        child: Text(
+                          "$indent$prefix${folder.name}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       );
-                      _folderController.clear();
-                      Navigator.pop(context);
-                    }
+                    }),
+                  ],
+                  onChanged: (val) {
+                    setDialogState(() {
+                      selectedParentId = val;
+                    });
                   },
-                  child: const Text("Create"),
                 ),
               ],
-            );
-          }
-        );
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _folderController.clear();
+                  Navigator.pop(context);
+                },
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final name = _folderController.text.trim();
+                  if (name.isNotEmpty) {
+                    Provider.of<NotesProvider>(context, listen: false)
+                        .createFolder(
+                      name,
+                      parentId: selectedParentId,
+                    );
+                    _folderController.clear();
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text("Create"),
+              ),
+            ],
+          );
+        });
       },
     );
   }
@@ -189,10 +191,12 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
             ),
             TextButton(
               onPressed: () {
-                Provider.of<NotesProvider>(context, listen: false).deleteFolder(folder.id);
+                Provider.of<NotesProvider>(context, listen: false)
+                    .deleteFolder(folder.id);
                 Navigator.pop(context);
               },
-              style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+              style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.error),
               child: const Text("Delete"),
             ),
           ],
@@ -207,9 +211,13 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
       return "Reflections and morning pages.";
     } else if (nameLower.contains("research") || nameLower.contains("study")) {
       return "Interviews, transcripts, and methodology.";
-    } else if (nameLower.contains("creative") || nameLower.contains("write") || nameLower.contains("novel")) {
+    } else if (nameLower.contains("creative") ||
+        nameLower.contains("write") ||
+        nameLower.contains("novel")) {
       return "Short stories and novel drafts.";
-    } else if (nameLower.contains("work") || nameLower.contains("job") || nameLower.contains("project")) {
+    } else if (nameLower.contains("work") ||
+        nameLower.contains("job") ||
+        nameLower.contains("project")) {
       return "Client projects and synthesis sheets.";
     } else {
       return "Structured notes and documents.";
@@ -274,7 +282,8 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                               "Organize your thoughts into distinct intellectual containers.",
                               style: GoogleFonts.inter(
                                 fontSize: 14,
-                                color: theme.colorScheme.onSurface.withAlpha(150),
+                                color:
+                                    theme.colorScheme.onSurface.withAlpha(150),
                               ),
                             ),
                           ],
@@ -286,8 +295,10 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,
                           foregroundColor: theme.colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           elevation: 0,
                         ),
                         icon: const Icon(Icons.create_new_folder, size: 18),
@@ -323,7 +334,8 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                               style: GoogleFonts.outfit(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.onSurface.withAlpha(120),
+                                color:
+                                    theme.colorScheme.onSurface.withAlpha(120),
                               ),
                             ),
                           ],
@@ -345,9 +357,12 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                         final item = orderedFolders[index];
                         final folder = item.folder;
                         final depth = item.depth;
-                        final noteCount = provider.notes.where((n) => n.folderId == folder.id).length;
+                        final noteCount = provider.notes
+                            .where((n) => n.folderId == folder.id)
+                            .length;
 
-                        return _buildFolderBentoCard(context, folder, noteCount, depth);
+                        return _buildFolderBentoCard(
+                            context, folder, noteCount, depth);
                       },
                     ),
 
@@ -396,7 +411,8 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
   }
 
   // Folder bento card design (with parent nesting depth indicators)
-  Widget _buildFolderBentoCard(BuildContext context, Folder folder, int noteCount, int depth) {
+  Widget _buildFolderBentoCard(
+      BuildContext context, Folder folder, int noteCount, int depth) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -422,7 +438,8 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
 
     final colorIdx = folder.name.hashCode.abs() % folderColors.length;
     final cardBg = isDark ? folderColorsDark[colorIdx] : folderColors[colorIdx];
-    final strokeColor = isDark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B);
+    final strokeColor =
+        isDark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B);
 
     final key = _getKeyForFolder(folder.id);
     final isTapped = _tappedFolderId == folder.id;
@@ -447,7 +464,7 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
             boxShadow: [
               if (isTapped)
                 BoxShadow(
-                  color: strokeColor.withOpacity(0.3),
+                  color: strokeColor.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 )
@@ -475,8 +492,12 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                         Row(
                           children: [
                             Icon(
-                              depth > 0 ? Icons.folder_open_rounded : Icons.folder_rounded,
-                              color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                              depth > 0
+                                  ? Icons.folder_open_rounded
+                                  : Icons.folder_rounded,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1E1B4B),
                               size: 20,
                             ),
                             if (depth > 0) ...[
@@ -486,7 +507,9 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                                 style: GoogleFonts.jetBrainsMono(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.white70 : const Color(0xFF1E1B4B).withAlpha(150),
+                                  color: isDark
+                                      ? Colors.white70
+                                      : const Color(0xFF1E1B4B).withAlpha(150),
                                 ),
                               ),
                             ],
@@ -497,7 +520,9 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                           style: GoogleFonts.jetBrainsMono(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white70 : const Color(0xFF1E1B4B).withAlpha(150),
+                            color: isDark
+                                ? Colors.white70
+                                : const Color(0xFF1E1B4B).withAlpha(150),
                           ),
                         ),
                       ],
@@ -523,17 +548,21 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white70 : const Color(0xFF1E1B4B).withAlpha(150),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF1E1B4B).withAlpha(150),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                          icon: const Icon(Icons.delete_outline_rounded,
+                              size: 16),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                          color: isDark ? Colors.white : theme.colorScheme.error,
+                          color:
+                              isDark ? Colors.white : theme.colorScheme.error,
                           onPressed: () => _confirmDeleteFolder(folder),
                           tooltip: "Delete Folder",
                         ),
@@ -547,13 +576,14 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
         ),
       ),
     );
-}
+  }
 
   // Horizontal Card item for recently modified notes
   Widget _buildRecentNoteCard(BuildContext context, Note note) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final strokeColor = isDark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B);
+    final strokeColor =
+        isDark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B);
     final timeStr = _getRelativeTimeString(note.updatedAt);
     final cardColor = NotesProvider.getNoteColor(note.colorValue, context);
     final textColor = NotesProvider.getNoteTextColor(note.colorValue, context);
@@ -590,7 +620,8 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.article_rounded, size: 18, color: textColor.withAlpha(200)),
+            Icon(Icons.article_rounded,
+                size: 18, color: textColor.withAlpha(200)),
             const SizedBox(height: 6),
             Text(
               note.title.isNotEmpty ? note.title : "Untitled",

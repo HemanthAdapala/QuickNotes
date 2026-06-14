@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:provider/provider.dart';
 import '../../themes/quick_notes_theme.dart';
-import '../../providers/notes_provider.dart';
-import 'navigation_shell.dart';
+import 'home_screen_v2.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -38,13 +36,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _completeOnboarding() async {
     await _secureStorage.write(key: 'has_completed_onboarding', value: 'true');
     if (!mounted) return;
-    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => NavigationShell(
-          onThemeToggle: notesProvider.toggleTheme,
-          isDarkMode: notesProvider.isDarkMode,
-        ),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreenV2(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

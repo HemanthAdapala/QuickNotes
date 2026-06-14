@@ -3,9 +3,50 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/notes_provider.dart';
+import '../../themes/app_theme.dart';
+import '../widgets/gravity_notes_nav_bar.dart';
 import '../widgets/living_writing_experience.dart';
 import 'note_editor_screen.dart';
+import 'folder_management_screen.dart';
+import 'settings_screen.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Calendar stub — intentionally minimal until the feature is built
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CalendarPlaceholder extends StatelessWidget {
+  const _CalendarPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Center(
+        child: Text(
+          'Calendar',
+          style: GoogleFonts.playfairDisplay(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: AppColors.ink,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HomeScreen
+// Self-contained: owns the GravityNotesNavBar and routes between all 4 tabs.
+// Layout faithfully reproduces the reference home_screen.dart:
+//   • Spacer(flex:55) at top, content ~55 % down
+//   • Date block at left:28
+//   • 20 px gap then prompt row at left:20
+//   • Spacer(flex:45) fills remainder
+//   • GravityNotesNavBar in Stack at bottom:0
+// ─────────────────────────────────────────────────────────────────────────────
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,464 +55,167 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _entryController;
-  late Animation<double> _fadeIn;
-  late Animation<Offset> _slideUp;
+class _HomeScreenState extends State<HomeScreen> {
+  int _activeNavIndex = 0;
 
-  // Key for the writing prompt area — used for FAB morph bounds
-  final GlobalKey _promptKey = GlobalKey();
-
-  @override
-  void initState() {
-    super.initState();
-    _entryController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-
-    _fadeIn = CurvedAnimation(
-      parent: _entryController,
-      curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
-    );
-
-    _slideUp = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entryController,
-      curve: const Interval(0.0, 0.8, curve: Curves.easeOutCubic),
-    ));
-
-    _entryController.forward();
-  }
-
-  @override
-  void dispose() {
-    _entryController.dispose();
-    super.dispose();
-  }
+  // ── FAB / prompt → new note ───────────────────────────────────────────────
 
   void _openNewNote() {
     HapticFeedback.lightImpact();
 
-    final RenderBox? box =
-        _promptKey.currentContext?.findRenderObject() as RenderBox?;
-    Rect sourceBounds;
-    if (box != null) {
-      final pos = box.localToGlobal(Offset.zero);
-      sourceBounds =
-          Rect.fromLTWH(pos.dx, pos.dy, box.size.width, box.size.height);
-    } else {
-      final size = MediaQuery.of(context).size;
-      sourceBounds =
-          Rect.fromLTWH(size.width / 2 - 28, size.height - 100, 56, 56);
-    }
+    // Compute FAB screen bounds from the SVG spec so the morph starts there.
+    final size = MediaQuery.of(context).size;
+    final double scale = size.width / 354;
+    final double barH = 83 * scale;
+    final double bottomPadding = MediaQuery.of(context).padding.bottom;
+    final double fabSize = 50 * scale;
+    final double fabLeft = (177 - 25) * scale;
+    // The nav bar sits at the bottom of the screen.
+    final double fabTop = size.height - barH - bottomPadding;
 
     Navigator.push(
       context,
       FabMorphPageRoute(
-        fabBounds: sourceBounds,
-        builder: (context) => const NoteEditorScreen(),
+        fabBounds: Rect.fromLTWH(fabLeft, fabTop, fabSize, fabSize),
+        builder: (_) => const NoteEditorScreen(),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  // ── Home tab body — exact reference layout ───────────────────────────────
 
+  Widget _buildHomeBody() {
     final now = DateTime.now();
-    final dayName = DateFormat('EEEE').format(now);   // "Monday"
-    final dateStr = DateFormat('MMM d').format(now);  // "Jun 13"
+    final dateStr = DateFormat('MMM d').format(now);   // e.g. "Jun 13"
+    final dayStr  = DateFormat('EEEE').format(now);    // e.g. "Friday"
 
-    // Design tokens
-    final Color bgColor = theme.scaffoldBackgroundColor;
-    final Color primaryText = isDark
-        ? const Color(0xFFF5F3EF)
-        : const Color(0xFF1E1B4B);
-    final Color secondaryText = isDark
-        ? const Color(0xFF9CA3AF)
-        : const Color(0xFF9CA3AF);
-    final Color todayAccent = const Color(0xFFF97316); // Orange accent
-    final Color promptText = isDark
-        ? const Color(0xFF6B7280)
-        : const Color(0xFFBBBDBF);
+    return SafeArea(
+      bottom: false, // bottom handled by nav bar + system padding
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Large top whitespace — content sits ~55 % down in design
+          const Spacer(flex: 55),
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeIn,
-          child: SlideTransition(
-            position: _slideUp,
-            child: _buildContent(
-              context,
-              dayName: dayName,
-              dateStr: dateStr,
-              primaryText: primaryText,
-              secondaryText: secondaryText,
-              todayAccent: todayAccent,
-              promptText: promptText,
-              isDark: isDark,
+          // ── Date block ────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.only(left: 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // e.g. "Jun 13"
+                Text(
+                  dateStr,
+                  style: AppTextStyles.dateSmall,
+                ),
+                const SizedBox(height: 2),
+                // e.g. "Friday"
+                Text(
+                  dayStr,
+                  style: AppTextStyles.dateLarge,
+                ),
+                const SizedBox(height: 2),
+                // "Today"
+                Text(
+                  'Today',
+                  style: AppTextStyles.dateLabel,
+                ),
+              ],
             ),
           ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildContent(
-    BuildContext context, {
-    required String dayName,
-    required String dateStr,
-    required Color primaryText,
-    required Color secondaryText,
-    required Color todayAccent,
-    required Color promptText,
-    required bool isDark,
-  }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final h = constraints.maxHeight;
+          const SizedBox(height: 20),
 
-        return Stack(
-          children: [
-            // ── Main scroll area ──
-            SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              child: SizedBox(
-                height: h,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Top spacing + settings icon ──
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(28, 16, 20, 0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // App wordmark — minimal
-                          Text(
-                            'QuickNotes',
-                            style: GoogleFonts.outfit(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? const Color(0xFF6B7280)
-                                  : const Color(0xFFBBBDBF),
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                          // Profile/Search icon
-                          _IconButton(
-                            icon: Icons.search_rounded,
-                            isDark: isDark,
-                            onTap: () {},
-                          ),
-                        ],
-                      ),
+          // ── Entry placeholder row ────────────────────────────────────
+          GestureDetector(
+            onTap: _openNewNote,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Bullet dot — AppColors.placeholder, diameter 7
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: AppColors.placeholder,
+                      shape: BoxShape.circle,
                     ),
-
-                    // ── Big vertical spacer — pushes date block down ──
-                    SizedBox(height: h * 0.28),
-
-                    // ── Date + Day block ──
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Date line: "Jun 13"
-                          Text(
-                            dateStr,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: isDark
-                                  ? const Color(0xFF6B7280)
-                                  : const Color(0xFF9CA3AF),
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-
-                          // Day name: "Monday" — large serif-like bold
-                          Text(
-                            dayName,
-                            style: GoogleFonts.outfit(
-                              fontSize: 42,
-                              fontWeight: FontWeight.w800,
-                              color: isDark
-                                  ? const Color(0xFFF5F3EF)
-                                  : const Color(0xFF1A1A2E),
-                              height: 1.05,
-                              letterSpacing: -1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-
-                          // "Today" in orange
-                          Text(
-                            'Today',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: todayAccent,
-                              letterSpacing: 0.1,
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-
-                          // ── Writing prompt ──
-                          _WritingPrompt(
-                            key: _promptKey,
-                            promptText: promptText,
-                            isDark: isDark,
-                            onTap: _openNewNote,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const Spacer(),
-
-                    // ── Recent notes teaser (if any) ──
-                    _RecentNoteTeaser(isDark: isDark),
-
-                    const SizedBox(height: 12),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Writing Prompt
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _WritingPrompt extends StatefulWidget {
-  final Color promptText;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _WritingPrompt({
-    super.key,
-    required this.promptText,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  State<_WritingPrompt> createState() => _WritingPromptState();
-}
-
-class _WritingPromptState extends State<_WritingPrompt>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  bool _isPressed = false;
-
-  static const List<String> _prompts = [
-    'what happened today?',
-    'what\'s on your mind?',
-    'capture a thought...',
-    'start writing...',
-    'what are you thinking?',
-  ];
-
-  late final String _prompt;
-
-  @override
-  void initState() {
-    super.initState();
-    _prompt = _prompts[DateTime.now().weekday % _prompts.length];
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.97 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeOut,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Breathing bullet
-            AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, _) {
-                final opacity =
-                    0.35 + 0.45 * Curves.easeInOut.transform(_pulseController.value);
-                return Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: widget.promptText.withAlpha((opacity * 255).round()),
                   ),
-                );
+                  const SizedBox(width: 10),
+                  // Placeholder text
+                  Text(
+                    'what happened today?',
+                    style: AppTextStyles.entryPlaceholder,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const Spacer(flex: 45),
+        ],
+      ),
+    );
+  }
+
+  // ── Other tab bodies ─────────────────────────────────────────────────────
+
+  Widget _buildFoldersBody() {
+    return FolderManagementScreen(
+      onMenuTap: () {},
+      onNavigateToTab: (i) => setState(() => _activeNavIndex = i),
+    );
+  }
+
+  Widget _buildCalendarBody() => const _CalendarPlaceholder();
+
+  Widget _buildSettingsBody() {
+    final provider = Provider.of<NotesProvider>(context, listen: false);
+    return SettingsScreen(
+      isDarkMode: false, // HomeScreen is always light
+      onThemeToggle: provider.toggleTheme,
+      onMenuTap: () {},
+    );
+  }
+
+  // ── Root build ───────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // Tab content — IndexedStack keeps all tabs alive
+          IndexedStack(
+            index: _activeNavIndex,
+            children: [
+              _buildHomeBody(),
+              _buildFoldersBody(),
+              _buildCalendarBody(),
+              _buildSettingsBody(),
+            ],
+          ),
+
+          // ── Bottom nav bar ─────────────────────────────────────────
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: GravityNotesNavBar(
+              activeIndex: _activeNavIndex,
+              onTap: (index) {
+                if (_activeNavIndex == index) return;
+                HapticFeedback.lightImpact();
+                setState(() => _activeNavIndex = index);
               },
+              onFabTap: _openNewNote,
             ),
-            const SizedBox(width: 12),
-
-            // Prompt text
-            Text(
-              _prompt,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 17,
-                fontWeight: FontWeight.w400,
-                color: widget.promptText,
-                letterSpacing: 0.1,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Recent Note Teaser (subtle — shows count or last note title)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _RecentNoteTeaser extends StatelessWidget {
-  final bool isDark;
-
-  const _RecentNoteTeaser({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<NotesProvider>(context);
-    final notes = provider.notes;
-    if (notes.isEmpty) return const SizedBox.shrink();
-
-    final count = notes.length;
-    final lastNote = notes.first;
-    final lastTitle =
-        lastNote.title.isNotEmpty ? lastNote.title : 'Untitled note';
-
-    final subtleColor = isDark
-        ? const Color(0xFF374151)
-        : const Color(0xFFE5E7EB);
-    final subtleText = isDark
-        ? const Color(0xFF6B7280)
-        : const Color(0xFFB0B3B8);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: subtleColor.withAlpha(isDark ? 60 : 80),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: subtleColor,
-            width: 1.0,
           ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.description_outlined,
-              size: 16,
-              color: subtleText,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                '$count note${count != 1 ? 's' : ''} · Last: $lastTitle',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: subtleText,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Minimal icon button
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _IconButton extends StatefulWidget {
-  final IconData icon;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _IconButton({
-    required this.icon,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  State<_IconButton> createState() => _IconButtonState();
-}
-
-class _IconButtonState extends State<_IconButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.88 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: widget.isDark
-                ? const Color(0xFF1F2937).withAlpha(120)
-                : const Color(0xFFF3F4F6).withAlpha(180),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            widget.icon,
-            size: 20,
-            color: widget.isDark
-                ? const Color(0xFF9CA3AF)
-                : const Color(0xFF6B7280),
-          ),
-        ),
+        ],
       ),
     );
   }

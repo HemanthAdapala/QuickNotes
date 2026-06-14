@@ -12,11 +12,14 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../models/note.dart';
+import '../../models/folder.dart';
 import '../../providers/notes_provider.dart';
 import '../../services/vault_service.dart';
 import '../widgets/folder_selector_dialog.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
+import '../widgets/paper_guide_painters.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 
@@ -44,6 +47,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   List<NoteBlock> _blocks = [];
   int _nextIdCounter = 0;
   NoteBlock? _lastFocusedBlock;
+  bool _showDeletePopup = false;
 
   String _generateId() {
     final random = Random();
@@ -497,28 +501,79 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final isNextMedia = next is ImageBlock || next is ImageStackBlock;
 
     if (isCurrentText && isNextText) {
-      return 6.0; // Paragraph ↔ Paragraph: 6px
+      return 2.0; // Paragraph ↔ Paragraph: 2px (Group 2-A Extra Tight)
     }
     if ((isCurrentText && isNextChecklist) || (isCurrentChecklist && isNextText)) {
-      return 6.0; // Paragraph ↔ Checklist: 6px
+      return 2.0; // Text ↔ Checklist: 2px
     }
     if (isCurrentChecklist && isNextChecklist) {
-      return 3.0; // Checklist item ↔ Checklist item: 3px
+      return 2.0; // Checklist Item Gap: 2px (Group 2-A Extra Tight)
     }
     if ((isCurrentMedia && !isNextMedia) || (!isCurrentMedia && isNextMedia)) {
-      return 14.0; // Media ↔ Any text/checklist block: 14px
+      return 6.0; // Text to Image Gap / Image to Checklist Gap: 6px
     }
     if (isCurrentMedia && isNextMedia) {
-      return 14.0;
+      return 6.0; // Media to Media: 6px
     }
     if (current is DividerBlock || next is DividerBlock) {
-      return 10.0;
+      return 6.0;
     }
-    return 4.0;
+    return 2.0;
+  }
+
+  Color _getPaperGuideColor(bool isDark) {
+    if (_paperGuideColor == 0) {
+      return isDark ? Colors.white : Colors.black;
+    }
+    return Color(_paperGuideColor);
+  }
+
+  Widget _wrapWithBlockPaperGuide(Widget blockWidget, {NoteBlock? block, bool isBottomSpacer = false}) {
+    if (block == null && !isBottomSpacer) return blockWidget;
+    if (block != null &&
+        block is! ParagraphBlock &&
+        block is! HeadingBlock &&
+        block is! ChecklistBlock &&
+        block is! QuoteBlock) {
+      return blockWidget;
+    }
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isLines = _paperGuideType.startsWith('lines') || _paperGuideType == 'custom';
+    final showLines = _paperGuideVisible && isLines;
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: IgnorePointer(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: showLines
+                  ? CustomPaint(
+                      key: ValueKey('${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
+                      painter: BlockPaperGuidePainter(
+                        guideType: _paperGuideType,
+                        lineHeight: 20.0 * _paperGuideHeight,
+                        color: _getPaperGuideColor(isDark),
+                        opacity: _paperGuideOpacity,
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('empty_block_guide')),
+            ),
+          ),
+        ),
+        blockWidget,
+      ],
+    );
   }
 
   Widget _buildBlockWidget(NoteBlock block, Color textColor, Color titleColor) {
-    final blockWidget = _buildRawBlockWidget(block, textColor, titleColor);
+    final rawWidget = _buildRawBlockWidget(block, textColor, titleColor);
+    final blockWidget = _wrapWithBlockPaperGuide(rawWidget, block: block);
 
     return DragTarget<Map<String, dynamic>>(
       onWillAcceptWithDetails: (details) {
@@ -642,14 +697,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               ? block.controller.styledChars.first.style.align
               : TextAlign.left,
           style: GoogleFonts.inter(
-            fontSize: 18.0,
+            fontSize: 20.0,
             color: textColor,
-            height: 1.6,
+            height: _paperGuideHeight,
           ),
           decoration: InputDecoration(
             hintText: _blocks.indexOf(block) == 0 && _blocks.length == 1 ? "Start writing..." : "",
             hintStyle: GoogleFonts.inter(
-              fontSize: 18.0,
+              fontSize: 20.0,
               color: textColor.withAlpha(80),
             ),
             border: InputBorder.none,
@@ -711,6 +766,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             fontSize: fontSize,
             fontWeight: FontWeight.bold,
             color: titleColor,
+            height: _paperGuideHeight,
           ),
           decoration: InputDecoration(
             hintText: "Heading ${block.level}",
@@ -777,15 +833,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             maxLines: null,
             keyboardType: TextInputType.multiline,
             style: GoogleFonts.inter(
-              fontSize: 18.0,
+              fontSize: 20.0,
               color: textColor.withAlpha(220),
               fontStyle: FontStyle.italic,
-              height: 1.6,
+              height: _paperGuideHeight,
             ),
             decoration: InputDecoration(
               hintText: "Quote",
               hintStyle: GoogleFonts.inter(
-                fontSize: 18.0,
+                fontSize: 20.0,
                 color: textColor.withAlpha(80),
                 fontStyle: FontStyle.italic,
               ),
@@ -805,15 +861,32 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Checkbox(
-              value: block.isChecked,
-              activeColor: Theme.of(context).colorScheme.primary,
-              onChanged: (bool? val) {
+            GestureDetector(
+              onTap: () {
                 setState(() {
-                  block.isChecked = val ?? false;
+                  block.isChecked = !block.isChecked;
                   _hasChanges = true;
+                  _calculateCounts();
                 });
               },
+              child: Container(
+                margin: const EdgeInsets.only(top: 8.0, right: 8.0, left: 4.0),
+                width: 10,
+                height: 10,
+                decoration: block.isChecked
+                    ? const BoxDecoration(color: Color(0xFF222222))
+                    : BoxDecoration(border: Border.all(color: Colors.black, width: 1.0)),
+                child: block.isChecked
+                    ? Center(
+                        child: SvgPicture.asset(
+                          'assets/icons/vector_check.svg',
+                          width: 6,
+                          height: 6,
+                          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                        ),
+                      )
+                    : null,
+              ),
             ),
             Expanded(
               child: Focus(
@@ -853,9 +926,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
                   style: GoogleFonts.inter(
-                    fontSize: 16.0,
+                    fontSize: 20.0,
                     color: block.isChecked ? textColor.withAlpha(120) : textColor,
                     decoration: block.isChecked ? TextDecoration.lineThrough : null,
+                    height: _paperGuideHeight,
                   ),
                   decoration: const InputDecoration(
                     hintText: "To-do item",
@@ -984,6 +1058,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   int _habitStreak = 0;
   DateTime? _habitLastCompleted;
 
+  // Paper Guide Layer state
+  String _paperGuideType = 'lines_extra_tight';
+  bool _paperGuideVisible = true;
+  double _paperGuideHeight = 1.05;
+  double _paperGuideOpacity = 0.15;
+  int _paperGuideColor = 0;
+
   bool _hasChanges = false;
   bool _isPreviewMarkdown = false;
   bool _isPageSettled = false;
@@ -1028,6 +1109,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _habitRecurrence = widget.note!.habitRecurrence;
       _habitStreak = widget.note!.habitStreak;
       _habitLastCompleted = widget.note!.habitLastCompleted;
+      _paperGuideType = widget.note!.paperGuideType;
+      _paperGuideVisible = widget.note!.paperGuideVisible;
+      _paperGuideHeight = widget.note!.paperGuideHeight;
+      _paperGuideOpacity = widget.note!.paperGuideOpacity;
+      _paperGuideColor = widget.note!.paperGuideColor;
       
       if (_noteType == 'checklist') {
         try {
@@ -1050,6 +1136,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _habitRecurrence = 'none';
       _habitStreak = 0;
       _habitLastCompleted = null;
+      _paperGuideType = 'lines_extra_tight';
+      _paperGuideVisible = true;
+      _paperGuideHeight = 1.05;
+      _paperGuideOpacity = 0.15;
+      _paperGuideColor = 0;
 
       if (_noteType == 'text') {
         _contentController = TextEditingController();
@@ -1872,6 +1963,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           folderId: _folderId,
           isHabit: _isHabit,
           habitRecurrence: _habitRecurrence,
+          paperGuideType: _paperGuideType,
+          paperGuideVisible: _paperGuideVisible,
+          paperGuideHeight: _paperGuideHeight,
+          paperGuideOpacity: _paperGuideOpacity,
+          paperGuideColor: _paperGuideColor,
         );
       } else {
         final updatedNote = widget.note!.copyWith(
@@ -1892,6 +1988,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           habitRecurrence: _habitRecurrence,
           habitStreak: _habitStreak,
           habitLastCompleted: _habitLastCompleted,
+          paperGuideType: _paperGuideType,
+          paperGuideVisible: _paperGuideVisible,
+          paperGuideHeight: _paperGuideHeight,
+          paperGuideOpacity: _paperGuideOpacity,
+          paperGuideColor: _paperGuideColor,
         );
         await provider.updateNote(updatedNote);
       }
@@ -2256,9 +2357,24 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 ),
               _buildCommandItem(
                 context,
+                icon: Icons.grid_on_rounded,
+                label: "Configure Paper & Spacing",
+                onTap: _showPaperSettingsBottomSheet,
+              ),
+              _buildCommandItem(
+                context,
                 icon: Icons.share_rounded,
                 label: "Export & Share",
                 onTap: _showExportDialog,
+              ),
+              _buildCommandItem(
+                context,
+                icon: Icons.add_circle_outline_rounded,
+                label: "Attachments & Tags...",
+                onTap: () {
+                  Navigator.pop(context); // close command palette
+                  _showQuickAddMenu();
+                },
               ),
             ],
           ),
@@ -2280,6 +2396,314 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       onTap: () {
         Navigator.pop(context);
         onTap();
+      },
+    );
+  }
+
+  void _showPaperSettingsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final theme = Theme.of(context);
+            final isDark = theme.brightness == Brightness.dark;
+
+            final List<Map<String, dynamic>> guideOptions = [
+              {'type': 'plain', 'label': 'Plain', 'icon': Icons.crop_free_rounded},
+              {'type': 'grid', 'label': 'Grid', 'icon': Icons.grid_on_rounded},
+              {'type': 'dots', 'label': 'Dots', 'icon': Icons.blur_on_rounded},
+              {'type': 'lines_extra_tight', 'label': 'Lines (Extra Tight)', 'icon': Icons.format_align_justify_rounded},
+              {'type': 'lines_tight', 'label': 'Lines (Tight)', 'icon': Icons.notes_rounded},
+              {'type': 'lines_comfort', 'label': 'Lines (Comfort)', 'icon': Icons.menu_rounded},
+              {'type': 'custom', 'label': 'Custom Lines', 'icon': Icons.tune_rounded},
+            ];
+
+            final List<int> presetColors = [
+              0, // Default (Theme aware)
+              0xFF4EA8DE, // Subtle Blue
+              0xFFF07167, // Subtle Red
+              0xFF40916C, // Subtle Green
+              0xFFF77F00, // Subtle Amber
+            ];
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Paper & Spacing Setup",
+                        style: GoogleFonts.outfit(
+                          fontSize: 20.0,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Toggle Switch for Visibility
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Show Writing Guides",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                      ),
+                      Switch(
+                        value: _paperGuideVisible,
+                        activeColor: theme.colorScheme.primary,
+                        onChanged: (val) {
+                          setSheetState(() {
+                            _paperGuideVisible = val;
+                          });
+                          setState(() {
+                            _paperGuideVisible = val;
+                            _hasChanges = true;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+
+                  if (_paperGuideVisible) ...[
+                    Text(
+                      "Guide Style",
+                      style: GoogleFonts.outfit(
+                        fontSize: 15.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    
+                    // Style list
+                    SizedBox(
+                      height: 80,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: guideOptions.length,
+                        itemBuilder: (context, idx) {
+                          final opt = guideOptions[idx];
+                          final optType = opt['type'] as String;
+                          final isSelected = _paperGuideType == optType;
+
+                          return GestureDetector(
+                            onTap: () {
+                              double newHeight = _paperGuideHeight;
+                              if (optType == 'lines_extra_tight') {
+                                newHeight = 1.05;
+                              } else if (optType == 'lines_tight') {
+                                newHeight = 1.3;
+                              } else if (optType == 'lines_comfort') {
+                                newHeight = 1.6;
+                              } else if (optType == 'custom') {
+                                newHeight = 1.3; // Default custom height factor
+                              }
+
+                              setSheetState(() {
+                                _paperGuideType = optType;
+                                _paperGuideHeight = newHeight;
+                              });
+                              setState(() {
+                                _paperGuideType = optType;
+                                _paperGuideHeight = newHeight;
+                                _hasChanges = true;
+                              });
+                            },
+                            child: Container(
+                              width: 85,
+                              margin: const EdgeInsets.only(right: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected 
+                                    ? theme.colorScheme.primary.withOpacity(0.15) 
+                                    : (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F3EF)),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected 
+                                      ? theme.colorScheme.primary 
+                                      : Colors.transparent,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    opt['icon'] as IconData,
+                                    color: isSelected 
+                                        ? theme.colorScheme.primary 
+                                        : (isDark ? Colors.white70 : Colors.black54),
+                                    size: 24,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    opt['label'] as String,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10.5,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      color: isSelected 
+                                          ? theme.colorScheme.primary 
+                                          : (isDark ? Colors.white60 : Colors.black87),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Custom Height Slider (visible only in custom mode)
+                    if (_paperGuideType == 'custom') ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Line Height Factor: ${_paperGuideHeight.toStringAsFixed(2)}",
+                            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                          Text(
+                            "${(_paperGuideHeight * 20).toInt()} px",
+                            style: GoogleFonts.jetBrainsMono(fontSize: 12, color: theme.colorScheme.primary),
+                          ),
+                        ],
+                      ),
+                      Slider(
+                        value: _paperGuideHeight,
+                        min: 1.0,
+                        max: 2.5,
+                        divisions: 30,
+                        onChanged: (val) {
+                          setSheetState(() {
+                            _paperGuideHeight = val;
+                          });
+                          setState(() {
+                            _paperGuideHeight = val;
+                            _hasChanges = true;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Opacity Slider
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Guide Opacity: ${(_paperGuideOpacity * 100).toInt()}%",
+                          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                    Slider(
+                      value: _paperGuideOpacity,
+                      min: 0.05,
+                      max: 0.60,
+                      divisions: 11,
+                      onChanged: (val) {
+                        setSheetState(() {
+                          _paperGuideOpacity = val;
+                        });
+                        setState(() {
+                          _paperGuideOpacity = val;
+                          _hasChanges = true;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Color Selector
+                    if (_paperGuideType != 'plain') ...[
+                      Text(
+                        "Guide Color",
+                        style: GoogleFonts.outfit(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 36,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: presetColors.length,
+                          itemBuilder: (context, index) {
+                            final colVal = presetColors[index];
+                            final isSelected = _paperGuideColor == colVal;
+
+                            Color displayCol;
+                            if (colVal == 0) {
+                              displayCol = isDark ? Colors.white60 : Colors.black45;
+                            } else {
+                              displayCol = Color(colVal);
+                            }
+
+                            return GestureDetector(
+                              onTap: () {
+                                setSheetState(() {
+                                  _paperGuideColor = colVal;
+                                });
+                                setState(() {
+                                  _paperGuideColor = colVal;
+                                  _hasChanges = true;
+                                });
+                              },
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  color: displayCol.withOpacity(0.4),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected ? theme.colorScheme.primary : displayCol,
+                                    width: isSelected ? 3.0 : 1.5,
+                                  ),
+                                ),
+                                child: colVal == 0
+                                    ? Center(
+                                        child: Icon(
+                                          Icons.autorenew_rounded,
+                                          size: 14,
+                                          color: isDark ? Colors.white70 : Colors.black87,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -2508,6 +2932,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       tooltip: 'Checklist',
                       isActive: activeStyle.listType == 'checkbox',
                     ),
+                    buildToolbarButton(
+                      icon: Icons.grid_on_rounded,
+                      onPressed: _showPaperSettingsBottomSheet,
+                      tooltip: 'Paper Settings',
+                    ),
                   ]),
 
                   // Page 2: Alignments & Actions Group
@@ -2696,17 +3125,1063 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     );
   }
 
+  bool get _isNoteEmpty {
+    final hasTitle = _titleController.text.trim().isNotEmpty;
+    if (hasTitle) return false;
+    
+    if (_noteType == 'checklist') {
+      return _checklistItems.isEmpty;
+    }
+    
+    if (_blocks.length > 1) return false;
+    if (_blocks.isEmpty) return true;
+    
+    final firstBlock = _blocks[0];
+    if (firstBlock is ParagraphBlock) {
+      return firstBlock.controller.text.isEmpty && _attachments.isEmpty && _tags.isEmpty;
+    }
+    
+    return false;
+  }
+
+  void _showCategorySelectorDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final categories = NotesProvider.categories;
+        return SimpleDialog(
+          title: const Text("Select Category"),
+          children: categories.map((cat) {
+            return SimpleDialogOption(
+              onPressed: () {
+                setState(() {
+                  _category = cat;
+                  _hasChanges = true;
+                });
+                Navigator.pop(context);
+              },
+              child: Text(cat, style: GoogleFonts.inter(fontSize: 16)),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildStartingScreen(ThemeData theme, bool isDark) {
+    final now = widget.note?.createdAt ?? DateTime.now();
+    final formattedDate = DateFormat('MMM d').format(now);
+    final formattedDay = DateFormat('EEEE').format(now);
+    
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9F6E5),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 180.0), // push down to upper-middle center
+                  // Date Headers
+                  Text(
+                    formattedDate,
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF333333),
+                    ),
+                  ),
+                  const SizedBox(height: 2.0),
+                  Text(
+                    formattedDay,
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF333333),
+                    ),
+                  ),
+                  const SizedBox(height: 5.0),
+                  Text(
+                    "Today",
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFFFFA322),
+                    ),
+                  ),
+                  const SizedBox(height: 30.0),
+                  
+                  // Text input Row
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 8.0, left: 0),
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFD9D9D9),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 25.0),
+                      Expanded(
+                        child: TextField(
+                          controller: _getControllerOfBlock(_blocks[0]),
+                          focusNode: _getFocusNodeOfBlock(_blocks[0]),
+                          maxLines: null,
+                          keyboardType: TextInputType.multiline,
+                          style: GoogleFonts.inter(
+                            fontSize: 20.0,
+                            color: const Color(0xFF333333),
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "what happened today?",
+                            hintStyle: GoogleFonts.inter(
+                              fontSize: 20.0,
+                              color: const Color(0xFF333333).withOpacity(0.3),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            filled: false,
+                          ),
+                          onChanged: (val) {
+                            _onBlockTextChanged(_blocks[0]);
+                            setState(() {}); // Rebuild to transition to active screen
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            // Bottom navigation bar
+            Positioned(
+              bottom: 32,
+              left: 24,
+              right: 24,
+              child: Center(
+                child: SizedBox(
+                  width: 354,
+                  height: 83,
+                  child: Stack(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/bottom_bar.svg',
+                        width: 354,
+                        height: 83,
+                      ),
+                      Positioned(
+                        left: 31,
+                        top: 39,
+                        width: 26,
+                        height: 26,
+                        child: GestureDetector(
+                          onTap: () => Navigator.of(context).maybePop(),
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                      Positioned(
+                        left: 106,
+                        top: 39,
+                        width: 26,
+                        height: 26,
+                        child: GestureDetector(
+                          onTap: _showFolderSelectorDialog,
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                      Positioned(
+                        left: 152,
+                        top: 0,
+                        width: 50,
+                        height: 50,
+                        child: GestureDetector(
+                          onTap: () {
+                            final fn = _getFocusNodeOfBlock(_blocks[0]);
+                            if (fn != null) fn.requestFocus();
+                          },
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                      Positioned(
+                        left: 222,
+                        top: 40,
+                        width: 28,
+                        height: 28,
+                        child: GestureDetector(
+                          onTap: _showQuickAddMenu,
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                      Positioned(
+                        left: 297,
+                        top: 39,
+                        width: 28,
+                        height: 28,
+                        child: GestureDetector(
+                          onTap: _showCommandPalette,
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
+    final notesProvider = Provider.of<NotesProvider>(context);
+    
+    // Resolve folder name
+    String currentFolderName = "Folder";
+    if (_folderId != null) {
+      final folder = notesProvider.folders.firstWhere(
+        (f) => f.id == _folderId,
+        orElse: () => Folder(id: '', name: 'Folder', createdAt: DateTime.now()),
+      );
+      currentFolderName = folder.name;
+    }
+    
+    String currentCategoryName = _category.isEmpty ? "Category" : _category;
+    final dateStr = DateFormat('MMM d, yyyy').format(widget.note?.updatedAt ?? DateTime.now());
+    
+    final activeStyle = (_contentController is RichTextEditingController)
+        ? (_contentController as RichTextEditingController).currentActiveStyle
+        : const Style();
+
+    final textColor = const Color(0xFF333333);
+    final titleColor = const Color(0xFF333333);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9F6E5),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Back chevron circular button
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).maybePop(),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF222222),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'assets/icons/angle_left.svg',
+                              width: 25,
+                              height: 25,
+                              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      // Folder Select Button
+                      GestureDetector(
+                        onTap: _showFolderSelectorDialog,
+                        child: Container(
+                          width: 121,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF222222),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Positioned(
+                                left: 13,
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 70),
+                                  child: Text(
+                                    currentFolderName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                left: 91,
+                                child: SvgPicture.asset(
+                                  'assets/icons/angle_small_down_topbar.svg',
+                                  width: 28,
+                                  height: 28,
+                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      // Edit and Options Menu Pill
+                      Container(
+                        width: 93,
+                        height: 38,
+                        child: Stack(
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/top_bar_group4.svg',
+                              width: 93,
+                              height: 38,
+                            ),
+                            // Left button (toggles preview mode)
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              width: 46,
+                              height: 38,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _isPreviewMarkdown = !_isPreviewMarkdown;
+                                  });
+                                },
+                                child: Container(color: Colors.transparent),
+                              ),
+                            ),
+                            // Right button (opens command palette)
+                            Positioned(
+                              left: 47,
+                              top: 0,
+                              width: 46,
+                              height: 38,
+                              child: GestureDetector(
+                                onTap: _showCommandPalette,
+                                child: Container(color: Colors.transparent),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Writing canvas
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(left: 32.0, right: 32.0, top: 15.0, bottom: 120.0),
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        TextField(
+                          controller: _titleController,
+                          maxLines: 1,
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 36.0,
+                            fontWeight: FontWeight.bold,
+                            color: titleColor,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "Note Title",
+                            hintStyle: GoogleFonts.playfairDisplay(
+                              fontSize: 36.0,
+                              fontWeight: FontWeight.bold,
+                              color: titleColor.withAlpha(80),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            filled: false,
+                          ),
+                          onChanged: (val) {
+                            setState(() {
+                              _hasChanges = true;
+                            });
+                          },
+                        ),
+                        
+                        // Date subtitle & circle-ellipsis
+                        Row(
+                          children: [
+                            Text(
+                              "Date: $dateStr",
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: textColor.withOpacity(0.3),
+                              ),
+                            ),
+                            const SizedBox(width: 80.0), // match x=246 layout roughly
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _showDeletePopup = true;
+                                });
+                              },
+                              child: SvgPicture.asset(
+                                'assets/icons/circle_ellipsis.svg',
+                                width: 24,
+                                height: 24,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12.0),
+                        
+                        // Folder and Category buttons row
+                        Row(
+                          children: [
+                            // Folder Button (Figma size 121x38)
+                            GestureDetector(
+                              onTap: _showFolderSelectorDialog,
+                              child: Container(
+                                width: 121,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF222222),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Positioned(
+                                      left: 3,
+                                      child: SvgPicture.asset(
+                                        'assets/icons/folder_open_folder.svg',
+                                        width: 28,
+                                        height: 28,
+                                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      left: 33,
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(maxWidth: 60),
+                                        child: Text(
+                                          currentFolderName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w400,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      left: 93,
+                                      child: SvgPicture.asset(
+                                        'assets/icons/angle_small_down_folder.svg',
+                                        width: 28,
+                                        height: 28,
+                                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 35.0), // Figma spacing x=157 - (x=1 + w=121) = 35px
+                            
+                            // Category Button (Figma size 147x38)
+                            GestureDetector(
+                              onTap: _showCategorySelectorDialog,
+                              child: Container(
+                                width: 147,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF222222),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Positioned(
+                                      left: 3,
+                                      child: SvgPicture.asset(
+                                        'assets/icons/folder_open_category.svg',
+                                        width: 28,
+                                        height: 28,
+                                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      left: 33,
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(maxWidth: 80),
+                                        child: Text(
+                                          currentCategoryName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w400,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      left: 119,
+                                      child: SvgPicture.asset(
+                                        'assets/icons/angle_small_down_category.svg',
+                                        width: 28,
+                                        height: 28,
+                                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_tags.isNotEmpty) ...[
+                          const SizedBox(height: 16.0),
+                          Wrap(
+                            spacing: 8.0,
+                            runSpacing: 4.0,
+                            children: _tags.map((tag) {
+                              return Chip(
+                                label: Text("#$tag"),
+                                labelStyle: GoogleFonts.inter(fontSize: 12, color: textColor),
+                                backgroundColor: const Color(0xFF222222).withOpacity(0.08),
+                                onDeleted: () {
+                                  setState(() {
+                                    _tags.remove(tag);
+                                    _hasChanges = true;
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                        const SizedBox(height: 16.0),
+                        
+                        // Render Checklist mode OR Markdown body OR block text editor
+                        if (_noteType == 'checklist')
+                          _buildChecklistEditor(textColor)
+                        else if (_isPreviewMarkdown)
+                          _buildMarkdownPreview(textColor)
+                        else
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ...() {
+                                final List<Widget> list = [];
+                                for (int i = 0; i < _blocks.length; i++) {
+                                  list.add(_buildBlockWidget(_blocks[i], textColor, titleColor));
+                                  if (i < _blocks.length - 1) {
+                                    final spacing = _getSpacingBetween(_blocks[i], _blocks[i + 1]);
+                                    list.add(SizedBox(height: spacing));
+                                  }
+                                }
+                                return list;
+                              }(),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            // Floating pill format bar
+            Positioned(
+              bottom: 32,
+              left: 24,
+              right: 24,
+              child: Center(
+                child: Container(
+                  width: 354,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF333333),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Left chevron play 1
+                      Positioned(
+                        left: 18,
+                        top: 20,
+                        width: 20,
+                        height: 20,
+                        child: GestureDetector(
+                          onTap: () {
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: Stack(
+                            children: [
+                              SvgPicture.asset(
+                                'assets/icons/play_1.svg',
+                                width: 20,
+                                height: 20,
+                                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                              ),
+                              const Positioned.fill(
+                                child: Icon(
+                                  Icons.play_arrow_rounded,
+                                  size: 20,
+                                  color: Colors.transparent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      // Sliding PageView
+                      Positioned(
+                        left: 50,
+                        right: 50,
+                        top: 0,
+                        bottom: 0,
+                        child: PageView(
+                          controller: _pageController,
+                          onPageChanged: (page) {
+                            setState(() {
+                              _currentPage = page;
+                            });
+                          },
+                          children: [
+                            _buildFigmaPage0(activeStyle),
+                            _buildFigmaPage1(activeStyle),
+                            _buildFigmaPage2(activeStyle),
+                          ],
+                        ),
+                      ),
+
+                      // Right chevron play 2
+                      Positioned(
+                        left: 315,
+                        top: 20,
+                        width: 20,
+                        height: 20,
+                        child: GestureDetector(
+                          onTap: () {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: Stack(
+                            children: [
+                              SvgPicture.asset(
+                                'assets/icons/play_2.svg',
+                                width: 20,
+                                height: 20,
+                                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                              ),
+                              const Positioned.fill(
+                                child: Icon(
+                                  Icons.play_arrow_rounded,
+                                  size: 20,
+                                  color: Colors.transparent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            
+            // Custom Delete Popup
+            if (_showDeletePopup)
+              _buildDeletePopup(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFigmaPage0(Style activeStyle) {
+    return Stack(
+      children: [
+        Positioned(
+          left: 11,
+          top: 20,
+          width: 21,
+          height: 23,
+          child: Tooltip(
+            message: 'Bold',
+            child: GestureDetector(
+              onTap: () => _wrapSelection('**', '**'),
+              child: Center(
+                child: Text(
+                  "B",
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: activeStyle.bold ? const Color(0xFFFFA322) : Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 55,
+          top: 20,
+          width: 21,
+          height: 23,
+          child: Tooltip(
+            message: 'Italic',
+            child: GestureDetector(
+              onTap: () => _wrapSelection('*', '*'),
+              child: Center(
+                child: Text(
+                  "I",
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.normal,
+                    color: activeStyle.italic ? const Color(0xFFFFA322) : Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 99,
+          top: 20,
+          width: 21,
+          height: 23,
+          child: Tooltip(
+            message: 'Underline',
+            child: GestureDetector(
+              onTap: () => _wrapSelection('<u>', '</u>'),
+              child: Center(
+                child: Text(
+                  "U",
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    decoration: TextDecoration.underline,
+                    color: activeStyle.underline ? const Color(0xFFFFA322) : Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 143,
+          top: 20,
+          width: 21,
+          height: 23,
+          child: Tooltip(
+            message: 'Strikethrough',
+            child: GestureDetector(
+              onTap: () => _wrapSelection('~~', '~~'),
+              child: Center(
+                child: Text(
+                  "T",
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    decoration: TextDecoration.lineThrough,
+                    color: activeStyle.strikethrough ? const Color(0xFFFFA322) : Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 187,
+          top: 22,
+          width: 20,
+          height: 20,
+          child: Tooltip(
+            message: 'Highlight',
+            child: GestureDetector(
+              onTap: () => _wrapSelection('highlight', ''),
+              child: SvgPicture.asset(
+                'assets/icons/highlighter.svg',
+                width: 16,
+                height: 16,
+                colorFilter: ColorFilter.mode(
+                  activeStyle.highlight != null ? const Color(0xFFFFA322) : Colors.white,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 226,
+          top: 22,
+          width: 20,
+          height: 20,
+          child: Tooltip(
+            message: 'Link',
+            child: GestureDetector(
+              onTap: () => _wrapSelection('[', '](url)'),
+              child: SvgPicture.asset(
+                'assets/icons/link.svg',
+                width: 16,
+                height: 16,
+                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFigmaPage1(Style activeStyle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildPage1TextButton("H1", () => _insertTextAtCursor('# '), activeStyle.heading == 'h1', tooltip: 'Heading 1'),
+        _buildPage1TextButton("H2", () => _insertTextAtCursor('## '), activeStyle.heading == 'h2', tooltip: 'Heading 2'),
+        _buildPage1TextButton("H3", () => _insertTextAtCursor('### '), activeStyle.heading == 'h3', tooltip: 'Heading 3'),
+        _buildPage1IconButton(Icons.format_list_bulleted_rounded, () => _insertTextAtCursor('- '), activeStyle.listType == 'bullet', tooltip: 'Bullet List'),
+        _buildPage1IconButton(Icons.format_list_numbered_rounded, () => _insertTextAtCursor('1. '), activeStyle.listType == 'number', tooltip: 'Numbered List'),
+        _buildPage1IconButton(Icons.add_task_rounded, () => _insertTextAtCursor('\u2610'), activeStyle.listType == 'checkbox', tooltip: 'Checklist'),
+        _buildPage1IconButton(Icons.grid_on_rounded, _showPaperSettingsBottomSheet, false, tooltip: 'Paper Settings'),
+      ],
+    );
+  }
+
+  Widget _buildFigmaPage2(Style activeStyle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildPage1IconButton(Icons.format_align_left_rounded, () => _wrapSelection('<p align="left">', '</p>'), activeStyle.align == TextAlign.left, tooltip: 'Align Left'),
+        _buildPage1IconButton(Icons.format_align_center_rounded, () => _wrapSelection('<p align="center">', '</p>'), activeStyle.align == TextAlign.center, tooltip: 'Align Center'),
+        _buildPage1IconButton(Icons.format_align_right_rounded, () => _wrapSelection('<p align="right">', '</p>'), activeStyle.align == TextAlign.right, tooltip: 'Align Right'),
+        const Opacity(
+          opacity: 0.0,
+          child: Tooltip(
+            message: 'Align Justify',
+            child: SizedBox(width: 0, height: 0),
+          ),
+        ),
+        _buildPage1IconButton(Icons.camera_alt_outlined, () => _showGalleryBottomSheet(context), false, tooltip: 'Attach Image'),
+        _buildPage1IconButton(Icons.mic_none_rounded, _startRecording, false, tooltip: 'Record Audio'),
+        _buildPage1IconButton(Icons.keyboard_hide_rounded, () => FocusScope.of(context).unfocus(), false, tooltip: 'Hide Keyboard'),
+      ],
+    );
+  }
+
+  Widget _buildPage1TextButton(String text, VoidCallback onTap, bool isActive, {required String tooltip}) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: isActive ? const Color(0xFFFFA322) : Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPage1IconButton(IconData icon, VoidCallback onTap, bool isActive, {required String tooltip}) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Icon(
+          icon,
+          size: 20,
+          color: isActive ? const Color(0xFFFFA322) : Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeletePopup() {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withOpacity(0.4),
+        child: Center(
+          child: Container(
+            width: 262,
+            height: 156,
+            decoration: BoxDecoration(
+              color: const Color(0xFF222222),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(color: Colors.black45, blurRadius: 20, spreadRadius: 1),
+              ],
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  left: 16,
+                  top: 18,
+                  width: 231,
+                  height: 83,
+                  child: Center(
+                    child: Text(
+                      "Are you sure",
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 35,
+                  top: 101,
+                  width: 80,
+                  height: 35,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final provider = Provider.of<NotesProvider>(context, listen: false);
+                      if (widget.note != null) {
+                        await provider.trashNote(widget.note!.id);
+                      }
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "Delete",
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF222222),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 145,
+                  top: 101,
+                  width: 80,
+                  height: 35,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showDeletePopup = false;
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "Cancel",
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF222222),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
-    // Resolve note colors matching theme
-    final editorBgColor = NotesProvider.getNoteColor(_colorIndex, context);
-    final textColor = NotesProvider.getNoteTextColor(_colorIndex, context);
-    final titleColor = NotesProvider.getNoteTitleColor(_colorIndex, context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    final dateStr = DateFormat('MMM d, yyyy').format(widget.note?.updatedAt ?? DateTime.now());
-    final readingTime = "${(_wordCount / 200).ceil()} min read";
+    Widget body = _isNoteEmpty
+        ? _buildStartingScreen(theme, isDark)
+        : _buildActiveEditorScreen(theme, isDark);
+
+    if (_isRecording) {
+      body = Stack(
+        children: [
+          body,
+          Positioned(
+            left: 24,
+            right: 24,
+            bottom: 110,
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(24.0),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 1),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.fiber_manual_record, color: Colors.red),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Recording: ${_recordDuration ~/ 60}:${(_recordDuration % 60).toString().padLeft(2, '0')}",
+                    style: GoogleFonts.inter(
+                      color: theme.colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: _stopRecording,
+                    style: TextButton.styleFrom(
+                      backgroundColor: theme.colorScheme.error,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("STOP"),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     return PopScope(
       canPop: false,
@@ -2717,471 +4192,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           Navigator.of(context).pop();
         }
       },
-      child: Scaffold(
-        backgroundColor: editorBgColor,
-        // AppBar (Faded in Zen Mode)
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: AnimatedOpacity(
-            opacity: !_isPageSettled ? 0.0 : (_isZenTyping ? 0.0 : 1.0),
-            duration: const Duration(milliseconds: 300),
-            child: IgnorePointer(
-              ignoring: !_isPageSettled || _isZenTyping,
-              child: AppBar(
-                backgroundColor: editorBgColor,
-                elevation: 0,
-                leading: IconButton(
-                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: titleColor),
-                  onPressed: () => Navigator.of(context).maybePop(),
-                ),
-                actions: [
-                  if (_noteType == 'text')
-                    IconButton(
-                      icon: Icon(
-                        _isPreviewMarkdown ? Icons.menu_book_rounded : Icons.text_snippet_rounded,
-                        color: titleColor,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPreviewMarkdown = !_isPreviewMarkdown;
-                        });
-                      },
-                    ),
-                  IconButton(
-                    icon: Icon(
-                      _isLocked ? Icons.lock : Icons.lock_open,
-                      color: _isLocked ? theme.colorScheme.primary : titleColor,
-                    ),
-                    onPressed: () async {
-                      if (!_isLocked) {
-                        final hasPin = await VaultService.instance.hasPinConfigured();
-                        if (!hasPin && mounted) {
-                          _showSetupPinDialog();
-                          return;
-                        }
-                      }
-                      setState(() {
-                        _isLocked = !_isLocked;
-                        _hasChanges = true;
-                      });
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      _isFavorite ? Icons.star : Icons.star_border,
-                      color: _isFavorite ? Colors.amber : titleColor,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isFavorite = !_isFavorite;
-                        _hasChanges = true;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        body: SafeArea(
-          child: Stack(
-            children: [
-              Column(
-                children: [
-                  // Media attachments (fades in zen mode)
-              AnimatedOpacity(
-                opacity: !_isPageSettled ? 0.0 : (_isZenTyping ? 0.0 : 1.0),
-                duration: const Duration(milliseconds: 300),
-                child: IgnorePointer(
-                  ignoring: !_isPageSettled || _isZenTyping,
-                  child: Column(
-                    children: [
-                      // Images slider
-                      if (_attachments.any((a) => a['type'] == 'image'))
-                        Container(
-                          height: 100,
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: _attachments.where((a) => a['type'] == 'image').map((image) {
-                              final path = image['path'] as String;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.file(File(path), fit: BoxFit.cover, width: 90, height: 90),
-                                    ),
-                                    Positioned(
-                                      top: 4,
-                                      right: 4,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _attachments.remove(image);
-                                            _hasChanges = true;
-                                          });
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.all(2),
-                                          decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                          child: const Icon(Icons.close, size: 14, color: Colors.white),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      // Audio player panel
-                      if (_attachments.any((a) => a['type'] == 'voice'))
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
-                          child: Column(
-                            children: _attachments.where((a) => a['type'] == 'voice').map((voice) {
-                              final path = voice['path'] as String;
-                              final duration = voice['duration'] as int;
-                              final isCurrent = _currentlyPlayingPath == path;
-                              final playStatus = isCurrent && _isPlaying;
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 8.0),
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                decoration: BoxDecoration(
-                                  color: titleColor.withAlpha(15),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Row(
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(playStatus ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded),
-                                      onPressed: () => _toggleAudioPlay(path),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        "Voice Attachment (${duration ~/ 60}:${(duration % 60).toString().padLeft(2, '0')})",
-                                        style: GoogleFonts.inter(fontSize: 13, color: textColor),
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline_rounded, size: 20),
-                                      onPressed: () {
-                                        setState(() {
-                                          _attachments.remove(voice);
-                                          _hasChanges = true;
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Main Writing canvas
-              Expanded(
-                child: DragTarget<Map<String, dynamic>>(
-                  onWillAcceptWithDetails: (details) => _noteType == 'text',
-                  onAcceptWithDetails: (details) {
-                    final data = details.data;
-                    final oldIndex = data['oldIndex'] as int;
-                    if (oldIndex != -1 && oldIndex < _blocks.length) {
-                      setState(() {
-                        final imgBlock = _blocks.removeAt(oldIndex);
-                        _blocks.add(imgBlock);
-                        _hasChanges = true;
-                      });
-                    }
-                  },
-                  builder: (context, candidateData, rejectedData) {
-                    return CustomScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      slivers: [
-                        SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                          sliver: SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Align(
-                              alignment: Alignment.topCenter,
-                              child: Container(
-                                constraints: const BoxConstraints(maxWidth: 720),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Metadata Info row (Faded in Zen mode)
-                                    AnimatedOpacity(
-                                      opacity: !_isPageSettled ? 0.0 : (_isZenTyping ? 0.0 : 1.0),
-                                      duration: const Duration(milliseconds: 300),
-                                      child: IgnorePointer(
-                                        ignoring: !_isPageSettled || _isZenTyping,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(bottom: 16.0),
-                                          child: Row(
-                                            children: [
-                                              const Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF91918E)),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                dateStr,
-                                                style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF91918E)),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF91918E)),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                readingTime,
-                                                style: GoogleFonts.jetBrainsMono(fontSize: 11, color: const Color(0xFF91918E)),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-          
-                                    // Note Title input
-                                    TextField(
-                                      controller: _titleController,
-                                      maxLines: 1,
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 24.0,
-                                        fontWeight: FontWeight.bold,
-                                        color: titleColor,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: "Note Title",
-                                        hintStyle: GoogleFonts.outfit(
-                                          fontSize: 24.0,
-                                          fontWeight: FontWeight.bold,
-                                          color: titleColor.withAlpha(80),
-                                        ),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.zero,
-                                        filled: false,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12.0),
-                                    _buildCategorySelector(titleColor),
-                                    const SizedBox(height: 16.0),
-          
-                                    // Render Checklist mode OR Markdown body OR Text editor
-                                    if (_noteType == 'checklist')
-                                      _buildChecklistEditor(textColor)
-                                    else if (_isPreviewMarkdown)
-                                      _buildMarkdownPreview(textColor)
-                                    else
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            DragTarget<Map<String, dynamic>>(
-                                              onWillAcceptWithDetails: (details) => details.data['imagePath'] != null,
-                                              onAcceptWithDetails: (details) {
-                                                final data = details.data;
-                                                final oldIndex = data['oldIndex'] as int;
-                                                final stackImgIdx = data['stackImageIndex'] as int?;
-                                                setState(() {
-                                                  ImageBlock draggedImgBlock;
-                                                  if (stackImgIdx != null) {
-                                                    final sourceStack = _blocks[oldIndex] as ImageStackBlock;
-                                                    draggedImgBlock = sourceStack.images[stackImgIdx];
-                                                    sourceStack.images.removeAt(stackImgIdx);
-                                                    if (sourceStack.images.length == 1) {
-                                                      _blocks[oldIndex] = sourceStack.images[0];
-                                                    }
-                                                  } else {
-                                                    draggedImgBlock = _blocks[oldIndex] as ImageBlock;
-                                                    _blocks.removeAt(oldIndex);
-                                                  }
-                                                  _blocks.insert(0, draggedImgBlock);
-                                                  _hasChanges = true;
-                                                });
-                                              },
-                                              builder: (context, candidateData, rejectedData) {
-                                                final isHovered = candidateData.isNotEmpty;
-                                                return GestureDetector(
-                                                  behavior: HitTestBehavior.opaque,
-                                                  onTap: () => _insertParagraphAt(0),
-                                                  child: Container(
-                                                    height: isHovered ? 24.0 : 16.0,
-                                                    color: isHovered ? theme.colorScheme.primary.withOpacity(0.15) : Colors.transparent,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            ...() {
-                                              final List<Widget> list = [];
-                                              for (int i = 0; i < _blocks.length; i++) {
-                                                list.add(_buildBlockWidget(_blocks[i], textColor, titleColor));
-                                                
-                                                if (i < _blocks.length - 1) {
-                                                  final spacing = _getSpacingBetween(_blocks[i], _blocks[i + 1]);
-                                                  list.add(
-                                                    DragTarget<Map<String, dynamic>>(
-                                                      onWillAcceptWithDetails: (details) => details.data['imagePath'] != null,
-                                                      onAcceptWithDetails: (details) {
-                                                        final data = details.data;
-                                                        final oldIndex = data['oldIndex'] as int;
-                                                        final stackImgIdx = data['stackImageIndex'] as int?;
-                                                        setState(() {
-                                                          ImageBlock draggedImgBlock;
-                                                          if (stackImgIdx != null) {
-                                                            final sourceStack = _blocks[oldIndex] as ImageStackBlock;
-                                                            draggedImgBlock = sourceStack.images[stackImgIdx];
-                                                            sourceStack.images.removeAt(stackImgIdx);
-                                                            if (sourceStack.images.length == 1) {
-                                                              _blocks[oldIndex] = sourceStack.images[0];
-                                                            }
-                                                          } else {
-                                                            draggedImgBlock = _blocks[oldIndex] as ImageBlock;
-                                                            _blocks.removeAt(oldIndex);
-                                                          }
-                                                          int insertIdx = i + 1;
-                                                          if (oldIndex < insertIdx && stackImgIdx == null) {
-                                                            insertIdx--;
-                                                          }
-                                                          _blocks.insert(insertIdx, draggedImgBlock);
-                                                          _hasChanges = true;
-                                                        });
-                                                      },
-                                                      builder: (context, candidateData, rejectedData) {
-                                                        final isHovered = candidateData.isNotEmpty;
-                                                        return GestureDetector(
-                                                          behavior: HitTestBehavior.opaque,
-                                                          onTap: () => _insertParagraphAt(i + 1),
-                                                          child: Container(
-                                                            height: isHovered ? 24.0 : spacing,
-                                                            color: isHovered ? theme.colorScheme.primary.withOpacity(0.15) : Colors.transparent,
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-                                                  );
-                                                }
-                                              }
-                                              return list;
-                                            }(),
-                                            Expanded(
-                                              child: GestureDetector(
-                                                behavior: HitTestBehavior.opaque,
-                                                onTap: () => _insertParagraphAt(_blocks.length),
-                                                child: const SizedBox(height: 100),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-
-              // Tags Chip bar (Faded in Zen Mode)
-              AnimatedOpacity(
-                opacity: !_isPageSettled ? 0.0 : (_isZenTyping ? 0.0 : 1.0),
-                duration: const Duration(milliseconds: 300),
-                child: IgnorePointer(
-                  ignoring: !_isPageSettled || _isZenTyping,
-                  child: Column(
-                    children: [
-                      if (_tags.isNotEmpty)
-                        Container(
-                          height: 32,
-                          margin: const EdgeInsets.only(bottom: 8.0),
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                            children: _tags.map((tag) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 6.0),
-                                child: Chip(
-                                  label: Text("#$tag"),
-                                  labelStyle: GoogleFonts.inter(fontSize: 11, color: textColor),
-                                  backgroundColor: titleColor.withAlpha(15),
-                                  onDeleted: () {
-                                    setState(() {
-                                      _tags.remove(tag);
-                                      _hasChanges = true;
-                                    });
-                                  },
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Bottom control panels (Fades in Zen mode)
-              AnimatedOpacity(
-                opacity: !_isPageSettled ? 0.0 : (_isZenTyping ? 0.0 : 1.0),
-                duration: const Duration(milliseconds: 300),
-                child: IgnorePointer(
-                  ignoring: !_isPageSettled || _isZenTyping,
-                  child: Container(
-                    padding: _anyBlockHasFocus && _noteType == 'text' && !_isPreviewMarkdown
-                        ? const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0)
-                        : const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                    decoration: BoxDecoration(
-                      color: _anyBlockHasFocus && _noteType == 'text' && !_isPreviewMarkdown
-                          ? Colors.transparent
-                          : editorBgColor,
-                      border: _anyBlockHasFocus && _noteType == 'text' && !_isPreviewMarkdown
-                          ? null
-                          : Border(top: BorderSide(color: titleColor.withAlpha(20))),
-                    ),
-                    child: _anyBlockHasFocus && _noteType == 'text' && !_isPreviewMarkdown
-                        ? _buildFormattingToolbar(textColor, titleColor)
-                        : _buildStandardBottomPanel(editorBgColor, titleColor, textColor, theme),
-                  ),
-                ),
-              ),
-
-              // Audio Record overlay
-              if (_isRecording)
-                Container(
-                  padding: const EdgeInsets.all(16.0),
-                  margin: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(color: theme.colorScheme.errorContainer, borderRadius: BorderRadius.circular(24.0)),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.fiber_manual_record, color: Colors.red),
-                      const SizedBox(width: 12),
-                      Text(
-                        "Recording: ${_recordDuration ~/ 60}:${(_recordDuration % 60).toString().padLeft(2, '0')}",
-                        style: GoogleFonts.inter(color: theme.colorScheme.onErrorContainer, fontWeight: FontWeight.bold),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: _stopRecording,
-                        style: TextButton.styleFrom(backgroundColor: theme.colorScheme.error, foregroundColor: Colors.white),
-                        child: const Text("STOP"),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  ),
+      child: body,
     );
   }
 
@@ -3273,12 +4284,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             padding: const EdgeInsets.symmetric(vertical: 4.0),
             child: Row(
               children: [
-                Checkbox(
-                  value: isDone,
-                  activeColor: Theme.of(context).colorScheme.primary,
-                  onChanged: (bool? val) {
+                InteractiveCheckbox(
+                  checked: isDone,
+                  onTap: () {
                     setState(() {
-                      _checklistItems[index]['done'] = val ?? false;
+                      _checklistItems[index]['done'] = !isDone;
                       _hasChanges = true;
                       _calculateCounts();
                     });

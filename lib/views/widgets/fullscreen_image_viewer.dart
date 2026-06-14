@@ -15,7 +15,8 @@ class FullscreenImageViewer extends StatefulWidget {
   State<FullscreenImageViewer> createState() => _FullscreenImageViewerState();
 }
 
-class _FullscreenImageViewerState extends State<FullscreenImageViewer> with SingleTickerProviderStateMixin {
+class _FullscreenImageViewerState extends State<FullscreenImageViewer>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   Offset _dragOffset = Offset.zero;
 
@@ -55,14 +56,17 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> with Sing
 
   @override
   Widget build(BuildContext context) {
-    final isFile = !widget.imagePath.startsWith('http://') && !widget.imagePath.startsWith('https://');
+    final isFile = !widget.imagePath.startsWith('http://') &&
+        !widget.imagePath.startsWith('https://');
     ImageProvider imageProvider;
     if (isFile) {
       String cleanPath = widget.imagePath;
       if (cleanPath.startsWith('file://')) {
         cleanPath = cleanPath.substring(7);
       }
-      if (cleanPath.startsWith('/') && cleanPath.length > 2 && cleanPath[2] == ':') {
+      if (cleanPath.startsWith('/') &&
+          cleanPath.length > 2 &&
+          cleanPath[2] == ':') {
         cleanPath = cleanPath.substring(1);
       }
       imageProvider = FileImage(File(cleanPath));
@@ -75,7 +79,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> with Sing
     final double bgOpacity = 1.0 - dragRatio;
 
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(bgOpacity),
+      backgroundColor: Colors.black.withValues(alpha: bgOpacity),
       body: Stack(
         children: [
           // Drag-to-dismiss wrapper
@@ -97,9 +101,11 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> with Sing
                         return const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.broken_image_outlined, size: 60, color: Colors.white60),
+                            Icon(Icons.broken_image_outlined,
+                                size: 60, color: Colors.white60),
                             SizedBox(height: 12),
-                            Text("Error loading image", style: TextStyle(color: Colors.white70)),
+                            Text("Error loading image",
+                                style: TextStyle(color: Colors.white70)),
                           ],
                         );
                       },
@@ -120,7 +126,8 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> with Sing
                 child: CircleAvatar(
                   backgroundColor: Colors.black38,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white, size: 20),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),

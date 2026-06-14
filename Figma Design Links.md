@@ -1,0 +1,1 @@
+Home Screen-  https://www.figma.com/design/WvUdzdJbbKky6J3gn8ONkc/Quick-Notes-Design?node-id=0-1&t=TagK7skJ2LXkzATy-1

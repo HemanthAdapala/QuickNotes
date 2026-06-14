@@ -1,6 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/note.dart';
 import '../models/folder.dart';
 
@@ -10,6 +11,10 @@ class DatabaseService {
   static final DatabaseService instance = DatabaseService._privateConstructor();
 
   static Database? _database;
+
+  // In-memory web fallback store
+  static final List<Note> _webNotes = [];
+  static final List<Folder> _webFolders = [];
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -22,16 +27,16 @@ class DatabaseService {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'quick_notes.db');
 
-    // Open/Create the database (version 6)
+    // Open/Create the database (version 7)
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
   }
 
-  // Schema creation for clean install (version 5)
+  // Schema creation for clean install (version 7)
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE notes(
@@ -56,7 +61,8 @@ class DatabaseService {
         habitStreak INTEGER DEFAULT 0,
         habitLastCompleted TEXT,
         isDeleted INTEGER DEFAULT 0,
-        previewText TEXT
+        previewText TEXT,
+        paperSettings TEXT
       )
     ''');
 
@@ -126,12 +132,24 @@ class DatabaseService {
         // Column may exist from previous run
       }
     }
+    if (oldVersion < 7) {
+      try {
+        await db.execute('ALTER TABLE notes ADD COLUMN paperSettings TEXT');
+      } catch (e) {
+        // Column may exist from previous run
+      }
+    }
   }
 
   // --- CRUD Operations ---
 
   // Create
   Future<int> insert(Note note) async {
+    if (kIsWeb) {
+      _webNotes.removeWhere((n) => n.id == note.id);
+      _webNotes.add(note);
+      return 1;
+    }
     final db = await instance.database;
     return await db.insert(
       'notes',
@@ -142,6 +160,15 @@ class DatabaseService {
 
   // Read All
   Future<List<Note>> queryAll() async {
+    if (kIsWeb) {
+      final list = List<Note>.from(_webNotes);
+      list.sort((a, b) {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return b.updatedAt.compareTo(a.updatedAt);
+      });
+      return list;
+    }
     final db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
       'notes',
@@ -152,6 +179,11 @@ class DatabaseService {
 
   // Update
   Future<int> update(Note note) async {
+    if (kIsWeb) {
+      _webNotes.removeWhere((n) => n.id == note.id);
+      _webNotes.add(note);
+      return 1;
+    }
     final db = await instance.database;
     return await db.update(
       'notes',
@@ -163,6 +195,10 @@ class DatabaseService {
 
   // Delete
   Future<int> delete(String id) async {
+    if (kIsWeb) {
+      _webNotes.removeWhere((n) => n.id == id);
+      return 1;
+    }
     final db = await instance.database;
     return await db.delete(
       'notes',
@@ -173,6 +209,10 @@ class DatabaseService {
 
   // Read Single Note
   Future<Note?> queryById(String id) async {
+    if (kIsWeb) {
+      final matches = _webNotes.where((n) => n.id == id);
+      return matches.isEmpty ? null : matches.first;
+    }
     final db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
       'notes',
@@ -183,9 +223,23 @@ class DatabaseService {
     return Note.fromMap(maps.first);
   }
 
-
   // Search Notes
   Future<List<Note>> search(String query) async {
+    if (kIsWeb) {
+      final q = query.toLowerCase();
+      final list = _webNotes.where((n) {
+        final titleMatch = n.title.toLowerCase().contains(q);
+        final contentMatch = n.content.toLowerCase().contains(q);
+        final tagMatch = n.tags.any((t) => t.toLowerCase().contains(q));
+        return titleMatch || contentMatch || tagMatch;
+      }).toList();
+      list.sort((a, b) {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return b.updatedAt.compareTo(a.updatedAt);
+      });
+      return list;
+    }
     final db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
       'notes',
@@ -198,6 +252,11 @@ class DatabaseService {
 
   // --- Folder Operations ---
   Future<int> insertFolder(Folder folder) async {
+    if (kIsWeb) {
+      _webFolders.removeWhere((f) => f.id == folder.id);
+      _webFolders.add(folder);
+      return 1;
+    }
     final db = await instance.database;
     return await db.insert(
       'folders',
@@ -207,12 +266,21 @@ class DatabaseService {
   }
 
   Future<List<Folder>> queryAllFolders() async {
+    if (kIsWeb) {
+      final list = List<Folder>.from(_webFolders);
+      list.sort((a, b) => a.name.compareTo(b.name));
+      return list;
+    }
     final db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query('folders', orderBy: 'name ASC');
     return maps.map((map) => Folder.fromMap(map)).toList();
   }
 
   Future<int> deleteFolder(String id) async {
+    if (kIsWeb) {
+      _webFolders.removeWhere((f) => f.id == id);
+      return 1;
+    }
     final db = await instance.database;
     return await db.delete(
       'folders',

@@ -4,10 +4,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../themes/quick_notes_theme.dart';
 import 'onboarding_screen.dart';
 import 'passcode_lock_screen.dart';
-import 'navigation_shell.dart';
+import 'home_screen_v2.dart';
 
-import 'package:provider/provider.dart';
-import '../../providers/notes_provider.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -53,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     // Read onboarding status
     final onboardingDone = await _secureStorage.read(key: 'has_completed_onboarding');
     final appLockEnabled = await _secureStorage.read(key: 'app_lock_enabled') == 'true';
-    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+
 
     Widget nextScreen;
     if (onboardingDone != 'true') {
@@ -64,21 +63,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         onSuccess: () {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (_) => NavigationShell(
-                onThemeToggle: notesProvider.toggleTheme,
-                isDarkMode: notesProvider.isDarkMode,
-              ),
+              builder: (_) => const HomeScreenV2(),
             ),
           );
         },
       );
     } else {
-      nextScreen = NavigationShell(
-        onThemeToggle: notesProvider.toggleTheme,
-        isDarkMode: notesProvider.isDarkMode,
-      );
+      nextScreen = const HomeScreenV2();
     }
 
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => nextScreen,

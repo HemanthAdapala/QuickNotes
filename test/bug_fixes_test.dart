@@ -6,9 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_notes/models/note.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
-import 'package:quick_notes/views/screens/navigation_shell.dart';
+import 'package:quick_notes/views/screens/home_screen.dart';
+import 'package:quick_notes/views/screens/folder_management_screen.dart';
 import 'package:quick_notes/views/screens/note_editor_screen.dart';
-import 'package:quick_notes/views/screens/notes_list_screen.dart';
 import 'package:quick_notes/views/widgets/note_card.dart';
 import 'package:quick_notes/views/widgets/rich_text_controller.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -91,8 +91,20 @@ void main() {
           providers: [
             ChangeNotifierProvider(create: (_) => NotesProvider()),
           ],
-          child: const MaterialApp(
-            home: NoteEditorScreen(),
+          child: MaterialApp(
+            home: NoteEditorScreen(
+              note: Note(
+                id: 'test_active',
+                title: 'Test Note',
+                content: '',
+                tags: [],
+                attachments: [],
+                category: 'Personal',
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+                colorValue: 0,
+              ),
+            ),
           ),
         ),
       );
@@ -158,46 +170,32 @@ void main() {
       await tester.pump(const Duration(seconds: 11));
     });
 
-    testWidgets('Issue 3: Drawer Sync / unique keys check', (WidgetTester tester) async {
+    testWidgets('Issue 3: HomeScreen tab switching check', (WidgetTester tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => NotesProvider()),
           ],
-          child: MaterialApp(
-            home: NavigationShell(
-              isDarkMode: true,
-              onThemeToggle: () {},
-            ),
+          child: const MaterialApp(
+            home: HomeScreen(),
           ),
         ),
       );
 
       await tester.pump(const Duration(milliseconds: 300));
 
-      final feedScreenFinder = find.byType(NotesListScreen);
-      expect(feedScreenFinder, findsOneWidget);
+      // Verify that we start on HomeScreen's Today block or input field
+      expect(find.text('what happened today?'), findsOneWidget);
 
-      final NotesListScreen feedScreen = tester.widget(feedScreenFinder);
-      expect(feedScreen.key, const ValueKey(NotesViewType.feed));
+      // Tap on Folders tab (index 1) which shows FolderManagementScreen
+      final folderIconFinder = find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_FolderIcon');
+      expect(folderIconFinder, findsOneWidget);
 
-      final scaffoldState = tester.firstState(find.byType(Scaffold)) as ScaffoldState;
-      scaffoldState.openDrawer();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.tap(folderIconFinder);
+      await tester.pumpAndSettle();
 
-      final archiveTileFinder = find.byWidgetPredicate(
-        (widget) => widget is ListTile && widget.title is Text && (widget.title as Text).data == 'Archive',
-      );
-      expect(archiveTileFinder, findsOneWidget);
-
-      await tester.tap(archiveTileFinder);
-      await tester.pump(const Duration(milliseconds: 500));
-
-      final archiveScreenFinder = find.byType(NotesListScreen);
-      expect(archiveScreenFinder, findsOneWidget);
-
-      final NotesListScreen archiveScreen = tester.widget(archiveScreenFinder);
-      expect(archiveScreen.key, const ValueKey(NotesViewType.archive));
+      // Now we should be on FolderManagementScreen
+      expect(find.byType(FolderManagementScreen), findsOneWidget);
       await tester.pump(const Duration(seconds: 11));
     });
 
@@ -286,8 +284,20 @@ void main() {
           providers: [
             ChangeNotifierProvider(create: (_) => NotesProvider()),
           ],
-          child: const MaterialApp(
-            home: NoteEditorScreen(),
+          child: MaterialApp(
+            home: NoteEditorScreen(
+              note: Note(
+                id: 'test_active',
+                title: 'Test Note',
+                content: '',
+                tags: [],
+                attachments: [],
+                category: 'Personal',
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+                colorValue: 0,
+              ),
+            ),
           ),
         ),
       );
@@ -465,8 +475,20 @@ void main() {
           providers: [
             ChangeNotifierProvider(create: (_) => NotesProvider()),
           ],
-          child: const MaterialApp(
-            home: NoteEditorScreen(),
+          child: MaterialApp(
+            home: NoteEditorScreen(
+              note: Note(
+                id: 'test_active',
+                title: 'Test Note',
+                content: '',
+                tags: [],
+                attachments: [],
+                category: 'Personal',
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+                colorValue: 0,
+              ),
+            ),
           ),
         ),
       );
@@ -637,6 +659,9 @@ void main() {
         colorValue: 0,
       );
 
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -648,12 +673,16 @@ void main() {
         ),
       );
 
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 500));
       expect(find.byType(ResizableImageWidget), findsOneWidget);
 
+      final rect = tester.getRect(find.byType(ResizableImageWidget));
+      final center = tester.getCenter(find.byType(ResizableImageWidget));
+      print('DEBUGGING_RESIZE: rect=$rect, center=$center');
+
       // Single tap on image to show controls
-      await tester.tap(find.byType(Image));
-      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ResizableImageWidget));
+      await tester.pump(const Duration(milliseconds: 400));
 
       // Verify handles are present
       final handleFinder = find.byIcon(Icons.drag_handle_rounded);
@@ -740,6 +769,55 @@ void main() {
 
       expect(find.byType(ImageStackWidget), findsOneWidget);
       await tester.pump(const Duration(seconds: 11));
+    });
+
+    test('3-Layer Note Paper System settings serialization & copyWith', () {
+      final note = Note(
+        id: 'test_paper_model',
+        title: 'Model Title',
+        content: 'Model Content',
+        tags: [],
+        attachments: [],
+        category: 'Personal',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        colorValue: 0,
+      );
+
+      // Verify defaults
+      expect(note.paperGuideType, equals('lines_extra_tight'));
+      expect(note.paperGuideVisible, isTrue);
+      expect(note.paperGuideHeight, equals(1.05));
+      expect(note.paperGuideOpacity, equals(0.15));
+      expect(note.paperGuideColor, equals(0));
+
+      // Verify copyWith
+      final updated = note.copyWith(
+        paperGuideType: 'grid',
+        paperGuideVisible: false,
+        paperGuideHeight: 1.5,
+        paperGuideOpacity: 0.35,
+        paperGuideColor: 0xFFF07167,
+      );
+      expect(updated.paperGuideType, equals('grid'));
+      expect(updated.paperGuideVisible, isFalse);
+      expect(updated.paperGuideHeight, equals(1.5));
+      expect(updated.paperGuideOpacity, equals(0.35));
+      expect(updated.paperGuideColor, equals(0xFFF07167));
+
+      // Verify serialization/deserialization
+      final map = updated.toMap();
+      expect(map['paperSettings'], isNotNull);
+      final decodedMap = jsonDecode(map['paperSettings'] as String);
+      expect(decodedMap['guideType'], equals('grid'));
+      expect(decodedMap['guideVisible'], isFalse);
+
+      final fromMap = Note.fromMap(map);
+      expect(fromMap.paperGuideType, equals('grid'));
+      expect(fromMap.paperGuideVisible, isFalse);
+      expect(fromMap.paperGuideHeight, equals(1.5));
+      expect(fromMap.paperGuideOpacity, equals(0.35));
+      expect(fromMap.paperGuideColor, equals(0xFFF07167));
     });
   });
 }

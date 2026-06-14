@@ -26,6 +26,13 @@ class Note {
   final int habitStreak;
   final DateTime? habitLastCompleted;
 
+  // Paper Guide Layer Settings
+  final String paperGuideType;
+  final bool paperGuideVisible;
+  final double paperGuideHeight;
+  final double paperGuideOpacity;
+  final int paperGuideColor;
+
   Note({
     required this.id,
     required this.title,
@@ -49,6 +56,11 @@ class Note {
     this.habitStreak = 0,
     this.habitLastCompleted,
     String? previewText,
+    this.paperGuideType = 'lines_extra_tight',
+    this.paperGuideVisible = true,
+    this.paperGuideHeight = 1.05,
+    this.paperGuideOpacity = 0.15,
+    this.paperGuideColor = 0,
   }) : previewText = previewText ?? _generatePreviewText(content, noteType);
 
   static String _generatePreviewText(String content, String noteType) {
@@ -156,6 +168,13 @@ class Note {
       'habitStreak': habitStreak,
       'habitLastCompleted': habitLastCompleted?.toIso8601String(),
       'previewText': previewText,
+      'paperSettings': jsonEncode({
+        'guideType': paperGuideType,
+        'guideVisible': paperGuideVisible,
+        'lineHeight': paperGuideHeight,
+        'opacity': paperGuideOpacity,
+        'color': paperGuideColor,
+      }),
     };
   }
 
@@ -183,6 +202,23 @@ class Note {
       }
     }
 
+    String paperGuideType = 'lines_extra_tight';
+    bool paperGuideVisible = true;
+    double paperGuideHeight = 1.05;
+    double paperGuideOpacity = 0.15;
+    int paperGuideColor = 0;
+
+    if (map['paperSettings'] != null) {
+      try {
+        final decoded = jsonDecode(map['paperSettings'] as String) as Map<String, dynamic>;
+        paperGuideType = decoded['guideType'] ?? 'lines_extra_tight';
+        paperGuideVisible = decoded['guideVisible'] ?? true;
+        paperGuideHeight = (decoded['lineHeight'] as num?)?.toDouble() ?? 1.05;
+        paperGuideOpacity = (decoded['opacity'] as num?)?.toDouble() ?? 0.15;
+        paperGuideColor = decoded['color'] ?? 0;
+      } catch (_) {}
+    }
+
     return Note(
       id: map['id'] as String,
       title: map['title'] as String,
@@ -206,6 +242,11 @@ class Note {
       habitStreak: (map['habitStreak'] ?? 0) as int,
       habitLastCompleted: map['habitLastCompleted'] != null ? DateTime.tryParse(map['habitLastCompleted'] as String) : null,
       previewText: map['previewText'] as String?,
+      paperGuideType: paperGuideType,
+      paperGuideVisible: paperGuideVisible,
+      paperGuideHeight: paperGuideHeight,
+      paperGuideOpacity: paperGuideOpacity,
+      paperGuideColor: paperGuideColor,
     );
   }
 
@@ -236,6 +277,11 @@ class Note {
     DateTime? habitLastCompleted,
     bool clearHabitLastCompleted = false,
     String? previewText,
+    String? paperGuideType,
+    bool? paperGuideVisible,
+    double? paperGuideHeight,
+    double? paperGuideOpacity,
+    int? paperGuideColor,
   }) {
     return Note(
       id: id ?? this.id,
@@ -260,6 +306,11 @@ class Note {
       habitStreak: habitStreak ?? this.habitStreak,
       habitLastCompleted: clearHabitLastCompleted ? null : (habitLastCompleted ?? this.habitLastCompleted),
       previewText: previewText ?? ((content != null || noteType != null) ? null : this.previewText),
+      paperGuideType: paperGuideType ?? this.paperGuideType,
+      paperGuideVisible: paperGuideVisible ?? this.paperGuideVisible,
+      paperGuideHeight: paperGuideHeight ?? this.paperGuideHeight,
+      paperGuideOpacity: paperGuideOpacity ?? this.paperGuideOpacity,
+      paperGuideColor: paperGuideColor ?? this.paperGuideColor,
     );
   }
 }

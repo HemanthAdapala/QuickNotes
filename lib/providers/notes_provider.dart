@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -19,6 +20,7 @@ class NotesProvider with ChangeNotifier {
   List<Folder> _folders = [];
   bool _isLoading = false;
   String _searchQuery = "";
+  Timer? _searchDebouncer;
   SortOption _currentSort = SortOption.newest;
   NotesViewType _currentView = NotesViewType.feed;
   String _selectedCategory = "All";
@@ -348,6 +350,11 @@ class NotesProvider with ChangeNotifier {
     String? folderId,
     bool isHabit = false,
     String habitRecurrence = 'none',
+    String paperGuideType = 'lines_extra_tight',
+    bool paperGuideVisible = true,
+    double paperGuideHeight = 1.05,
+    double paperGuideOpacity = 0.15,
+    int paperGuideColor = 0,
   }) async {
     String finalTitle = title;
     String finalContent = content;
@@ -377,6 +384,11 @@ class NotesProvider with ChangeNotifier {
       isHabit: isHabit,
       habitRecurrence: habitRecurrence,
       habitStreak: 0,
+      paperGuideType: paperGuideType,
+      paperGuideVisible: paperGuideVisible,
+      paperGuideHeight: paperGuideHeight,
+      paperGuideOpacity: paperGuideOpacity,
+      paperGuideColor: paperGuideColor,
     );
 
     try {
@@ -571,7 +583,12 @@ class NotesProvider with ChangeNotifier {
   // Set Search Query
   void setSearchQuery(String query) {
     _searchQuery = query;
-    loadNotes();
+    if (_searchDebouncer?.isActive ?? false) {
+      _searchDebouncer!.cancel();
+    }
+    _searchDebouncer = Timer(const Duration(milliseconds: 300), () {
+      loadNotes();
+    });
   }
 
   // Set Sorting Option
