@@ -6,7 +6,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../providers/notes_provider.dart';
 import '../../themes/app_theme.dart';
-import '../widgets/gravity_notes_nav_bar.dart';
 import '../widgets/living_writing_experience.dart';
 import '../widgets/home_prompt_view.dart';
 import 'note_editor_screen.dart';
@@ -135,9 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
 
-          // ── Restored Bottom Bar (Comparison) ────────────────────────
+          // ── Bottom nav bar (The Cardboard Cutout) ──────────────────
           Positioned(
-            bottom: 110,
+            bottom: 32 + MediaQuery.of(context).padding.bottom,
             left: 24,
             right: 24,
             child: Center(
@@ -157,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: 26,
                       height: 26,
                       child: GestureDetector(
+                        key: const Key('nav_home'),
                         onTap: () {
                           HapticFeedback.lightImpact();
                           setState(() => _activeNavIndex = 0);
@@ -170,6 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: 26,
                       height: 26,
                       child: GestureDetector(
+                        key: const Key('nav_folders'),
                         onTap: () {
                           HapticFeedback.lightImpact();
                           setState(() => _activeNavIndex = 1);
@@ -183,6 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: 50,
                       height: 50,
                       child: GestureDetector(
+                        key: const Key('nav_fab'),
                         onTap: _openNewNote,
                         child: Container(color: Colors.transparent),
                       ),
@@ -193,6 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: 28,
                       height: 28,
                       child: GestureDetector(
+                        key: const Key('nav_calendar'),
                         onTap: () {
                           HapticFeedback.lightImpact();
                           setState(() => _activeNavIndex = 2);
@@ -206,6 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: 28,
                       height: 28,
                       child: GestureDetector(
+                        key: const Key('nav_settings'),
                         onTap: () {
                           HapticFeedback.lightImpact();
                           setState(() => _activeNavIndex = 3);
@@ -216,22 +220,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-            ),
-          ),
-
-          // ── Bottom nav bar ─────────────────────────────────────────
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: GravityNotesNavBar(
-              activeIndex: _activeNavIndex,
-              onTap: (index) {
-                if (_activeNavIndex == index) return;
-                HapticFeedback.lightImpact();
-                setState(() => _activeNavIndex = index);
-              },
-              onFabTap: _openNewNote,
             ),
           ),
         ],

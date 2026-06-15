@@ -188,7 +188,7 @@ void main() {
       expect(find.text('what happened today?'), findsOneWidget);
 
       // Tap on Folders tab (index 1) which shows FolderManagementScreen
-      final folderIconFinder = find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_FolderIcon');
+      final folderIconFinder = find.byKey(const Key('nav_folders'));
       expect(folderIconFinder, findsOneWidget);
 
       await tester.tap(folderIconFinder);
