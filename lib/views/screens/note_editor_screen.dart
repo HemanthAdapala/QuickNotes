@@ -43,6 +43,9 @@ class NoteEditorScreen extends StatefulWidget {
 
 class _NoteEditorScreenState extends State<NoteEditorScreen> {
   final _titleController = TextEditingController();
+  final _titleFocusNode = FocusNode();
+  final _scrollController = ScrollController();
+  bool _isMetadataCollapsed = false;
   late final TextEditingController _contentController;
   final _tagController = TextEditingController();
   List<NoteBlock> _blocks = [];
@@ -215,6 +218,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             break;
           }
         }
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !_anyBlockHasFocus && _isMetadataCollapsed) {
+            setState(() {
+              _isMetadataCollapsed = false;
+            });
+          }
+        });
       }
       if (mounted) {
         setState(() {});
@@ -248,7 +259,20 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     return null;
   }
 
+  void _onScroll() {
+    if (_scrollController.hasClients && _scrollController.offset < 5.0 && _isMetadataCollapsed) {
+      setState(() {
+        _isMetadataCollapsed = false;
+      });
+    }
+  }
+
   void _onBlockTextChanged(NoteBlock block) {
+    if (!_isMetadataCollapsed) {
+      setState(() {
+        _isMetadataCollapsed = true;
+      });
+    }
     final controller = _getControllerOfBlock(block);
     if (controller == null) return;
 
@@ -1051,6 +1075,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   List<Map<String, dynamic>> _attachments = [];
   List<Map<String, dynamic>> _checklistItems = []; // [{'text': '...', 'done': false}]
   List<TextEditingController> _checklistControllers = [];
+  List<FocusNode> _checklistFocusNodes = [];
 
   // Folders & Habits state
   String? _folderId;
@@ -1158,6 +1183,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _titleController.addListener(_onTitleTextChanged);
     _contentController.addListener(_onContentTextChanged);
     
+    _titleFocusNode.addListener(() {
+      if (!_titleFocusNode.hasFocus) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !_anyBlockHasFocus && _isMetadataCollapsed) {
+            setState(() {
+              _isMetadataCollapsed = false;
+            });
+          }
+        });
+      }
+      if (mounted) {
+        setState(() {});
+      }
+    });
+    
+    _scrollController.addListener(_onScroll);
+    
     _contentFocusNode.addListener(() {
       if (mounted) {
         setState(() {});
@@ -1229,10 +1271,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   @override
   void dispose() {
     _titleController.dispose();
+    _titleFocusNode.dispose();
+    _scrollController.dispose();
     _contentController.dispose();
     _tagController.dispose();
     _contentFocusNode.dispose();
     _pageController.dispose();
+    for (final fn in _checklistFocusNodes) {
+      fn.dispose();
+    }
     for (final controller in _checklistControllers) {
       controller.dispose();
     }
@@ -1324,9 +1371,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   bool get _anyBlockHasFocus {
+    if (_titleFocusNode.hasFocus) return true;
     for (final block in _blocks) {
       final fn = _getFocusNodeOfBlock(block);
       if (fn != null && fn.hasFocus) return true;
+    }
+    for (final fn in _checklistFocusNodes) {
+      if (fn.hasFocus) return true;
     }
     return false;
   }
@@ -1356,9 +1407,24 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       final index = _checklistControllers.length;
       final text = _checklistItems[index]['text'] ?? '';
       _checklistControllers.add(TextEditingController(text: text));
+      final fn = FocusNode();
+      fn.addListener(() {
+        if (!fn.hasFocus) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_anyBlockHasFocus && _isMetadataCollapsed) {
+              setState(() {
+                _isMetadataCollapsed = false;
+              });
+            }
+          });
+        }
+        if (mounted) setState(() {});
+      });
+      _checklistFocusNodes.add(fn);
     }
     while (_checklistControllers.length > _checklistItems.length) {
       _checklistControllers.removeLast().dispose();
+      _checklistFocusNodes.removeLast().dispose();
     }
     for (int i = 0; i < _checklistItems.length; i++) {
       final text = _checklistItems[i]['text'] ?? '';
@@ -1373,6 +1439,20 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     setState(() {
       _checklistItems.add({'text': '', 'done': false});
       _checklistControllers.add(TextEditingController());
+      final fn = FocusNode();
+      fn.addListener(() {
+        if (!fn.hasFocus) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_anyBlockHasFocus && _isMetadataCollapsed) {
+              setState(() {
+                _isMetadataCollapsed = false;
+              });
+            }
+          });
+        }
+        if (mounted) setState(() {});
+      });
+      _checklistFocusNodes.add(fn);
       _hasChanges = true;
       _calculateCounts();
     });
@@ -1383,6 +1463,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _checklistItems.removeAt(index);
       if (index < _checklistControllers.length) {
         _checklistControllers.removeAt(index).dispose();
+      }
+      if (index < _checklistFocusNodes.length) {
+        _checklistFocusNodes.removeAt(index).dispose();
       }
       _hasChanges = true;
       _calculateCounts();
@@ -3418,6 +3501,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 // Writing canvas
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: _scrollController,
                     padding: const EdgeInsets.only(left: 32.0, right: 32.0, top: 15.0, bottom: 120.0),
                     physics: const BouncingScrollPhysics(),
                     child: Column(
@@ -3426,6 +3510,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         // Title
                         TextField(
                           controller: _titleController,
+                          focusNode: _titleFocusNode,
                           maxLines: 1,
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 30.0,
@@ -3452,175 +3537,192 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           },
                         ),
                         
-                        // Metadata Row (Date, Folder, Category, Options)
-                        Row(
-                          children: [
-                            // Date & Reminder Button
-                            GestureDetector(
-                              onTap: _pickReminder,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 14,
-                                    color: textColor.withValues(alpha: 0.5),
-                                  ),
-                                  const SizedBox(width: 4.0),
-                                  Text(
-                                    dateStr,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w400,
-                                      color: textColor.withValues(alpha: 0.5),
-                                    ),
-                                  ),
-                                  if (_reminderTime != null) ...[
-                                    const SizedBox(width: 4.0),
-                                    Icon(
-                                      Icons.notifications_active_outlined,
-                                      size: 14,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            
-                            // Separator
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text(
-                                "•",
-                                style: TextStyle(
-                                  color: textColor.withValues(alpha: 0.3),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            
-                            // Folder Button
-                            GestureDetector(
-                              onTap: _showFolderSelectorDialog,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icons/folder_open_folder.svg',
-                                    width: 18,
-                                    height: 18,
-                                    colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                                  ),
-                                  const SizedBox(width: 4.0),
-                                  ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 60),
-                                    child: Text(
-                                      currentFolderName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: textColor.withValues(alpha: 0.7),
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 200),
+                            opacity: _isMetadataCollapsed ? 0.0 : 1.0,
+                            child: _isMetadataCollapsed
+                                ? const SizedBox.shrink()
+                                : Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 8.0),
+                                      // Metadata Row (Date, Folder, Category, Options)
+                                      Row(
+                                        children: [
+                                          // Date & Reminder Button
+                                          GestureDetector(
+                                            onTap: _pickReminder,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.calendar_today_outlined,
+                                                  size: 14,
+                                                  color: textColor.withValues(alpha: 0.5),
+                                                ),
+                                                const SizedBox(width: 4.0),
+                                                Text(
+                                                  dateStr,
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w400,
+                                                    color: textColor.withValues(alpha: 0.5),
+                                                  ),
+                                                ),
+                                                if (_reminderTime != null) ...[
+                                                  const SizedBox(width: 4.0),
+                                                  Icon(
+                                                    Icons.notifications_active_outlined,
+                                                    size: 14,
+                                                    color: theme.colorScheme.primary,
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                          
+                                          // Separator
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                            child: Text(
+                                              "•",
+                                              style: TextStyle(
+                                                color: textColor.withValues(alpha: 0.3),
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                          
+                                          // Folder Button
+                                          GestureDetector(
+                                            onTap: _showFolderSelectorDialog,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  'assets/icons/folder_open_folder.svg',
+                                                  width: 18,
+                                                  height: 18,
+                                                  colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
+                                                ),
+                                                const SizedBox(width: 4.0),
+                                                ConstrainedBox(
+                                                  constraints: const BoxConstraints(maxWidth: 60),
+                                                  child: Text(
+                                                    currentFolderName,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.w500,
+                                                      color: textColor.withValues(alpha: 0.7),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 2.0),
+                                                Icon(
+                                                  Icons.keyboard_arrow_down_rounded,
+                                                  size: 14,
+                                                  color: textColor.withValues(alpha: 0.4),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          
+                                          // Separator
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                            child: Text(
+                                              "•",
+                                              style: TextStyle(
+                                                color: textColor.withValues(alpha: 0.3),
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                          
+                                          // Category Button
+                                          GestureDetector(
+                                            onTap: _showCategorySelectorDialog,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                SvgPicture.asset(
+                                                  'assets/icons/folder_open_category.svg',
+                                                  width: 18,
+                                                  height: 18,
+                                                  colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
+                                                ),
+                                                const SizedBox(width: 4.0),
+                                                ConstrainedBox(
+                                                  constraints: const BoxConstraints(maxWidth: 80),
+                                                  child: Text(
+                                                    currentCategoryName,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.w500,
+                                                      color: textColor.withValues(alpha: 0.7),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 2.0),
+                                                Icon(
+                                                  Icons.keyboard_arrow_down_rounded,
+                                                  size: 14,
+                                                  color: textColor.withValues(alpha: 0.4),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          
+                                          const Spacer(),
+                                          
+                                          // Delete Button
+                                          GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                _showDeletePopup = true;
+                                              });
+                                            },
+                                            child: SvgPicture.asset(
+                                              'assets/icons/circle_ellipsis.svg',
+                                              width: 20,
+                                              height: 20,
+                                              colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
+                                      const SizedBox(height: 10.0),
+                                      if (_tags.isNotEmpty) ...[
+                                        Wrap(
+                                          spacing: 8.0,
+                                          runSpacing: 4.0,
+                                          children: _tags.map((tag) {
+                                            return Chip(
+                                              label: Text("#$tag"),
+                                              labelStyle: GoogleFonts.inter(fontSize: 12, color: textColor),
+                                              backgroundColor: const Color(0xFF222222).withValues(alpha: 0.08),
+                                              onDeleted: () {
+                                                setState(() {
+                                                  _tags.remove(tag);
+                                                  _hasChanges = true;
+                                                });
+                                              },
+                                            );
+                                          }).toList(),
+                                        ),
+                                        const SizedBox(height: 10.0),
+                                      ],
+                                    ],
                                   ),
-                                  const SizedBox(width: 2.0),
-                                  Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    size: 14,
-                                    color: textColor.withValues(alpha: 0.4),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            
-                            // Separator
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text(
-                                "•",
-                                style: TextStyle(
-                                  color: textColor.withValues(alpha: 0.3),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            
-                            // Category Button
-                            GestureDetector(
-                              onTap: _showCategorySelectorDialog,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icons/folder_open_category.svg',
-                                    width: 18,
-                                    height: 18,
-                                    colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                                  ),
-                                  const SizedBox(width: 4.0),
-                                  ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 80),
-                                    child: Text(
-                                      currentCategoryName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: textColor.withValues(alpha: 0.7),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 2.0),
-                                  Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    size: 14,
-                                    color: textColor.withValues(alpha: 0.4),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            
-                            const Spacer(),
-                            
-                            // Delete Button
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _showDeletePopup = true;
-                                });
-                              },
-                              child: SvgPicture.asset(
-                                'assets/icons/circle_ellipsis.svg',
-                                width: 20,
-                                height: 20,
-                                colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (_tags.isNotEmpty) ...[
-                          const SizedBox(height: 10.0),
-                          Wrap(
-                            spacing: 8.0,
-                            runSpacing: 4.0,
-                            children: _tags.map((tag) {
-                              return Chip(
-                                label: Text("#$tag"),
-                                labelStyle: GoogleFonts.inter(fontSize: 12, color: textColor),
-                                backgroundColor: const Color(0xFF222222).withOpacity(0.08),
-                                onDeleted: () {
-                                  setState(() {
-                                    _tags.remove(tag);
-                                    _hasChanges = true;
-                                  });
-                                },
-                              );
-                            }).toList(),
                           ),
-                        ],
+                        ),
                         const SizedBox(height: 10.0),
                         
                         // Render Checklist mode OR Markdown body OR block text editor
