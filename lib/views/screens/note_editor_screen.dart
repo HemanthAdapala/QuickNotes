@@ -3452,18 +3452,140 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           },
                         ),
                         
-                        // Date subtitle & circle-ellipsis
+                        // Metadata Row (Date, Folder, Category, Options)
                         Row(
                           children: [
-                            Text(
-                              "Date: $dateStr",
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: textColor.withOpacity(0.3),
+                            // Date & Reminder Button
+                            GestureDetector(
+                              onTap: _pickReminder,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_outlined,
+                                    size: 14,
+                                    color: textColor.withValues(alpha: 0.5),
+                                  ),
+                                  const SizedBox(width: 4.0),
+                                  Text(
+                                    dateStr,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: textColor.withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  if (_reminderTime != null) ...[
+                                    const SizedBox(width: 4.0),
+                                    Icon(
+                                      Icons.notifications_active_outlined,
+                                      size: 14,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 80.0), // match x=246 layout roughly
+                            
+                            // Separator
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Text(
+                                "•",
+                                style: TextStyle(
+                                  color: textColor.withValues(alpha: 0.3),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            
+                            // Folder Button
+                            GestureDetector(
+                              onTap: _showFolderSelectorDialog,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SvgPicture.asset(
+                                    'assets/icons/folder_open_folder.svg',
+                                    width: 18,
+                                    height: 18,
+                                    colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
+                                  ),
+                                  const SizedBox(width: 4.0),
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 60),
+                                    child: Text(
+                                      currentFolderName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: textColor.withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2.0),
+                                  Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    size: 14,
+                                    color: textColor.withValues(alpha: 0.4),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            // Separator
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Text(
+                                "•",
+                                style: TextStyle(
+                                  color: textColor.withValues(alpha: 0.3),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            
+                            // Category Button
+                            GestureDetector(
+                              onTap: _showCategorySelectorDialog,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SvgPicture.asset(
+                                    'assets/icons/folder_open_category.svg',
+                                    width: 18,
+                                    height: 18,
+                                    colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
+                                  ),
+                                  const SizedBox(width: 4.0),
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 80),
+                                    child: Text(
+                                      currentCategoryName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: textColor.withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2.0),
+                                  Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    size: 14,
+                                    color: textColor.withValues(alpha: 0.4),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            const Spacer(),
+                            
+                            // Delete Button
                             GestureDetector(
                               onTap: () {
                                 setState(() {
@@ -3472,119 +3594,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                               },
                               child: SvgPicture.asset(
                                 'assets/icons/circle_ellipsis.svg',
-                                width: 24,
-                                height: 24,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8.0),
-                        
-                        // Folder and Category buttons row
-                        Row(
-                          children: [
-                            // Folder Button (Figma size 121x38)
-                            GestureDetector(
-                              onTap: _showFolderSelectorDialog,
-                              child: Container(
-                                width: 121,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF222222),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Positioned(
-                                      left: 3,
-                                      child: SvgPicture.asset(
-                                        'assets/icons/folder_open_folder.svg',
-                                        width: 28,
-                                        height: 28,
-                                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 33,
-                                      child: ConstrainedBox(
-                                        constraints: const BoxConstraints(maxWidth: 60),
-                                        child: Text(
-                                          currentFolderName,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 93,
-                                      child: SvgPicture.asset(
-                                        'assets/icons/angle_small_down_folder.svg',
-                                        width: 28,
-                                        height: 28,
-                                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 35.0), // Figma spacing x=157 - (x=1 + w=121) = 35px
-                            
-                            // Category Button (Figma size 147x38)
-                            GestureDetector(
-                              onTap: _showCategorySelectorDialog,
-                              child: Container(
-                                width: 147,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF222222),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Positioned(
-                                      left: 3,
-                                      child: SvgPicture.asset(
-                                        'assets/icons/folder_open_category.svg',
-                                        width: 28,
-                                        height: 28,
-                                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 33,
-                                      child: ConstrainedBox(
-                                        constraints: const BoxConstraints(maxWidth: 80),
-                                        child: Text(
-                                          currentCategoryName,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 119,
-                                      child: SvgPicture.asset(
-                                        'assets/icons/angle_small_down_category.svg',
-                                        width: 28,
-                                        height: 28,
-                                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                width: 20,
+                                height: 20,
+                                colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
                               ),
                             ),
                           ],
