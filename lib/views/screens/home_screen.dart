@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../providers/notes_provider.dart';
 import '../../themes/app_theme.dart';
@@ -133,90 +132,6 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildCalendarBody(),
               _buildSettingsBody(),
             ],
-          ),
-
-          // ── Restored Bottom Bar (Comparison) ────────────────────────
-          Positioned(
-            bottom: 110,
-            left: 24,
-            right: 24,
-            child: Center(
-              child: SizedBox(
-                width: 354,
-                height: 83,
-                child: Stack(
-                  children: [
-                    SvgPicture.asset(
-                      'assets/icons/bottom_bar.svg',
-                      width: 354,
-                      height: 83,
-                    ),
-                    Positioned(
-                      left: 31,
-                      top: 39,
-                      width: 26,
-                      height: 26,
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          setState(() => _activeNavIndex = 0);
-                        },
-                        child: Container(color: Colors.transparent),
-                      ),
-                    ),
-                    Positioned(
-                      left: 106,
-                      top: 39,
-                      width: 26,
-                      height: 26,
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          setState(() => _activeNavIndex = 1);
-                        },
-                        child: Container(color: Colors.transparent),
-                      ),
-                    ),
-                    Positioned(
-                      left: 152,
-                      top: 0,
-                      width: 50,
-                      height: 50,
-                      child: GestureDetector(
-                        onTap: _openNewNote,
-                        child: Container(color: Colors.transparent),
-                      ),
-                    ),
-                    Positioned(
-                      left: 222,
-                      top: 40,
-                      width: 28,
-                      height: 28,
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          setState(() => _activeNavIndex = 2);
-                        },
-                        child: Container(color: Colors.transparent),
-                      ),
-                    ),
-                    Positioned(
-                      left: 297,
-                      top: 39,
-                      width: 28,
-                      height: 28,
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          setState(() => _activeNavIndex = 3);
-                        },
-                        child: Container(color: Colors.transparent),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ),
 
           // ── Bottom nav bar ─────────────────────────────────────────
