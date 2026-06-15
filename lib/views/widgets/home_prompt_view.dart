@@ -35,30 +35,45 @@ class HomePromptView extends StatelessWidget {
           
           // Date Headers
           Text(
-            formattedDate,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF333333),
-            ),
-          ),
-          const SizedBox(height: 2.0),
-          Text(
             formattedDay,
             style: GoogleFonts.playfairDisplay(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF333333),
+              fontSize: 36,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF222222),
+              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 5.0),
-          Text(
-            "Today",
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFFFFA322),
-            ),
+          const SizedBox(height: 6.0),
+          Row(
+            children: [
+              Text(
+                formattedDate.toUpperCase(),
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF8E8E93),
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(width: 8.0),
+              Text(
+                "•",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: const Color(0xFF8E8E93).withOpacity(0.5),
+                ),
+              ),
+              const SizedBox(width: 8.0),
+              Text(
+                "TODAY",
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFFFA322),
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 30.0),
           
