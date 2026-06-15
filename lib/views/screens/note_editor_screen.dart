@@ -3428,16 +3428,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           controller: _titleController,
                           maxLines: 1,
                           style: GoogleFonts.playfairDisplay(
-                            fontSize: 36.0,
+                            fontSize: 30.0,
                             fontWeight: FontWeight.bold,
                             color: titleColor,
+                            height: 1.15,
                           ),
                           decoration: InputDecoration(
                             hintText: "Note Title",
                             hintStyle: GoogleFonts.playfairDisplay(
-                              fontSize: 36.0,
+                              fontSize: 30.0,
                               fontWeight: FontWeight.bold,
                               color: titleColor.withAlpha(80),
+                              height: 1.15,
                             ),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.zero,
@@ -3476,7 +3478,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12.0),
+                        const SizedBox(height: 8.0),
                         
                         // Folder and Category buttons row
                         Row(
@@ -3588,7 +3590,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           ],
                         ),
                         if (_tags.isNotEmpty) ...[
-                          const SizedBox(height: 16.0),
+                          const SizedBox(height: 10.0),
                           Wrap(
                             spacing: 8.0,
                             runSpacing: 4.0,
@@ -3607,7 +3609,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                             }).toList(),
                           ),
                         ],
-                        const SizedBox(height: 16.0),
+                        const SizedBox(height: 10.0),
                         
                         // Render Checklist mode OR Markdown body OR block text editor
                         if (_noteType == 'checklist')
