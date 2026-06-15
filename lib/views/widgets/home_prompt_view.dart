@@ -56,6 +56,8 @@ class HomePromptView extends StatelessWidget {
       countText = "$count notes today";
     }
 
+    final isTest = Platform.environment.containsKey('FLUTTER_TEST');
+
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -64,122 +66,157 @@ class HomePromptView extends StatelessWidget {
         children: [
           const SizedBox(height: 45.0), // push down to upper third center
           
-          // Contextual Greeting
-          Text(
-            greeting,
-            style: GoogleFonts.outfit(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF8E8E93),
-            ),
-          ),
-          const SizedBox(height: 3.0),
-          
-          // Date Headers
-          Text(
-            formattedDay,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 36,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF222222),
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 3.0),
-          Row(
-            children: [
-              Text(
-                formattedDate.toUpperCase(),
-                style: GoogleFonts.outfit(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF8E8E93),
-                  letterSpacing: 0.8,
+          // Header Launch Animation
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.0, end: 1.0),
+            duration: isTest ? Duration.zero : const Duration(milliseconds: 800),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 12 * (1 - value)),
+                  child: child,
                 ),
-              ),
-              const SizedBox(width: 8.0),
-              Text(
-                "•",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: const Color(0xFF8E8E93).withOpacity(0.5),
+              );
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Contextual Greeting
+                Text(
+                  greeting,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF8E8E93),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8.0),
-              Text(
-                "TODAY",
-                style: GoogleFonts.outfit(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFFFFA322),
-                  letterSpacing: 0.8,
+                const SizedBox(height: 3.0),
+                
+                // Date Headers
+                Text(
+                  formattedDay,
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF222222),
+                    letterSpacing: -0.5,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 3.0),
-          Text(
-            countText,
-            style: GoogleFonts.outfit(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF8E8E93),
+                const SizedBox(height: 3.0),
+                Row(
+                  children: [
+                    Text(
+                      formattedDate.toUpperCase(),
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF8E8E93),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(width: 8.0),
+                    Text(
+                      "•",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: const Color(0xFF8E8E93).withOpacity(0.5),
+                      ),
+                    ),
+                    const SizedBox(width: 8.0),
+                    Text(
+                      "TODAY",
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFFFFA322),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3.0),
+                Text(
+                  countText,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF8E8E93),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 14.0),
           
-          // Entry Row
-          GestureDetector(
-            onTap: interactive ? null : onTap,
-            behavior: HitTestBehavior.opaque,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!interactive) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(top: 3.0),
-                    child: _BlinkingCaret(
-                      height: 22.0,
-                      color: const Color(0xFFFFA322),
+          // Writing Prompt Staggered Launch Animation
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.0, end: 1.0),
+            duration: isTest ? Duration.zero : const Duration(milliseconds: 1000),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              final opacityValue = isTest ? 1.0 : (value - 0.2).clamp(0.0, 1.0) / 0.8;
+              return Opacity(
+                opacity: opacityValue,
+                child: Transform.translate(
+                  offset: Offset(0, 8 * (1 - opacityValue)),
+                  child: child,
+                ),
+              );
+            },
+            child: GestureDetector(
+              onTap: interactive ? null : onTap,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!interactive) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3.0),
+                      child: _BlinkingCaret(
+                        height: 22.0,
+                        color: const Color(0xFFFFA322),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8.0),
-                ],
-                
-                // Prompt text field or static placeholder
-                Expanded(
-                  child: interactive
-                      ? TextField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          maxLines: null,
-                          keyboardType: TextInputType.multiline,
-                          style: GoogleFonts.inter(
-                            fontSize: 20.0,
-                            color: const Color(0xFF333333),
-                          ),
-                          decoration: InputDecoration(
-                            hintText: "Start writing...",
-                            hintStyle: GoogleFonts.inter(
+                    const SizedBox(width: 8.0),
+                  ],
+                  
+                  // Prompt text field or static placeholder
+                  Expanded(
+                    child: interactive
+                        ? TextField(
+                            controller: controller,
+                            focusNode: focusNode,
+                            maxLines: null,
+                            keyboardType: TextInputType.multiline,
+                            style: GoogleFonts.inter(
+                              fontSize: 20.0,
+                              color: const Color(0xFF333333),
+                            ),
+                            decoration: InputDecoration(
+                              hintText: "Start writing...",
+                              hintStyle: GoogleFonts.inter(
+                                fontSize: 20.0,
+                                color: const Color(0xFF333333).withOpacity(0.3),
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              filled: false,
+                            ),
+                            onChanged: onChanged,
+                          )
+                        : Text(
+                            "Start writing...",
+                            style: GoogleFonts.inter(
                               fontSize: 20.0,
                               color: const Color(0xFF333333).withOpacity(0.3),
+                              height: 1.4,
                             ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            filled: false,
                           ),
-                          onChanged: onChanged,
-                        )
-                      : Text(
-                          "Start writing...",
-                          style: GoogleFonts.inter(
-                            fontSize: 20.0,
-                            color: const Color(0xFF333333).withOpacity(0.3),
-                            height: 1.4,
-                          ),
-                        ),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
