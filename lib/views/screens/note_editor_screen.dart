@@ -3603,136 +3603,145 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                       // Metadata Row (Date, Folder, Category, Options)
                                       Row(
                                         children: [
-                                          // Date & Reminder Button
-                                          GestureDetector(
-                                            onTap: _pickReminder,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons.calendar_today_outlined,
-                                                  size: 14,
-                                                  color: textColor.withValues(alpha: 0.5),
-                                                ),
-                                                const SizedBox(width: 4.0),
-                                                Text(
-                                                  dateStr,
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w400,
-                                                    color: textColor.withValues(alpha: 0.5),
+                                          Expanded(
+                                            child: SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              physics: const BouncingScrollPhysics(),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  // Date & Reminder Button
+                                                  GestureDetector(
+                                                    onTap: _pickReminder,
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.calendar_today_outlined,
+                                                          size: 14,
+                                                          color: textColor.withValues(alpha: 0.5),
+                                                        ),
+                                                        const SizedBox(width: 4.0),
+                                                        Text(
+                                                          dateStr,
+                                                          style: GoogleFonts.inter(
+                                                            fontSize: 13,
+                                                            fontWeight: FontWeight.w400,
+                                                            color: textColor.withValues(alpha: 0.5),
+                                                          ),
+                                                        ),
+                                                        if (_reminderTime != null) ...[
+                                                          const SizedBox(width: 4.0),
+                                                          Icon(
+                                                            Icons.notifications_active_outlined,
+                                                            size: 14,
+                                                            color: theme.colorScheme.primary,
+                                                          ),
+                                                        ],
+                                                      ],
+                                                    ),
                                                   ),
-                                                ),
-                                                if (_reminderTime != null) ...[
-                                                  const SizedBox(width: 4.0),
-                                                  Icon(
-                                                    Icons.notifications_active_outlined,
-                                                    size: 14,
-                                                    color: theme.colorScheme.primary,
+                                                  
+                                                  // Separator
+                                                  Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                    child: Text(
+                                                      "•",
+                                                      style: TextStyle(
+                                                        color: textColor.withValues(alpha: 0.3),
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  
+                                                  // Folder Button
+                                                  GestureDetector(
+                                                    onTap: _showFolderSelectorDialog,
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        SvgPicture.asset(
+                                                          'assets/icons/folder_open_folder.svg',
+                                                          width: 18,
+                                                          height: 18,
+                                                          colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
+                                                        ),
+                                                        const SizedBox(width: 4.0),
+                                                        ConstrainedBox(
+                                                          constraints: const BoxConstraints(maxWidth: 60),
+                                                          child: Text(
+                                                            currentFolderName,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.inter(
+                                                              fontSize: 13,
+                                                              fontWeight: FontWeight.w500,
+                                                              color: textColor.withValues(alpha: 0.7),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 2.0),
+                                                        Icon(
+                                                          Icons.keyboard_arrow_down_rounded,
+                                                          size: 14,
+                                                          color: textColor.withValues(alpha: 0.4),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  
+                                                  // Separator
+                                                  Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                    child: Text(
+                                                      "•",
+                                                      style: TextStyle(
+                                                        color: textColor.withValues(alpha: 0.3),
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  
+                                                  // Category Button
+                                                  GestureDetector(
+                                                    onTap: _showCategorySelectorDialog,
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        SvgPicture.asset(
+                                                          'assets/icons/category.svg',
+                                                          width: 18,
+                                                          height: 18,
+                                                          colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
+                                                        ),
+                                                        const SizedBox(width: 4.0),
+                                                        ConstrainedBox(
+                                                          constraints: const BoxConstraints(maxWidth: 80),
+                                                          child: Text(
+                                                            currentCategoryName,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: GoogleFonts.inter(
+                                                              fontSize: 13,
+                                                              fontWeight: FontWeight.w500,
+                                                              color: textColor.withValues(alpha: 0.7),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 2.0),
+                                                        Icon(
+                                                          Icons.keyboard_arrow_down_rounded,
+                                                          size: 14,
+                                                          color: textColor.withValues(alpha: 0.4),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ],
-                                              ],
-                                            ),
-                                          ),
-                                          
-                                          // Separator
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                            child: Text(
-                                              "•",
-                                              style: TextStyle(
-                                                color: textColor.withValues(alpha: 0.3),
-                                                fontSize: 13,
                                               ),
                                             ),
                                           ),
-                                          
-                                          // Folder Button
-                                          GestureDetector(
-                                            onTap: _showFolderSelectorDialog,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  'assets/icons/folder_open_folder.svg',
-                                                  width: 18,
-                                                  height: 18,
-                                                  colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                                                ),
-                                                const SizedBox(width: 4.0),
-                                                ConstrainedBox(
-                                                  constraints: const BoxConstraints(maxWidth: 60),
-                                                  child: Text(
-                                                    currentFolderName,
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: GoogleFonts.inter(
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.w500,
-                                                      color: textColor.withValues(alpha: 0.7),
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 2.0),
-                                                Icon(
-                                                  Icons.keyboard_arrow_down_rounded,
-                                                  size: 14,
-                                                  color: textColor.withValues(alpha: 0.4),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          
-                                          // Separator
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                            child: Text(
-                                              "•",
-                                              style: TextStyle(
-                                                color: textColor.withValues(alpha: 0.3),
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                          
-                                          // Category Button
-                                          GestureDetector(
-                                            onTap: _showCategorySelectorDialog,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                SvgPicture.asset(
-                                                  'assets/icons/folder_open_category.svg',
-                                                  width: 18,
-                                                  height: 18,
-                                                  colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                                                ),
-                                                const SizedBox(width: 4.0),
-                                                ConstrainedBox(
-                                                  constraints: const BoxConstraints(maxWidth: 80),
-                                                  child: Text(
-                                                    currentCategoryName,
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: GoogleFonts.inter(
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.w500,
-                                                      color: textColor.withValues(alpha: 0.7),
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 2.0),
-                                                Icon(
-                                                  Icons.keyboard_arrow_down_rounded,
-                                                  size: 14,
-                                                  color: textColor.withValues(alpha: 0.4),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          
-                                          const Spacer(),
-                                          
+                                          const SizedBox(width: 8.0),
                                           // Delete Button
                                           GestureDetector(
                                             onTap: () {
