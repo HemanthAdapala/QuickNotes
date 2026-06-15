@@ -218,6 +218,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             break;
           }
         }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (focusNode.context != null) {
+            Scrollable.ensureVisible(
+              focusNode.context!,
+              alignment: 0.1,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+            );
+          }
+        });
       } else {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && !_anyBlockHasFocus && _isMetadataCollapsed) {
@@ -718,6 +728,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           focusNode: block.focusNode,
           maxLines: null,
           keyboardType: TextInputType.multiline,
+          scrollPadding: const EdgeInsets.only(bottom: 90.0),
           textAlign: block.controller.styledChars.isNotEmpty
               ? block.controller.styledChars.first.style.align
               : TextAlign.left,
@@ -787,6 +798,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           focusNode: block.focusNode,
           maxLines: null,
           keyboardType: TextInputType.multiline,
+          scrollPadding: const EdgeInsets.only(bottom: 90.0),
           style: GoogleFonts.outfit(
             fontSize: fontSize,
             fontWeight: FontWeight.bold,
@@ -857,6 +869,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             focusNode: block.focusNode,
             maxLines: null,
             keyboardType: TextInputType.multiline,
+            scrollPadding: const EdgeInsets.only(bottom: 90.0),
             style: GoogleFonts.inter(
               fontSize: 20.0,
               color: textColor.withAlpha(220),
@@ -950,6 +963,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   focusNode: block.focusNode,
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
+                  scrollPadding: const EdgeInsets.only(bottom: 90.0),
                   style: GoogleFonts.inter(
                     fontSize: 20.0,
                     color: block.isChecked ? textColor.withAlpha(120) : textColor,
@@ -1403,13 +1417,32 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   // --- Checklist operations ---
   void _syncControllers() {
+    // 1. Grow/shrink controllers if needed
     while (_checklistControllers.length < _checklistItems.length) {
       final index = _checklistControllers.length;
       final text = _checklistItems[index]['text'] ?? '';
       _checklistControllers.add(TextEditingController(text: text));
+    }
+    while (_checklistControllers.length > _checklistItems.length) {
+      _checklistControllers.removeLast().dispose();
+    }
+
+    // 2. Grow/shrink focus nodes if needed
+    while (_checklistFocusNodes.length < _checklistItems.length) {
       final fn = FocusNode();
       fn.addListener(() {
-        if (!fn.hasFocus) {
+        if (fn.hasFocus) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (fn.context != null) {
+              Scrollable.ensureVisible(
+                fn.context!,
+                alignment: 0.1,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        } else {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted && !_anyBlockHasFocus && _isMetadataCollapsed) {
               setState(() {
@@ -1422,10 +1455,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       });
       _checklistFocusNodes.add(fn);
     }
-    while (_checklistControllers.length > _checklistItems.length) {
-      _checklistControllers.removeLast().dispose();
+    while (_checklistFocusNodes.length > _checklistItems.length) {
       _checklistFocusNodes.removeLast().dispose();
     }
+
+    // 3. Update controller text if it changed
     for (int i = 0; i < _checklistItems.length; i++) {
       final text = _checklistItems[i]['text'] ?? '';
       if (_checklistControllers[i].text != text) {
@@ -1441,7 +1475,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _checklistControllers.add(TextEditingController());
       final fn = FocusNode();
       fn.addListener(() {
-        if (!fn.hasFocus) {
+        if (fn.hasFocus) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (fn.context != null) {
+              Scrollable.ensureVisible(
+                fn.context!,
+                alignment: 0.1,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        } else {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted && !_anyBlockHasFocus && _isMetadataCollapsed) {
               setState(() {
@@ -3517,6 +3562,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           controller: _titleController,
                           focusNode: _titleFocusNode,
                           maxLines: 1,
+                          scrollPadding: const EdgeInsets.only(bottom: 90.0),
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 30.0,
                             fontWeight: FontWeight.bold,
@@ -4277,7 +4323,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   // Checklist editor view builder
   Widget _buildChecklistEditor(Color textColor) {
-    if (_checklistControllers.length != _checklistItems.length) {
+    if (_checklistControllers.length != _checklistItems.length ||
+        _checklistFocusNodes.length != _checklistItems.length) {
       _syncControllers();
     }
     return Column(
@@ -4305,6 +4352,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 Expanded(
                   child: TextField(
                     controller: itemController,
+                    focusNode: _checklistFocusNodes[index],
+                    scrollPadding: const EdgeInsets.only(bottom: 90.0),
                     onChanged: (val) {
                       _checklistItems[index]['text'] = val;
                       _hasChanges = true;
