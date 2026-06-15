@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:quick_notes/providers/notes_provider.dart';
 
 class HomePromptView extends StatelessWidget {
   final DateTime date;
@@ -34,6 +36,24 @@ class HomePromptView extends StatelessWidget {
       greeting = "Good Afternoon";
     } else {
       greeting = "Good Evening";
+    }
+
+    final notesProvider = Provider.of<NotesProvider>(context);
+    final todayNotes = notesProvider.allActiveNotes.where((n) {
+      final created = n.createdAt;
+      return created.year == date.year &&
+             created.month == date.month &&
+             created.day == date.day;
+    }).toList();
+
+    final count = todayNotes.length;
+    final String countText;
+    if (count == 0) {
+      countText = "No notes yet";
+    } else if (count == 1) {
+      countText = "1 entry today";
+    } else {
+      countText = "$count notes today";
     }
 
     return SingleChildScrollView(
@@ -96,6 +116,15 @@ class HomePromptView extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 6.0),
+          Text(
+            countText,
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF8E8E93),
+            ),
           ),
           const SizedBox(height: 20.0),
           

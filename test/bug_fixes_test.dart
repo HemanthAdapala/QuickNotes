@@ -822,12 +822,19 @@ void main() {
     });
 
     testWidgets('HomePromptView displays correct contextual greeting based on time', (WidgetTester tester) async {
+      final notesProvider = NotesProvider();
+
       // Test morning time (8:00 AM)
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: HomePromptView(
-              date: DateTime(2026, 6, 15, 8, 0),
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: notesProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: HomePromptView(
+                date: DateTime(2026, 6, 15, 8, 0),
+              ),
             ),
           ),
         ),
@@ -836,10 +843,15 @@ void main() {
 
       // Test afternoon time (2:00 PM / 14:00)
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: HomePromptView(
-              date: DateTime(2026, 6, 15, 14, 0),
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: notesProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: HomePromptView(
+                date: DateTime(2026, 6, 15, 14, 0),
+              ),
             ),
           ),
         ),
@@ -848,15 +860,97 @@ void main() {
 
       // Test evening time (8:00 PM / 20:00)
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: HomePromptView(
-              date: DateTime(2026, 6, 15, 20, 0),
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: notesProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: HomePromptView(
+                date: DateTime(2026, 6, 15, 20, 0),
+              ),
             ),
           ),
         ),
       );
       expect(find.text('Good Evening'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 11));
+    });
+
+    testWidgets('HomePromptView displays correct activity indicator based on note count', (WidgetTester tester) async {
+      final notesProvider = NotesProvider();
+
+      // Case 1: No notes yet
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: notesProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: HomePromptView(
+                date: DateTime(2026, 6, 15, 12, 0),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('No notes yet'), findsOneWidget);
+
+      // Add 1 note for today (June 15, 2026)
+      await notesProvider.addNote(
+        title: 'Note 1',
+        content: 'Content 1',
+        colorIndex: 0,
+        tags: [],
+        attachments: [],
+      );
+      await tester.pump();
+
+      // Re-render and check count is 1 entry today
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: notesProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: HomePromptView(
+                date: DateTime.now(),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('1 entry today'), findsOneWidget);
+
+      // Add another note for today
+      await notesProvider.addNote(
+        title: 'Note 2',
+        content: 'Content 2',
+        colorIndex: 0,
+        tags: [],
+        attachments: [],
+      );
+      await tester.pump();
+
+      // Re-render and check count is 2 notes today
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: notesProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: HomePromptView(
+                date: DateTime.now(),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('2 notes today'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 11));
     });
   });
 }

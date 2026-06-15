@@ -56,6 +56,7 @@ class NotesProvider with ChangeNotifier {
   bool get isZenModeEnabled => _isZenModeEnabled;
   List<Folder> get folders => _folders;
   List<Note> get trashNotes => _notes.where((n) => n.isDeleted).toList();
+  List<Note> get allActiveNotes => _notes.where((n) => !n.isDeleted).toList();
 
   // Filter notes in-memory dynamically based on view type, folder, category, and active tags
   List<Note> get notes {
