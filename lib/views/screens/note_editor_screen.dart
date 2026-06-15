@@ -3502,7 +3502,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     controller: _scrollController,
-                    padding: const EdgeInsets.only(left: 32.0, right: 32.0, top: 8.0, bottom: 120.0),
+                    padding: EdgeInsets.only(
+                      left: 32.0,
+                      right: 32.0,
+                      top: 8.0,
+                      bottom: (MediaQuery.of(context).viewInsets.bottom > 0 || Platform.environment.containsKey('FLUTTER_TEST')) ? 80.0 : 40.0,
+                    ),
                     physics: const BouncingScrollPhysics(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3754,112 +3759,113 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             ),
             
             // Floating pill format bar
-            Positioned(
-              bottom: 32,
-              left: 24,
-              right: 24,
-              child: Center(
-                child: Container(
-                  width: 354,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF333333),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Left chevron play 1
-                      Positioned(
-                        left: 18,
-                        top: 20,
-                        width: 20,
-                        height: 20,
-                        child: GestureDetector(
-                          onTap: () {
-                            _pageController.previousPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          },
-                          child: Stack(
-                            children: [
-                              SvgPicture.asset(
-                                'assets/icons/play_1.svg',
-                                width: 20,
-                                height: 20,
-                                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                              ),
-                              const Positioned.fill(
-                                child: Icon(
-                                  Icons.play_arrow_rounded,
-                                  size: 20,
-                                  color: Colors.transparent,
+            if (MediaQuery.of(context).viewInsets.bottom > 0 || Platform.environment.containsKey('FLUTTER_TEST'))
+              Positioned(
+                bottom: 12,
+                left: 24,
+                right: 24,
+                child: Center(
+                  child: Container(
+                    width: 354,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF333333),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Left chevron play 1
+                        Positioned(
+                          left: 18,
+                          top: 20,
+                          width: 20,
+                          height: 20,
+                          child: GestureDetector(
+                            onTap: () {
+                              _pageController.previousPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            },
+                            child: Stack(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/play_1.svg',
+                                  width: 20,
+                                  height: 20,
+                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                                 ),
-                              ),
+                                const Positioned.fill(
+                                  child: Icon(
+                                    Icons.play_arrow_rounded,
+                                    size: 20,
+                                    color: Colors.transparent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        
+                        // Sliding PageView
+                        Positioned(
+                          left: 50,
+                          right: 50,
+                          top: 0,
+                          bottom: 0,
+                          child: PageView(
+                            controller: _pageController,
+                            onPageChanged: (page) {
+                              setState(() {
+                                _currentPage = page;
+                              });
+                            },
+                            children: [
+                              _buildFigmaPage0(activeStyle),
+                              _buildFigmaPage1(activeStyle),
+                              _buildFigmaPage2(activeStyle),
                             ],
                           ),
                         ),
-                      ),
-                      
-                      // Sliding PageView
-                      Positioned(
-                        left: 50,
-                        right: 50,
-                        top: 0,
-                        bottom: 0,
-                        child: PageView(
-                          controller: _pageController,
-                          onPageChanged: (page) {
-                            setState(() {
-                              _currentPage = page;
-                            });
-                          },
-                          children: [
-                            _buildFigmaPage0(activeStyle),
-                            _buildFigmaPage1(activeStyle),
-                            _buildFigmaPage2(activeStyle),
-                          ],
-                        ),
-                      ),
 
-                      // Right chevron play 2
-                      Positioned(
-                        left: 315,
-                        top: 20,
-                        width: 20,
-                        height: 20,
-                        child: GestureDetector(
-                          onTap: () {
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          },
-                          child: Stack(
-                            children: [
-                              SvgPicture.asset(
-                                'assets/icons/play_2.svg',
-                                width: 20,
-                                height: 20,
-                                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                              ),
-                              const Positioned.fill(
-                                child: Icon(
-                                  Icons.play_arrow_rounded,
-                                  size: 20,
-                                  color: Colors.transparent,
+                        // Right chevron play 2
+                        Positioned(
+                          left: 315,
+                          top: 20,
+                          width: 20,
+                          height: 20,
+                          child: GestureDetector(
+                            onTap: () {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            },
+                            child: Stack(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/play_2.svg',
+                                  width: 20,
+                                  height: 20,
+                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                                 ),
-                              ),
-                            ],
+                                const Positioned.fill(
+                                  child: Icon(
+                                    Icons.play_arrow_rounded,
+                                    size: 20,
+                                    color: Colors.transparent,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
             
             // Custom Delete Popup
             if (_showDeletePopup)
@@ -3871,133 +3877,90 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   Widget _buildFigmaPage0(Style activeStyle) {
-    return Stack(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Positioned(
-          left: 11,
-          top: 20,
-          width: 21,
-          height: 23,
-          child: Tooltip(
-            message: 'Bold',
-            child: GestureDetector(
-              onTap: () => _wrapSelection('**', '**'),
-              child: Center(
-                child: Text(
-                  "B",
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: activeStyle.bold ? const Color(0xFFFFA322) : Colors.white,
-                  ),
-                ),
+        Tooltip(
+          message: 'Bold',
+          child: GestureDetector(
+            onTap: () => _wrapSelection('**', '**'),
+            child: Text(
+              "B",
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: activeStyle.bold ? const Color(0xFFFFA322) : Colors.white,
               ),
             ),
           ),
         ),
-        Positioned(
-          left: 55,
-          top: 20,
-          width: 21,
-          height: 23,
-          child: Tooltip(
-            message: 'Italic',
-            child: GestureDetector(
-              onTap: () => _wrapSelection('*', '*'),
-              child: Center(
-                child: Text(
-                  "I",
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.normal,
-                    color: activeStyle.italic ? const Color(0xFFFFA322) : Colors.white,
-                  ),
-                ),
+        Tooltip(
+          message: 'Italic',
+          child: GestureDetector(
+            onTap: () => _wrapSelection('*', '*'),
+            child: Text(
+              "I",
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.normal,
+                color: activeStyle.italic ? const Color(0xFFFFA322) : Colors.white,
               ),
             ),
           ),
         ),
-        Positioned(
-          left: 99,
-          top: 20,
-          width: 21,
-          height: 23,
-          child: Tooltip(
-            message: 'Underline',
-            child: GestureDetector(
-              onTap: () => _wrapSelection('<u>', '</u>'),
-              child: Center(
-                child: Text(
-                  "U",
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    decoration: TextDecoration.underline,
-                    color: activeStyle.underline ? const Color(0xFFFFA322) : Colors.white,
-                  ),
-                ),
+        Tooltip(
+          message: 'Underline',
+          child: GestureDetector(
+            onTap: () => _wrapSelection('<u>', '</u>'),
+            child: Text(
+              "U",
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                decoration: TextDecoration.underline,
+                color: activeStyle.underline ? const Color(0xFFFFA322) : Colors.white,
               ),
             ),
           ),
         ),
-        Positioned(
-          left: 143,
-          top: 20,
-          width: 21,
-          height: 23,
-          child: Tooltip(
-            message: 'Strikethrough',
-            child: GestureDetector(
-              onTap: () => _wrapSelection('~~', '~~'),
-              child: Center(
-                child: Text(
-                  "T",
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    decoration: TextDecoration.lineThrough,
-                    color: activeStyle.strikethrough ? const Color(0xFFFFA322) : Colors.white,
-                  ),
-                ),
+        Tooltip(
+          message: 'Strikethrough',
+          child: GestureDetector(
+            onTap: () => _wrapSelection('~~', '~~'),
+            child: Text(
+              "T",
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                decoration: TextDecoration.lineThrough,
+                color: activeStyle.strikethrough ? const Color(0xFFFFA322) : Colors.white,
               ),
             ),
           ),
         ),
-        Positioned(
-          left: 187,
-          top: 22,
-          width: 20,
-          height: 20,
-          child: Tooltip(
-            message: 'Highlight',
-            child: GestureDetector(
-              onTap: () => _wrapSelection('highlight', ''),
-              child: SvgPicture.asset(
-                'assets/icons/highlighter.svg',
-                width: 16,
-                height: 16,
-                colorFilter: ColorFilter.mode(
-                  activeStyle.highlight != null ? const Color(0xFFFFA322) : Colors.white,
-                  BlendMode.srcIn,
-                ),
+        Tooltip(
+          message: 'Highlight',
+          child: GestureDetector(
+            onTap: () => _wrapSelection('highlight', ''),
+            child: SvgPicture.asset(
+              'assets/icons/highlighter.svg',
+              width: 16,
+              height: 16,
+              colorFilter: ColorFilter.mode(
+                activeStyle.highlight != null ? const Color(0xFFFFA322) : Colors.white,
+                BlendMode.srcIn,
               ),
             ),
           ),
         ),
-        Positioned(
-          left: 226,
-          top: 22,
-          width: 20,
-          height: 20,
-          child: Tooltip(
-            message: 'Link',
-            child: GestureDetector(
-              onTap: () => _wrapSelection('[', '](url)'),
-              child: SvgPicture.asset(
-                'assets/icons/link.svg',
-                width: 16,
-                height: 16,
-                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-              ),
+        Tooltip(
+          message: 'Link',
+          child: GestureDetector(
+            onTap: () => _wrapSelection('[', '](url)'),
+            child: SvgPicture.asset(
+              'assets/icons/link.svg',
+              width: 16,
+              height: 16,
+              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
             ),
           ),
         ),
