@@ -3386,7 +3386,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               children: [
                 // Top Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 4.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -3502,7 +3502,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     controller: _scrollController,
-                    padding: const EdgeInsets.only(left: 32.0, right: 32.0, top: 15.0, bottom: 120.0),
+                    padding: const EdgeInsets.only(left: 32.0, right: 32.0, top: 8.0, bottom: 120.0),
                     physics: const BouncingScrollPhysics(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3548,7 +3548,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                 : Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const SizedBox(height: 8.0),
+                                      const SizedBox(height: 4.0),
                                       // Metadata Row (Date, Folder, Category, Options)
                                       Row(
                                         children: [
@@ -3698,8 +3698,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 10.0),
                                       if (_tags.isNotEmpty) ...[
+                                        const SizedBox(height: 6.0),
                                         Wrap(
                                           spacing: 8.0,
                                           runSpacing: 4.0,
@@ -3717,13 +3717,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                             );
                                           }).toList(),
                                         ),
-                                        const SizedBox(height: 10.0),
                                       ],
                                     ],
                                   ),
                           ),
                         ),
-                        const SizedBox(height: 10.0),
+                        const SizedBox(height: 6.0),
                         
                         // Render Checklist mode OR Markdown body OR block text editor
                         if (_noteType == 'checklist')
