@@ -26,6 +26,16 @@ class HomePromptView extends StatelessWidget {
     final formattedDate = DateFormat('MMM d').format(date);
     final formattedDay = DateFormat('EEEE').format(date);
 
+    String greeting;
+    final hour = date.hour;
+    if (hour >= 5 && hour < 12) {
+      greeting = "Good Morning";
+    } else if (hour >= 12 && hour < 17) {
+      greeting = "Good Afternoon";
+    } else {
+      greeting = "Good Evening";
+    }
+
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -33,6 +43,17 @@ class HomePromptView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 90.0), // push down to upper third center
+          
+          // Contextual Greeting
+          Text(
+            greeting,
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF8E8E93),
+            ),
+          ),
+          const SizedBox(height: 4.0),
           
           // Date Headers
           Text(

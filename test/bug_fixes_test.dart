@@ -11,6 +11,7 @@ import 'package:quick_notes/views/screens/folder_management_screen.dart';
 import 'package:quick_notes/views/screens/note_editor_screen.dart';
 import 'package:quick_notes/views/widgets/note_card.dart';
 import 'package:quick_notes/views/widgets/rich_text_controller.dart';
+import 'package:quick_notes/views/widgets/home_prompt_view.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -818,6 +819,44 @@ void main() {
       expect(fromMap.paperGuideHeight, equals(1.5));
       expect(fromMap.paperGuideOpacity, equals(0.35));
       expect(fromMap.paperGuideColor, equals(0xFFF07167));
+    });
+
+    testWidgets('HomePromptView displays correct contextual greeting based on time', (WidgetTester tester) async {
+      // Test morning time (8:00 AM)
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HomePromptView(
+              date: DateTime(2026, 6, 15, 8, 0),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Good Morning'), findsOneWidget);
+
+      // Test afternoon time (2:00 PM / 14:00)
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HomePromptView(
+              date: DateTime(2026, 6, 15, 14, 0),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Good Afternoon'), findsOneWidget);
+
+      // Test evening time (8:00 PM / 20:00)
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HomePromptView(
+              date: DateTime(2026, 6, 15, 20, 0),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Good Evening'), findsOneWidget);
     });
   });
 }
