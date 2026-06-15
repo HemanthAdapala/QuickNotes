@@ -898,13 +898,18 @@ void main() {
       expect(find.text('No notes yet'), findsOneWidget);
 
       // Add 1 note for today (June 15, 2026)
-      await notesProvider.addNote(
+      final now = DateTime.now();
+      final note1 = Note(
+        id: '1',
         title: 'Note 1',
         content: 'Content 1',
-        colorIndex: 0,
+        colorValue: 0,
         tags: [],
         attachments: [],
+        createdAt: now,
+        updatedAt: now,
       );
+      notesProvider.setNotesForTesting([note1]);
       await tester.pump();
 
       // Re-render and check count is 1 entry today
@@ -916,7 +921,7 @@ void main() {
           child: MaterialApp(
             home: Scaffold(
               body: HomePromptView(
-                date: DateTime.now(),
+                date: now,
               ),
             ),
           ),
@@ -925,13 +930,17 @@ void main() {
       expect(find.text('1 entry today'), findsOneWidget);
 
       // Add another note for today
-      await notesProvider.addNote(
+      final note2 = Note(
+        id: '2',
         title: 'Note 2',
         content: 'Content 2',
-        colorIndex: 0,
+        colorValue: 0,
         tags: [],
         attachments: [],
+        createdAt: now,
+        updatedAt: now,
       );
+      notesProvider.setNotesForTesting([note1, note2]);
       await tester.pump();
 
       // Re-render and check count is 2 notes today
@@ -943,7 +952,7 @@ void main() {
           child: MaterialApp(
             home: Scaffold(
               body: HomePromptView(
-                date: DateTime.now(),
+                date: now,
               ),
             ),
           ),

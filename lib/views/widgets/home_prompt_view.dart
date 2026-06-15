@@ -62,7 +62,7 @@ class HomePromptView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 90.0), // push down to upper third center
+          const SizedBox(height: 45.0), // push down to upper third center
           
           // Contextual Greeting
           Text(
@@ -73,7 +73,7 @@ class HomePromptView extends StatelessWidget {
               color: const Color(0xFF8E8E93),
             ),
           ),
-          const SizedBox(height: 4.0),
+          const SizedBox(height: 3.0),
           
           // Date Headers
           Text(
@@ -85,7 +85,7 @@ class HomePromptView extends StatelessWidget {
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 6.0),
+          const SizedBox(height: 3.0),
           Row(
             children: [
               Text(
@@ -117,7 +117,7 @@ class HomePromptView extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6.0),
+          const SizedBox(height: 3.0),
           Text(
             countText,
             style: GoogleFonts.outfit(
@@ -126,7 +126,7 @@ class HomePromptView extends StatelessWidget {
               color: const Color(0xFF8E8E93),
             ),
           ),
-          const SizedBox(height: 20.0),
+          const SizedBox(height: 14.0),
           
           // Entry Row
           GestureDetector(

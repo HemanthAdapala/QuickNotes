@@ -326,29 +326,162 @@ class _NotesListScreenState extends State<NotesListScreen> {
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
+                  backgroundColor: theme.scaffoldBackgroundColor,
                   shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
                   ),
                   builder: (context) => SafeArea(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ListTile(
-                          leading: const Icon(Icons.edit_note_rounded),
-                          title: const Text("New Text Note"),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _navigateToCreateNote('text', provider);
-                          },
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Container(
+                            width: 36,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: theme.dividerColor,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
                         ),
-                        ListTile(
-                          leading: const Icon(Icons.playlist_add_check_rounded),
-                          title: const Text("New Checklist Note"),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _navigateToCreateNote('checklist', provider);
-                          },
+                        const SizedBox(height: 24),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Text(
+                            "Create New",
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
                         ),
+                        const SizedBox(height: 16),
+                        
+                        // Quick Note (Prioritized Default Action)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                              _navigateToCreateNote('text', provider);
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: theme.brightness == Brightness.dark 
+                                      ? const Color(0xFFFAF8F5) 
+                                      : const Color(0xFF1E1B4B),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.edit_note_rounded,
+                                    color: theme.colorScheme.onPrimary,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Quick Note",
+                                          style: GoogleFonts.outfit(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: theme.colorScheme.onPrimary,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Jot down your thoughts instantly",
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: theme.colorScheme.onPrimary,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        
+                        // Checklist (Secondary Action)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                              _navigateToCreateNote('checklist', provider);
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                color: theme.cardColor,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: theme.brightness == Brightness.dark 
+                                      ? const Color(0xFFFAF8F5).withOpacity(0.3) 
+                                      : const Color(0xFF1E1B4B).withOpacity(0.3),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.playlist_add_check_rounded,
+                                    color: theme.colorScheme.primary,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Checklist",
+                                          style: GoogleFonts.outfit(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: theme.colorScheme.onSurface,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Track tasks, habits, and to-dos",
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),

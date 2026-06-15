@@ -58,6 +58,11 @@ class NotesProvider with ChangeNotifier {
   List<Note> get trashNotes => _notes.where((n) => n.isDeleted).toList();
   List<Note> get allActiveNotes => _notes.where((n) => !n.isDeleted).toList();
 
+  void setNotesForTesting(List<Note> testNotes) {
+    _notes = testNotes;
+    notifyListeners();
+  }
+
   // Filter notes in-memory dynamically based on view type, folder, category, and active tags
   List<Note> get notes {
     // 1. Filter by View Type
