@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -84,17 +85,16 @@ class HomePromptView extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Bullet dot
-                Container(
-                  margin: const EdgeInsets.only(top: 8.0, left: 0),
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFD9D9D9),
-                    shape: BoxShape.circle,
+                if (!interactive) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 3.0),
+                    child: _BlinkingCaret(
+                      height: 22.0,
+                      color: const Color(0xFFFFA322),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 25.0),
+                  const SizedBox(width: 8.0),
+                ],
                 
                 // Prompt text field or static placeholder
                 Expanded(
@@ -109,7 +109,7 @@ class HomePromptView extends StatelessWidget {
                             color: const Color(0xFF333333),
                           ),
                           decoration: InputDecoration(
-                            hintText: "what happened today?",
+                            hintText: "Start writing...",
                             hintStyle: GoogleFonts.inter(
                               fontSize: 20.0,
                               color: const Color(0xFF333333).withOpacity(0.3),
@@ -120,15 +120,12 @@ class HomePromptView extends StatelessWidget {
                           ),
                           onChanged: onChanged,
                         )
-                      : Padding(
-                          padding: const EdgeInsets.only(top: 0.0),
-                          child: Text(
-                            "what happened today?",
-                            style: GoogleFonts.inter(
-                              fontSize: 20.0,
-                              color: const Color(0xFF333333).withOpacity(0.3),
-                              height: 1.4,
-                            ),
+                      : Text(
+                          "Start writing...",
+                          style: GoogleFonts.inter(
+                            fontSize: 20.0,
+                            color: const Color(0xFF333333).withOpacity(0.3),
+                            height: 1.4,
                           ),
                         ),
                 ),
@@ -136,6 +133,61 @@ class HomePromptView extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BlinkingCaret extends StatefulWidget {
+  final double height;
+  final Color color;
+
+  const _BlinkingCaret({
+    required this.height,
+    required this.color,
+  });
+
+  @override
+  State<_BlinkingCaret> createState() => _BlinkingCaretState();
+}
+
+class _BlinkingCaretState extends State<_BlinkingCaret>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final showCaret = Platform.environment.containsKey('FLUTTER_TEST') || _controller.value > 0.5;
+        return Opacity(
+          opacity: showCaret ? 1.0 : 0.0,
+          child: child,
+        );
+      },
+      child: Container(
+        width: 2.0,
+        height: widget.height,
+        color: widget.color,
       ),
     );
   }

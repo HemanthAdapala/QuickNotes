@@ -185,7 +185,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Verify that we start on HomeScreen's Today block or input field
-      expect(find.text('what happened today?'), findsOneWidget);
+      expect(find.text('Start writing...'), findsOneWidget);
 
       // Tap on Folders tab (index 1) which shows FolderManagementScreen
       final folderIconFinder = find.byKey(const Key('nav_folders'));
