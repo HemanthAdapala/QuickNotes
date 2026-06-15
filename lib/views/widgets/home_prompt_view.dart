@@ -1,11 +1,12 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
 
-class HomePromptView extends StatelessWidget {
+class HomePromptView extends StatefulWidget {
   final DateTime date;
   final bool interactive;
   final TextEditingController? controller;
@@ -23,13 +24,89 @@ class HomePromptView extends StatelessWidget {
     this.onTap,
   });
 
+  static final List<String> _prompts = [
+    "What's on your mind?",
+    "Start writing...",
+    "One thought is enough.",
+    "Capture it before it's gone.",
+    "What surprised you today?",
+    "Leave a note for tomorrow.",
+    "Write anything.",
+    "What deserves remembering today?",
+  ];
+  static List<int> _deck = [];
+  static int _deckIndex = 0;
+
+  static String _getRandomPrompt() {
+    if (_prompts.isEmpty) return "";
+    if (_deck.isEmpty || _deckIndex >= _deck.length) {
+      final random = Random();
+      final newDeck = List<int>.generate(_prompts.length, (i) => i);
+      
+      // Fisher-Yates shuffle
+      for (int i = newDeck.length - 1; i > 0; i--) {
+        final j = random.nextInt(i + 1);
+        final temp = newDeck[i];
+        newDeck[i] = newDeck[j];
+        newDeck[j] = temp;
+      }
+      
+      // Avoid consecutive duplicate prompt at boundary
+      if (_deck.isNotEmpty) {
+        final lastVal = _deck.last;
+        if (newDeck.first == lastVal && newDeck.length > 1) {
+          final swapIdx = 1 + random.nextInt(newDeck.length - 1);
+          final temp = newDeck[0];
+          newDeck[0] = newDeck[swapIdx];
+          newDeck[swapIdx] = temp;
+        }
+      }
+      
+      _deck = newDeck;
+      _deckIndex = 0;
+    }
+    
+    final promptIndex = _deck[_deckIndex];
+    _deckIndex++;
+    return _prompts[promptIndex];
+  }
+
+  @visibleForTesting
+  static String getRandomPromptForTesting() => _getRandomPrompt();
+
+  @visibleForTesting
+  static void resetDeckForTesting() {
+    _deck.clear();
+    _deckIndex = 0;
+  }
+
+  @visibleForTesting
+  static List<String> get prompts => _prompts;
+
+  @override
+  State<HomePromptView> createState() => _HomePromptViewState();
+}
+
+class _HomePromptViewState extends State<HomePromptView> {
+  late final String _placeholderPrompt;
+
+  @override
+  void initState() {
+    super.initState();
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      _placeholderPrompt = "Start writing...";
+    } else {
+      _placeholderPrompt = HomePromptView._getRandomPrompt();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('MMM d').format(date);
-    final formattedDay = DateFormat('EEEE').format(date);
+    final formattedDate = DateFormat('MMM d').format(widget.date);
+    final formattedDay = DateFormat('EEEE').format(widget.date);
 
     String greeting;
-    final hour = date.hour;
+    final hour = widget.date.hour;
     if (hour >= 5 && hour < 12) {
       greeting = "Good Morning";
     } else if (hour >= 12 && hour < 17) {
@@ -41,9 +118,9 @@ class HomePromptView extends StatelessWidget {
     final notesProvider = Provider.of<NotesProvider>(context);
     final todayNotes = notesProvider.allActiveNotes.where((n) {
       final created = n.createdAt;
-      return created.year == date.year &&
-             created.month == date.month &&
-             created.day == date.day;
+      return created.year == widget.date.year &&
+             created.month == widget.date.month &&
+             created.day == widget.date.day;
     }).toList();
 
     final count = todayNotes.length;
@@ -166,12 +243,12 @@ class HomePromptView extends StatelessWidget {
               );
             },
             child: GestureDetector(
-              onTap: interactive ? null : onTap,
+              onTap: widget.interactive ? null : widget.onTap,
               behavior: HitTestBehavior.opaque,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (!interactive) ...[
+                  if (!widget.interactive) ...[
                     Padding(
                       padding: const EdgeInsets.only(top: 3.0),
                       child: _BlinkingCaret(
@@ -184,10 +261,10 @@ class HomePromptView extends StatelessWidget {
                   
                   // Prompt text field or static placeholder
                   Expanded(
-                    child: interactive
+                    child: widget.interactive
                         ? TextField(
-                            controller: controller,
-                            focusNode: focusNode,
+                            controller: widget.controller,
+                            focusNode: widget.focusNode,
                             maxLines: null,
                             keyboardType: TextInputType.multiline,
                             style: GoogleFonts.inter(
@@ -195,7 +272,7 @@ class HomePromptView extends StatelessWidget {
                               color: const Color(0xFF333333),
                             ),
                             decoration: InputDecoration(
-                              hintText: "Start writing...",
+                              hintText: _placeholderPrompt,
                               hintStyle: GoogleFonts.inter(
                                 fontSize: 20.0,
                                 color: const Color(0xFF333333).withOpacity(0.3),
@@ -204,10 +281,10 @@ class HomePromptView extends StatelessWidget {
                               contentPadding: EdgeInsets.zero,
                               filled: false,
                             ),
-                            onChanged: onChanged,
+                            onChanged: widget.onChanged,
                           )
                         : Text(
-                            "Start writing...",
+                            _placeholderPrompt,
                             style: GoogleFonts.inter(
                               fontSize: 20.0,
                               color: const Color(0xFF333333).withOpacity(0.3),

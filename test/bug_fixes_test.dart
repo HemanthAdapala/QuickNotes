@@ -961,5 +961,41 @@ void main() {
       expect(find.text('2 notes today'), findsOneWidget);
       await tester.pump(const Duration(seconds: 11));
     });
+
+    test('HomePromptView dynamic placeholder prompts rotation logic tests', () {
+      HomePromptView.resetDeckForTesting();
+      final prompts = HomePromptView.prompts;
+
+      // 1st Cycle
+      final List<String> deck1 = [];
+      for (int i = 0; i < 8; i++) {
+        deck1.add(HomePromptView.getRandomPromptForTesting());
+      }
+      // Verify all 8 prompts from the first cycle are unique
+      expect(deck1.toSet().length, equals(8));
+      for (final p in deck1) {
+        expect(prompts.contains(p), isTrue);
+      }
+
+      // 2nd Cycle (starts on the 9th call)
+      final String firstOfDeck2 = HomePromptView.getRandomPromptForTesting();
+      // Verify no consecutive repeat at the boundary
+      expect(firstOfDeck2, isNot(equals(deck1.last)));
+
+      final List<String> deck2 = [firstOfDeck2];
+      for (int i = 0; i < 7; i++) {
+        deck2.add(HomePromptView.getRandomPromptForTesting());
+      }
+      // Verify all 8 prompts from the second cycle are unique
+      expect(deck2.toSet().length, equals(8));
+      for (final p in deck2) {
+        expect(prompts.contains(p), isTrue);
+      }
+
+      // 3rd Cycle (starts on the 17th call)
+      final String firstOfDeck3 = HomePromptView.getRandomPromptForTesting();
+      // Verify no consecutive repeat at the boundary
+      expect(firstOfDeck3, isNot(equals(deck2.last)));
+    });
   });
 }
