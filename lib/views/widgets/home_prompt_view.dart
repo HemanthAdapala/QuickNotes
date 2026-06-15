@@ -31,7 +31,7 @@ class HomePromptView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 180.0), // push down to upper-middle center
+          const SizedBox(height: 90.0), // push down to upper third center
           
           // Date Headers
           Text(
@@ -75,7 +75,7 @@ class HomePromptView extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 30.0),
+          const SizedBox(height: 20.0),
           
           // Entry Row
           GestureDetector(
