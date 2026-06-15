@@ -665,7 +665,7 @@ class FabMorphPageRoute<T> extends PageRouteBuilder<T> {
             final radius = lerpDouble(16.0, 0.0, curvedT)!;
 
             final theme = Theme.of(context);
-            final fabColor = theme.colorScheme.primary;
+            const fabColor = Color(0xFF333333);
             final editorBgColor = theme.scaffoldBackgroundColor;
             final color = Color.lerp(fabColor, editorBgColor, curvedT)!;
 
