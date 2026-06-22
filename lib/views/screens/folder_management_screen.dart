@@ -317,62 +317,61 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
               Container(
                 height: 38,
                 margin: const EdgeInsets.symmetric(horizontal: 30),
-                child: Stack(
-                  alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Positioned(
-                      left: 0,
-                      child: TactileButton(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          widget.onNavigateToTab?.call(0);
-                        },
-                        child: SizedBox(
-                          width: 38,
-                          height: 38,
-                          child: SvgPicture.asset(
-                            'assets/icons/angle_left.svg',
-                            colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                            fit: BoxFit.scaleDown,
+                    TactileButton(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        widget.onNavigateToTab?.call(0);
+                      },
+                      child: SizedBox(
+                        width: 38,
+                        height: 38,
+                        child: SvgPicture.asset(
+                          'assets/icons/angle_left.svg',
+                          colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                          fit: BoxFit.scaleDown,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          "My Notes",
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1C1C1E),
                           ),
                         ),
                       ),
                     ),
-                    Text(
-                      "My Notes",
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1C1C1E),
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      child: TactileButton(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          widget.onNavigateToTab?.call(0);
-                        },
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF222222),
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.search_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+                    TactileButton(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        widget.onNavigateToTab?.call(0);
+                      },
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF222222),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.search_rounded,
+                          color: Colors.white,
+                          size: 20,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 28),
 
               // Your Categories Carousel Title
               Padding(
@@ -386,7 +385,7 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Categories Carousel
               SizedBox(
@@ -464,7 +463,7 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 14),
 
               // Section Header Background full width
               Container(
@@ -512,7 +511,7 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 22),
 
               // Folders List Area
               Padding(
@@ -568,7 +567,7 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                                   child: Container(
                                     width: double.infinity,
                                     height: 74,
-                                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                                    padding: const EdgeInsets.only(left: 20, right: 28),
                                     decoration: BoxDecoration(
                                       color: bg,
                                       borderRadius: BorderRadius.circular(24),
@@ -579,10 +578,11 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                                         Expanded(
                                           child: Row(
                                             children: [
-                                              Icon(
-                                                depth > 0 ? Icons.folder_open_outlined : Icons.folder_outlined,
-                                                size: 24,
-                                                color: const Color(0xFF1C1C1E),
+                                              SvgPicture.asset(
+                                                'assets/icons/folder_open_folder.svg',
+                                                width: 24,
+                                                height: 24,
+                                                colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
                                               ),
                                               const SizedBox(width: 16),
                                               Expanded(
