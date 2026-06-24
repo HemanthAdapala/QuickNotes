@@ -8,6 +8,12 @@ import '../../models/folder.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/living_writing_experience.dart';
 import 'folder_notes_screen.dart';
+import 'category_details_screen.dart';
+import '../../core/animations/page_transitions.dart';
+import '../../core/animations/animation_constants.dart';
+import '../../core/animations/tactile_card_wrapper.dart';
+import '../../core/animations/dialog_transition.dart';
+import '../../core/animations/animated_list_entrance.dart';
 
 class FolderManagementScreen extends StatefulWidget {
   final VoidCallback onMenuTap;
@@ -73,153 +79,91 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
 
   void _showCreateFolderDialog() {
     String? selectedParentId;
-    showDialog(
+    showAnimatedDialog(
       context: context,
-      builder: (context) {
+      child: StatefulBuilder(builder: (context, setDialogState) {
         final provider = Provider.of<NotesProvider>(context, listen: false);
         final hierarchical = FolderUtils.getHierarchicalFolders(provider.folders);
 
-        return StatefulBuilder(builder: (context, setDialogState) {
-          return AlertDialog(
-            backgroundColor: const Color(0xFFF9F6E5),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text(
-              "New Folder",
-              style: GoogleFonts.playfairDisplay(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1C1C1E),
-              ),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  controller: _folderController,
-                  autofocus: true,
-                  style: GoogleFonts.inter(color: const Color(0xFF1C1C1E)),
-                  decoration: InputDecoration(
-                    labelText: "Folder Name",
-                    labelStyle: GoogleFonts.inter(color: const Color(0xFF8C8987)),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFE6E3D2)),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF1C1C1E), width: 1.5),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String?>(
-                  initialValue: selectedParentId,
-                  dropdownColor: const Color(0xFFF9F6E5),
-                  style: GoogleFonts.inter(color: const Color(0xFF1C1C1E)),
-                  decoration: InputDecoration(
-                    labelText: "Parent Folder (Optional)",
-                    labelStyle: GoogleFonts.inter(color: const Color(0xFF8C8987)),
-                    border: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFE6E3D2)),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFE6E3D2)),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: [
-                    const DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text("None (Root Folder)"),
-                    ),
-                    ...hierarchical.map((item) {
-                      final folder = item.folder;
-                      final depth = item.depth;
-                      final indent = "  " * depth;
-                      final prefix = depth > 0 ? "└─ " : "";
-                      return DropdownMenuItem<String?>(
-                        value: folder.id,
-                        child: Text(
-                          "$indent$prefix${folder.name}",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }),
-                  ],
-                  onChanged: (val) {
-                    setDialogState(() {
-                      selectedParentId = val;
-                    });
-                  },
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  _folderController.clear();
-                  Navigator.pop(context);
-                },
-                child: Text(
-                  "Cancel",
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF8C8987),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final name = _folderController.text.trim();
-                  if (name.isNotEmpty) {
-                    Provider.of<NotesProvider>(context, listen: false).createFolder(
-                      name,
-                      parentId: selectedParentId,
-                    );
-                    _folderController.clear();
-                    Navigator.pop(context);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF222222),
-                  foregroundColor: const Color(0xFFF9F6E5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(
-                  "Create",
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          );
-        });
-      },
-    );
-  }
-
-  void _confirmDeleteFolder(Folder folder) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final theme = Theme.of(context);
         return AlertDialog(
           backgroundColor: const Color(0xFFF9F6E5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text(
-            "Delete Folder?",
+            "New Folder",
             style: GoogleFonts.playfairDisplay(
               fontWeight: FontWeight.bold,
               color: const Color(0xFF1C1C1E),
             ),
           ),
-          content: Text(
-            "Are you sure you want to delete '${folder.name}'? Internal notes will be moved to the root level. They will NOT be deleted.",
-            style: GoogleFonts.inter(color: const Color(0xFF1C1C1E).withOpacity(0.8)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: _folderController,
+                autofocus: true,
+                style: GoogleFonts.inter(color: const Color(0xFF1C1C1E)),
+                decoration: InputDecoration(
+                  labelText: "Folder Name",
+                  labelStyle: GoogleFonts.inter(color: const Color(0xFF8C8987)),
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFFE6E3D2)),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF1C1C1E), width: 1.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String?>(
+                initialValue: selectedParentId,
+                dropdownColor: const Color(0xFFF9F6E5),
+                style: GoogleFonts.inter(color: const Color(0xFF1C1C1E)),
+                decoration: InputDecoration(
+                  labelText: "Parent Folder (Optional)",
+                  labelStyle: GoogleFonts.inter(color: const Color(0xFF8C8987)),
+                  border: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFFE6E3D2)),
+                  ),
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFFE6E3D2)),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text("None (Root Folder)"),
+                  ),
+                  ...hierarchical.map((item) {
+                    final folder = item.folder;
+                    final depth = item.depth;
+                    final indent = "  " * depth;
+                    final prefix = depth > 0 ? "└─ " : "";
+                    return DropdownMenuItem<String?>(
+                      value: folder.id,
+                      child: Text(
+                        "$indent$prefix${folder.name}",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }),
+                ],
+                onChanged: (val) {
+                  setDialogState(() {
+                    selectedParentId = val;
+                  });
+                },
+              ),
+            ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                _folderController.clear();
+                Navigator.pop(context);
+              },
               child: Text(
                 "Cancel",
                 style: GoogleFonts.inter(
@@ -228,14 +172,25 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                 ),
               ),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
-                Provider.of<NotesProvider>(context, listen: false).deleteFolder(folder.id);
-                Navigator.pop(context);
+                final name = _folderController.text.trim();
+                if (name.isNotEmpty) {
+                  Provider.of<NotesProvider>(context, listen: false).createFolder(
+                    name,
+                    parentId: selectedParentId,
+                  );
+                  _folderController.clear();
+                  Navigator.pop(context);
+                }
               },
-              style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF222222),
+                foregroundColor: const Color(0xFFF9F6E5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               child: Text(
-                "Delete",
+                "Create",
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
                 ),
@@ -243,7 +198,58 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
             ),
           ],
         );
-      },
+      }),
+    );
+  }
+
+  void _confirmDeleteFolder(Folder folder) {
+    showAnimatedDialog(
+      context: context,
+      child: Builder(
+        builder: (context) {
+          final theme = Theme.of(context);
+          return AlertDialog(
+            backgroundColor: const Color(0xFFF9F6E5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Text(
+              "Delete Folder?",
+              style: GoogleFonts.playfairDisplay(
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF1C1C1E),
+              ),
+            ),
+            content: Text(
+              "Are you sure you want to delete '${folder.name}'? Internal notes will be moved to the root level. They will NOT be deleted.",
+              style: GoogleFonts.inter(color: const Color(0xFF1C1C1E).withOpacity(0.8)),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  "Cancel",
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF8C8987),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Provider.of<NotesProvider>(context, listen: false).deleteFolder(folder.id);
+                  Navigator.pop(context);
+                },
+                style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                child: Text(
+                  "Delete",
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -402,12 +408,12 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
 
                     return Padding(
                       padding: const EdgeInsets.only(right: 15.0),
-                      child: TactileButton(
+                      child: TactileCardWrapper(
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          provider.setSelectedCategory(category);
-                          provider.setSelectedTag("");
-                          widget.onNavigateToTab?.call(0);
+                          Navigator.of(context).push(
+                            buildPageRoute(CategoryDetailsScreen(category: category)),
+                          );
                         },
                         child: Container(
                           width: 100,
@@ -549,21 +555,21 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                           final bg = _getFolderCardBg(index);
                           final key = _getKeyForFolder(folder.id);
                           final isTapped = _tappedFolderId == folder.id;
-
-                          return Padding(
-                            key: key,
-                            padding: const EdgeInsets.only(bottom: 12.0),
-                            child: TactileButton(
-                              onTap: () => _handleFolderTap(folder),
-                              child: GestureDetector(
+                          return AnimatedListEntrance(
+                            index: index,
+                            child: Padding(
+                              key: key,
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: TactileCardWrapper(
+                                onTap: () => _handleFolderTap(folder),
                                 onLongPress: () {
                                   HapticFeedback.mediumImpact();
                                   _confirmDeleteFolder(folder);
                                 },
                                 child: AnimatedScale(
                                   scale: isTapped ? 1.02 : 1.0,
-                                  duration: const Duration(milliseconds: 150),
-                                  curve: Curves.easeOutCubic,
+                                  duration: kDurationFast,
+                                  curve: kCurveEnter,
                                   child: Container(
                                     width: double.infinity,
                                     height: 74,
