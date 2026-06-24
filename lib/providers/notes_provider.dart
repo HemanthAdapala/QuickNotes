@@ -52,7 +52,7 @@ class NotesProvider with ChangeNotifier {
   String get selectedTag => _selectedTag;
   String? get selectedFolderId => _selectedFolderId;
   bool get isVaultUnlocked => _isVaultUnlocked;
-  bool get isDarkMode => _isDarkMode;
+  bool get isDarkMode => false;
   bool get isZenModeEnabled => _isZenModeEnabled;
   List<Folder> get folders => _folders;
   List<Note> get trashNotes => _notes.where((n) => n.isDeleted).toList();
@@ -128,7 +128,7 @@ class NotesProvider with ChangeNotifier {
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
   NotesProvider() {
-    _isDarkMode = WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+    _isDarkMode = false;
     _initNotifications();
     loadFolders();
     loadNotes();

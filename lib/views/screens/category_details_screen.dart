@@ -146,7 +146,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     super.didChangeDependencies();
     if (!_tintReady) {
       final theme  = Theme.of(context);
-      final isDark = theme.brightness == Brightness.dark;
+      final isDark = false;
       final base   = isDark ? theme.scaffoldBackgroundColor : AppColors.background;
       final end    = Color.lerp(base, _accent, isDark ? 0.08 : 0.12)!;
 
@@ -574,7 +574,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   @override
   Widget build(BuildContext context) {
     final theme    = Theme.of(context);
-    final isDark   = theme.brightness == Brightness.dark;
+    final isDark   = false;
     final provider = Provider.of<NotesProvider>(context);
 
     // All active notes belonging to this category

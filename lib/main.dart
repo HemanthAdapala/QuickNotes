@@ -98,7 +98,7 @@ class QuickNotesApp extends StatelessWidget {
       ),
 
       // Dark Theme configuration
-      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      themeMode: ThemeMode.light,
 
       darkTheme: ThemeData(
         useMaterial3: true,
