@@ -12,31 +12,11 @@ import '../widgets/home_prompt_view.dart';
 import 'note_editor_screen.dart';
 import 'folder_management_screen.dart';
 import 'settings_screen.dart';
+import 'note_calendar_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Calendar stub — intentionally minimal until the feature is built
+// Calendar tab content
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _CalendarPlaceholder extends StatelessWidget {
-  const _CalendarPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Text(
-          'Calendar',
-          style: GoogleFonts.playfairDisplay(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: AppColors.ink,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HomeScreen
@@ -108,14 +88,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCalendarBody() => const _CalendarPlaceholder();
+  Widget _buildCalendarBody() {
+    return NoteCalendarScreen(
+      onNavigateToTab: (i) => setState(() => _activeNavIndex = i),
+    );
+  }
 
   Widget _buildSettingsBody() {
     final provider = Provider.of<NotesProvider>(context, listen: false);
     return SettingsScreen(
-      isDarkMode: false, // HomeScreen is always light
+      isDarkMode: provider.isDarkMode,
       onThemeToggle: provider.toggleTheme,
-      onMenuTap: () {},
+      onMenuTap: () {
+        HapticFeedback.lightImpact();
+        setState(() => _activeNavIndex = 0);
+      },
     );
   }
 

@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-06-22
+
+### Added
+- **Unified Header Alignment**: Standardized all screen headers to a fixed height of 38px, horizontal margins of 30px, and top spacing of 24.0px below SafeArea.
+- **Standardized Back Buttons**: Replaced default AppBars and custom icons with a unified 38x38px `TactileButton` enclosing the `assets/icons/angle_left.svg` SVG icon. Back button SVG colors adapt automatically based on light/dark themes.
+- **Ignored/Disabled NoteEditor Folder Picker**: Wrapped the black folder picker button on `NoteEditorScreen` in an `IgnorePointer` and reduced its opacity to 0.5 when in editing mode.
+
+### Fixed
+- **Note Calendar Screen Compilation**: Fixed bracket mismatch and duplicate layout rendering blocks inside `note_calendar_screen.dart`.
+- **TactileButton Hit-Testing**: Set `behavior: HitTestBehavior.opaque` on the `GestureDetector` inside `TactileButton` to fix hit-testing on buttons with transparent/SVG children.
+- **Settings Screen Test Suite Integration**: Awaited dialog transitions using `pumpAndSettle()` in `bug_fixes_test.dart` to ensure modal barrier removal.
+
 ## [1.4.0] - 2026-06-13
 
 ### Changed

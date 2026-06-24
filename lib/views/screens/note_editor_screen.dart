@@ -16,12 +16,17 @@ import '../../models/folder.dart';
 import '../../providers/notes_provider.dart';
 import '../../services/vault_service.dart';
 import '../widgets/folder_selector_dialog.dart';
+import '../widgets/folder_selection_sheet.dart';
+import '../widgets/category_selection_sheet.dart';
+import '../widgets/blurred_bottom_sheet.dart';
 import '../widgets/home_prompt_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
 import '../widgets/paper_guide_painters.dart';
+import '../widgets/tactile_button.dart';
 import 'package:flutter/services.dart';
+import '../../core/animations/page_transitions.dart';
 import 'dart:math';
 
 
@@ -29,23 +34,26 @@ class NoteEditorScreen extends StatefulWidget {
   final Note? note;
   final String defaultCategory;
   final String defaultNoteType;
+  final String? defaultFolderId;
 
   const NoteEditorScreen({
     super.key,
     this.note,
     this.defaultCategory = 'Uncategorized',
     this.defaultNoteType = 'text',
+    this.defaultFolderId,
   });
 
   @override
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
 }
 
-class _NoteEditorScreenState extends State<NoteEditorScreen> {
+class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBindingObserver {
   final _titleController = TextEditingController();
   final _titleFocusNode = FocusNode();
   final _scrollController = ScrollController();
   bool _isMetadataCollapsed = false;
+  bool _isKeyboardVisible = false;
   late final TextEditingController _contentController;
   final _tagController = TextEditingController();
   List<NoteBlock> _blocks = [];
@@ -175,6 +183,29 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         continue;
       }
 
+      // Check if bulleted list block
+      if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('+ ')) {
+        final newBlock = BulletedListBlock(id: _generateId(), markdown: trimmed.substring(2));
+        _setupBlockFocusNode(newBlock.focusNode);
+        _setupBlockController(newBlock);
+        blocks.add(newBlock);
+        i++;
+        continue;
+      }
+
+      // Check if numbered list block
+      final numListRegex = RegExp(r'^(\d+)\.\s(.*)$');
+      if (numListRegex.hasMatch(trimmed)) {
+        final match = numListRegex.firstMatch(trimmed)!;
+        final content = match.group(2) ?? '';
+        final newBlock = NumberedListBlock(id: _generateId(), markdown: content);
+        _setupBlockFocusNode(newBlock.focusNode);
+        _setupBlockController(newBlock);
+        blocks.add(newBlock);
+        i++;
+        continue;
+      }
+
       // Check if consecutive image blocks
       if (isImageLine(trimmed)) {
         final List<ImageBlock> images = [];
@@ -258,6 +289,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     if (block is HeadingBlock) return block.controller;
     if (block is QuoteBlock) return block.controller;
     if (block is ChecklistBlock) return block.controller;
+    if (block is BulletedListBlock) return block.controller;
+    if (block is NumberedListBlock) return block.controller;
     return null;
   }
 
@@ -266,7 +299,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     if (block is HeadingBlock) return block.focusNode;
     if (block is QuoteBlock) return block.focusNode;
     if (block is ChecklistBlock) return block.focusNode;
+    if (block is BulletedListBlock) return block.focusNode;
+    if (block is NumberedListBlock) return block.focusNode;
     return null;
+  }
+
+  int _getNumberedIndex(NoteBlock block) {
+    int index = 1;
+    final blockIdx = _blocks.indexOf(block);
+    if (blockIdx == -1) return 1;
+    for (int i = blockIdx - 1; i >= 0; i--) {
+      if (_blocks[i] is NumberedListBlock) {
+        index++;
+      } else {
+        break;
+      }
+    }
+    return index;
   }
 
   void _onScroll() {
@@ -314,6 +363,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         NoteBlock newBlock;
         if (block is ChecklistBlock) {
           newBlock = ChecklistBlock(id: _generateId(), isChecked: false);
+        } else if (block is BulletedListBlock) {
+          newBlock = BulletedListBlock(id: _generateId());
+        } else if (block is NumberedListBlock) {
+          newBlock = NumberedListBlock(id: _generateId());
         } else if (block is QuoteBlock) {
           newBlock = QuoteBlock(id: _generateId());
         } else {
@@ -362,7 +415,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final controller = _getControllerOfBlock(block);
     if (controller == null) return;
 
-    if (block is ChecklistBlock && controller.text.isEmpty) {
+    if ((block is ChecklistBlock || block is BulletedListBlock || block is NumberedListBlock) && controller.text.isEmpty) {
       _toggleBlockType(block, ParagraphBlock);
       return;
     }
@@ -387,6 +440,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     NoteBlock newBlock;
     if (block is ChecklistBlock) {
       newBlock = ChecklistBlock(id: _generateId(), isChecked: false);
+    } else if (block is BulletedListBlock) {
+      newBlock = BulletedListBlock(id: _generateId());
+    } else if (block is NumberedListBlock) {
+      newBlock = NumberedListBlock(id: _generateId());
     } else if (block is QuoteBlock) {
       newBlock = QuoteBlock(id: _generateId());
     } else {
@@ -418,7 +475,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   void _handleBackspaceAtStart(NoteBlock block) {
-    if (block is ChecklistBlock && block.controller.text.isEmpty) {
+    final ctrl = _getControllerOfBlock(block);
+    if ((block is ChecklistBlock || block is BulletedListBlock || block is NumberedListBlock) && ctrl != null && ctrl.text.isEmpty) {
       _toggleBlockType(block, ParagraphBlock);
       return;
     }
@@ -526,33 +584,42 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   double _getSpacingBetween(NoteBlock current, NoteBlock next) {
-    final isCurrentText = current is ParagraphBlock || current is HeadingBlock || current is QuoteBlock;
-    final isNextText = next is ParagraphBlock || next is HeadingBlock || next is QuoteBlock;
-    
-    final isCurrentChecklist = current is ChecklistBlock;
-    final isNextChecklist = next is ChecklistBlock;
-    
+    // Heading ↔ Paragraph/Text/Checklist: 4px spacing
+    if (current is HeadingBlock && (next is ParagraphBlock || next is QuoteBlock || next is ChecklistBlock)) {
+      return 4.0;
+    }
+    if ((current is ParagraphBlock || current is QuoteBlock || current is ChecklistBlock) && next is HeadingBlock) {
+      return 4.0;
+    }
+
     final isCurrentMedia = current is ImageBlock || current is ImageStackBlock;
     final isNextMedia = next is ImageBlock || next is ImageStackBlock;
 
-    if (isCurrentText && isNextText) {
-      return 2.0; // Paragraph ↔ Paragraph: 2px (Group 2-A Extra Tight)
+    // Image ↔ Paragraph/Text/Checklist: 6px spacing
+    if ((isCurrentMedia && (next is ParagraphBlock || next is QuoteBlock || next is ChecklistBlock)) ||
+        ((current is ParagraphBlock || current is QuoteBlock || current is ChecklistBlock) && isNextMedia)) {
+      return 6.0;
     }
-    if ((isCurrentText && isNextChecklist) || (isCurrentChecklist && isNextText)) {
-      return 2.0; // Text ↔ Checklist: 2px
+
+    // Paragraph ↔ Paragraph: 2px spacing
+    if ((current is ParagraphBlock || current is QuoteBlock) && (next is ParagraphBlock || next is QuoteBlock)) {
+      return 2.0;
     }
-    if (isCurrentChecklist && isNextChecklist) {
-      return 2.0; // Checklist Item Gap: 2px (Group 2-A Extra Tight)
+
+    // Checklist ↔ Checklist: 2px spacing
+    if (current is ChecklistBlock && next is ChecklistBlock) {
+      return 2.0;
     }
-    if ((isCurrentMedia && !isNextMedia) || (!isCurrentMedia && isNextMedia)) {
-      return 6.0; // Text to Image Gap / Image to Checklist Gap: 6px
-    }
+
+    // Media ↔ Media: 6px spacing
     if (isCurrentMedia && isNextMedia) {
-      return 6.0; // Media to Media: 6px
+      return 6.0;
     }
+
     if (current is DividerBlock || next is DividerBlock) {
       return 6.0;
     }
+
     return 2.0;
   }
 
@@ -733,19 +800,20 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               ? block.controller.styledChars.first.style.align
               : TextAlign.left,
           style: GoogleFonts.inter(
-            fontSize: 20.0,
+            fontSize: 16.0,
             color: textColor,
-            height: _paperGuideHeight,
+            height: 1.35,
           ),
           decoration: InputDecoration(
             hintText: _blocks.indexOf(block) == 0 && _blocks.length == 1 ? "Start writing..." : "",
             hintStyle: GoogleFonts.inter(
-              fontSize: 20.0,
+              fontSize: 16.0,
               color: textColor.withAlpha(80),
             ),
             border: InputBorder.none,
             contentPadding: EdgeInsets.zero,
             filled: false,
+            isDense: true,
           ),
           onChanged: (val) => _onBlockTextChanged(block),
         ),
@@ -815,6 +883,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             border: InputBorder.none,
             contentPadding: EdgeInsets.zero,
             filled: false,
+            isDense: true,
           ),
           onChanged: (val) => _onBlockTextChanged(block),
         ),
@@ -871,21 +940,22 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             keyboardType: TextInputType.multiline,
             scrollPadding: const EdgeInsets.only(bottom: 90.0),
             style: GoogleFonts.inter(
-              fontSize: 20.0,
+              fontSize: 16.0,
               color: textColor.withAlpha(220),
               fontStyle: FontStyle.italic,
-              height: _paperGuideHeight,
+              height: 1.35,
             ),
             decoration: InputDecoration(
               hintText: "Quote",
               hintStyle: GoogleFonts.inter(
-                fontSize: 20.0,
+                fontSize: 16.0,
                 color: textColor.withAlpha(80),
                 fontStyle: FontStyle.italic,
               ),
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
               filled: false,
+              isDense: true,
             ),
             onChanged: (val) => _onBlockTextChanged(block),
           ),
@@ -908,7 +978,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 });
               },
               child: Container(
-                margin: const EdgeInsets.only(top: 8.0, right: 8.0, left: 4.0),
+                margin: const EdgeInsets.only(top: 6.0, right: 8.0, left: 4.0),
                 width: 10,
                 height: 10,
                 decoration: block.isChecked
@@ -965,16 +1035,171 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   keyboardType: TextInputType.multiline,
                   scrollPadding: const EdgeInsets.only(bottom: 90.0),
                   style: GoogleFonts.inter(
-                    fontSize: 20.0,
+                    fontSize: 16.0,
                     color: block.isChecked ? textColor.withAlpha(120) : textColor,
                     decoration: block.isChecked ? TextDecoration.lineThrough : null,
-                    height: _paperGuideHeight,
+                    height: 1.35,
                   ),
                   decoration: const InputDecoration(
                     hintText: "To-do item",
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
                     filled: false,
+                    isDense: true,
+                  ),
+                  onChanged: (val) => _onBlockTextChanged(block),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (block is BulletedListBlock) {
+      return Padding(
+        padding: EdgeInsets.zero,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 8.0, right: 10.0, left: 6.0),
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: textColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            Expanded(
+              child: Focus(
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent) {
+                    if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+                      _handleEnterKey(block);
+                      return KeyEventResult.handled;
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.backspace) {
+                      final sel = block.controller.selection;
+                      if (sel.isCollapsed && sel.start == 0) {
+                        _handleBackspaceAtStart(block);
+                        return KeyEventResult.handled;
+                      }
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                      final sel = block.controller.selection;
+                      if (sel.isCollapsed && sel.start == 0) {
+                        _handleArrowUpAtStart(block);
+                        return KeyEventResult.handled;
+                      }
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                      final sel = block.controller.selection;
+                      if (sel.isCollapsed && sel.start == block.controller.text.length) {
+                        _handleArrowDownAtEnd(block);
+                        return KeyEventResult.handled;
+                      }
+                    }
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: TextField(
+                  controller: block.controller,
+                  focusNode: block.focusNode,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  scrollPadding: const EdgeInsets.only(bottom: 90.0),
+                  style: GoogleFonts.inter(
+                    fontSize: 16.0,
+                    color: textColor,
+                    height: 1.35,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: "List item",
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    filled: false,
+                    isDense: true,
+                  ),
+                  onChanged: (val) => _onBlockTextChanged(block),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (block is NumberedListBlock) {
+      final num = _getNumberedIndex(block);
+      return Padding(
+        padding: EdgeInsets.zero,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 0.0, right: 8.0, left: 4.0),
+              width: 18,
+              alignment: Alignment.topRight,
+              child: Text(
+                "$num.",
+                style: GoogleFonts.inter(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                  height: 1.35,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Focus(
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent) {
+                    if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+                      _handleEnterKey(block);
+                      return KeyEventResult.handled;
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.backspace) {
+                      final sel = block.controller.selection;
+                      if (sel.isCollapsed && sel.start == 0) {
+                        _handleBackspaceAtStart(block);
+                        return KeyEventResult.handled;
+                      }
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                      final sel = block.controller.selection;
+                      if (sel.isCollapsed && sel.start == 0) {
+                        _handleArrowUpAtStart(block);
+                        return KeyEventResult.handled;
+                      }
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                      final sel = block.controller.selection;
+                      if (sel.isCollapsed && sel.start == block.controller.text.length) {
+                        _handleArrowDownAtEnd(block);
+                        return KeyEventResult.handled;
+                      }
+                    }
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: TextField(
+                  controller: block.controller,
+                  focusNode: block.focusNode,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  scrollPadding: const EdgeInsets.only(bottom: 90.0),
+                  style: GoogleFonts.inter(
+                    fontSize: 16.0,
+                    color: textColor,
+                    height: 1.35,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: "List item",
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    filled: false,
+                    isDense: true,
                   ),
                   onChanged: (val) => _onBlockTextChanged(block),
                 ),
@@ -1132,6 +1357,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (widget.note != null) {
       _titleController.text = widget.note!.title;
       _colorIndex = widget.note!.colorValue;
@@ -1171,7 +1397,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     } else {
       _category = widget.defaultCategory;
       _noteType = widget.defaultNoteType;
-      _folderId = null;
+      _folderId = widget.defaultFolderId;
       _isHabit = false;
       _habitRecurrence = 'none';
       _habitStreak = 0;
@@ -1284,6 +1510,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _titleController.dispose();
     _titleFocusNode.dispose();
     _scrollController.dispose();
@@ -1310,6 +1537,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       } else if (block is ChecklistBlock) {
         block.controller.dispose();
         block.focusNode.dispose();
+      } else if (block is BulletedListBlock) {
+        block.controller.dispose();
+        block.focusNode.dispose();
+      } else if (block is NumberedListBlock) {
+        block.controller.dispose();
+        block.focusNode.dispose();
       }
     }
     _recordTimer?.cancel();
@@ -1317,6 +1550,19 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     _audioRecorder.dispose();
     _audioPlayer.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    final bottomInset = WidgetsBinding.instance.platformDispatcher.views.first.viewInsets.bottom;
+    final isKeyboardVisible = bottomInset > 0;
+    if (isKeyboardVisible != _isKeyboardVisible) {
+      _isKeyboardVisible = isKeyboardVisible;
+      setState(() {
+        _isMetadataCollapsed = isKeyboardVisible;
+      });
+    }
   }
 
   void _startZenTimer() {
@@ -1381,6 +1627,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     if (block is HeadingBlock) return block.controller;
     if (block is QuoteBlock) return block.controller;
     if (block is ChecklistBlock) return block.controller;
+    if (block is BulletedListBlock) return block.controller;
+    if (block is NumberedListBlock) return block.controller;
     return null;
   }
 
@@ -1406,6 +1654,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         if (b is HeadingBlock) return b.controller.text;
         if (b is QuoteBlock) return b.controller.text;
         if (b is ChecklistBlock) return b.controller.text;
+        if (b is BulletedListBlock) return b.controller.text;
+        if (b is NumberedListBlock) return b.controller.text;
         return "";
       }).join(" ").trim();
     }
@@ -2196,6 +2446,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       styledChars = block.controller.styledChars;
       selection = block.controller.selection;
       block.focusNode.unfocus();
+    } else if (block is BulletedListBlock) {
+      text = block.controller.text;
+      styledChars = block.controller.styledChars;
+      selection = block.controller.selection;
+      block.focusNode.unfocus();
+    } else if (block is NumberedListBlock) {
+      text = block.controller.text;
+      styledChars = block.controller.styledChars;
+      selection = block.controller.selection;
+      block.focusNode.unfocus();
     }
 
     NoteBlock newBlock;
@@ -2207,6 +2467,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       newBlock = QuoteBlock(id: id, markdown: "");
     } else if (targetType == ChecklistBlock) {
       newBlock = ChecklistBlock(id: id, isChecked: isChecked ?? false, markdown: "");
+    } else if (targetType == BulletedListBlock) {
+      newBlock = BulletedListBlock(id: id, markdown: "");
+    } else if (targetType == NumberedListBlock) {
+      newBlock = NumberedListBlock(id: id, markdown: "");
     } else if (targetType == DividerBlock) {
       newBlock = DividerBlock(id: id);
     } else {
@@ -2232,6 +2496,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _setupBlockFocusNode(newBlock.focusNode);
       _setupBlockController(newBlock);
     } else if (newBlock is ChecklistBlock) {
+      newBlock.controller.styledChars = styledChars;
+      newBlock.controller.text = text;
+      newBlock.controller.selection = selection;
+      _setupBlockFocusNode(newBlock.focusNode);
+      _setupBlockController(newBlock);
+    } else if (newBlock is BulletedListBlock) {
+      newBlock.controller.styledChars = styledChars;
+      newBlock.controller.text = text;
+      newBlock.controller.selection = selection;
+      _setupBlockFocusNode(newBlock.focusNode);
+      _setupBlockController(newBlock);
+    } else if (newBlock is NumberedListBlock) {
       newBlock.controller.styledChars = styledChars;
       newBlock.controller.text = text;
       newBlock.controller.selection = selection;
@@ -2838,7 +3114,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   Widget _buildCategorySelector(Color titleColor) {
-    final categories = NotesProvider.categories;
+    const categories = NotesProvider.categories;
     return SizedBox(
       height: 38,
       child: ListView.builder(
@@ -3276,26 +3552,17 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   */
 
   void _showCategorySelectorDialog() {
-    showDialog(
+    showBlurredBottomSheet(
       context: context,
-      builder: (context) {
-        final categories = NotesProvider.categories;
-        return SimpleDialog(
-          title: const Text("Select Category"),
-          children: categories.map((cat) {
-            return SimpleDialogOption(
-              onPressed: () {
-                setState(() {
-                  _category = cat;
-                  _hasChanges = true;
-                });
-                Navigator.pop(context);
-              },
-              child: Text(cat, style: GoogleFonts.inter(fontSize: 16)),
-            );
-          }).toList(),
-        );
-      },
+      child: CategorySelectionSheet(
+        currentCategory: _category,
+        onCategorySelected: (cat) {
+          setState(() {
+            _category = cat;
+            _hasChanges = true;
+          });
+        },
+      ),
     );
   }
 
@@ -3418,126 +3685,168 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         ? (_contentController as RichTextEditingController).currentActiveStyle
         : const Style();
 
-    final textColor = const Color(0xFF333333);
-    final titleColor = const Color(0xFF333333);
+    const textColor = Color(0xFF333333);
+    const titleColor = Color(0xFF333333);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F6E5),
       body: SafeArea(
         child: Stack(
           children: [
+            if (_paperGuideVisible && (_paperGuideType == 'grid' || _paperGuideType == 'dots'))
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    key: ValueKey('${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
+                    painter: GlobalPaperGuidePainter(
+                      guideType: _paperGuideType,
+                      spacing: 20.0 * _paperGuideHeight,
+                      color: _getPaperGuideColor(isDark),
+                      opacity: _paperGuideOpacity,
+                    ),
+                  ),
+                ),
+              ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 24.0),
                 // Top Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 4.0),
+                Container(
+                  height: 38,
+                  margin: const EdgeInsets.symmetric(horizontal: 30),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Back chevron circular button
-                      GestureDetector(
-                        onTap: () => Navigator.of(context).maybePop(),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF222222),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: SvgPicture.asset(
-                              'assets/icons/angle_left.svg',
-                              width: 25,
-                              height: 25,
-                              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                            ),
+                      // Back chevron button
+                      TactileButton(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.of(context).maybePop();
+                        },
+                        child: SizedBox(
+                          width: 38,
+                          height: 38,
+                          child: SvgPicture.asset(
+                            'assets/icons/angle_left.svg',
+                            colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                            fit: BoxFit.scaleDown,
                           ),
                         ),
                       ),
                       
-                      // Folder Select Button
-                      GestureDetector(
-                        onTap: _showFolderSelectorDialog,
-                        child: Container(
-                          width: 121,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF222222),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Positioned(
-                                left: 13,
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 70),
+                      // Folder Select Button (Disabled)
+                      IgnorePointer(
+                        ignoring: true,
+                        child: Opacity(
+                          opacity: 0.5,
+                          child: Container(
+                            height: 36,
+                            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF222222),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 80),
                                   child: Text(
                                     currentFolderName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.inter(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w400,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
                                       color: Colors.white,
                                     ),
                                   ),
                                 ),
-                              ),
-                              Positioned(
-                                left: 91,
-                                child: SvgPicture.asset(
+                                const SizedBox(width: 4.0),
+                                SvgPicture.asset(
                                   'assets/icons/angle_small_down_topbar.svg',
-                                  width: 28,
-                                  height: 28,
+                                  width: 16,
+                                  height: 16,
                                   colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
                       
-                      // Edit and Options Menu Pill
-                      Container(
-                        width: 93,
-                        height: 38,
-                        child: Stack(
-                          children: [
-                            SvgPicture.asset(
-                              'assets/icons/top_bar_group4.svg',
-                              width: 93,
-                              height: 38,
-                            ),
-                            // Left button (toggles preview mode)
-                            Positioned(
-                              left: 0,
-                              top: 0,
-                              width: 46,
-                              height: 38,
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _isPreviewMarkdown = !_isPreviewMarkdown;
-                                  });
-                                },
-                                child: Container(color: Colors.transparent),
+                      // Actions Row (Pin + Options)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Pin Button
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isPinned = !_isPinned;
+                                _hasChanges = true;
+                              });
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF222222),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                                  size: 18,
+                                  color: _isPinned ? const Color(0xFFF9D423) : Colors.white,
+                                ),
                               ),
                             ),
-                            // Right button (opens command palette)
-                            Positioned(
-                              left: 47,
-                              top: 0,
-                              width: 46,
-                              height: 38,
-                              child: GestureDetector(
-                                onTap: _showCommandPalette,
-                                child: Container(color: Colors.transparent),
-                              ),
+                          ),
+                          const SizedBox(width: 8.0),
+                          
+                          // Edit and Options Menu Pill
+                          Container(
+                            width: 88,
+                            height: 36,
+                            child: Stack(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/top_bar_group4.svg',
+                                  width: 88,
+                                  height: 36,
+                                ),
+                                // Left button (toggles preview mode)
+                                Positioned(
+                                  left: 0,
+                                  top: 0,
+                                  width: 44,
+                                  height: 36,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _isPreviewMarkdown = !_isPreviewMarkdown;
+                                      });
+                                    },
+                                    child: Container(color: Colors.transparent),
+                                  ),
+                                ),
+                                // Right button (opens command palette)
+                                Positioned(
+                                  left: 44,
+                                  top: 0,
+                                  width: 44,
+                                  height: 36,
+                                  child: GestureDetector(
+                                    onTap: _showCommandPalette,
+                                    child: Container(color: Colors.transparent),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -3545,12 +3854,37 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 
                 // Writing canvas
                 Expanded(
-                  child: SingleChildScrollView(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      if (_noteType == 'checklist') {
+                        if (_checklistFocusNodes.isNotEmpty) {
+                          final fn = _checklistFocusNodes.last;
+                          final ctrl = _checklistControllers.last;
+                          fn.requestFocus();
+                          ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
+                        }
+                      } else {
+                        if (_blocks.isNotEmpty) {
+                          final lastTextBlock = _blocks.lastWhere(
+                            (b) => b is ParagraphBlock || b is HeadingBlock || b is QuoteBlock || b is ChecklistBlock,
+                            orElse: () => _blocks.last,
+                          );
+                          final fn = _getFocusNodeOfBlock(lastTextBlock);
+                          final ctrl = _getControllerOfBlock(lastTextBlock);
+                          if (fn != null && ctrl != null) {
+                            fn.requestFocus();
+                            ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
+                          }
+                        }
+                      }
+                    },
+                    child: SingleChildScrollView(
                     controller: _scrollController,
                     padding: EdgeInsets.only(
                       left: 32.0,
                       right: 32.0,
-                      top: 8.0,
+                      top: 4.0,
                       bottom: (MediaQuery.of(context).viewInsets.bottom > 0 || Platform.environment.containsKey('FLUTTER_TEST')) ? 80.0 : 40.0,
                     ),
                     physics: const BouncingScrollPhysics(),
@@ -3588,198 +3922,200 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           },
                         ),
                         
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeInOut,
-                          child: AnimatedOpacity(
-                            duration: const Duration(milliseconds: 200),
-                            opacity: _isMetadataCollapsed ? 0.0 : 1.0,
-                            child: _isMetadataCollapsed
-                                ? const SizedBox.shrink()
-                                : Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: _isMetadataCollapsed ? 0.0 : 1.0,
+                          child: AnimatedAlign(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                            alignment: Alignment.topCenter,
+                            heightFactor: _isMetadataCollapsed ? 0.0 : 1.0,
+                            child: ClipRect(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4.0),
+                                  // Metadata Row (Date, Folder, Category, Options)
+                                  Row(
                                     children: [
-                                      const SizedBox(height: 4.0),
-                                      // Metadata Row (Date, Folder, Category, Options)
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              physics: const BouncingScrollPhysics(),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  // Date & Reminder Button
-                                                  GestureDetector(
-                                                    onTap: _pickReminder,
-                                                    child: Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        Icon(
-                                                          Icons.calendar_today_outlined,
-                                                          size: 14,
-                                                          color: textColor.withValues(alpha: 0.5),
-                                                        ),
-                                                        const SizedBox(width: 4.0),
-                                                        Text(
-                                                          dateStr,
-                                                          style: GoogleFonts.inter(
-                                                            fontSize: 13,
-                                                            fontWeight: FontWeight.w400,
-                                                            color: textColor.withValues(alpha: 0.5),
-                                                          ),
-                                                        ),
-                                                        if (_reminderTime != null) ...[
-                                                          const SizedBox(width: 4.0),
-                                                          Icon(
-                                                            Icons.notifications_active_outlined,
-                                                            size: 14,
-                                                            color: theme.colorScheme.primary,
-                                                          ),
-                                                        ],
-                                                      ],
+                                      Expanded(
+                                        child: SingleChildScrollView(
+                                          scrollDirection: Axis.horizontal,
+                                          physics: const BouncingScrollPhysics(),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              // Date & Reminder Button
+                                              GestureDetector(
+                                                onTap: _pickReminder,
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.calendar_today_outlined,
+                                                      size: 14,
+                                                      color: textColor.withValues(alpha: 0.5),
                                                     ),
-                                                  ),
-                                                  
-                                                  // Separator
-                                                  Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                    child: Text(
-                                                      "•",
-                                                      style: TextStyle(
-                                                        color: textColor.withValues(alpha: 0.3),
+                                                    const SizedBox(width: 4.0),
+                                                    Text(
+                                                      dateStr,
+                                                      style: GoogleFonts.inter(
                                                         fontSize: 13,
+                                                        fontWeight: FontWeight.w400,
+                                                        color: textColor.withValues(alpha: 0.5),
                                                       ),
                                                     ),
-                                                  ),
-                                                  
-                                                  // Folder Button
-                                                  GestureDetector(
-                                                    onTap: _showFolderSelectorDialog,
-                                                    child: Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        SvgPicture.asset(
-                                                          'assets/icons/folder_open_folder.svg',
-                                                          width: 18,
-                                                          height: 18,
-                                                          colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                                                        ),
-                                                        const SizedBox(width: 4.0),
-                                                        ConstrainedBox(
-                                                          constraints: const BoxConstraints(maxWidth: 60),
-                                                          child: Text(
-                                                            currentFolderName,
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.inter(
-                                                              fontSize: 13,
-                                                              fontWeight: FontWeight.w500,
-                                                              color: textColor.withValues(alpha: 0.7),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 2.0),
-                                                        Icon(
-                                                          Icons.keyboard_arrow_down_rounded,
-                                                          size: 14,
-                                                          color: textColor.withValues(alpha: 0.4),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  
-                                                  // Separator
-                                                  Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                    child: Text(
-                                                      "•",
-                                                      style: TextStyle(
-                                                        color: textColor.withValues(alpha: 0.3),
-                                                        fontSize: 13,
+                                                    if (_reminderTime != null) ...[
+                                                      const SizedBox(width: 4.0),
+                                                      Icon(
+                                                        Icons.notifications_active_outlined,
+                                                        size: 14,
+                                                        color: theme.colorScheme.primary,
                                                       ),
-                                                    ),
-                                                  ),
-                                                  
-                                                  // Category Button
-                                                  GestureDetector(
-                                                    onTap: _showCategorySelectorDialog,
-                                                    child: Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        SvgPicture.asset(
-                                                          'assets/icons/category.svg',
-                                                          width: 18,
-                                                          height: 18,
-                                                          colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                                                        ),
-                                                        const SizedBox(width: 4.0),
-                                                        ConstrainedBox(
-                                                          constraints: const BoxConstraints(maxWidth: 80),
-                                                          child: Text(
-                                                            currentCategoryName,
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.inter(
-                                                              fontSize: 13,
-                                                              fontWeight: FontWeight.w500,
-                                                              color: textColor.withValues(alpha: 0.7),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 2.0),
-                                                        Icon(
-                                                          Icons.keyboard_arrow_down_rounded,
-                                                          size: 14,
-                                                          color: textColor.withValues(alpha: 0.4),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
+                                                    ],
+                                                  ],
+                                                ),
                                               ),
-                                            ),
+                                              
+                                              // Separator
+                                              Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                child: Text(
+                                                  "•",
+                                                  style: TextStyle(
+                                                    color: textColor.withValues(alpha: 0.3),
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ),
+                                              
+                                              // Folder Button
+                                              GestureDetector(
+                                                onTap: _showFolderSelectorDialog,
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    SvgPicture.asset(
+                                                      'assets/icons/folder_open_folder.svg',
+                                                      width: 18,
+                                                      height: 18,
+                                                      colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
+                                                    ),
+                                                    const SizedBox(width: 4.0),
+                                                    ConstrainedBox(
+                                                      constraints: const BoxConstraints(maxWidth: 60),
+                                                      child: Text(
+                                                        currentFolderName,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.w500,
+                                                          color: textColor.withValues(alpha: 0.7),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 2.0),
+                                                    Icon(
+                                                      Icons.keyboard_arrow_down_rounded,
+                                                      size: 14,
+                                                      color: textColor.withValues(alpha: 0.4),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              
+                                              // Separator
+                                              Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                child: Text(
+                                                  "•",
+                                                  style: TextStyle(
+                                                    color: textColor.withValues(alpha: 0.3),
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ),
+                                              
+                                              // Category Button
+                                              GestureDetector(
+                                                onTap: _showCategorySelectorDialog,
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    SvgPicture.asset(
+                                                      'assets/icons/category.svg',
+                                                      width: 18,
+                                                      height: 18,
+                                                      colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
+                                                    ),
+                                                    const SizedBox(width: 4.0),
+                                                    ConstrainedBox(
+                                                      constraints: const BoxConstraints(maxWidth: 80),
+                                                      child: Text(
+                                                        currentCategoryName,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.w500,
+                                                          color: textColor.withValues(alpha: 0.7),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 2.0),
+                                                    Icon(
+                                                      Icons.keyboard_arrow_down_rounded,
+                                                      size: 14,
+                                                      color: textColor.withValues(alpha: 0.4),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 8.0),
-                                          // Delete Button
-                                          GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                _showDeletePopup = true;
-                                              });
-                                            },
-                                            child: SvgPicture.asset(
-                                              'assets/icons/circle_ellipsis.svg',
-                                              width: 20,
-                                              height: 20,
-                                              colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (_tags.isNotEmpty) ...[
-                                        const SizedBox(height: 6.0),
-                                        Wrap(
-                                          spacing: 8.0,
-                                          runSpacing: 4.0,
-                                          children: _tags.map((tag) {
-                                            return Chip(
-                                              label: Text("#$tag"),
-                                              labelStyle: GoogleFonts.inter(fontSize: 12, color: textColor),
-                                              backgroundColor: const Color(0xFF222222).withValues(alpha: 0.08),
-                                              onDeleted: () {
-                                                setState(() {
-                                                  _tags.remove(tag);
-                                                  _hasChanges = true;
-                                                });
-                                              },
-                                            );
-                                          }).toList(),
                                         ),
-                                      ],
+                                      ),
+                                      const SizedBox(width: 8.0),
+                                      // Delete Button
+                                      GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _showDeletePopup = true;
+                                          });
+                                        },
+                                        child: SvgPicture.asset(
+                                          'assets/icons/circle_ellipsis.svg',
+                                          width: 20,
+                                          height: 20,
+                                          colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
+                                        ),
+                                      ),
                                     ],
                                   ),
+                                  if (_tags.isNotEmpty) ...[
+                                    const SizedBox(height: 6.0),
+                                    Wrap(
+                                      spacing: 8.0,
+                                      runSpacing: 4.0,
+                                      children: _tags.map((tag) {
+                                        return Chip(
+                                          label: Text("#$tag"),
+                                          labelStyle: GoogleFonts.inter(fontSize: 12, color: textColor),
+                                          backgroundColor: const Color(0xFF222222).withValues(alpha: 0.08),
+                                          onDeleted: () {
+                                            setState(() {
+                                              _tags.remove(tag);
+                                              _hasChanges = true;
+                                            });
+                                          },
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 6.0),
@@ -3808,6 +4144,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           ),
                       ],
                     ),
+                    ),
                   ),
                 ),
               ],
@@ -3821,102 +4158,103 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 right: 24,
                 child: Center(
                   child: Container(
-                    width: 354,
+                    constraints: const BoxConstraints(maxWidth: 354),
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
                     height: 60,
                     decoration: BoxDecoration(
                       color: const Color(0xFF333333),
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Left chevron play 1
-                        Positioned(
-                          left: 18,
-                          top: 20,
-                          width: 20,
-                          height: 20,
-                          child: GestureDetector(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: Row(
+                        children: [
+                          // Left chevron play 1
+                          GestureDetector(
                             onTap: () {
                               _pageController.previousPage(
                                 duration: const Duration(milliseconds: 300),
                                 curve: Curves.easeInOut,
                               );
                             },
-                            child: Stack(
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/icons/play_1.svg',
-                                  width: 20,
-                                  height: 20,
-                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                ),
-                                const Positioned.fill(
-                                  child: Icon(
-                                    Icons.play_arrow_rounded,
-                                    size: 20,
-                                    color: Colors.transparent,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              alignment: Alignment.center,
+                              color: Colors.transparent,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  SvgPicture.asset(
+                                    'assets/icons/play_1.svg',
+                                    width: 20,
+                                    height: 20,
+                                    colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                                   ),
-                                ),
+                                  const Positioned.fill(
+                                    child: Icon(
+                                      Icons.play_arrow_rounded,
+                                      size: 20,
+                                      color: Colors.transparent,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          
+                          // Sliding PageView
+                          Expanded(
+                            child: PageView(
+                              controller: _pageController,
+                              onPageChanged: (page) {
+                                setState(() {
+                                  _currentPage = page;
+                                });
+                              },
+                              children: [
+                                _buildFigmaPage0(activeStyle),
+                                _buildFigmaPage1(activeStyle),
+                                _buildFigmaPage2(activeStyle),
                               ],
                             ),
                           ),
-                        ),
-                        
-                        // Sliding PageView
-                        Positioned(
-                          left: 50,
-                          right: 50,
-                          top: 0,
-                          bottom: 0,
-                          child: PageView(
-                            controller: _pageController,
-                            onPageChanged: (page) {
-                              setState(() {
-                                _currentPage = page;
-                              });
-                            },
-                            children: [
-                              _buildFigmaPage0(activeStyle),
-                              _buildFigmaPage1(activeStyle),
-                              _buildFigmaPage2(activeStyle),
-                            ],
-                          ),
-                        ),
 
-                        // Right chevron play 2
-                        Positioned(
-                          left: 315,
-                          top: 20,
-                          width: 20,
-                          height: 20,
-                          child: GestureDetector(
+                          // Right chevron play 2
+                          GestureDetector(
                             onTap: () {
                               _pageController.nextPage(
                                 duration: const Duration(milliseconds: 300),
                                 curve: Curves.easeInOut,
                               );
                             },
-                            child: Stack(
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/icons/play_2.svg',
-                                  width: 20,
-                                  height: 20,
-                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                ),
-                                const Positioned.fill(
-                                  child: Icon(
-                                    Icons.play_arrow_rounded,
-                                    size: 20,
-                                    color: Colors.transparent,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              alignment: Alignment.center,
+                              color: Colors.transparent,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  SvgPicture.asset(
+                                    'assets/icons/play_2.svg',
+                                    width: 20,
+                                    height: 20,
+                                    colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                                   ),
-                                ),
-                              ],
+                                  const Positioned.fill(
+                                    child: Icon(
+                                      Icons.play_arrow_rounded,
+                                      size: 20,
+                                      color: Colors.transparent,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -4024,15 +4362,71 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   Widget _buildFigmaPage1(Style activeStyle) {
+    final block = _focusedBlock;
+    final isH1 = block is HeadingBlock && block.level == 1;
+    final isH2 = block is HeadingBlock && block.level == 2;
+    final isH3 = block is HeadingBlock && block.level == 3;
+    final isBullet = block is BulletedListBlock;
+    final isNumber = block is NumberedListBlock;
+    final isCheckbox = block is ChecklistBlock;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildPage1TextButton("H1", () => _insertTextAtCursor('# '), activeStyle.heading == 'h1', tooltip: 'Heading 1'),
-        _buildPage1TextButton("H2", () => _insertTextAtCursor('## '), activeStyle.heading == 'h2', tooltip: 'Heading 2'),
-        _buildPage1TextButton("H3", () => _insertTextAtCursor('### '), activeStyle.heading == 'h3', tooltip: 'Heading 3'),
-        _buildPage1IconButton(Icons.format_list_bulleted_rounded, () => _insertTextAtCursor('- '), activeStyle.listType == 'bullet', tooltip: 'Bullet List'),
-        _buildPage1IconButton(Icons.format_list_numbered_rounded, () => _insertTextAtCursor('1. '), activeStyle.listType == 'number', tooltip: 'Numbered List'),
-        _buildPage1IconButton(Icons.add_task_rounded, () => _insertTextAtCursor('\u2610'), activeStyle.listType == 'checkbox', tooltip: 'Checklist'),
+        _buildPage1TextButton("H1", () {
+          if (block != null) {
+            if (isH1) {
+              _toggleBlockType(block, ParagraphBlock);
+            } else {
+              _toggleBlockType(block, HeadingBlock, headingLevel: 1);
+            }
+          }
+        }, isH1, tooltip: 'Heading 1'),
+        _buildPage1TextButton("H2", () {
+          if (block != null) {
+            if (isH2) {
+              _toggleBlockType(block, ParagraphBlock);
+            } else {
+              _toggleBlockType(block, HeadingBlock, headingLevel: 2);
+            }
+          }
+        }, isH2, tooltip: 'Heading 2'),
+        _buildPage1TextButton("H3", () {
+          if (block != null) {
+            if (isH3) {
+              _toggleBlockType(block, ParagraphBlock);
+            } else {
+              _toggleBlockType(block, HeadingBlock, headingLevel: 3);
+            }
+          }
+        }, isH3, tooltip: 'Heading 3'),
+        _buildPage1IconButton(Icons.format_list_bulleted_rounded, () {
+          if (block != null) {
+            if (isBullet) {
+              _toggleBlockType(block, ParagraphBlock);
+            } else {
+              _toggleBlockType(block, BulletedListBlock);
+            }
+          }
+        }, isBullet, tooltip: 'Bullet List'),
+        _buildPage1IconButton(Icons.format_list_numbered_rounded, () {
+          if (block != null) {
+            if (isNumber) {
+              _toggleBlockType(block, ParagraphBlock);
+            } else {
+              _toggleBlockType(block, NumberedListBlock);
+            }
+          }
+        }, isNumber, tooltip: 'Numbered List'),
+        _buildPage1IconButton(Icons.add_task_rounded, () {
+          if (block != null) {
+            if (isCheckbox) {
+              _toggleBlockType(block, ParagraphBlock);
+            } else {
+              _toggleBlockType(block, ChecklistBlock);
+            }
+          }
+        }, isCheckbox, tooltip: 'Checklist'),
         _buildPage1IconButton(Icons.grid_on_rounded, _showPaperSettingsBottomSheet, false, tooltip: 'Paper Settings'),
       ],
     );
@@ -4064,12 +4458,21 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       message: tooltip,
       child: GestureDetector(
         onTap: onTap,
-        child: Text(
-          text,
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: isActive ? const Color(0xFFFFA322) : Colors.white,
+        child: Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFFFA322).withValues(alpha: 0.15) : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: isActive ? const Color(0xFFFFA322) : Colors.white,
+            ),
           ),
         ),
       ),
@@ -4081,10 +4484,19 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       message: tooltip,
       child: GestureDetector(
         onTap: onTap,
-        child: Icon(
-          icon,
-          size: 20,
-          color: isActive ? const Color(0xFFFFA322) : Colors.white,
+        child: Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFFFA322).withValues(alpha: 0.15) : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: isActive ? const Color(0xFFFFA322) : Colors.white,
+          ),
         ),
       ),
     );
@@ -4411,9 +4823,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => FullScreenImageViewer(imagePath: path),
-              ),
+              buildPageRoute(FullScreenImageViewer(imagePath: path)),
             );
           },
           child: Hero(
@@ -4451,9 +4861,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   void _showFolderSelectorDialog() {
-    showDialog(
+    showBlurredBottomSheet(
       context: context,
-      builder: (context) => FolderSelectorDialog(
+      child: FolderSelectionSheet(
         currentFolderId: _folderId,
         onFolderSelected: (folderId) {
           setState(() {
@@ -4740,6 +5150,36 @@ class ChecklistBlock extends NoteBlock {
     final prefix = isChecked ? '- [x] ' : '- [ ] ';
     final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
     return '$prefix$content';
+  }
+}
+
+class BulletedListBlock extends NoteBlock {
+  final RichTextEditingController controller;
+  final FocusNode focusNode;
+
+  BulletedListBlock({required super.id, String markdown = ""})
+      : controller = RichTextEditingController(markdown: markdown),
+        focusNode = FocusNode();
+
+  @override
+  String toMarkdown() {
+    final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
+    return '- $content';
+  }
+}
+
+class NumberedListBlock extends NoteBlock {
+  final RichTextEditingController controller;
+  final FocusNode focusNode;
+
+  NumberedListBlock({required super.id, String markdown = ""})
+      : controller = RichTextEditingController(markdown: markdown),
+        focusNode = FocusNode();
+
+  @override
+  String toMarkdown() {
+    final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
+    return '1. $content';
   }
 }
 

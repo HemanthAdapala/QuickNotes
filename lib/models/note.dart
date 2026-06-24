@@ -222,7 +222,7 @@ class Note {
     return Note(
       id: map['id'] as String,
       title: map['title'] as String,
-      content: map['content'] as String,
+      content: (map['content'] ?? "") as String,
       isPinned: (map['isPinned'] as int) == 1,
       isFavorite: (map['isFavorite'] ?? 0) as int == 1,
       isArchived: (map['isArchived'] ?? 0) as int == 1,

@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:home_widget/home_widget.dart' as home_widget;
 import '../models/note.dart';
 import '../models/folder.dart';
+import '../models/note_summary.dart';
 import '../services/database_service.dart';
 import '../services/vault_service.dart';
 
@@ -19,6 +20,16 @@ class NotesProvider with ChangeNotifier {
   List<Note> _notes = [];
   List<Folder> _folders = [];
   bool _isLoading = false;
+
+  int _currentPage = 0;
+  bool _hasMoreNotes = true;
+  bool _isPageLoading = false;
+  final Map<int, List<NoteSummary>> _pageCache = {};
+  List<NoteSummary> _notesSummary = [];
+
+  bool get hasMoreNotes => _hasMoreNotes;
+  bool get isPageLoading => _isPageLoading;
+  List<NoteSummary> get notesSummary => _notesSummary;
   String _searchQuery = "";
   Timer? _searchDebouncer;
   SortOption _currentSort = SortOption.newest;
@@ -281,6 +292,130 @@ class NotesProvider with ChangeNotifier {
     return Colors.black.withAlpha(15);
   }
 
+  // Cache folder mappings for folder names
+  Map<String, String> get _folderNameMap {
+    final map = <String, String>{};
+    for (final f in _folders) {
+      map[f.id] = f.name;
+    }
+    return map;
+  }
+
+  // Clear cache and reset pagination
+  void clearPageCache() {
+    _pageCache.clear();
+    _currentPage = 0;
+    _hasMoreNotes = true;
+    _notesSummary = [];
+  }
+
+  // Load next page
+  Future<void> loadNextPage() async {
+    if (_isPageLoading || !_hasMoreNotes) return;
+    _currentPage++;
+    await loadNotesPage();
+  }
+
+  Future<void> loadNotesPage({bool refresh = false}) async {
+    if (refresh) {
+      clearPageCache();
+    }
+    
+    _isPageLoading = true;
+    notifyListeners();
+
+    try {
+      if (_pageCache.containsKey(_currentPage)) {
+        final cached = _pageCache[_currentPage]!;
+        _notesSummary.addAll(cached);
+        _hasMoreNotes = cached.length == 20; // kPageSize
+      } else {
+        final folderMap = _folderNameMap;
+        const limit = 20;
+        final offset = _currentPage * limit;
+        
+        final isDeleted = _currentView == NotesViewType.trash;
+        final isArchived = _currentView == NotesViewType.archive;
+        final isFavorite = _currentView == NotesViewType.favorites;
+        
+        final maps = await _dbService.queryNotesSummaryPaged(
+          folderId: _selectedFolderId,
+          category: (_selectedFolderId == null && _selectedCategory != "All" && _currentView == NotesViewType.feed) ? _selectedCategory : null,
+          isFavorite: isFavorite ? true : null,
+          isArchived: isArchived ? true : (_currentView == NotesViewType.feed ? false : null),
+          isDeleted: isDeleted,
+          limit: limit,
+          offset: offset,
+        );
+        
+        final List<NoteSummary> summaries = [];
+        for (final map in maps) {
+          final isLocked = (map['isLocked'] as int? ?? 0) == 1;
+          Map<String, dynamic> processedMap = Map.from(map);
+          if (isLocked) {
+            if (_isVaultUnlocked) {
+              final titleDec = await VaultService.instance.decryptText(map['title'] as String);
+              final contentDec = await VaultService.instance.decryptText(map['content'] as String? ?? '');
+              processedMap['title'] = titleDec;
+              processedMap['content'] = contentDec;
+            } else {
+              processedMap['title'] = "🔐 Locked Note";
+              processedMap['content'] = "[Unlocked with authentication]";
+            }
+          }
+          final fId = map['folderId'] as String?;
+          final fName = fId != null ? folderMap[fId] : null;
+          final cat = map['category'] as String? ?? 'Uncategorized';
+          final catColor = _getCategoryColorValue(cat);
+          summaries.add(NoteSummary.fromMap(processedMap, folderName: fName, categoryColor: catColor));
+        }
+        
+        _pageCache[_currentPage] = summaries;
+        _notesSummary.addAll(summaries);
+        _hasMoreNotes = summaries.length == limit;
+      }
+    } catch (e) {
+      debugPrint("Error loading notes page: $e");
+    } finally {
+      _isPageLoading = false;
+      notifyListeners();
+    }
+  }
+
+  int? _getCategoryColorValue(String category) {
+    switch (category.toLowerCase()) {
+      case 'personal': return const Color(0xFF78C291).value;
+      case 'work': return const Color(0xFF4A90E2).value;
+      case 'study': return const Color(0xFFA388E8).value;
+      case 'ideas': return const Color(0xFFF5D44A).value;
+      case 'important': return const Color(0xFFE57373).value;
+      case 'unimportant': return const Color(0xFFFF7043).value;
+      case 'uncategorized':
+      default:
+        return null;
+    }
+  }
+
+  Future<Note?> getNoteById(String id) async {
+    try {
+      final note = await _dbService.queryById(id);
+      if (note == null) return null;
+      if (note.isLocked) {
+        if (_isVaultUnlocked) {
+          final titleDec = await VaultService.instance.decryptText(note.title);
+          final contentDec = await VaultService.instance.decryptText(note.content);
+          return note.copyWith(title: titleDec, content: contentDec);
+        } else {
+          return note.copyWith(title: "🔐 Locked Note", content: "[Unlocked with authentication]");
+        }
+      }
+      return note;
+    } catch (e) {
+      debugPrint("Error getting note by id: $e");
+      return null;
+    }
+  }
+
   // Load notes from Database
   Future<void> loadNotes() async {
     _isLoading = true;
@@ -289,6 +424,9 @@ class NotesProvider with ChangeNotifier {
     try {
       // Run habits completion resets
       await _checkAndResetHabits();
+
+      // Refresh paginated summaries
+      await loadNotesPage(refresh: true);
 
       List<Note> rawNotes = [];
       if (_searchQuery.trim().isEmpty) {
@@ -570,20 +708,20 @@ class NotesProvider with ChangeNotifier {
     _currentView = view;
     _selectedTag = "";
     _selectedFolderId = null; // Clear folder when moving to tabs
-    notifyListeners();
+    loadNotes();
   }
 
   // Set Active Category Filter
   void setSelectedCategory(String category) {
     _selectedCategory = category;
     _selectedFolderId = null; // Clear folder filter if selecting category
-    notifyListeners();
+    loadNotes();
   }
 
   // Set Tag Filter
   void setSelectedTag(String tag) {
     _selectedTag = tag;
-    notifyListeners();
+    loadNotes();
   }
 
   // Set Search Query
@@ -600,14 +738,14 @@ class NotesProvider with ChangeNotifier {
   // Set Sorting Option
   void setSortOption(SortOption option) {
     _currentSort = option;
-    notifyListeners();
+    loadNotes();
   }
 
   // --- Folder Operations ---
   void setSelectedFolder(String? folderId) {
     _selectedFolderId = folderId;
     _selectedCategory = "All"; // Reset category to avoid overlapping filters
-    notifyListeners();
+    loadNotes();
   }
 
   Future<void> loadFolders() async {
@@ -636,25 +774,12 @@ class NotesProvider with ChangeNotifier {
 
   Future<void> deleteFolder(String id) async {
     try {
-      // Find raw notes referencing this folder in the database and detach them to prevent data loss
-      final rawNotes = await _dbService.queryAll();
-      for (var rawNote in rawNotes) {
-        if (rawNote.folderId == id) {
-          final updatedRawNote = rawNote.copyWith(clearFolder: true);
-          await _dbService.update(updatedRawNote);
-        }
-      }
-      // Find and detach child folders
-      final childFolders = _folders.where((f) => f.parentId == id).toList();
-      for (var child in childFolders) {
-        final updatedFolder = Folder(
-          id: child.id,
-          name: child.name,
-          parentId: null,
-          createdAt: child.createdAt,
-        );
-        await _dbService.insertFolder(updatedFolder);
-      }
+      // Detach notes referencing this folder in the database to prevent data loss (DB-level optimized)
+      await _dbService.detachNotesFromFolder(id);
+      
+      // Detach child folders referencing this parent folder (DB-level optimized)
+      await _dbService.detachChildFolders(id);
+
       await _dbService.deleteFolder(id);
       if (_selectedFolderId == id) {
         _selectedFolderId = null;
@@ -668,7 +793,7 @@ class NotesProvider with ChangeNotifier {
 
   // --- Habit Checklists Reset Engine ---
   Future<void> _checkAndResetHabits() async {
-    final rawNotes = await _dbService.queryAll();
+    final rawNotes = await _dbService.queryHabits();
     for (int i = 0; i < rawNotes.length; i++) {
       final note = rawNotes[i];
       if (note.isHabit && note.noteType == 'checklist' && note.habitRecurrence != 'none') {

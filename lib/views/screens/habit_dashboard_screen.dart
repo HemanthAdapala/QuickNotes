@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../providers/notes_provider.dart';
 import '../../models/note.dart';
+import '../widgets/tactile_button.dart';
 
 class HabitDashboardScreen extends StatelessWidget {
   final VoidCallback onMenuTap;
@@ -53,82 +54,68 @@ class HabitDashboardScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final provider = Provider.of<NotesProvider>(context);
     final habitNotes = provider.notes.where((n) => n.isHabit).toList();
-    final dateStr = DateFormat('MMM d').format(DateTime.now()).toUpperCase();
     final width = MediaQuery.of(context).size.width;
-    final isDesktop = width > 768;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        leading: isDesktop
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.menu_rounded),
-                onPressed: onMenuTap,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 24.0),
+            // Header Bar
+            Container(
+              height: 38,
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  TactileButton(
+                    onTap: onMenuTap,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.menu_rounded,
+                        color: theme.brightness == Brightness.dark
+                            ? Colors.white
+                            : const Color(0xFF1C1C1E),
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        "Habits",
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.white
+                              : const Color(0xFF1C1C1E),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 38), // spacer to center title
+                ],
               ),
-        title: Text(
-          "QuickNotes",
-          style: GoogleFonts.outfit(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Screen Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Daily Intentions",
-                            style: GoogleFonts.outfit(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "Quiet persistence. These are the small things that hold the larger structure together.",
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: theme.colorScheme.onSurface.withAlpha(150),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      dateStr,
-                      style: GoogleFonts.jetBrainsMono(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Divider(color: Color(0xFFEBEBE8)),
-                const SizedBox(height: 24),
+            ),
+            const SizedBox(height: 24.0),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
 
                 // Bento Grid for Habits
                 if (habitNotes.isEmpty)
@@ -191,6 +178,10 @@ class HabitDashboardScreen extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+            ),
+          ],
         ),
       ),
     );

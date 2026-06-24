@@ -581,6 +581,7 @@ class LivingFloatingActionButton extends StatefulWidget {
   final Widget child;
   final ShapeBorder? shape;
   final double? elevation;
+  final Color? backgroundColor;
 
   const LivingFloatingActionButton({
     super.key,
@@ -588,6 +589,7 @@ class LivingFloatingActionButton extends StatefulWidget {
     required this.child,
     this.shape,
     this.elevation,
+    this.backgroundColor,
   });
 
   @override
@@ -631,6 +633,7 @@ class _LivingFloatingActionButtonState extends State<LivingFloatingActionButton>
         onPressed: _handleTap,
         shape: widget.shape,
         elevation: widget.elevation,
+        backgroundColor: widget.backgroundColor,
         child: widget.child,
       ),
     );

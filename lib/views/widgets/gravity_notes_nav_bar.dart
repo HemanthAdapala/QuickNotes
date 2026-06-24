@@ -28,8 +28,8 @@ class GravityNotesNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double svgW = 354;
-    final double svgH = 83;
+    const double svgW = 354;
+    const double svgH = 83;
     final double screenW = MediaQuery.of(context).size.width;
     final double scale = screenW / svgW;
     final double barH = svgH * scale;

@@ -5,13 +5,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_notes/models/note.dart';
+import 'package:quick_notes/models/note_summary.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
 import 'package:quick_notes/views/screens/home_screen.dart';
 import 'package:quick_notes/views/screens/folder_management_screen.dart';
 import 'package:quick_notes/views/screens/note_editor_screen.dart';
+import 'package:quick_notes/views/screens/settings_screen.dart';
 import 'package:quick_notes/views/widgets/note_card.dart';
 import 'package:quick_notes/views/widgets/rich_text_controller.dart';
 import 'package:quick_notes/views/widgets/home_prompt_view.dart';
+import 'package:quick_notes/views/widgets/tactile_button.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -223,7 +227,7 @@ void main() {
           child: MaterialApp(
             home: Scaffold(
               body: NoteCard(
-                note: note,
+                note: NoteSummary.fromNote(note),
                 onTap: () {},
                 onPinToggle: () => notesProvider.togglePin(note.id),
                 onFavoriteToggle: () {},
@@ -750,7 +754,7 @@ void main() {
       var targetCenter = tester.getCenter(find.byType(ResizableImageWidget).at(1));
 
       // Drag incrementally
-      final steps = 10;
+      const steps = 10;
       for (int i = 1; i <= steps; i++) {
         final point = Offset(
           firstCenter.dx + (targetCenter.dx - firstCenter.dx) * (i / steps),
@@ -996,6 +1000,137 @@ void main() {
       final String firstOfDeck3 = HomePromptView.getRandomPromptForTesting();
       // Verify no consecutive repeat at the boundary
       expect(firstOfDeck3, isNot(equals(deck2.last)));
+    });
+
+    testWidgets('SettingsScreen rendering and interaction test', (WidgetTester tester) async {
+      final notesProvider = NotesProvider();
+      addTearDown(() => notesProvider.dispose());
+      bool backTapped = false;
+      bool themeToggled = false;
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: notesProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: SettingsScreen(
+                isDarkMode: false,
+                onThemeToggle: () {
+                  themeToggled = true;
+                },
+                onMenuTap: () {
+                  backTapped = true;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Verify that title Settings exists
+      expect(find.text('Settings'), findsOneWidget);
+
+      // Verify Olivia Green profile card exists
+      expect(find.text('Olivia Green'), findsNWidgets(2)); // Name + Username
+
+      // Verify Change Password section is present
+      final changePasswordFinder = find.text('Change Password');
+      expect(changePasswordFinder, findsOneWidget);
+
+      // Tap on Change Password to trigger the mock dialog
+      await tester.tap(changePasswordFinder);
+      await tester.pump();
+      
+      // Verify dialog is shown
+      expect(find.text('Password change verification request has been sent to your registered email address.'), findsOneWidget);
+      
+      // Tap Dismiss to close the dialog
+      await tester.tap(find.text('Dismiss'));
+      await tester.pumpAndSettle();
+
+      // Verify toggle switch state toggles theme when clicked
+      final appearanceFinder = find.text('Appearance');
+      expect(appearanceFinder, findsOneWidget);
+
+      // Find the toggle switches (StitchToggleSwitch)
+      final switchFinder = find.byType(StitchToggleSwitch);
+      expect(switchFinder, findsNWidgets(2)); // Appearance and Zen Focus Mode
+
+      // Tap the first switch (Appearance)
+      await tester.tap(switchFinder.first);
+      await tester.pump();
+      expect(themeToggled, isTrue);
+
+      // Tap back button (TactileButton enclosing back chevron)
+      final backButtonFinder = find.descendant(
+        of: find.byType(TactileButton),
+        matching: find.byType(SvgPicture),
+      ).first;
+      expect(backButtonFinder, findsOneWidget);
+      await tester.tap(backButtonFinder);
+      await tester.pump();
+      expect(backTapped, isTrue);
+
+      await tester.pump(const Duration(seconds: 11));
+    });
+
+    testWidgets('WYSIWYG: Bulleted and Numbered list blocks rendering, formatting, and propagation', (WidgetTester tester) async {
+      final textNote = Note(
+        id: 'test_bullet_number_list',
+        title: 'Lists Title',
+        content: '- Item 1\n1. First item\n',
+        tags: [],
+        attachments: [],
+        category: 'Personal',
+        noteType: 'text',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        colorValue: 0,
+      );
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => NotesProvider()),
+          ],
+          child: MaterialApp(
+            home: NoteEditorScreen(note: textNote),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(NoteEditorScreen), findsOneWidget);
+
+      // Verify that BulletedListBlock and NumberedListBlock are rendered
+      // Hint text for List items is "List item"
+      final listFields = find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.decoration?.hintText == 'List item',
+      );
+      expect(listFields, findsNWidgets(2));
+
+      // Tap on the first list field (BulletedListBlock)
+      await tester.tap(listFields.first);
+      await tester.pump();
+
+      // Clear the bullet block text
+      await tester.enterText(listFields.first, '');
+      await tester.pump();
+
+      // Press backspace to escape bullet list mode
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await tester.pumpAndSettle();
+
+      // BulletedListBlock should convert to ParagraphBlock, so hintText changes to empty/placeholder
+      expect(find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.decoration?.hintText == 'List item',
+      ), findsOneWidget); // Only NumberedListBlock remains
+
+      await tester.pump(const Duration(seconds: 11));
     });
   });
 }

@@ -5,6 +5,7 @@ import '../../themes/quick_notes_theme.dart';
 import 'onboarding_screen.dart';
 import 'passcode_lock_screen.dart';
 import 'home_screen.dart';
+import '../../core/animations/page_transitions.dart';
 
 
 
@@ -62,9 +63,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         purpose: LockPurpose.appUnlock,
         onSuccess: () {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (_) => const HomeScreen(),
-            ),
+            buildPageRoute(const HomeScreen()),
           );
         },
       );
@@ -74,13 +73,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 500),
-      ),
+      buildPageRoute(nextScreen),
     );
   }
 

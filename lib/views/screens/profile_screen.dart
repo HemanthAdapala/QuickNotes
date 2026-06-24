@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/tactile_button.dart';
 import '../../themes/quick_notes_theme.dart';
 import '../../providers/notes_provider.dart';
 
@@ -19,101 +23,148 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: QuickNotesTheme.background,
-      appBar: AppBar(
-        backgroundColor: QuickNotesTheme.background,
-        title: const Text("User Profile"),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Profile Header
-              Center(
-                child: Column(
-                  children: [
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        color: QuickNotesTheme.surface,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: QuickNotesTheme.border, width: 2),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 24.0),
+            // Header Bar
+            Container(
+              height: 38,
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  TactileButton(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.of(context).maybePop();
+                    },
+                    child: SizedBox(
+                      width: 38,
+                      height: 38,
+                      child: SvgPicture.asset(
+                        'assets/icons/angle_left.svg',
+                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                        fit: BoxFit.scaleDown,
                       ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.network(
-                        "https://lh3.googleusercontent.com/aida-public/AB6AXuDDDbQZzHFjLe7KbAj3WunCYWwKUAItyNOmSjwEoxaZ0lZwWUGVR10nWRi2_2Qsju87gb_NkMf9lyXW-xL2K5sJWeN7U-fXtKBz1NnoHsEZ_4KEn8XE99nAUeXVp5l6BTaoAN3eL9Gs22HWHjSL4KAWxINtItIJiO7Tay0yEH-jHZKEHqJGRTnHE5nRItgTWXB5OQPuTwfPv5_cQ0y265VWgIPaXiQp8zeMGB_UZKhH3Het-6uFten02P886jXShg1g4C0wA3-XszY",
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.person_outline_rounded,
-                          size: 48,
-                          color: QuickNotesTheme.textSecondary,
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        "User Profile",
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Julian Thorne",
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: QuickNotesTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Pro Member since August 2023",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: QuickNotesTheme.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 40),
-              
-              Text(
-                "STATISTICS",
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Bento Grid for Stats
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.3,
-                children: [
-                  _buildStatTile(context, "TOTAL NOTES", totalNotes.toString(), Icons.note_alt_outlined),
-                  _buildStatTile(context, "FAVORITES", favoriteNotes.toString(), Icons.star_border_rounded),
-                  _buildStatTile(context, "LOCKED NOTES", lockedNotes.toString(), Icons.lock_outline_rounded),
-                  _buildStatTile(context, "ACTIVE HABITS", totalHabits.toString(), Icons.check_circle_outline_rounded),
+                  ),
+                  const SizedBox(width: 38), // spacer to center the title
                 ],
               ),
-              const SizedBox(height: 40),
+            ),
+            const SizedBox(height: 24.0),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile Header
+                      Center(
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 96,
+                              height: 96,
+                              decoration: BoxDecoration(
+                                color: QuickNotesTheme.surface,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: QuickNotesTheme.border, width: 2),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Image.network(
+                                "https://lh3.googleusercontent.com/aida-public/AB6AXuDDDbQZzHFjLe7KbAj3WunCYWwKUAItyNOmSjwEoxaZ0lZwWUGVR10nWRi2_2Qsju87gb_NkMf9lyXW-xL2K5sJWeN7U-fXtKBz1NnoHsEZ_4KEn8XE99nAUeXVp5l6BTaoAN3eL9Gs22HWHjSL4KAWxINtItIJiO7Tay0yEH-jHZKEHqJGRTnHE5nRItgTWXB5OQPuTwfPv5_cQ0y265VWgIPaXiQp8zeMGB_UZKhH3Het-6uFten02P886jXShg1g4C0wA3-XszY",
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Icon(
+                                  Icons.person_outline_rounded,
+                                  size: 48,
+                                  color: QuickNotesTheme.textSecondary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Julian Thorne",
+                              style: theme.textTheme.headlineLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: QuickNotesTheme.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Pro Member since August 2023",
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: QuickNotesTheme.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      
+                      Text(
+                        "STATISTICS",
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
-              Text(
-                "ACCOUNT DETAILS",
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
+                      // Bento Grid for Stats
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.3,
+                        children: [
+                          _buildStatTile(context, "TOTAL NOTES", totalNotes.toString(), Icons.note_alt_outlined),
+                          _buildStatTile(context, "FAVORITES", favoriteNotes.toString(), Icons.star_border_rounded),
+                          _buildStatTile(context, "LOCKED NOTES", lockedNotes.toString(), Icons.lock_outline_rounded),
+                          _buildStatTile(context, "ACTIVE HABITS", totalHabits.toString(), Icons.check_circle_outline_rounded),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
+
+                      Text(
+                        "ACCOUNT DETAILS",
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Simple account details list
+                      _buildDetailRow("Email", "julian.thorne@luxury.com"),
+                      _buildDetailRow("Subscription", "QuickNotes Pro (\$9.99/mo)"),
+                      _buildDetailRow("Next Billing Date", "July 12, 2026"),
+                      _buildDetailRow("Storage Used", "14.2 MB of 10 GB"),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Simple account details list
-              _buildDetailRow("Email", "julian.thorne@luxury.com"),
-              _buildDetailRow("Subscription", "QuickNotes Pro (\$9.99/mo)"),
-              _buildDetailRow("Next Billing Date", "July 12, 2026"),
-              _buildDetailRow("Storage Used", "14.2 MB of 10 GB"),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -23,11 +23,13 @@ import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../providers/notes_provider.dart';
-import '../../models/note.dart';
+import '../../models/note_summary.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/animation_constants.dart';
 import '../../core/animations/animated_list_entrance.dart';
 import '../../core/animations/page_transitions.dart';
+import '../../core/animations/search_route.dart';
+import 'search_screen.dart';
 import '../../core/animations/bottom_sheet_transition.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/living_writing_experience.dart';
@@ -91,6 +93,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   // ── State ─────────────────────────────────────────────────────────────────
   bool _isFabVisible = true;
   final GlobalKey _fabKey = GlobalKey();
+  late ScrollController _scrollController;
 
   // Soft tint on the header area (category accent at ~12% opacity)
   late AnimationController _tintCtrl;
@@ -108,6 +111,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()..addListener(_scrollListener);
 
     _tintCtrl = AnimationController(vsync: this, duration: kDurationNormal);
     _tintAnim = ColorTween(
@@ -116,6 +120,9 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     ).animate(_tintCtrl);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<NotesProvider>(context, listen: false);
+      provider.setSelectedCategory(widget.category);
+      
       final route = ModalRoute.of(context);
       if (route != null) {
         route.animation?.addListener(_onRouteAnim);
@@ -124,6 +131,18 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
         if (mounted) setState(() => _fadeProgress = 1.0);
       }
     });
+  }
+
+  void _scrollListener() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (maxScroll - currentScroll <= 700) {
+      final provider = Provider.of<NotesProvider>(context, listen: false);
+      if (provider.hasMoreNotes && !provider.isPageLoading) {
+        provider.loadNextPage();
+      }
+    }
   }
 
   void _onRouteAnim() {
@@ -146,7 +165,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     super.didChangeDependencies();
     if (!_tintReady) {
       final theme  = Theme.of(context);
-      final isDark = false;
+      const isDark = false;
       final base   = isDark ? theme.scaffoldBackgroundColor : AppColors.background;
       final end    = Color.lerp(base, _accent, isDark ? 0.08 : 0.12)!;
 
@@ -159,17 +178,35 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
 
   @override
   void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
     _tintCtrl.dispose();
     final route = ModalRoute.of(context);
     route?.animation?.removeListener(_onRouteAnim);
     route?.animation?.removeStatusListener(_onRouteStatus);
+    
+    // Reset category selection safely
+    try {
+      Provider.of<NotesProvider>(context, listen: false).setSelectedCategory("All");
+    } catch (_) {}
+    
     super.dispose();
   }
 
   // ── Note tap ───────────────────────────────────────────────────────────────
 
-  void _onNoteTap(Note note, NotesProvider provider) {
-    if (note.isLocked && !provider.isVaultUnlocked) {
+  void _onNoteTap(NoteSummary note, NotesProvider provider) async {
+    final fullNote = await provider.getNoteById(note.id);
+    if (fullNote == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load note details')),
+        );
+      }
+      return;
+    }
+
+    if (fullNote.isLocked && !provider.isVaultUnlocked) {
       showAnimatedBottomSheet(
         context: context,
         shape: const RoundedRectangleBorder(
@@ -180,7 +217,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             final nav  = Navigator.of(context);
             final msng = ScaffoldMessenger.of(context);
             if (await provider.unlockVault(pin)) {
-              if (mounted) nav.push(buildPageRoute(NoteEditorScreen(note: note)));
+              final decryptedNote = await provider.getNoteById(note.id);
+              if (mounted && decryptedNote != null) nav.push(buildPageRoute(NoteEditorScreen(note: decryptedNote)));
             } else {
               if (mounted) {
                 msng
@@ -195,13 +233,13 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
         ),
       );
     } else {
-      Navigator.push(context, buildPageRoute(NoteEditorScreen(note: note)));
+      Navigator.push(context, buildPageRoute(NoteEditorScreen(note: fullNote)));
     }
   }
 
   // ── Options sheet ──────────────────────────────────────────────────────────
 
-  void _showOptions(Note note, NotesProvider provider) {
+  void _showOptions(NoteSummary note, NotesProvider provider) {
     showAnimatedBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -313,7 +351,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
 
   Widget _buildTitleBlock(
     BuildContext context,
-    List<Note> catNotes,
+    List<NoteSummary> catNotes,
     NotesProvider provider,
     bool isDark,
   ) {
@@ -390,53 +428,76 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   //   top gap from title block to first card: 16px
   // ─────────────────────────────────────────────────────────────────────────
 
-  Widget _buildNoteList(List<Note> notes, NotesProvider provider) {
-    return ListView.separated(
-      shrinkWrap:  true,
-      physics:     const NeverScrollableScrollPhysics(),
-      itemCount:   notes.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12), // mockup gap
-      itemBuilder: (_, i) {
+  Widget _buildNoteList(List<NoteSummary> notes, NotesProvider provider, ThemeData theme) {
+    return ListView.builder(
+      controller:  _scrollController,
+      physics:     const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(
+        left:   24,
+        right:  24,
+        top:    0,
+        bottom: 120,
+      ),
+      itemCount:   notes.length + (provider.isPageLoading ? 1 : 0),
+      itemBuilder: (context, i) {
+        if (i == notes.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.0,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          );
+        }
         final note = notes[i];
-        return AnimatedListEntrance(
-          key:   ValueKey(note.id),
-          index: i,
-          child: Dismissible(
-            key:       Key('cat_${note.id}'),
-            direction: DismissDirection.horizontal,
-            background:          _swipeBg(isSecondary: false),
-            secondaryBackground: _swipeBg(isSecondary: true),
-            confirmDismiss: (dir) async {
-              if (dir == DismissDirection.startToEnd) {
-                provider.togglePin(note.id);
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(SnackBar(
-                    content:  Text(note.isPinned ? 'Note unpinned' : 'Note pinned'),
-                    duration: const Duration(seconds: 1),
-                  ));
-              } else {
-                _showOptions(note, provider);
-              }
-              return false;
-            },
-            child: _CategoryNoteCard(
-              note:        note,
-              provider:    provider,
-              onTap:       () => _onNoteTap(note, provider),
-              onPinToggle: () => provider.togglePin(note.id),
-              onDelete:    () {
-                provider.trashNote(note.id);
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(SnackBar(
-                    content: const Text('Note moved to Recycle Bin'),
-                    action:  SnackBarAction(
-                      label:     'UNDO',
-                      onPressed: () => provider.restoreFromTrash(note.id),
-                    ),
-                  ));
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0), // mockup gap
+          child: AnimatedListEntrance(
+            key:   ValueKey(note.id),
+            index: i,
+            child: Dismissible(
+              key:       Key('cat_${note.id}'),
+              direction: DismissDirection.horizontal,
+              background:          _swipeBg(isSecondary: false),
+              secondaryBackground: _swipeBg(isSecondary: true),
+              confirmDismiss: (dir) async {
+                if (dir == DismissDirection.startToEnd) {
+                  provider.togglePin(note.id);
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(
+                      content:  Text(note.isPinned ? 'Note unpinned' : 'Note pinned'),
+                      duration: const Duration(seconds: 1),
+                    ));
+                } else {
+                  _showOptions(note, provider);
+                }
+                return false;
               },
+              child: _CategoryNoteCard(
+                note:        note,
+                provider:    provider,
+                onTap:       () => _onNoteTap(note, provider),
+                onPinToggle: () => provider.togglePin(note.id),
+                onDelete:    () {
+                  provider.trashNote(note.id);
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(
+                      content: const Text('Note moved to Recycle Bin'),
+                      action:  SnackBarAction(
+                        label:     'UNDO',
+                        onPressed: () => provider.restoreFromTrash(note.id),
+                      ),
+                    ));
+                },
+              ),
             ),
           ),
         );
@@ -574,12 +635,12 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   @override
   Widget build(BuildContext context) {
     final theme    = Theme.of(context);
-    final isDark   = false;
+    const isDark   = false;
     final provider = Provider.of<NotesProvider>(context);
 
     // All active notes belonging to this category
-    final catNotes = provider.allActiveNotes
-        .where((n) => n.category == widget.category)
+    final catNotes = provider.notesSummary
+        .where((n) => n.categoryName == widget.category)
         .toList();
 
     // Sort: pinned first, then newest
@@ -606,10 +667,10 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
           child: LivingFloatingActionButton(
             key:             _fabKey,
             backgroundColor: AppColors.amber,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(16)),
               side: BorderSide(
-                color: isDark ? const Color(0xFFFAF8F5) : AppColors.ink,
+                color: isDark ? Color(0xFFFAF8F5) : AppColors.ink,
                 width: 1.5,
               ),
             ),
@@ -675,7 +736,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                               width: 38, height: 38,
                               child: SvgPicture.asset(
                                 'assets/icons/angle_left.svg',
-                                colorFilter: ColorFilter.mode(
+                                colorFilter: const ColorFilter.mode(
                                   isDark ? Colors.white : AppColors.ink,
                                   BlendMode.srcIn,
                                 ),
@@ -684,12 +745,24 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                             ),
                           ),
                           const Spacer(),
-                          SizedBox(
-                            width: 38, height: 38,
-                            child: Icon(
-                              Icons.search_rounded,
-                              size:  24,
-                              color: isDark ? Colors.white : AppColors.ink,
+                          // Search icon — opens SearchScreen pre-scoped to this category
+                          TactileButton(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(context).push(SearchRoute(
+                                builder: (_) => SearchScreen(
+                                  initialScope: 'notes',
+                                  presetCategory: widget.category,
+                                ),
+                              ));
+                            },
+                            child: const SizedBox(
+                              width: 38, height: 38,
+                              child: Icon(
+                                Icons.search_rounded,
+                                size:  24,
+                                color: isDark ? Colors.white : AppColors.ink,
+                              ),
                             ),
                           ),
                         ],
@@ -721,20 +794,11 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                             child: _buildEmptyState(context, isDark),
                           ),
                         )
-                      : SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.only(
-                            left:   24,
-                            right:  24,
-                            top:    0,
-                            bottom: 120,
-                          ),
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 720),
-                              child: _buildNoteList(catNotes, provider),
-                            ),
+                      : Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 720),
+                            child: _buildNoteList(catNotes, provider, theme),
                           ),
                         ),
                 ),
@@ -781,7 +845,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CategoryNoteCard extends StatefulWidget {
-  final Note         note;
+  final NoteSummary  note;
   final NotesProvider provider;
   final VoidCallback onTap;
   final VoidCallback onPinToggle;
@@ -821,11 +885,7 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
     final cardColor = NotesProvider.getNoteColor(widget.note.colorValue, context);
     final date      = DateFormat('MMM d, yyyy').format(widget.note.updatedAt);
 
-    // Resolve folder name for the badge chip
-    final folder = widget.provider.folders
-        .where((f) => f.id == widget.note.folderId)
-        .toList();
-    final folderName = folder.isNotEmpty ? folder.first.name.toUpperCase() : null;
+    final folderName = widget.note.folderName?.toUpperCase();
 
     // Pill badge background: card color blended toward ink (~20% darker)
     final pillBg = Color.lerp(

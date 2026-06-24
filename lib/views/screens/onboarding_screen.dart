@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../themes/quick_notes_theme.dart';
 import 'home_screen.dart';
+import '../../core/animations/page_transitions.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -37,14 +38,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await _secureStorage.write(key: 'has_completed_onboarding', value: 'true');
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const HomeScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 500),
-      ),
+      buildPageRoute(const HomeScreen()),
     );
   }
 

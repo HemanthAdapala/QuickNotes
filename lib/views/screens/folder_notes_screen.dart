@@ -21,12 +21,14 @@ import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../providers/notes_provider.dart';
-import '../../models/note.dart';
+import '../../models/note_summary.dart';
 import '../../models/folder.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/animation_constants.dart';
 import '../../core/animations/animated_list_entrance.dart';
 import '../../core/animations/page_transitions.dart';
+import '../../core/animations/search_route.dart';
+import 'search_screen.dart';
 import '../../core/animations/bottom_sheet_transition.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/living_writing_experience.dart';
@@ -93,6 +95,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
   String _activeFilter = 'All'; // 'All' | 'Pinned' | 'Checklists'
   bool   _isFabVisible = true;
   final  GlobalKey _fabKey = GlobalKey();
+  late   ScrollController _scrollController;
 
   // Animated soft tint on the header (folder accent colour at ~15 % opacity)
   late AnimationController _tintCtrl;
@@ -107,6 +110,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()..addListener(_scrollListener);
 
     _tintCtrl = AnimationController(vsync: this, duration: kDurationNormal);
     _tintAnim = ColorTween(
@@ -115,6 +119,9 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
     ).animate(_tintCtrl);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<NotesProvider>(context, listen: false);
+      provider.setSelectedFolder(widget.folder.id);
+      
       final route = ModalRoute.of(context);
       if (route != null) {
         route.animation?.addListener(_onRouteAnim);
@@ -123,6 +130,18 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
         if (mounted) setState(() => _fadeProgress = 1.0);
       }
     });
+  }
+
+  void _scrollListener() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (maxScroll - currentScroll <= 700) {
+      final provider = Provider.of<NotesProvider>(context, listen: false);
+      if (provider.hasMoreNotes && !provider.isPageLoading) {
+        provider.loadNextPage();
+      }
+    }
   }
 
   void _onRouteAnim() {
@@ -145,7 +164,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
     super.didChangeDependencies();
     if (!_tintReady) {
       final theme   = Theme.of(context);
-      final isDark  = false;
+      const isDark  = false;
       final provider = Provider.of<NotesProvider>(context, listen: false);
       final accent  = _folderAccentColor(provider);
       final base    = isDark ? theme.scaffoldBackgroundColor : AppColors.background;
@@ -160,10 +179,18 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
 
   @override
   void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
     _tintCtrl.dispose();
     final route = ModalRoute.of(context);
     route?.animation?.removeListener(_onRouteAnim);
     route?.animation?.removeStatusListener(_onRouteStatus);
+    
+    // Reset folder selection safely
+    try {
+      Provider.of<NotesProvider>(context, listen: false).setSelectedFolder(null);
+    } catch (_) {}
+    
     super.dispose();
   }
 
@@ -177,8 +204,18 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
 
   // ── Note tap (handles locked vault) ───────────────────────────────────────
 
-  void _onNoteTap(Note note, NotesProvider provider) {
-    if (note.isLocked && !provider.isVaultUnlocked) {
+  void _onNoteTap(NoteSummary note, NotesProvider provider) async {
+    final fullNote = await provider.getNoteById(note.id);
+    if (fullNote == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load note details')),
+        );
+      }
+      return;
+    }
+
+    if (fullNote.isLocked && !provider.isVaultUnlocked) {
       showAnimatedBottomSheet(
         context: context,
         shape: const RoundedRectangleBorder(
@@ -186,11 +223,11 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
         ),
         child: PinLockSheet(
           onPinSubmitted: (pin) async {
-            // Capture before async gap
             final nav  = Navigator.of(context);
             final msng = ScaffoldMessenger.of(context);
             if (await provider.unlockVault(pin)) {
-              if (mounted) nav.push(buildPageRoute(NoteEditorScreen(note: note)));
+              final decryptedNote = await provider.getNoteById(note.id);
+              if (mounted && decryptedNote != null) nav.push(buildPageRoute(NoteEditorScreen(note: decryptedNote)));
             } else {
               if (mounted) {
                 msng
@@ -205,7 +242,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
         ),
       );
     } else {
-      Navigator.push(context, buildPageRoute(NoteEditorScreen(note: note)));
+      Navigator.push(context, buildPageRoute(NoteEditorScreen(note: fullNote)));
     }
   }
 
@@ -213,7 +250,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
 
   Widget _swipeBg({required bool isSecondary}) {
     final theme  = Theme.of(context);
-    final isDark = false;
+    const isDark = false;
     return Container(
       decoration: BoxDecoration(
         color: isSecondary
@@ -237,7 +274,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
 
   // ── Options bottom sheet ───────────────────────────────────────────────────
 
-  void _showOptions(Note note, NotesProvider provider) {
+  void _showOptions(NoteSummary note, NotesProvider provider) {
     showAnimatedBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -253,7 +290,6 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                 child: Text(
                   note.title.isNotEmpty ? note.title : 'Untitled Note',
-                  // Section title — Outfit Bold (project-wide bottom-sheet pattern)
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.bold,
                     fontSize:   16,
@@ -407,52 +443,75 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
   //   staggered entrance: AnimatedListEntrance → fade + translateY 12→0, 40ms/card
   // ─────────────────────────────────────────────────────────────────────────
 
-  Widget _buildNoteList(List<Note> notes, NotesProvider provider) {
-    return ListView.separated(
-      shrinkWrap:  true,
-      physics:     const NeverScrollableScrollPhysics(),
-      itemCount:   notes.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16), // Figma gap: 16px
-      itemBuilder: (_, i) {
+  Widget _buildNoteList(List<NoteSummary> notes, NotesProvider provider, ThemeData theme) {
+    return ListView.builder(
+      controller:  _scrollController,
+      physics:     const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(
+        left:   24,  // Figma x:24
+        right:  24,
+        top:    0,
+        bottom: 120, // clearance for FAB
+      ),
+      itemCount:   notes.length + (provider.isPageLoading ? 1 : 0),
+      itemBuilder: (context, i) {
+        if (i == notes.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.0,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          );
+        }
         final note = notes[i];
-        return AnimatedListEntrance(
-          key:   ValueKey('${note.id}_$_activeFilter'),
-          index: i,
-          child: Dismissible(
-            key:       Key('fn_${note.id}'),
-            direction: DismissDirection.horizontal,
-            background:          _swipeBg(isSecondary: false),
-            secondaryBackground: _swipeBg(isSecondary: true),
-            confirmDismiss: (dir) async {
-              if (dir == DismissDirection.startToEnd) {
-                provider.togglePin(note.id);
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(SnackBar(
-                    content:  Text(note.isPinned ? 'Note unpinned' : 'Note pinned'),
-                    duration: const Duration(seconds: 1),
-                  ));
-              } else {
-                _showOptions(note, provider);
-              }
-              return false;
-            },
-            child: _FigmaFolderCard(
-              note:        note,
-              onTap:       () => _onNoteTap(note, provider),
-              onPinToggle: () => provider.togglePin(note.id),
-              onDelete:    () {
-                provider.trashNote(note.id);
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(SnackBar(
-                    content: const Text('Note moved to Recycle Bin'),
-                    action:  SnackBarAction(
-                      label:     'UNDO',
-                      onPressed: () => provider.restoreFromTrash(note.id),
-                    ),
-                  ));
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16.0), // Figma gap: 16px
+          child: AnimatedListEntrance(
+            key:   ValueKey('${note.id}_$_activeFilter'),
+            index: i,
+            child: Dismissible(
+              key:       Key('fn_${note.id}'),
+              direction: DismissDirection.horizontal,
+              background:          _swipeBg(isSecondary: false),
+              secondaryBackground: _swipeBg(isSecondary: true),
+              confirmDismiss: (dir) async {
+                if (dir == DismissDirection.startToEnd) {
+                  provider.togglePin(note.id);
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(
+                      content:  Text(note.isPinned ? 'Note unpinned' : 'Note pinned'),
+                      duration: const Duration(seconds: 1),
+                    ));
+                } else {
+                  _showOptions(note, provider);
+                }
+                return false;
               },
+              child: _FigmaFolderCard(
+                note:        note,
+                onTap:       () => _onNoteTap(note, provider),
+                onPinToggle: () => provider.togglePin(note.id),
+                onDelete:    () {
+                  provider.trashNote(note.id);
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(
+                      content: const Text('Note moved to Recycle Bin'),
+                      action:  SnackBarAction(
+                        label:     'UNDO',
+                        onPressed: () => provider.restoreFromTrash(note.id),
+                      ),
+                    ));
+                },
+              ),
             ),
           ),
         );
@@ -498,10 +557,10 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
   @override
   Widget build(BuildContext context) {
     final theme    = Theme.of(context);
-    final isDark   = false;
+    const isDark   = false;
     final provider = Provider.of<NotesProvider>(context);
 
-    final allFolderNotes = provider.notes
+    final allFolderNotes = provider.notesSummary
         .where((n) => n.folderId == widget.folder.id && !n.isDeleted)
         .toList();
 
@@ -531,10 +590,10 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
           child: LivingFloatingActionButton(
             key:             _fabKey,
             backgroundColor: AppColors.amber, // Figma: FAB fill amber #F5A623
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(16)),
               side: BorderSide(
-                color: isDark ? const Color(0xFFFAF8F5) : AppColors.ink,
+                color: isDark ? Color(0xFFFAF8F5) : AppColors.ink,
                 width: 1.5,
               ),
             ),
@@ -607,7 +666,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
                                   width: 38, height: 38,
                                   child: SvgPicture.asset(
                                     'assets/icons/angle_left.svg',
-                                    colorFilter: ColorFilter.mode(
+                                    colorFilter: const ColorFilter.mode(
                                       isDark ? Colors.white : AppColors.ink,
                                       BlendMode.srcIn,
                                     ),
@@ -616,13 +675,24 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
                                 ),
                               ),
                               const Spacer(),
-                              // Search icon (Figma Header Bar SVG contains search icon)
-                              SizedBox(
-                                width: 38, height: 38,
-                                child: Icon(
-                                  Icons.search_rounded,
-                                  size:  24,
-                                  color: isDark ? Colors.white : AppColors.ink,
+                              // Search icon — opens SearchScreen pre-scoped to this folder
+                              TactileButton(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.of(context).push(SearchRoute(
+                                    builder: (_) => SearchScreen(
+                                      initialScope: 'notes',
+                                      presetFolder: widget.folder.id,
+                                    ),
+                                  ));
+                                },
+                                child: const SizedBox(
+                                  width: 38, height: 38,
+                                  child: Icon(
+                                    Icons.search_rounded,
+                                    size:  24,
+                                    color: isDark ? Colors.white : AppColors.ink,
+                                  ),
                                 ),
                               ),
                             ],
@@ -690,20 +760,11 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
                   ignoring: _fadeProgress < 0.5,
                   child: displayed.isEmpty
                       ? _buildEmptyState()
-                      : SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.only(
-                            left:   24,  // Figma x:24
-                            right:  24,
-                            top:    0,
-                            bottom: 120, // clearance for FAB
-                          ),
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 720),
-                              child: _buildNoteList(displayed, provider),
-                            ),
+                      : Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 720),
+                            child: _buildNoteList(displayed, provider, theme),
                           ),
                         ),
                 ),
@@ -756,7 +817,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _FigmaFolderCard extends StatefulWidget {
-  final Note         note;
+  final NoteSummary  note;
   final VoidCallback onTap;
   final VoidCallback onPinToggle;
   final VoidCallback onDelete;

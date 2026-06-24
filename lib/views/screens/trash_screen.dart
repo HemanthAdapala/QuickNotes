@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../widgets/tactile_button.dart';
 import '../../themes/quick_notes_theme.dart';
 import '../../providers/notes_provider.dart';
 import '../../models/note.dart';
@@ -19,61 +21,103 @@ class TrashScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: QuickNotesTheme.background,
-      appBar: AppBar(
-        backgroundColor: QuickNotesTheme.background,
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded),
-          onPressed: onMenuTap,
-        ),
-        title: Text(
-          "Recycle Bin",
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          Consumer<NotesProvider>(
-            builder: (context, provider, child) {
-              final trashNotes = provider.trashNotes; // Double check
-              if (trashNotes.isEmpty) return const SizedBox.shrink();
-              return TextButton.icon(
-                onPressed: () => _confirmEmptyTrash(context, provider, trashNotes),
-                icon: const Icon(Icons.delete_sweep_rounded, size: 18, color: Colors.red),
-                label: const Text(
-                  "EMPTY",
-                  style: TextStyle(color: Colors.red, fontSize: 12),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Consumer<NotesProvider>(
-        builder: (context, provider, child) {
-          // Wait, the notes list is filtered inside the provider based on currentView.
-          // Since we might be inside TrashScreen but the provider's active view isn't trash,
-          // let's fetch all notes directly from the provider and filter isTrash manually!
-          // This is extremely safe and doesn't require modifying active shell state.
-          final trashNotes = provider.trashNotes;
-          
-          if (trashNotes.isEmpty) {
-            return const Center(
-              child: EmptyState(
-                title: "Trash is Empty",
-                subtitle: "Notes you delete will appear here before being permanently purged.",
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 24.0),
+            // Header Bar
+            Container(
+              height: 38,
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  TactileButton(
+                    onTap: onMenuTap,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.menu_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        "Recycle Bin",
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Consumer<NotesProvider>(
+                    builder: (context, provider, child) {
+                      final trashNotes = provider.trashNotes;
+                      if (trashNotes.isEmpty) return const SizedBox(width: 38);
+                      return TactileButton(
+                        onTap: () => _confirmEmptyTrash(context, provider, trashNotes),
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.delete_sweep_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-            );
-          }
+            ),
+            const SizedBox(height: 24.0),
+            Expanded(
+              child: Consumer<NotesProvider>(
+                builder: (context, provider, child) {
+                  // Wait, the notes list is filtered inside the provider based on currentView.
+                  // Since we might be inside TrashScreen but the provider's active view isn't trash,
+                  // let's fetch all notes directly from the provider and filter isTrash manually!
+                  // This is extremely safe and doesn't require modifying active shell state.
+                  final trashNotes = provider.trashNotes;
+                  
+                  if (trashNotes.isEmpty) {
+                    return const Center(
+                      child: EmptyState(
+                        title: "Trash is Empty",
+                        subtitle: "Notes you delete will appear here before being permanently purged.",
+                      ),
+                    );
+                  }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: trashNotes.length,
-            itemBuilder: (context, index) {
-              final note = trashNotes[index];
-              return _buildTrashCard(context, provider, note);
-            },
-          );
-        },
+                  return ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                    itemCount: trashNotes.length,
+                    itemBuilder: (context, index) {
+                      final note = trashNotes[index];
+                      return _buildTrashCard(context, provider, note);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

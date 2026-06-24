@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/tactile_button.dart';
 import '../../themes/quick_notes_theme.dart';
 
 class AppearanceScreen extends StatefulWidget {
@@ -43,156 +47,203 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
 
     return Scaffold(
       backgroundColor: QuickNotesTheme.background,
-      appBar: AppBar(
-        backgroundColor: QuickNotesTheme.background,
-        title: const Text("Appearance"),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionTitle("THEME STYLE"),
-              const SizedBox(height: 12),
-              
-              // Obsidian Dark display tile (Non-toggleable premium default)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: QuickNotesTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: QuickNotesTheme.accent.withAlpha(50), width: 1.5),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: const BoxDecoration(
-                        color: QuickNotesTheme.background,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.circle, color: QuickNotesTheme.accent, size: 12),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 24.0),
+            // Header Bar
+            Container(
+              height: 38,
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  TactileButton(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.of(context).maybePop();
+                    },
+                    child: SizedBox(
+                      width: 38,
+                      height: 38,
+                      child: SvgPicture.asset(
+                        'assets/icons/angle_left.svg',
+                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                        fit: BoxFit.scaleDown,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        "Appearance",
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 38), // spacer to center the title
+                ],
+              ),
+            ),
+            const SizedBox(height: 24.0),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle("THEME STYLE"),
+                      const SizedBox(height: 12),
+                      
+                      // Obsidian Dark display tile (Non-toggleable premium default)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: QuickNotesTheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: QuickNotesTheme.accent.withAlpha(50), width: 1.5),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: const BoxDecoration(
+                                color: QuickNotesTheme.background,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Icon(Icons.circle, color: QuickNotesTheme.accent, size: 12),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Obsidian Night (Default)",
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: QuickNotesTheme.textPrimary),
+                                  ),
+                                  Text(
+                                    "Luxury machined dark aluminum canvas",
+                                    style: TextStyle(fontSize: 12, color: QuickNotesTheme.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.check_circle_rounded, color: QuickNotesTheme.accent),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      _buildSectionTitle("LAYOUT DENSITY"),
+                      const SizedBox(height: 12),
+
+                      Row(
                         children: [
-                          Text(
-                            "Obsidian Night (Default)",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: QuickNotesTheme.textPrimary),
+                          Expanded(
+                            child: _buildChoiceCard(
+                              title: "Bento Grid",
+                              description: "Masonry card view",
+                              selected: _layoutDensity == "grid",
+                              icon: Icons.dashboard_outlined,
+                              onTap: () {
+                                setState(() {
+                                  _layoutDensity = "grid";
+                                });
+                                _saveSetting('layout_density', 'grid');
+                              },
+                            ),
                           ),
-                          Text(
-                            "Luxury machined dark aluminum canvas",
-                            style: TextStyle(fontSize: 12, color: QuickNotesTheme.textSecondary),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildChoiceCard(
+                              title: "Quiet List",
+                              description: "High visual density",
+                              selected: _layoutDensity == "list",
+                              icon: Icons.view_headline_rounded,
+                              onTap: () {
+                                setState(() {
+                                  _layoutDensity = "list";
+                                });
+                                _saveSetting('layout_density', 'list');
+                              },
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                    const Icon(Icons.check_circle_rounded, color: QuickNotesTheme.accent),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
+                      const SizedBox(height: 32),
 
-              _buildSectionTitle("LAYOUT DENSITY"),
-              const SizedBox(height: 12),
+                      _buildSectionTitle("TYPOGRAPHY SCALE"),
+                      const SizedBox(height: 12),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildChoiceCard(
-                      title: "Bento Grid",
-                      description: "Masonry card view",
-                      selected: _layoutDensity == "grid",
-                      icon: Icons.dashboard_outlined,
-                      onTap: () {
-                        setState(() {
-                          _layoutDensity = "grid";
-                        });
-                        _saveSetting('layout_density', 'grid');
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildChoiceCard(
-                      title: "Quiet List",
-                      description: "High visual density",
-                      selected: _layoutDensity == "list",
-                      icon: Icons.view_headline_rounded,
-                      onTap: () {
-                        setState(() {
-                          _layoutDensity = "list";
-                        });
-                        _saveSetting('layout_density', 'list');
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: QuickNotesTheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: QuickNotesTheme.border),
+                        ),
+                        child: Column(
+                          children: [
+                            Slider(
+                              value: _fontSizeScale,
+                              min: 0.8,
+                              max: 1.2,
+                              divisions: 2,
+                              activeColor: QuickNotesTheme.accent,
+                              inactiveColor: QuickNotesTheme.border,
+                              onChanged: (val) {
+                                setState(() {
+                                  _fontSizeScale = val;
+                                });
+                                _saveSetting('font_scale', val.toString());
+                              },
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("Compact", style: theme.textTheme.bodySmall),
+                                  Text("Regular", style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold)),
+                                  Text("Large", style: theme.textTheme.bodySmall),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
 
-              _buildSectionTitle("TYPOGRAPHY SCALE"),
-              const SizedBox(height: 12),
+                      _buildSectionTitle("ACCENT COLOR"),
+                      const SizedBox(height: 12),
 
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: QuickNotesTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: QuickNotesTheme.border),
-                ),
-                child: Column(
-                  children: [
-                    Slider(
-                      value: _fontSizeScale,
-                      min: 0.8,
-                      max: 1.2,
-                      divisions: 2,
-                      activeColor: QuickNotesTheme.accent,
-                      inactiveColor: QuickNotesTheme.border,
-                      onChanged: (val) {
-                        setState(() {
-                          _fontSizeScale = val;
-                        });
-                        _saveSetting('font_scale', val.toString());
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          Text("Compact", style: theme.textTheme.bodySmall),
-                          Text("Regular", style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold)),
-                          Text("Large", style: theme.textTheme.bodySmall),
+                          _buildAccentOption("yellow", QuickNotesTheme.accent, "Chartreuse"),
+                          _buildAccentOption("white", Colors.white, "White"),
+                          _buildAccentOption("gray", Colors.grey, "Muted"),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 32),
-
-              _buildSectionTitle("ACCENT COLOR"),
-              const SizedBox(height: 12),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildAccentOption("yellow", QuickNotesTheme.accent, "Chartreuse"),
-                  _buildAccentOption("white", Colors.white, "White"),
-                  _buildAccentOption("gray", Colors.grey, "Muted"),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

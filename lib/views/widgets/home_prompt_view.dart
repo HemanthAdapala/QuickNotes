@@ -249,11 +249,11 @@ class _HomePromptViewState extends State<HomePromptView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (!widget.interactive) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 3.0),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 3.0),
                       child: _BlinkingCaret(
                         height: 22.0,
-                        color: const Color(0xFFFFA322),
+                        color: Color(0xFFFFA322),
                       ),
                     ),
                     const SizedBox(width: 8.0),

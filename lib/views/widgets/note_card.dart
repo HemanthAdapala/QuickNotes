@@ -1,11 +1,8 @@
-import 'dart:io';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../../models/note.dart';
-import '../../models/folder.dart';
+import '../../models/note_summary.dart';
 import '../../providers/notes_provider.dart';
 import 'package:flutter/services.dart';
 import 'living_writing_experience.dart';
@@ -15,10 +12,8 @@ import '../../core/animations/animation_constants.dart';
 import '../../core/animations/dialog_transition.dart';
 import '../../themes/app_theme.dart';
 
-
-
 class NoteCard extends StatefulWidget {
-  final Note note;
+  final NoteSummary note;
   final VoidCallback onTap;
   final VoidCallback onPinToggle;
   final VoidCallback onFavoriteToggle;
@@ -106,36 +101,6 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
     widget.onPinToggle();
   }
 
-  String? _getFirstImagePath(Note note) {
-    // 1. Look in note.attachments for image
-    final Map<String, dynamic> firstImage = note.attachments.firstWhere(
-      (a) => a['type'] == 'image',
-      orElse: () => {},
-    );
-    if (firstImage.isNotEmpty && firstImage['path'] != null) {
-      return firstImage['path'] as String;
-    }
-    // 2. Parse inline image markdown syntax: ![description](url)
-    final regExp = RegExp(r'!\[.*?\]\((.*?)\)');
-    final match = regExp.firstMatch(note.content);
-    if (match != null) {
-      String path = match.group(1) ?? '';
-      if (path.startsWith('file://')) {
-        try {
-          return Uri.parse(path).toFilePath();
-        } catch (_) {
-          String p = path.substring(7);
-          if (Platform.isWindows && p.startsWith('/')) {
-            p = p.substring(1);
-          }
-          return p;
-        }
-      }
-      return path;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -144,19 +109,9 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
     final cardColor = NotesProvider.getNoteColor(widget.note.colorValue, context);
     final textColor = isDark ? Colors.white70 : AppColors.ink.withOpacity(0.8);
     final titleColor = isDark ? Colors.white : AppColors.ink;
-    
-    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-    final folderList = notesProvider.folders.where((f) => f.id == widget.note.folderId).toList();
-    final Folder? folder = folderList.isNotEmpty ? folderList.first : null;
 
     // Format timestamp
     final formattedDate = DateFormat('MMM d, h:mm a').format(widget.note.updatedAt);
-
-    // Extract image attachment path (from attachments or inline markdown)
-    final String? imagePath = _getFirstImagePath(widget.note);
-
-    // Extract voice attachment presence
-    final bool hasVoice = widget.note.attachments.any((a) => a['type'] == 'voice');
 
     if (_isDeleting) {
       final double progress = _deleteAnimation.value;
@@ -176,7 +131,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
               angle: angle,
               child: Transform.scale(
                 scale: scale,
-                child: _buildCardContent(context, theme, cardColor, textColor, titleColor, folder, formattedDate, imagePath, hasVoice),
+                child: _buildCardContent(context, theme, cardColor, textColor, titleColor, widget.note.folderName, formattedDate),
               ),
             ),
           ),
@@ -209,7 +164,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                     : _scaleAnimation.value;
                 return Transform.scale(
                   scale: currentScale,
-                  child: _buildCardContent(context, theme, cardColor, textColor, titleColor, folder, formattedDate, imagePath, hasVoice),
+                  child: _buildCardContent(context, theme, cardColor, textColor, titleColor, widget.note.folderName, formattedDate),
                 );
               },
             ),
@@ -225,10 +180,8 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
     Color cardColor,
     Color textColor,
     Color titleColor,
-    Folder? folder,
+    String? folderName,
     String formattedDate,
-    String? imagePath,
-    bool hasVoice,
   ) {
     final isDark = theme.brightness == Brightness.dark;
     
@@ -273,16 +226,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Render image thumbnail preview or subtle gradient cover at the top of the card
-          if (imagePath != null && !widget.note.isLocked)
-            Image.file(
-              File(imagePath),
-              fit: BoxFit.cover,
-              height: 120,
-              width: double.infinity,
-              errorBuilder: (context, error, stackTrace) => const SizedBox(),
-            )
-          else if (widget.note.colorValue > 0 && !widget.note.isLocked)
+          if (widget.note.colorValue > 0 && !widget.note.isLocked)
             Container(
               height: 60,
               width: double.infinity,
@@ -398,73 +342,73 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                 ),
                 
                 // Category & Folder Badges Tag Wrap
-                if (!widget.note.isLocked && ((widget.note.category.isNotEmpty && widget.note.category != 'Uncategorized') || folder != null))
+                if (!widget.note.isLocked && ((widget.note.categoryName != null && widget.note.categoryName != 'Uncategorized') || folderName != null))
                   Padding(
-                    padding: const EdgeInsets.only(top: 6, bottom: 4),
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: [
-                        if (widget.note.category.isNotEmpty && widget.note.category != 'Uncategorized')
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              Navigator.of(context).push(
-                                buildPageRoute(CategoryDetailsScreen(category: widget.note.category)),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: NotesProvider.getCategoryTagColor(widget.note.colorValue, context),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: (isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.4)), width: 0.8),
-                              ),
-                              child: Text(
-                                widget.note.category,
-                                style: GoogleFonts.inter(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: textColor,
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (folder != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: NotesProvider.getCategoryTagColor(widget.note.colorValue, context).withAlpha(120),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: (isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.4)),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.folder_open_rounded,
-                                  size: 11,
-                                  color: isDark ? Colors.white60 : AppColors.ink.withOpacity(0.6),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  folder.name,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: textColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+                     padding: const EdgeInsets.only(top: 6, bottom: 4),
+                     child: Wrap(
+                       spacing: 6,
+                       runSpacing: 4,
+                       children: [
+                         if (widget.note.categoryName != null && widget.note.categoryName != 'Uncategorized')
+                           GestureDetector(
+                             behavior: HitTestBehavior.opaque,
+                             onTap: () {
+                               HapticFeedback.lightImpact();
+                               Navigator.of(context).push(
+                                 buildPageRoute(CategoryDetailsScreen(category: widget.note.categoryName!)),
+                               );
+                             },
+                             child: Container(
+                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                               decoration: BoxDecoration(
+                                 color: NotesProvider.getCategoryTagColor(widget.note.colorValue, context),
+                                 borderRadius: BorderRadius.circular(8),
+                                 border: Border.all(color: (isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.4)), width: 0.8),
+                               ),
+                               child: Text(
+                                 widget.note.categoryName!,
+                                 style: GoogleFonts.inter(
+                                   fontSize: 10,
+                                   fontWeight: FontWeight.w700,
+                                   color: textColor,
+                                 ),
+                               ),
+                             ),
+                           ),
+                         if (folderName != null)
+                           Container(
+                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                             decoration: BoxDecoration(
+                               color: NotesProvider.getCategoryTagColor(widget.note.colorValue, context).withAlpha(120),
+                               borderRadius: BorderRadius.circular(8),
+                               border: Border.all(
+                                 color: (isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.4)),
+                                 width: 0.8,
+                               ),
+                             ),
+                             child: Row(
+                               mainAxisSize: MainAxisSize.min,
+                               children: [
+                                 Icon(
+                                   Icons.folder_open_rounded,
+                                   size: 11,
+                                   color: isDark ? Colors.white60 : AppColors.ink.withOpacity(0.6),
+                                 ),
+                                 const SizedBox(width: 4),
+                                 Text(
+                                   folderName,
+                                   style: GoogleFonts.inter(
+                                     fontSize: 10,
+                                     fontWeight: FontWeight.w700,
+                                     color: textColor,
+                                   ),
+                                 ),
+                               ],
+                             ),
+                           ),
+                       ],
+                     ),
+                   ),
                   
                 const SizedBox(height: 10),
                 
@@ -472,7 +416,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                 if (widget.note.isLocked)
                   _buildLockedContent(context, textColor)
                 else if (widget.note.noteType == 'checklist')
-                  _buildChecklistPreview(context, widget.note.content, textColor)
+                  _buildChecklistProgress(context, widget.note.checklistProgress, textColor)
                 else
                   Text(
                     widget.note.previewText.isNotEmpty ? widget.note.previewText : "No additional text",
@@ -484,33 +428,6 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                
-                // Multi-Tags Pill Row
-                if (widget.note.tags.isNotEmpty && !widget.note.isLocked) ...[
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: widget.note.tags.map((tag) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: NotesProvider.getCategoryTagColor(widget.note.colorValue, context).withAlpha(100),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: (isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.4)), width: 0.8),
-                        ),
-                        child: Text(
-                          "#$tag",
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : AppColors.ink.withOpacity(0.7),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
 
                 const SizedBox(height: 16),
                 
@@ -528,14 +445,6 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                             color: isDark ? Colors.white60 : AppColors.ink.withOpacity(0.6),
                           ),
                         ),
-                        if (hasVoice && !widget.note.isLocked) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.mic_rounded,
-                            size: 14,
-                            color: isDark ? Colors.white60 : AppColors.ink.withOpacity(0.6),
-                          ),
-                        ],
                         if (widget.note.reminderTime != null) ...[
                           const SizedBox(width: 8),
                           Icon(
@@ -649,7 +558,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                   ],
                 ),
               ],
-                  ),
+            ),
           ),
         ],
       ),
@@ -684,92 +593,24 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
   }
 
   // Checklist completion overview widget
-  Widget _buildChecklistPreview(BuildContext context, String contentJson, Color textColor) {
-    List<dynamic> items = [];
-    try {
-      items = jsonDecode(contentJson) as List<dynamic>;
-    } catch (e) {
-      return Text(
-        contentJson,
-        style: GoogleFonts.inter(fontSize: 14, color: textColor),
-        maxLines: 4,
-        overflow: TextOverflow.ellipsis,
-      );
-    }
-
-    if (items.isEmpty) {
-      return Text(
-        "Empty checklist",
-        style: GoogleFonts.inter(
-          fontSize: 14,
-          fontStyle: FontStyle.italic,
-          color: textColor.withAlpha(120),
-        ),
-      );
-    }
-
-    final totalCount = items.length;
-    final doneCount = items.where((e) => (e['done'] ?? false) == true || (e['checked'] ?? false) == true).length;
-    final fractionText = "$doneCount of $totalCount items completed";
-
-    // Show first 3 checklist item previews
-    final previewItems = items.take(3).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildChecklistProgress(BuildContext context, String progress, Color textColor) {
+    return Row(
       children: [
-        ...previewItems.map((item) {
-          final bool isDone = item['done'] == true || item['checked'] == true;
-          final String itemText = item['text'] ?? item['title'] ?? "";
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2.0),
-            child: Row(
-              children: [
-                Icon(
-                  isDone ? Icons.check_box_outlined : Icons.check_box_outline_blank_rounded,
-                  size: 14,
-                  color: isDone ? textColor.withAlpha(100) : textColor.withAlpha(150),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    itemText,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: isDone ? textColor.withAlpha(120) : textColor,
-                      decoration: isDone ? TextDecoration.lineThrough : null,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
-        if (totalCount > 3)
-          Padding(
-            padding: const EdgeInsets.only(top: 4.0),
-            child: Text(
-              "+ ${totalCount - 3} more tasks",
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: textColor.withAlpha(120),
-              ),
-            ),
-          ),
-        const SizedBox(height: 8),
-        // Progress text
+        Icon(
+          Icons.fact_check_rounded,
+          size: 16,
+          color: textColor.withAlpha(150),
+        ),
+        const SizedBox(width: 8),
         Text(
-          fractionText,
+          progress.isNotEmpty ? progress : "0/0 done",
           style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: textColor.withAlpha(180),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: textColor,
           ),
         ),
       ],
     );
   }
 }
-

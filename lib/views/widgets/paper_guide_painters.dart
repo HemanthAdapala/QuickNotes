@@ -26,7 +26,7 @@ class GlobalPaperGuidePainter extends CustomPainter {
       final dotPaint = Paint()
         ..color = color.withOpacity(opacity)
         ..style = PaintingStyle.fill;
-      final double dotRadius = 1.2;
+      const double dotRadius = 1.2;
 
       // Draw dot matrix starting from spacing and repeating
       for (double x = spacing; x < size.width; x += spacing) {

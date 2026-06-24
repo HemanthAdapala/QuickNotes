@@ -289,13 +289,13 @@ class _NavItem extends StatelessWidget {
     const double size = 24;
     switch (icon) {
       case _NavIcon.home:
-        return Icon(Icons.home_outlined, color: c, size: size);
+        return const Icon(Icons.home_outlined, color: c, size: size);
       case _NavIcon.folder:
-        return Icon(Icons.folder_open_outlined, color: c, size: size);
+        return const Icon(Icons.folder_open_outlined, color: c, size: size);
       case _NavIcon.calendar:
-        return Icon(Icons.calendar_month_outlined, color: c, size: size);
+        return const Icon(Icons.calendar_month_outlined, color: c, size: size);
       case _NavIcon.settings:
-        return Icon(Icons.settings_outlined, color: c, size: size);
+        return const Icon(Icons.settings_outlined, color: c, size: size);
     }
   }
 }

@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/tactile_button.dart';
 import '../../themes/quick_notes_theme.dart';
 import '../../providers/notes_provider.dart';
 import '../../models/note.dart';
@@ -103,68 +107,115 @@ class ExportImportScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: QuickNotesTheme.background,
-      appBar: AppBar(
-        backgroundColor: QuickNotesTheme.background,
-        title: const Text("Backup & Sharing"),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionTitle("EXPORT WORKSPACE"),
-              const SizedBox(height: 12),
-              
-              _buildActionCard(
-                context,
-                title: "Share Workspace Backup",
-                description: "Export all notes, folders, and attachments as a JSON string file that you can share or save to drive.",
-                icon: Icons.backup_outlined,
-                onTap: () => _exportWorkspace(context, provider),
-              ),
-              const SizedBox(height: 32),
-
-              _buildSectionTitle("IMPORT WORKSPACE"),
-              const SizedBox(height: 12),
-
-              _buildActionCard(
-                context,
-                title: "Restore Backup JSON",
-                description: "Import notes from a previously shared JSON workspace file to restore your database.",
-                icon: Icons.restore_page_outlined,
-                onTap: () => _importWorkspaceDialog(context, provider),
-              ),
-              const SizedBox(height: 40),
-
-              // Export advice note
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: QuickNotesTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: QuickNotesTheme.border),
-                ),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline_rounded, color: QuickNotesTheme.accent, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 24.0),
+            // Header Bar
+            Container(
+              height: 38,
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  TactileButton(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.of(context).maybePop();
+                    },
+                    child: SizedBox(
+                      width: 38,
+                      height: 38,
+                      child: SvgPicture.asset(
+                        'assets/icons/angle_left.svg',
+                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                        fit: BoxFit.scaleDown,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
                       child: Text(
-                        "Workspace backups do not contain secure vault passwords. Secure vault notes will remain encrypted with your master key when imported to another device.",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: QuickNotesTheme.textSecondary,
-                          height: 1.4,
+                        "Backup & Sharing",
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
                         ),
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 38), // spacer to center the title
+                ],
+              ),
+            ),
+            const SizedBox(height: 24.0),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle("EXPORT WORKSPACE"),
+                      const SizedBox(height: 12),
+                      
+                      _buildActionCard(
+                        context,
+                        title: "Share Workspace Backup",
+                        description: "Export all notes, folders, and attachments as a JSON string file that you can share or save to drive.",
+                        icon: Icons.backup_outlined,
+                        onTap: () => _exportWorkspace(context, provider),
+                      ),
+                      const SizedBox(height: 32),
+
+                      _buildSectionTitle("IMPORT WORKSPACE"),
+                      const SizedBox(height: 12),
+
+                      _buildActionCard(
+                        context,
+                        title: "Restore Backup JSON",
+                        description: "Import notes from a previously shared JSON workspace file to restore your database.",
+                        icon: Icons.restore_page_outlined,
+                        onTap: () => _importWorkspaceDialog(context, provider),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Export advice note
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: QuickNotesTheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: QuickNotesTheme.border),
+                        ),
+                        child: const Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.info_outline_rounded, color: QuickNotesTheme.accent, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                "Workspace backups do not contain secure vault passwords. Secure vault notes will remain encrypted with your master key when imported to another device.",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: QuickNotesTheme.textSecondary,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -10,6 +10,8 @@ import '../widgets/living_writing_experience.dart';
 import 'folder_notes_screen.dart';
 import 'category_details_screen.dart';
 import '../../core/animations/page_transitions.dart';
+import '../../core/animations/search_route.dart';
+import 'search_screen.dart';
 import '../../core/animations/animation_constants.dart';
 import '../../core/animations/tactile_card_wrapper.dart';
 import '../../core/animations/dialog_transition.dart';
@@ -357,7 +359,11 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
                     TactileButton(
                       onTap: () {
                         HapticFeedback.lightImpact();
-                        widget.onNavigateToTab?.call(0);
+                        Navigator.of(context).push(SearchRoute(
+                          builder: (_) => const SearchScreen(
+                            initialScope: 'all',
+                          ),
+                        ));
                       },
                       child: Container(
                         width: 38,

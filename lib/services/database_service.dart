@@ -1,7 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, debugPrint;
 import '../models/note.dart';
 import '../models/folder.dart';
 
@@ -27,10 +27,10 @@ class DatabaseService {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'quick_notes.db');
 
-    // Open/Create the database (version 7)
+    // Open/Create the database (version 8)
     return await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -74,6 +74,15 @@ class DatabaseService {
         createdAt TEXT
       )
     ''');
+
+    // Create indexes for version 8
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_folderId ON notes(folderId)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_category ON notes(category)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_createdAt ON notes(createdAt)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_updatedAt ON notes(updatedAt)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_isPinned ON notes(isPinned)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_reminderTime ON notes(reminderTime)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_folders_createdAt ON folders(createdAt)');
   }
 
   // Migration handling
@@ -139,6 +148,28 @@ class DatabaseService {
         // Column may exist from previous run
       }
     }
+    if (oldVersion < 8) {
+      try {
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_folderId ON notes(folderId)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_category ON notes(category)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_createdAt ON notes(createdAt)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_updatedAt ON notes(updatedAt)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_isPinned ON notes(isPinned)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_reminderTime ON notes(reminderTime)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_folders_createdAt ON folders(createdAt)');
+      } catch (_) {}
+    }
+  }
+
+  // --- Performance Timing Helper ---
+  static Future<T> timedQuery<T>(String name, Future<T> Function() query) async {
+    final stopwatch = Stopwatch()..start();
+    final result = await query();
+    stopwatch.stop();
+    if (kDebugMode) {
+      debugPrint('DB QUERY [$name]: ${stopwatch.elapsedMilliseconds}ms');
+    }
+    return result;
   }
 
   // --- CRUD Operations ---
@@ -151,14 +182,14 @@ class DatabaseService {
       return 1;
     }
     final db = await instance.database;
-    return await db.insert(
+    return await timedQuery('insert', () => db.insert(
       'notes',
       note.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    ));
   }
 
-  // Read All
+  // Read All (Optimized to return content summary instead of loading full text for text notes)
   Future<List<Note>> queryAll() async {
     if (kIsWeb) {
       final list = List<Note>.from(_webNotes);
@@ -170,10 +201,12 @@ class DatabaseService {
       return list;
     }
     final db = await instance.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'notes',
-      orderBy: 'isPinned DESC, updatedAt DESC',
-    );
+    final List<Map<String, dynamic>> maps = await timedQuery('queryAll', () => db.rawQuery('''
+      SELECT id, title, isPinned, isFavorite, isArchived, category, noteType, tags, attachments, isLocked, reminderTime, createdAt, updatedAt, colorValue, isDeleted, folderId, isHabit, habitRecurrence, habitStreak, habitLastCompleted, previewText, paperSettings,
+      CASE WHEN noteType = 'checklist' THEN content ELSE SUBSTR(content, 1, 150) END AS content
+      FROM notes
+      ORDER BY isPinned DESC, updatedAt DESC
+    '''));
     return maps.map((map) => Note.fromMap(map)).toList();
   }
 
@@ -185,12 +218,12 @@ class DatabaseService {
       return 1;
     }
     final db = await instance.database;
-    return await db.update(
+    return await timedQuery('update', () => db.update(
       'notes',
       note.toMap(),
       where: 'id = ?',
       whereArgs: [note.id],
-    );
+    ));
   }
 
   // Delete
@@ -200,30 +233,30 @@ class DatabaseService {
       return 1;
     }
     final db = await instance.database;
-    return await db.delete(
+    return await timedQuery('delete', () => db.delete(
       'notes',
       where: 'id = ?',
       whereArgs: [id],
-    );
+    ));
   }
 
-  // Read Single Note
+  // Read Single Note (Retrieves full content for the editor screen)
   Future<Note?> queryById(String id) async {
     if (kIsWeb) {
       final matches = _webNotes.where((n) => n.id == id);
       return matches.isEmpty ? null : matches.first;
     }
     final db = await instance.database;
-    final List<Map<String, dynamic>> maps = await db.query(
+    final List<Map<String, dynamic>> maps = await timedQuery('queryById', () => db.query(
       'notes',
       where: 'id = ?',
       whereArgs: [id],
-    );
+    ));
     if (maps.isEmpty) return null;
     return Note.fromMap(maps.first);
   }
 
-  // Search Notes
+  // Search Notes (Optimized to return content summary instead of loading full text for text notes)
   Future<List<Note>> search(String query) async {
     if (kIsWeb) {
       final q = query.toLowerCase();
@@ -241,13 +274,153 @@ class DatabaseService {
       return list;
     }
     final db = await instance.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'notes',
-      where: 'title LIKE ? OR content LIKE ? OR tags LIKE ?',
-      whereArgs: ['%$query%', '%$query%', '%$query%'],
-      orderBy: 'isPinned DESC, updatedAt DESC',
-    );
+    final List<Map<String, dynamic>> maps = await timedQuery('search', () => db.rawQuery('''
+      SELECT id, title, isPinned, isFavorite, isArchived, category, noteType, tags, attachments, isLocked, reminderTime, createdAt, updatedAt, colorValue, isDeleted, folderId, isHabit, habitRecurrence, habitStreak, habitLastCompleted, previewText, paperSettings,
+      CASE WHEN noteType = 'checklist' THEN content ELSE SUBSTR(content, 1, 150) END AS content
+      FROM notes
+      WHERE title LIKE ? OR content LIKE ? OR tags LIKE ?
+      ORDER BY isPinned DESC, updatedAt DESC
+    ''', ['%$query%', '%$query%', '%$query%']));
     return maps.map((map) => Note.fromMap(map)).toList();
+  }
+
+  // Query notes summary with pagination and optional filters
+  Future<List<Map<String, dynamic>>> queryNotesSummaryPaged({
+    String? folderId,
+    String? category,
+    bool? isFavorite,
+    bool? isArchived,
+    bool isDeleted = false,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    if (kIsWeb) {
+      var list = List<Note>.from(_webNotes);
+      if (isDeleted) {
+        list = list.where((n) => n.isDeleted).toList();
+      } else {
+        list = list.where((n) => !n.isDeleted).toList();
+        if (isArchived != null) {
+          list = list.where((n) => n.isArchived == isArchived).toList();
+        }
+        if (isFavorite != null) {
+          list = list.where((n) => n.isFavorite == isFavorite).toList();
+        }
+        if (folderId != null) {
+          list = list.where((n) => n.folderId == folderId).toList();
+        }
+        if (category != null) {
+          list = list.where((n) => n.category == category).toList();
+        }
+      }
+      
+      list.sort((a, b) {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return b.updatedAt.compareTo(a.updatedAt);
+      });
+      
+      final start = offset;
+      if (start >= list.length) return [];
+      final end = start + limit > list.length ? list.length : start + limit;
+      return list.sublist(start, end).map((n) => n.toMap()).toList();
+    }
+    
+    final db = await instance.database;
+    
+    final List<String> whereClauses = [];
+    final List<dynamic> whereArgs = [];
+    
+    whereClauses.add('isDeleted = ?');
+    whereArgs.add(isDeleted ? 1 : 0);
+    
+    if (!isDeleted) {
+      if (isArchived != null) {
+        whereClauses.add('isArchived = ?');
+        whereArgs.add(isArchived ? 1 : 0);
+      }
+      if (isFavorite != null) {
+        whereClauses.add('isFavorite = ?');
+        whereArgs.add(isFavorite ? 1 : 0);
+      }
+      if (folderId != null) {
+        whereClauses.add('folderId = ?');
+        whereArgs.add(folderId);
+      }
+      if (category != null) {
+        whereClauses.add('category = ?');
+        whereArgs.add(category);
+      }
+    }
+    
+    final whereString = whereClauses.isEmpty ? '' : 'WHERE ${whereClauses.join(' AND ')}';
+    
+    final List<Map<String, dynamic>> maps = await timedQuery('queryNotesSummaryPaged', () => db.rawQuery('''
+      SELECT id, title, isPinned, isFavorite, isArchived, category, noteType, reminderTime, createdAt, updatedAt, colorValue, isDeleted, folderId, previewText, isLocked, isHabit, habitStreak,
+      CASE WHEN noteType = 'checklist' THEN content ELSE SUBSTR(content, 1, 120) END AS content
+      FROM notes
+      $whereString
+      ORDER BY isPinned DESC, updatedAt DESC
+      LIMIT ? OFFSET ?
+    ''', [...whereArgs, limit, offset]));
+    
+    return maps;
+  }
+
+  // Query habits only (Optimized DB-level filtering)
+  Future<List<Note>> queryHabits() async {
+    if (kIsWeb) {
+      return _webNotes.where((n) => n.isHabit).toList();
+    }
+    final db = await instance.database;
+    final List<Map<String, dynamic>> maps = await timedQuery('queryHabits', () => db.query(
+      'notes',
+      where: 'isHabit = 1',
+    ));
+    return maps.map((map) => Note.fromMap(map)).toList();
+  }
+
+  // Detach all notes from a folder (Optimized DB-level operation)
+  Future<void> detachNotesFromFolder(String folderId) async {
+    if (kIsWeb) {
+      for (var i = 0; i < _webNotes.length; i++) {
+        if (_webNotes[i].folderId == folderId) {
+          _webNotes[i] = _webNotes[i].copyWith(clearFolder: true);
+        }
+      }
+      return;
+    }
+    final db = await instance.database;
+    await timedQuery('detachNotesFromFolder', () => db.update(
+      'notes',
+      {'folderId': null},
+      where: 'folderId = ?',
+      whereArgs: [folderId],
+    ));
+  }
+
+  // Detach all child folders from a parent folder (Optimized DB-level operation)
+  Future<void> detachChildFolders(String parentId) async {
+    if (kIsWeb) {
+      for (var i = 0; i < _webFolders.length; i++) {
+        if (_webFolders[i].parentId == parentId) {
+          _webFolders[i] = Folder(
+            id: _webFolders[i].id,
+            name: _webFolders[i].name,
+            parentId: null,
+            createdAt: _webFolders[i].createdAt,
+          );
+        }
+      }
+      return;
+    }
+    final db = await instance.database;
+    await timedQuery('detachChildFolders', () => db.update(
+      'folders',
+      {'parentId': null},
+      where: 'parentId = ?',
+      whereArgs: [parentId],
+    ));
   }
 
   // --- Folder Operations ---
@@ -258,11 +431,11 @@ class DatabaseService {
       return 1;
     }
     final db = await instance.database;
-    return await db.insert(
+    return await timedQuery('insertFolder', () => db.insert(
       'folders',
       folder.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    ));
   }
 
   Future<List<Folder>> queryAllFolders() async {
@@ -272,7 +445,7 @@ class DatabaseService {
       return list;
     }
     final db = await instance.database;
-    final List<Map<String, dynamic>> maps = await db.query('folders', orderBy: 'name ASC');
+    final List<Map<String, dynamic>> maps = await timedQuery('queryAllFolders', () => db.query('folders', orderBy: 'name ASC'));
     return maps.map((map) => Folder.fromMap(map)).toList();
   }
 
@@ -282,10 +455,10 @@ class DatabaseService {
       return 1;
     }
     final db = await instance.database;
-    return await db.delete(
+    return await timedQuery('deleteFolder', () => db.delete(
       'folders',
       where: 'id = ?',
       whereArgs: [id],
-    );
+    ));
   }
 }

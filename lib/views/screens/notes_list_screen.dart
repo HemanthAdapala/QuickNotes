@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../providers/notes_provider.dart';
-import '../../models/note.dart';
+import '../../models/note_summary.dart';
 import 'note_editor_screen.dart';
 import '../widgets/pin_lock_sheet.dart';
 import '../widgets/note_card.dart';
 import '../widgets/living_writing_experience.dart';
+import 'package:flutter/rendering.dart';
+import '../../core/animations/page_transitions.dart';
+import '../../core/animations/dialog_transition.dart';
+import '../../core/animations/bottom_sheet_transition.dart';
+import '../../core/animations/animated_list_entrance.dart';
+import '../../core/animations/animation_constants.dart';
 
 
 class NotesListScreen extends StatefulWidget {
@@ -29,8 +36,10 @@ class NotesListScreen extends StatefulWidget {
 class _NotesListScreenState extends State<NotesListScreen> {
   bool _isSearchActive = false;
   bool _isGridView = true; // Default layout to show off colorful cards
+  bool _isFabVisible = true;
   final TextEditingController _searchController = TextEditingController();
   final GlobalKey _fabKey = GlobalKey();
+  late ScrollController _scrollController;
 
   void _navigateToCreateNote(String type, NotesProvider provider) {
     final RenderBox? box = _fabKey.currentContext?.findRenderObject() as RenderBox?;
@@ -60,12 +69,23 @@ class _NotesListScreenState extends State<NotesListScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()..addListener(_scrollListener);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<NotesProvider>(context, listen: false);
       provider.setViewType(widget.viewType);
-      provider.loadNotes();
-      provider.loadFolders();
     });
+  }
+
+  void _scrollListener() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (maxScroll - currentScroll <= 700) {
+      final provider = Provider.of<NotesProvider>(context, listen: false);
+      if (provider.hasMoreNotes && !provider.isPageLoading) {
+        provider.loadNextPage();
+      }
+    }
   }
 
   @override
@@ -76,7 +96,6 @@ class _NotesListScreenState extends State<NotesListScreen> {
         if (mounted) {
           final provider = Provider.of<NotesProvider>(context, listen: false);
           provider.setViewType(widget.viewType);
-          provider.loadNotes();
         }
       });
     }
@@ -84,22 +103,24 @@ class _NotesListScreenState extends State<NotesListScreen> {
 
   @override
   void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  void _onNoteCardTapped(BuildContext context, Note note, NotesProvider provider) {
+  void _onNoteCardTapped(BuildContext context, NoteSummary note, NotesProvider provider) async {
     if (widget.viewType == NotesViewType.trash) {
-      showDialog(
+      showAnimatedDialog(
         context: context,
-        builder: (ctx) => AlertDialog(
+        child: AlertDialog(
           title: Text("Restore Note?", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
           content: const Text("This note is in the Trash. You need to restore it to view or edit it."),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
             FilledButton(
               onPressed: () {
-                Navigator.pop(ctx);
+                Navigator.pop(context);
                 provider.restoreFromTrash(note.id);
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -114,22 +135,30 @@ class _NotesListScreenState extends State<NotesListScreen> {
       return;
     }
 
-    if (note.isLocked && !provider.isVaultUnlocked) {
-      showModalBottomSheet(
+    final fullNote = await provider.getNoteById(note.id);
+    if (fullNote == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to load note details")),
+        );
+      }
+      return;
+    }
+
+    if (fullNote.isLocked && !provider.isVaultUnlocked) {
+      showAnimatedBottomSheet(
         context: context,
-        isScrollControlled: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
         ),
-        builder: (context) => PinLockSheet(
+        child: PinLockSheet(
           onPinSubmitted: (pin) async {
             if (await provider.unlockVault(pin)) {
-              if (context.mounted) {
+              final decryptedNote = await provider.getNoteById(note.id);
+              if (context.mounted && decryptedNote != null) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => NoteEditorScreen(note: note),
-                  ),
+                  buildPageRoute(NoteEditorScreen(note: decryptedNote)),
                 );
               }
             } else {
@@ -147,12 +176,12 @@ class _NotesListScreenState extends State<NotesListScreen> {
         ),
       );
     } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => NoteEditorScreen(note: note),
-        ),
-      );
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          buildPageRoute(NoteEditorScreen(note: fullNote)),
+        );
+      }
     }
   }
 
@@ -176,7 +205,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width > 768;
 
-    final allNotes = provider.notes;
+    final allNotes = provider.notesSummary;
     final pinnedNotes = allNotes.where((note) => note.isPinned).toList();
     final recentNotes = allNotes.where((note) => !note.isPinned).toList();
 
@@ -199,34 +228,33 @@ class _NotesListScreenState extends State<NotesListScreen> {
           ),
         ),
         actions: [
-          if (widget.viewType == NotesViewType.trash)
-            IconButton(
-              icon: const Icon(Icons.delete_forever_rounded),
-              tooltip: "Empty Trash",
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: Text("Empty Trash?", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-                    content: const Text("All notes in Trash will be permanently deleted. This action cannot be undone."),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
-                      FilledButton(
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          provider.emptyTrash();
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: theme.colorScheme.error,
-                          foregroundColor: theme.colorScheme.onError,
-                        ),
-                        child: const Text("Empty Trash"),
+          IconButton(
+            icon: const Icon(Icons.delete_forever_rounded),
+            tooltip: "Empty Trash",
+            onPressed: () {
+              showAnimatedDialog(
+                context: context,
+                child: AlertDialog(
+                  title: Text("Empty Trash?", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                  content: const Text("All notes in Trash will be permanently deleted. This action cannot be undone."),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        provider.emptyTrash();
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.error,
+                        foregroundColor: theme.colorScheme.onError,
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                      child: const Text("Empty Trash"),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(_isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded),
             tooltip: _isGridView ? "List View" : "Grid View",
@@ -251,251 +279,324 @@ class _NotesListScreenState extends State<NotesListScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Search Input Row if Active
-            if (_isSearchActive)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 720),
-                  child: TextField(
-                    controller: _searchController,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: "Search notes, tags, or contents...",
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: theme.dividerColor),
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification is UserScrollNotification) {
+              if (notification.direction == ScrollDirection.reverse) {
+                if (_isFabVisible) {
+                  setState(() {
+                    _isFabVisible = false;
+                  });
+                }
+              } else if (notification.direction == ScrollDirection.forward) {
+                if (!_isFabVisible) {
+                  setState(() {
+                    _isFabVisible = true;
+                  });
+                }
+              }
+            }
+            return false;
+          },
+          child: Column(
+            children: [
+              if (_isSearchActive)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: "Search notes, tags, or contents...",
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: theme.dividerColor),
+                        ),
+                        filled: true,
+                        fillColor: theme.cardColor,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      filled: true,
-                      fillColor: theme.cardColor,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                      onChanged: (val) {
+                        provider.setSearchQuery(val);
+                      },
                     ),
-                    onChanged: (val) {
-                      provider.setSearchQuery(val);
-                    },
                   ),
                 ),
-              ),
-
-            // Horizontal Category Pills (Only for main feed)
-            if (widget.viewType == NotesViewType.feed)
-              _buildCategoryPills(context, provider),
-
-            // Main Notes list rows
-            Expanded(
-              child: allNotes.isEmpty
-                  ? _buildEmptyState(context)
-                  : SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        child: Container(
-                          constraints: const BoxConstraints(maxWidth: 720),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+  
+              if (widget.viewType == NotesViewType.feed)
+                _buildCategoryPills(context, provider),
+  
+              Expanded(
+                child: provider.isLoading && allNotes.isEmpty
+                    ? CustomScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        slivers: [
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            sliver: SliverToBoxAdapter(
+                              child: _buildSectionTitle("LOADING NOTES..."),
+                            ),
+                          ),
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            sliver: _buildSliverSkeletonLayout(context, isDesktop),
+                          ),
+                        ],
+                      )
+                    : allNotes.isEmpty
+                        ? CustomScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            slivers: [
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: _buildEmptyState(context),
+                              ),
+                            ],
+                          )
+                        : CustomScrollView(
+                            controller: _scrollController,
+                            physics: const BouncingScrollPhysics(),
+                            slivers: [
                               if (pinnedNotes.isNotEmpty) ...[
-                                _buildSectionTitle("PINNED"),
-                                const SizedBox(height: 8),
-                                _buildNotesLayout(pinnedNotes, provider, isDesktop),
-                                const SizedBox(height: 24),
+                                SliverPadding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                  sliver: SliverToBoxAdapter(
+                                    child: _buildSectionTitle("PINNED"),
+                                  ),
+                                ),
+                                SliverPadding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                  sliver: _buildSliverNotesLayout(pinnedNotes, provider, isDesktop),
+                                ),
                               ],
                               if (recentNotes.isNotEmpty) ...[
-                                _buildSectionTitle(pinnedNotes.isNotEmpty ? "RECENT" : "ALL NOTES"),
-                                const SizedBox(height: 8),
-                                _buildNotesLayout(recentNotes, provider, isDesktop),
+                                SliverPadding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                  sliver: SliverToBoxAdapter(
+                                    child: _buildSectionTitle(pinnedNotes.isNotEmpty ? "RECENT" : "ALL NOTES"),
+                                  ),
+                                ),
+                                SliverPadding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                  sliver: _buildSliverNotesLayout(recentNotes, provider, isDesktop),
+                                ),
                               ],
-                              const SizedBox(height: 100),
+                              if (provider.isPageLoading)
+                                SliverToBoxAdapter(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 24.0),
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.0,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              const SliverToBoxAdapter(
+                                child: SizedBox(height: 100),
+                              ),
                             ],
                           ),
-                        ),
-                      ),
-                    ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: widget.viewType == NotesViewType.trash
           ? null
-          : LivingFloatingActionButton(
-              key: _fabKey,
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: theme.scaffoldBackgroundColor,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
-                  ),
-                  builder: (context) => SafeArea(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 8),
-                        Center(
-                          child: Container(
-                            width: 36,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: theme.dividerColor,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                          child: Text(
-                            "Create New",
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Quick Note (Prioritized Default Action)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pop(context);
-                              _navigateToCreateNote('text', provider);
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.all(16.0),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: theme.brightness == Brightness.dark 
-                                      ? const Color(0xFFFAF8F5) 
-                                      : const Color(0xFF1E1B4B),
-                                  width: 1.5,
+          : AnimatedScale(
+              scale: _isFabVisible ? 1.0 : 0.0,
+              duration: kDurationFast,
+              curve: _isFabVisible ? kCurveEnter : kCurveExit,
+              child: AnimatedOpacity(
+                opacity: _isFabVisible ? 1.0 : 0.0,
+                duration: kDurationFast,
+                curve: _isFabVisible ? kCurveEnter : kCurveExit,
+                child: LivingFloatingActionButton(
+                  key: _fabKey,
+                  onPressed: () {
+                    showAnimatedBottomSheet(
+                      context: context,
+                      backgroundColor: theme.scaffoldBackgroundColor,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+                      ),
+                      child: SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            Center(
+                              child: Container(
+                                width: 36,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: theme.dividerColor,
+                                  borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.edit_note_rounded,
-                                    color: theme.colorScheme.onPrimary,
-                                    size: 28,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Quick Note",
-                                          style: GoogleFonts.outfit(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                            color: theme.colorScheme.onPrimary,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Jot down your thoughts instantly",
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 12,
-                                            color: theme.colorScheme.onPrimary.withOpacity(0.8),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.chevron_right_rounded,
-                                    color: theme.colorScheme.onPrimary,
-                                  ),
-                                ],
-                              ),
                             ),
-                          ),
-                        ),
-                        
-                        // Checklist (Secondary Action)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pop(context);
-                              _navigateToCreateNote('checklist', provider);
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.all(16.0),
-                              decoration: BoxDecoration(
-                                color: theme.cardColor,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: theme.brightness == Brightness.dark 
-                                      ? const Color(0xFFFAF8F5).withOpacity(0.3) 
-                                      : const Color(0xFF1E1B4B).withOpacity(0.3),
-                                  width: 1.5,
+                            const SizedBox(height: 24),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              child: Text(
+                                "Create New",
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                               ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.playlist_add_check_rounded,
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            // Quick Note (Prioritized Default Action)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _navigateToCreateNote('text', provider);
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16.0),
+                                  decoration: BoxDecoration(
                                     color: theme.colorScheme.primary,
-                                    size: 28,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Checklist",
-                                          style: GoogleFonts.outfit(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                            color: theme.colorScheme.onSurface,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Track tasks, habits, and to-dos",
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 12,
-                                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                          ),
-                                        ),
-                                      ],
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: theme.brightness == Brightness.dark 
+                                          ? const Color(0xFFFAF8F5) 
+                                          : const Color(0xFF1E1B4B),
+                                      width: 1.5,
                                     ),
                                   ),
-                                  Icon(
-                                    Icons.chevron_right_rounded,
-                                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.edit_note_rounded,
+                                        color: theme.colorScheme.onPrimary,
+                                        size: 28,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Quick Note",
+                                              style: GoogleFonts.outfit(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: theme.colorScheme.onPrimary,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Jot down your thoughts instantly",
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 12,
+                                                color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right_rounded,
+                                        color: theme.colorScheme.onPrimary,
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
-                          ),
+                            
+                            // Checklist (Secondary Action)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _navigateToCreateNote('checklist', provider);
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16.0),
+                                  decoration: BoxDecoration(
+                                    color: theme.cardColor,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: theme.brightness == Brightness.dark 
+                                          ? const Color(0xFFFAF8F5).withOpacity(0.3) 
+                                          : const Color(0xFF1E1B4B).withOpacity(0.3),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.playlist_add_check_rounded,
+                                        color: theme.colorScheme.primary,
+                                        size: 28,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Checklist",
+                                              style: GoogleFonts.outfit(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: theme.colorScheme.onSurface,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Track tasks, habits, and to-dos",
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 12,
+                                                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right_rounded,
+                                        color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
+                    );
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: theme.brightness == Brightness.dark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B),
+                      width: 1.5,
                     ),
                   ),
-                );
-              },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: theme.brightness == Brightness.dark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B),
-                  width: 1.5,
+                  elevation: 4,
+                  child: const Icon(Icons.add),
                 ),
               ),
-              elevation: 4,
-              child: const Icon(Icons.add),
             ),
     );
   }
@@ -523,79 +624,80 @@ class _NotesListScreenState extends State<NotesListScreen> {
     );
   }
 
-  void _showSwipeOptionsSheet(BuildContext context, Note note, NotesProvider provider) {
-    showModalBottomSheet(
+  void _showSwipeOptionsSheet(BuildContext context, NoteSummary note, NotesProvider provider) {
+    showAnimatedBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
       ),
-      builder: (context) {
-        final theme = Theme.of(context);
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
-                child: Text(
-                  note.title.isNotEmpty ? note.title : "Untitled Note",
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.primary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+      child: Builder(
+        builder: (context) {
+          final theme = Theme.of(context);
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+                  child: Text(
+                    note.title.isNotEmpty ? note.title : "Untitled Note",
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.primary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: Icon(note.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, color: Colors.amber),
-                title: Text(note.isFavorite ? "Remove from Favorites" : "Add to Favorites"),
-                onTap: () {
-                  Navigator.pop(context);
-                  provider.toggleFavorite(note.id);
-                },
-              ),
-              ListTile(
-                leading: Icon(note.isArchived ? Icons.unarchive_outlined : Icons.archive_outlined, color: theme.colorScheme.primary),
-                title: Text(note.isArchived ? "Unarchive Note" : "Archive Note"),
-                onTap: () {
-                  Navigator.pop(context);
-                  provider.toggleArchive(note.id);
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(note.isArchived ? "Note unarchived" : "Note archived"),
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-                title: const Text("Delete (Move to Trash)"),
-                onTap: () {
-                  Navigator.pop(context);
-                  provider.trashNote(note.id);
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text("Note moved to Trash"),
-                      action: SnackBarAction(
-                        label: "UNDO",
-                        onPressed: () => provider.restoreFromTrash(note.id),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Icon(note.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, color: Colors.amber),
+                  title: Text(note.isFavorite ? "Remove from Favorites" : "Add to Favorites"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    provider.toggleFavorite(note.id);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(note.isArchived ? Icons.unarchive_outlined : Icons.archive_outlined, color: theme.colorScheme.primary),
+                  title: Text(note.isArchived ? "Unarchive Note" : "Archive Note"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    provider.toggleArchive(note.id);
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(note.isArchived ? "Note unarchived" : "Note archived"),
+                        duration: const Duration(seconds: 1),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                  title: const Text("Delete (Move to Trash)"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    provider.trashNote(note.id);
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text("Note moved to Trash"),
+                        action: SnackBarAction(
+                          label: "UNDO",
+                          onPressed: () => provider.restoreFromTrash(note.id),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
-  // Builder to switch dynamically between grid (staggered) and list format
-  Widget _buildNotesLayout(List<Note> notesList, NotesProvider provider, bool isDesktop) {
-    Widget wrapWithDismissible(Note note) {
+  Widget _buildSliverNotesLayout(List<NoteSummary> notesList, NotesProvider provider, bool isDesktop) {
+    Widget wrapWithDismissible(NoteSummary note) {
       if (widget.viewType == NotesViewType.trash) {
         return NoteCard(
           note: note,
@@ -649,28 +751,64 @@ class _NotesListScreenState extends State<NotesListScreen> {
     }
 
     if (_isGridView) {
-      return MasonryGridView.count(
+      return SliverMasonryGrid.count(
         crossAxisCount: isDesktop ? 3 : 2,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: notesList.length,
+        childCount: notesList.length,
         itemBuilder: (context, index) {
           final note = notesList[index];
-          return wrapWithDismissible(note);
+          return AnimatedListEntrance(
+            index: index,
+            child: wrapWithDismissible(note),
+          );
         },
       );
     } else {
-      return ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: notesList.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final itemIndex = index ~/ 2;
+            if (index.isEven) {
+              final note = notesList[itemIndex];
+              return AnimatedListEntrance(
+                index: itemIndex,
+                child: wrapWithDismissible(note),
+              );
+            }
+            return const SizedBox(height: 16);
+          },
+          childCount: notesList.isEmpty ? 0 : notesList.length * 2 - 1,
+        ),
+      );
+    }
+  }
+
+  Widget _buildSliverSkeletonLayout(BuildContext context, bool isDesktop) {
+    final count = isDesktop ? 6 : 4;
+    
+    if (_isGridView) {
+      return SliverMasonryGrid.count(
+        crossAxisCount: isDesktop ? 3 : 2,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childCount: count,
         itemBuilder: (context, index) {
-          final note = notesList[index];
-          return wrapWithDismissible(note);
+          return _buildSkeletonCard(context, index);
         },
+      );
+    } else {
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final itemIndex = index ~/ 2;
+            if (index.isEven) {
+              return _buildSkeletonCard(context, itemIndex);
+            }
+            return const SizedBox(height: 16);
+          },
+          childCount: count * 2 - 1,
+        ),
       );
     }
   }
@@ -686,6 +824,115 @@ class _NotesListScreenState extends State<NotesListScreen> {
           fontWeight: FontWeight.w800,
           color: isDark ? const Color(0xFFC7C6CA) : const Color(0xFF1E1B4B),
           letterSpacing: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonCard(BuildContext context, int index) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    // Shimmer colors matching the app's aesthetics
+    final baseColor = isDark 
+        ? const Color(0xFF1E1C2E).withOpacity(0.5) 
+        : const Color(0xFFE2E8F0);
+    final highlightColor = isDark 
+        ? const Color(0xFF312E81).withOpacity(0.3) 
+        : const Color(0xFFFFFDF9);
+
+    // Stagger content lines to mock staggered grid card heights
+    final contentLines = 2 + (index % 3);
+
+    return Shimmer.fromColors(
+      baseColor: baseColor,
+      highlightColor: highlightColor,
+      child: Container(
+        padding: const EdgeInsets.all(18.0),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.12) : Colors.white.withOpacity(0.4),
+            width: 1.0,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Skeleton Header Accent Strip (simulating premium card color cover)
+            if (index % 2 == 1) ...[
+              Container(
+                height: 45,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            // Skeleton Title
+            Container(
+              width: 100 + (index % 4) * 20.0,
+              height: 16,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Skeleton Content lines
+            for (int i = 0; i < contentLines; i++) ...[
+              Container(
+                width: i == contentLines - 1 ? 120.0 + (index % 2) * 40.0 : double.infinity,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            const SizedBox(height: 12),
+            // Skeleton Badges / Actions Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    if (index % 2 == 0)
+                      Container(
+                        width: 40,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                  ],
+                ),
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

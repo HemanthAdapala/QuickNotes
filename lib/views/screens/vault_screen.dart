@@ -5,7 +5,10 @@ import 'package:intl/intl.dart';
 import '../../providers/notes_provider.dart';
 import '../../models/note.dart';
 import '../widgets/pin_lock_sheet.dart';
+import '../widgets/tactile_button.dart';
 import 'note_editor_screen.dart';
+import '../../core/animations/page_transitions.dart';
+import '../../core/animations/bottom_sheet_transition.dart';
 
 class VaultScreen extends StatelessWidget {
   final VoidCallback onMenuTap;
@@ -17,13 +20,12 @@ class VaultScreen extends StatelessWidget {
 
   // Helper to check PIN
   void _triggerUnlock(BuildContext context, NotesProvider provider) {
-    showModalBottomSheet(
+    showAnimatedBottomSheet(
       context: context,
-      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
       ),
-      builder: (context) => PinLockSheet(
+      child: PinLockSheet(
         onPinSubmitted: (pin) async {
           final success = await provider.unlockVault(pin);
           if (!context.mounted) return;
@@ -46,34 +48,89 @@ class VaultScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final provider = Provider.of<NotesProvider>(context);
     final isUnlocked = provider.isVaultUnlocked;
-    final width = MediaQuery.of(context).size.width;
-    final isDesktop = width > 768;
 
     // Filter locked notes (in-memory provider lists them decrypted when unlocked, scrubbed when locked)
     final lockedNotes = provider.notes.where((note) => note.isLocked).toList();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        leading: isDesktop
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.menu_rounded),
-                onPressed: onMenuTap,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 24.0),
+            // Header Bar
+            Container(
+              height: 38,
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  TactileButton(
+                    onTap: onMenuTap,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.menu_rounded,
+                        color: theme.brightness == Brightness.dark
+                            ? Colors.white
+                            : const Color(0xFF1C1C1E),
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        "Vault",
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.white
+                              : const Color(0xFF1C1C1E),
+                        ),
+                      ),
+                    ),
+                  ),
+                  isUnlocked
+                      ? TactileButton(
+                          onTap: () {
+                            provider.lockVault();
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Vault re-locked")),
+                            );
+                          },
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.lock_open_rounded,
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.white
+                                  : const Color(0xFF1C1C1E),
+                              size: 24,
+                            ),
+                          ),
+                        )
+                      : const SizedBox(width: 38),
+                ],
               ),
-        title: Text(
-          "QuickNotes",
-          style: GoogleFonts.outfit(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
-          ),
+            ),
+            const SizedBox(height: 24.0),
+            Expanded(
+              child: isUnlocked
+                  ? _buildUnlockedContent(context, provider, lockedNotes)
+                  : _buildLockedOverlay(context, provider),
+            ),
+          ],
         ),
       ),
-      body: isUnlocked
-          ? _buildUnlockedContent(context, provider, lockedNotes)
-          : _buildLockedOverlay(context, provider),
     );
   }
 
@@ -180,51 +237,6 @@ class VaultScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Screen Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "SECURE STORAGE",
-                        style: GoogleFonts.jetBrainsMono(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF91918E),
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Personal Vault",
-                        style: GoogleFonts.outfit(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.lock_open_rounded),
-                    onPressed: () {
-                      provider.lockVault();
-                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Vault re-locked")),
-                      );
-                    },
-                    tooltip: "Lock Vault",
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Divider(color: Color(0xFFEBEBE8)),
-              const SizedBox(height: 24),
-
               // Empty locked notes handler
               if (notes.isEmpty) ...[
                 Center(
@@ -295,9 +307,7 @@ class VaultScreen extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => NoteEditorScreen(note: note),
-          ),
+          buildPageRoute(NoteEditorScreen(note: note)),
         );
       },
       child: Container(
