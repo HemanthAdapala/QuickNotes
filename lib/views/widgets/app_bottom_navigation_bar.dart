@@ -1,260 +1,198 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Data model for a single nav destination
-// ─────────────────────────────────────────────────────────────────────────────
+import '../constants/app_bottom_navigation_assets.dart';
 
-class NavDestination {
-  const NavDestination({
-    required this.svgAssetPath,
-    required this.label,
-    this.semanticLabel,
-  });
-
-  final String svgAssetPath;
-  final String label;
-  final String? semanticLabel;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Design tokens — all magic numbers live here, not scattered through the tree
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _NavTokens {
-  const _NavTokens._();
-
-  // Container
-  static const double barHeight = 64.0;
-  static const double barRadius = 32.0;
-  static const double barPaddingH = 8.0;
-  static const double barPaddingV = 8.0;
-
-  // FAB pill (pencil / create button)
-  static const double fabSize = 60.0;
-  static const double fabRadius = 30.0;
-  static const double fabGap = 12.0; // horizontal gap between bar and FAB
-
-  // Blur
-  static const double blurSigma = 20.0;
-
-  // Glass surfaces — light mode
-  static const Color lightFill = Color(0xBBFFFFFF);        // ~73 % white
-  static const Color lightBorder = Color(0x40FFFFFF);      // top/left highlight
-  static const Color lightBorderBottom = Color(0x18000000); // subtle dark base
-
-  // Glass surfaces — dark mode
-  static const Color darkFill = Color(0x992A2A2A);         // ~60 % dark
-  static const Color darkBorder = Color(0x33FFFFFF);
-  static const Color darkBorderBottom = Color(0x30000000);
-
-  // Icon
-  static const double iconSize = 24.0;
-  static const Color iconActiveLight = Color(0xFF1A1A1A);
-  static const Color iconInactiveLight = Color(0xFF8E8E93); // iOS gray
-  static const Color iconActiveDark = Color(0xFFFFFFFF);
-  static const Color iconInactiveDark = Color(0xFF636366);
-
-  // Active indicator pill
-  static const double indicatorWidth = 40.0;
-  static const double indicatorHeight = 3.0;
-  static const double indicatorRadius = 1.5;
-  static const Color indicatorLight = Color(0xFF1A1A1A);
-  static const Color indicatorDark = Color(0xFFFFFFFF);
-
-  // Shadows (Figma: dy=4, blur=4, opacity=0.25)
-  static List<BoxShadow> shadow(bool isDark) => [
-        BoxShadow(
-          color: isDark
-              ? const Color(0x52000000)
-              : const Color(0x40000000),
-          blurRadius: 24.0,
-          spreadRadius: 0,
-          offset: const Offset(0, 8),
-        ),
-        BoxShadow(
-          color: isDark
-              ? const Color(0x1A000000)
-              : const Color(0x1A000000),
-          blurRadius: 4.0,
-          spreadRadius: 0,
-          offset: const Offset(0, 2),
-        ),
-      ];
-
-  // Animation
-  static const Duration animDuration = Duration(milliseconds: 220);
-  static const Curve animCurve = Curves.easeInOut;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Public widget
-// ─────────────────────────────────────────────────────────────────────────────
-
-class AppBottomNavigationBar extends StatefulWidget {
+class AppBottomNavigationBar extends StatelessWidget {
   const AppBottomNavigationBar({
     super.key,
-    required this.destinations,
     required this.selectedIndex,
     required this.onDestinationSelected,
-    this.fabSvgAssetPath,
-    this.onFabPressed,
-    this.margin = const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-  }) : assert(
-          destinations.length >= 2,
-          'AppBottomNavigationBar requires at least 2 destinations.',
-        );
+    this.destinations = AppBottomNavigationDestination.defaults,
+  })  : assert(destinations.length == 5),
+        assert(selectedIndex >= 0 && selectedIndex < destinations.length);
 
-  /// The regular nav items shown inside the pill bar.
-  final List<NavDestination> destinations;
-
-  /// Currently selected tab index (0-based, matching [destinations]).
   final int selectedIndex;
-
-  /// Callback fired when the user taps a nav item.
   final ValueChanged<int> onDestinationSelected;
+  final List<AppBottomNavigationDestination> destinations;
 
-  /// Optional: SVG asset path for the floating FAB pill (pencil / create).
-  /// If null, the FAB is not rendered.
-  final String? fabSvgAssetPath;
-
-  /// Optional: Callback fired when the FAB is pressed.
-  final VoidCallback? onFabPressed;
-
-  /// Outer margin from screen edges — tweak to taste.
-  final EdgeInsets margin;
-
-  @override
-  State<AppBottomNavigationBar> createState() =>
-      _AppBottomNavigationBarState();
-}
-
-class _AppBottomNavigationBarState extends State<AppBottomNavigationBar> {
-  // Track which item is being pressed for the tap-scale effect
-  int? _pressedIndex;
-  bool _fabPressed = false;
-
-  void _handleTapDown(int index) =>
-      setState(() => _pressedIndex = index);
-
-  void _handleTapUp(int index) {
-    setState(() => _pressedIndex = null);
-    widget.onDestinationSelected(index);
-  }
-
-  void _handleTapCancel() =>
-      setState(() => _pressedIndex = null);
-
-  void _handleFabDown() => setState(() => _fabPressed = true);
-  void _handleFabUp() {
-    setState(() => _fabPressed = false);
-    widget.onFabPressed?.call();
-  }
-  void _handleFabCancel() => setState(() => _fabPressed = false);
+  static const double _figmaWidth = 356;
+  static const double _barWidth = 284;
+  static const double _height = 68;
+  static const double _controlHeight = 60;
+  static const double _gap = 4;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final scheme = Theme.of(context).colorScheme;
 
-    return Padding(
-      padding: widget.margin,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // ── Main pill bar ──────────────────────────────────────────────────
-          Flexible(
-            child: _GlassPill(
-              isDark: isDark,
-              child: SizedBox(
-                height: _NavTokens.barHeight,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: _NavTokens.barPaddingH,
-                    vertical: _NavTokens.barPaddingV,
+    return SizedBox(
+      height: _height + bottomInset,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final availableWidth = constraints.maxWidth <= 32
+                ? constraints.maxWidth
+                : constraints.maxWidth - 32;
+            final scale =
+                (availableWidth / _figmaWidth).clamp(0.0, 1.0).toDouble();
+            final width = _figmaWidth * scale;
+
+            return SizedBox(
+              width: width,
+              height: _height * scale,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _GlassSurface(
+                    width: _barWidth * scale,
+                    height: _controlHeight * scale,
+                    borderRadius: BorderRadius.circular(30 * scale),
+                    child: Row(
+                      children: [
+                        for (var index = 0; index < 4; index++)
+                          Expanded(
+                            child: _NavigationButton(
+                              destination: destinations[index],
+                              index: index,
+                              selectedIndex: selectedIndex,
+                              onDestinationSelected: onDestinationSelected,
+                              iconSize: 22 * scale,
+                              selectedColor: scheme.onSurface,
+                              unselectedColor:
+                                  scheme.onSurface.withOpacity(0.62),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(widget.destinations.length, (i) {
-                      return Expanded(
-                        child: _NavItem(
-                          destination: widget.destinations[i],
-                          isSelected: widget.selectedIndex == i,
-                          isPressed: _pressedIndex == i,
-                          isDark: isDark,
-                          onTapDown: () => _handleTapDown(i),
-                          onTapUp: () => _handleTapUp(i),
-                          onTapCancel: _handleTapCancel,
-                        ),
-                      );
-                    }),
+                  SizedBox(width: _gap * scale),
+                  _GlassSurface(
+                    width: _controlHeight * scale,
+                    height: _controlHeight * scale,
+                    borderRadius: BorderRadius.circular(30 * scale),
+                    child: _NavigationButton(
+                      destination: destinations[4],
+                      index: 4,
+                      selectedIndex: selectedIndex,
+                      onDestinationSelected: onDestinationSelected,
+                      iconSize: 22 * scale,
+                      selectedColor: scheme.onSurface,
+                      unselectedColor: scheme.onSurface.withOpacity(0.72),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ),
-          ),
-
-          // ── Optional FAB pill ──────────────────────────────────────────────
-          if (widget.fabSvgAssetPath != null) ...[
-            const SizedBox(width: _NavTokens.fabGap),
-            _FabPill(
-              svgAssetPath: widget.fabSvgAssetPath!,
-              isDark: isDark,
-              isPressed: _fabPressed,
-              onTapDown: _handleFabDown,
-              onTapUp: _handleFabUp,
-              onTapCancel: _handleFabCancel,
-            ),
-          ],
-        ],
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Glass pill container — shared by bar and FAB
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _GlassPill extends StatelessWidget {
-  const _GlassPill({
-    required this.isDark,
-    required this.child,
-    this.radius = _NavTokens.barRadius,
+class AppBottomNavigationDestination {
+  const AppBottomNavigationDestination({
+    required this.iconAsset,
+    required this.label,
   });
 
-  final bool isDark;
+  final String iconAsset;
+  final String label;
+
+  static const List<AppBottomNavigationDestination> defaults = [
+    AppBottomNavigationDestination(
+      iconAsset: AppBottomNavigationAssets.home,
+      label: 'Home',
+    ),
+    AppBottomNavigationDestination(
+      iconAsset: AppBottomNavigationAssets.folderOpen,
+      label: 'Folders',
+    ),
+    AppBottomNavigationDestination(
+      iconAsset: AppBottomNavigationAssets.calendarPen,
+      label: 'Calendar',
+    ),
+    AppBottomNavigationDestination(
+      iconAsset: AppBottomNavigationAssets.settings,
+      label: 'Settings',
+    ),
+    AppBottomNavigationDestination(
+      iconAsset: AppBottomNavigationAssets.pencil,
+      label: 'Create note',
+    ),
+  ];
+}
+
+class _GlassSurface extends StatelessWidget {
+  const _GlassSurface({
+    required this.width,
+    required this.height,
+    required this.borderRadius,
+    required this.child,
+  });
+
+  final double width;
+  final double height;
+  final BorderRadius borderRadius;
   final Widget child;
-  final double radius;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
-        boxShadow: _NavTokens.shadow(isDark),
+        borderRadius: borderRadius,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.14),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.34),
+            blurRadius: 18,
+            offset: const Offset(-4, -6),
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: borderRadius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: _NavTokens.blurSigma,
-            sigmaY: _NavTokens.blurSigma,
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: isDark ? _NavTokens.darkFill : _NavTokens.lightFill,
-              borderRadius: BorderRadius.circular(radius),
-              border: Border.all(
-                color: isDark
-                    ? _NavTokens.darkBorder
-                    : _NavTokens.lightBorder,
-                width: 1.0,
-              ),
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: CustomPaint(
+            foregroundPainter: _InnerGlassBorderPainter(
+              borderRadius: borderRadius,
             ),
-            child: child,
+            child: Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                color: scheme.surface.withOpacity(0.28),
+                borderRadius: borderRadius,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.34),
+                  width: 0.8,
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.46),
+                    Colors.white.withOpacity(0.16),
+                    scheme.surfaceTint.withOpacity(0.08),
+                  ],
+                  stops: const [0, 0.56, 1],
+                ),
+              ),
+              child: child,
+            ),
           ),
         ),
       ),
@@ -262,86 +200,53 @@ class _GlassPill extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Single nav item
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
+class _NavigationButton extends StatelessWidget {
+  const _NavigationButton({
     required this.destination,
-    required this.isSelected,
-    required this.isPressed,
-    required this.isDark,
-    required this.onTapDown,
-    required this.onTapUp,
-    required this.onTapCancel,
+    required this.index,
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.iconSize,
+    required this.selectedColor,
+    required this.unselectedColor,
   });
 
-  final NavDestination destination;
-  final bool isSelected;
-  final bool isPressed;
-  final bool isDark;
-  final VoidCallback onTapDown;
-  final VoidCallback onTapUp;
-  final VoidCallback onTapCancel;
+  final AppBottomNavigationDestination destination;
+  final int index;
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final double iconSize;
+  final Color selectedColor;
+  final Color unselectedColor;
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = isSelected
-        ? (isDark ? _NavTokens.iconActiveDark : _NavTokens.iconActiveLight)
-        : (isDark ? _NavTokens.iconInactiveDark : _NavTokens.iconInactiveLight);
+    final isSelected = selectedIndex == index;
+    final color = isSelected ? selectedColor : unselectedColor;
 
     return Semantics(
-      label: destination.semanticLabel ?? destination.label,
-      selected: isSelected,
       button: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => onTapDown(),
-        onTapUp: (_) => onTapUp(),
-        onTapCancel: onTapCancel,
-        child: AnimatedScale(
-          scale: isPressed ? 0.88 : 1.0,
-          duration: _NavTokens.animDuration,
-          curve: _NavTokens.animCurve,
-          child: SizedBox(
-            height: double.infinity,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // ── Icon ──────────────────────────────────────────────────
-                AnimatedScale(
-                  scale: isSelected ? 1.08 : 1.0,
-                  duration: _NavTokens.animDuration,
-                  curve: _NavTokens.animCurve,
-                  child: SvgPicture.asset(
-                    destination.svgAssetPath,
-                    width: _NavTokens.iconSize,
-                    height: _NavTokens.iconSize,
-                    colorFilter: ColorFilter.mode(
-                      iconColor,
-                      BlendMode.srcIn,
-                    ),
-                    semanticsLabel: destination.semanticLabel,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                // ── Active dot indicator ──────────────────────────────────
-                AnimatedContainer(
-                  duration: _NavTokens.animDuration,
-                  curve: _NavTokens.animCurve,
-                  width: isSelected ? _NavTokens.indicatorWidth : 0,
-                  height: _NavTokens.indicatorHeight,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? _NavTokens.indicatorDark
-                        : _NavTokens.indicatorLight,
-                    borderRadius: BorderRadius.circular(
-                      _NavTokens.indicatorRadius,
-                    ),
-                  ),
-                ),
-              ],
+      selected: isSelected,
+      label: destination.label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onDestinationSelected(index);
+          },
+          child: Center(
+            child: AnimatedScale(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              scale: isSelected ? 1.08 : 1,
+              child: SvgPicture.asset(
+                destination.iconAsset,
+                width: iconSize,
+                height: iconSize,
+                colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+              ),
             ),
           ),
         ),
@@ -350,65 +255,47 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Floating FAB pill
-// ─────────────────────────────────────────────────────────────────────────────
+class _InnerGlassBorderPainter extends CustomPainter {
+  const _InnerGlassBorderPainter({required this.borderRadius});
 
-class _FabPill extends StatelessWidget {
-  const _FabPill({
-    required this.svgAssetPath,
-    required this.isDark,
-    required this.isPressed,
-    required this.onTapDown,
-    required this.onTapUp,
-    required this.onTapCancel,
-  });
-
-  final String svgAssetPath;
-  final bool isDark;
-  final bool isPressed;
-  final VoidCallback onTapDown;
-  final VoidCallback onTapUp;
-  final VoidCallback onTapCancel;
+  final BorderRadius borderRadius;
 
   @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Create new note',
-      button: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => onTapDown(),
-        onTapUp: (_) => onTapUp(),
-        onTapCancel: onTapCancel,
-        child: AnimatedScale(
-          scale: isPressed ? 0.90 : 1.0,
-          duration: _NavTokens.animDuration,
-          curve: _NavTokens.animCurve,
-          child: _GlassPill(
-            isDark: isDark,
-            radius: _NavTokens.fabRadius,
-            child: SizedBox(
-              width: _NavTokens.fabSize,
-              height: _NavTokens.fabSize,
-              child: Center(
-                child: SvgPicture.asset(
-                  svgAssetPath,
-                  width: _NavTokens.iconSize,
-                  height: _NavTokens.iconSize,
-                  colorFilter: ColorFilter.mode(
-                    isDark
-                        ? _NavTokens.iconActiveDark
-                        : _NavTokens.iconActiveLight,
-                    BlendMode.srcIn,
-                  ),
-                  semanticsLabel: 'Create',
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = borderRadius.toRRect(rect).deflate(1);
+
+    final topHighlight = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xB3FFFFFF),
+          Color(0x00FFFFFF),
+        ],
+      ).createShader(rect);
+
+    final lowerShadow = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0x00000000),
+          Color(0x26000000),
+        ],
+      ).createShader(rect);
+
+    canvas
+      ..drawRRect(rrect, topHighlight)
+      ..drawRRect(rrect.deflate(1), lowerShadow);
+  }
+
+  @override
+  bool shouldRepaint(_InnerGlassBorderPainter oldDelegate) {
+    return oldDelegate.borderRadius != borderRadius;
   }
 }

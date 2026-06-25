@@ -43,25 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _activeNavIndex = 0;
   int _validationSelectedIndex = 0;
 
-  static const List<NavDestination> _destinations = [
-    NavDestination(
-      svgAssetPath: 'assets/app_bottom_navigation_bar_Icons/home.svg',
-      label: 'Home',
-    ),
-    NavDestination(
-      svgAssetPath: 'assets/app_bottom_navigation_bar_Icons/folder-open.svg',
-      label: 'Folders',
-    ),
-    NavDestination(
-      svgAssetPath: 'assets/app_bottom_navigation_bar_Icons/calendar-pen.svg',
-      label: 'Calendar',
-    ),
-    NavDestination(
-      svgAssetPath: 'assets/app_bottom_navigation_bar_Icons/settings.svg',
-      label: 'Settings',
-    ),
-  ];
-
   // ── FAB / prompt → new note ───────────────────────────────────────────────
 
   /// Opens an existing note by [noteId] using the standard page transition.
@@ -193,13 +174,14 @@ class _HomeScreenState extends State<HomeScreen> {
             left: 0,
             right: 0,
             child: AppBottomNavigationBar(
-              destinations: _destinations,
               selectedIndex: _validationSelectedIndex,
               onDestinationSelected: (i) {
-                setState(() => _validationSelectedIndex = i);
+                if (i == 4) {
+                  _openNewNote();
+                } else {
+                  setState(() => _validationSelectedIndex = i);
+                }
               },
-              fabSvgAssetPath: 'assets/app_bottom_navigation_bar_Icons/pencil.svg',
-              onFabPressed: _openNewNote,
             ),
           ),
         ],
