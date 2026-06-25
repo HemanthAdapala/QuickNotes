@@ -17,7 +17,19 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
 
   /// Screen background
-  static const Color background = Color(0xFFF9F6E5);
+  static const Color background = Color(0xFFF2F2EE);
+
+  /// Glass Surface - Frosted cards, widgets, floating panels
+  static const Color glassSurface = Color(0x8CFFFFFF);
+
+  /// Glass Border - Subtle glass outlines and edge highlights
+  static const Color glassBorder = Color(0xA6FFFFFF);
+
+  /// Divider - Layout separators and minimal boundaries
+  static const Color divider = Color(0x14333333);
+
+  /// Amber Soft - Hover states, gentle highlights, and animations
+  static const Color amberSoft = Color(0xFFFFB84D);
 }
 
 class AppTextStyles {

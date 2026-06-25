@@ -65,7 +65,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFFF9F6E5),
+          backgroundColor: const Color(0xFFF2F2EE),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text(
             "New Category",
@@ -113,7 +113,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF222222),
-                foregroundColor: const Color(0xFFF9F6E5),
+                foregroundColor: const Color(0xFFF2F2EE),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: Text("Create", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
@@ -168,7 +168,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 402),
       decoration: const BoxDecoration(
-        color: Color(0xFFF9F6E5),
+        color: Color(0xFFF2F2EE),
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
@@ -367,7 +367,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF222222) : const Color(0xFFF9F6E5),
+          color: isSelected ? const Color(0xFF222222) : const Color(0xFFF2F2EE),
           borderRadius: BorderRadius.circular(12),
           border: isSelected
               ? null
@@ -399,7 +399,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                     color: color == Colors.transparent ? null : color,
                     border: color == Colors.transparent
                         ? Border.all(
-                            color: isSelected ? const Color(0xFFF9F6E5) : const Color(0xFF747878),
+                            color: isSelected ? const Color(0xFFF2F2EE) : const Color(0xFF747878),
                             width: 1.5,
                           )
                         : null,
@@ -411,7 +411,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
-                    color: isSelected ? const Color(0xFFF9F6E5) : Colors.black,
+                    color: isSelected ? const Color(0xFFF2F2EE) : Colors.black,
                   ),
                 ),
               ],
@@ -419,7 +419,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
             if (isSelected)
               const Icon(
                 Icons.check,
-                color: Color(0xFFF9F6E5),
+                color: Color(0xFFF2F2EE),
                 size: 18,
               ),
           ],

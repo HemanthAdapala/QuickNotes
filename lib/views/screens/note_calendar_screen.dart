@@ -164,7 +164,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
     showAnimatedDialog<DateTime>(
       context: context,
       child: AlertDialog(
-        backgroundColor: const Color(0xFFF9F6E5),
+        backgroundColor: const Color(0xFFF2F2EE),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           "Select Month",

@@ -237,7 +237,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F6E5),
+      backgroundColor: const Color(0xFFF2F2EE),
       body: SafeArea(
         bottom: false,
         child: Column(

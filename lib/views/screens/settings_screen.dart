@@ -23,7 +23,7 @@ class SettingsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFF9F6E5),
+        backgroundColor: const Color(0xFFF2F2EE),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
         title: Text(
           title,
@@ -59,7 +59,7 @@ class SettingsScreen extends StatelessWidget {
     final provider = Provider.of<NotesProvider>(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F6E5),
+      backgroundColor: const Color(0xFFF2F2EE),
       body: SafeArea(
         bottom: false,
         child: Column(

@@ -55,7 +55,7 @@ enum _UiState { empty, typing, results, noResults }
 // Design constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const Color _kBg          = Color(0xFFF9F6E5);
+const Color _kBg          = Color(0xFFF2F2EE);
 const Color _kInk         = Color(0xFF333333);
 const Color _kAmber       = Color(0xFFFFA322);
 const Color _kPlaceholder = Color(0x73333333);

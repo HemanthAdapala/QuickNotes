@@ -219,8 +219,8 @@ class NotesProvider with ChangeNotifier {
   static Color getLightColor(int index, BuildContext context) {
     switch (index) {
       case 1: return const Color(0xFFFFAAA6); // Coral
-      case 2: return const Color(0xFFFFD3B6); // Peach
-      case 3: return const Color(0xFFFFFFA6); // Lemon
+      case 2: return const Color(0xFFFFDAB6); // Peach
+      case 3: return const Color(0xFFFFF3A6); // Lemon
       case 4: return const Color(0xFFD4ECDD); // Sage
       case 5: return const Color(0xFFA8DADC); // Sky
       case 6: return const Color(0xFFD6C8FF); // Lavender

@@ -88,7 +88,7 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
         final hierarchical = FolderUtils.getHierarchicalFolders(provider.folders);
 
         return AlertDialog(
-          backgroundColor: const Color(0xFFF9F6E5),
+          backgroundColor: const Color(0xFFF2F2EE),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text(
             "New Folder",
@@ -119,7 +119,7 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String?>(
                 initialValue: selectedParentId,
-                dropdownColor: const Color(0xFFF9F6E5),
+                dropdownColor: const Color(0xFFF2F2EE),
                 style: GoogleFonts.inter(color: const Color(0xFF1C1C1E)),
                 decoration: InputDecoration(
                   labelText: "Parent Folder (Optional)",
@@ -188,7 +188,7 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF222222),
-                foregroundColor: const Color(0xFFF9F6E5),
+                foregroundColor: const Color(0xFFF2F2EE),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: Text(
@@ -211,7 +211,7 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
         builder: (context) {
           final theme = Theme.of(context);
           return AlertDialog(
-            backgroundColor: const Color(0xFFF9F6E5),
+            backgroundColor: const Color(0xFFF2F2EE),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: Text(
               "Delete Folder?",
@@ -312,7 +312,7 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
     final categoriesList = allCategoriesSet.toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F6E5),
+      backgroundColor: const Color(0xFFF2F2EE),
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(

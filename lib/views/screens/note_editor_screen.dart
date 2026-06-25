@@ -3569,7 +3569,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   /*
   Widget _buildStartingScreen(ThemeData theme, bool isDark) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F6E5),
+      backgroundColor: const Color(0xFFF2F2EE),
       body: SafeArea(
         child: Stack(
           children: [
@@ -3689,7 +3689,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     const titleColor = Color(0xFF333333);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F6E5),
+      backgroundColor: const Color(0xFFF2F2EE),
       body: SafeArea(
         child: Stack(
           children: [

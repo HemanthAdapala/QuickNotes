@@ -34,7 +34,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: const Color(0xFFF9F6E5),
+              backgroundColor: const Color(0xFFF2F2EE),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: Text(
                 "New Folder",
@@ -62,7 +62,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String?>(
                     value: selectedParentId,
-                    dropdownColor: const Color(0xFFF9F6E5),
+                    dropdownColor: const Color(0xFFF2F2EE),
                     style: GoogleFonts.plusJakartaSans(color: Colors.black),
                     decoration: InputDecoration(
                       labelText: "Parent Folder (Optional)",
@@ -125,7 +125,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF222222),
-                    foregroundColor: const Color(0xFFF9F6E5),
+                    foregroundColor: const Color(0xFFF2F2EE),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: Text("Create", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
@@ -154,7 +154,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 402),
       decoration: const BoxDecoration(
-        color: Color(0xFFF9F6E5),
+        color: Color(0xFFF2F2EE),
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
@@ -358,7 +358,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
           children: [
             Icon(
               isSelected ? Icons.folder : Icons.folder_open_outlined,
-              color: isSelected ? const Color(0xFFF9F6E5) : const Color(0xFF8C8987),
+              color: isSelected ? const Color(0xFFF2F2EE) : const Color(0xFF8C8987),
               size: 22,
             ),
             const SizedBox(width: 12),
@@ -368,7 +368,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
-                  color: isSelected ? const Color(0xFFF9F6E5) : Colors.black,
+                  color: isSelected ? const Color(0xFFF2F2EE) : Colors.black,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -377,7 +377,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
             if (isSelected)
               const Icon(
                 Icons.check,
-                color: Color(0xFFF9F6E5),
+                color: Color(0xFFF2F2EE),
                 size: 18,
               )
             else
