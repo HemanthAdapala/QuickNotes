@@ -59,3 +59,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icons/
+    - assets/New Icons/Selected/
+    - assets/New Icons/Not Selected/
+    - assets/app_bottom_navigation_bar_Icons/
