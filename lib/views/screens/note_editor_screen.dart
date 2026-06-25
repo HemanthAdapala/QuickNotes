@@ -25,6 +25,7 @@ import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
 import '../widgets/paper_guide_painters.dart';
 import '../widgets/tactile_button.dart';
+import '../widgets/rich_text_formatting_pill.dart';
 import 'package:flutter/services.dart';
 import '../../core/animations/page_transitions.dart';
 import 'dart:math';
@@ -4157,104 +4158,58 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                 left: 24,
                 right: 24,
                 child: Center(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 354),
+                  child: RichTextFormattingPillContainer(
+                    width: 354,
                     margin: const EdgeInsets.symmetric(horizontal: 8),
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF333333),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: Row(
-                        children: [
-                          // Left chevron play 1
-                          GestureDetector(
-                            onTap: () {
-                              _pageController.previousPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
+                    child: Row(
+                      children: [
+                        // Left chevron play 1
+                        IconButton(
+                          tooltip: 'Previous tools',
+                          onPressed: () {
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                            );
+                          },
+                          icon: const RichTextFormattingPillIcon(
+                            assetName: 'assets/icons/play_1.svg',
+                            semanticLabel: 'Previous tools',
+                          ),
+                        ),
+                        
+                        // Sliding PageView
+                        Expanded(
+                          child: PageView(
+                            controller: _pageController,
+                            onPageChanged: (page) {
+                              setState(() {
+                                _currentPage = page;
+                              });
                             },
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              alignment: Alignment.center,
-                              color: Colors.transparent,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icons/play_1.svg',
-                                    width: 20,
-                                    height: 20,
-                                    colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                  ),
-                                  const Positioned.fill(
-                                    child: Icon(
-                                      Icons.play_arrow_rounded,
-                                      size: 20,
-                                      color: Colors.transparent,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            children: [
+                              _buildFigmaPage0(activeStyle),
+                              _buildFigmaPage1(activeStyle),
+                              _buildFigmaPage2(activeStyle),
+                            ],
                           ),
-                          
-                          // Sliding PageView
-                          Expanded(
-                            child: PageView(
-                              controller: _pageController,
-                              onPageChanged: (page) {
-                                setState(() {
-                                  _currentPage = page;
-                                });
-                              },
-                              children: [
-                                _buildFigmaPage0(activeStyle),
-                                _buildFigmaPage1(activeStyle),
-                                _buildFigmaPage2(activeStyle),
-                              ],
-                            ),
-                          ),
+                        ),
 
-                          // Right chevron play 2
-                          GestureDetector(
-                            onTap: () {
-                              _pageController.nextPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            },
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              alignment: Alignment.center,
-                              color: Colors.transparent,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icons/play_2.svg',
-                                    width: 20,
-                                    height: 20,
-                                    colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                  ),
-                                  const Positioned.fill(
-                                    child: Icon(
-                                      Icons.play_arrow_rounded,
-                                      size: 20,
-                                      color: Colors.transparent,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        // Right chevron play 2
+                        IconButton(
+                          tooltip: 'Next tools',
+                          onPressed: () {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                            );
+                          },
+                          icon: const RichTextFormattingPillIcon(
+                            assetName: 'assets/icons/play_2.svg',
+                            semanticLabel: 'Next tools',
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -4270,6 +4225,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   Widget _buildFigmaPage0(Style activeStyle) {
+    final inactiveColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -4282,7 +4238,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: activeStyle.bold ? const Color(0xFFFFA322) : Colors.white,
+                color: activeStyle.bold ? const Color(0xFFFFA322) : inactiveColor,
               ),
             ),
           ),
@@ -4297,7 +4253,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                 fontSize: 16,
                 fontStyle: FontStyle.italic,
                 fontWeight: FontWeight.normal,
-                color: activeStyle.italic ? const Color(0xFFFFA322) : Colors.white,
+                color: activeStyle.italic ? const Color(0xFFFFA322) : inactiveColor,
               ),
             ),
           ),
@@ -4311,7 +4267,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               style: GoogleFonts.inter(
                 fontSize: 16,
                 decoration: TextDecoration.underline,
-                color: activeStyle.underline ? const Color(0xFFFFA322) : Colors.white,
+                color: activeStyle.underline ? const Color(0xFFFFA322) : inactiveColor,
               ),
             ),
           ),
@@ -4325,7 +4281,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               style: GoogleFonts.inter(
                 fontSize: 16,
                 decoration: TextDecoration.lineThrough,
-                color: activeStyle.strikethrough ? const Color(0xFFFFA322) : Colors.white,
+                color: activeStyle.strikethrough ? const Color(0xFFFFA322) : inactiveColor,
               ),
             ),
           ),
@@ -4339,7 +4295,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               width: 16,
               height: 16,
               colorFilter: ColorFilter.mode(
-                activeStyle.highlight != null ? const Color(0xFFFFA322) : Colors.white,
+                activeStyle.highlight != null ? const Color(0xFFFFA322) : inactiveColor,
                 BlendMode.srcIn,
               ),
             ),
@@ -4353,7 +4309,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               'assets/icons/link.svg',
               width: 16,
               height: 16,
-              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              colorFilter: ColorFilter.mode(inactiveColor, BlendMode.srcIn),
             ),
           ),
         ),
@@ -4454,6 +4410,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   Widget _buildPage1TextButton(String text, VoidCallback onTap, bool isActive, {required String tooltip}) {
+    final inactiveColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72);
     return Tooltip(
       message: tooltip,
       child: GestureDetector(
@@ -4471,7 +4428,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: isActive ? const Color(0xFFFFA322) : Colors.white,
+              color: isActive ? const Color(0xFFFFA322) : inactiveColor,
             ),
           ),
         ),
@@ -4480,6 +4437,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   Widget _buildPage1IconButton(IconData icon, VoidCallback onTap, bool isActive, {required String tooltip}) {
+    final inactiveColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72);
     return Tooltip(
       message: tooltip,
       child: GestureDetector(
@@ -4495,7 +4453,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           child: Icon(
             icon,
             size: 20,
-            color: isActive ? const Color(0xFFFFA322) : Colors.white,
+            color: isActive ? const Color(0xFFFFA322) : inactiveColor,
           ),
         ),
       ),

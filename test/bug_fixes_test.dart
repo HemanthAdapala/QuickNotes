@@ -15,6 +15,7 @@ import 'package:quick_notes/views/widgets/note_card.dart';
 import 'package:quick_notes/views/widgets/rich_text_controller.dart';
 import 'package:quick_notes/views/widgets/home_prompt_view.dart';
 import 'package:quick_notes/views/widgets/tactile_button.dart';
+import 'package:quick_notes/views/widgets/rich_text_formatting_pill.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -329,8 +330,8 @@ void main() {
       expect(find.byTooltip('Highlight'), findsOneWidget);
       expect(find.byTooltip('Link'), findsOneWidget);
 
-      // Find both left and right arrow buttons (Icons.play_arrow_rounded)
-      final arrowButtons = find.byIcon(Icons.play_arrow_rounded);
+      // Find both left and right arrow buttons (RichTextFormattingPillIcon)
+      final arrowButtons = find.byType(RichTextFormattingPillIcon);
       expect(arrowButtons, findsNWidgets(2));
 
       // Tap the right arrow button (last in widget tree) to slide to Page 1
@@ -517,7 +518,7 @@ void main() {
       final pageViewFinder = find.byType(PageView);
       expect(pageViewFinder, findsOneWidget);
 
-      final arrowButtons = find.byIcon(Icons.play_arrow_rounded);
+      final arrowButtons = find.byType(RichTextFormattingPillIcon);
       expect(arrowButtons, findsNWidgets(2));
 
       await tester.tap(arrowButtons.last);
