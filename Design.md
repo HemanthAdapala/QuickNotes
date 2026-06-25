@@ -82,6 +82,45 @@ Accent colors should never overpower content.
 
 The writing itself should always remain the visual focus.
 
+### Core Color Palette
+
+| Name            | Hex         | Usage                                                                                                                                                    |
+| --------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ink**         | `#333333`   | Primary dark color — used for main text, titles, icons, dividers, and structural elements.                                                               |
+| **Amber**       | `#FFA322`   | Accent color — used for active highlights, today's date, selected states, and navigation indicators.                                                     |
+| **Placeholder** | `#73333333` | Muted and disabled text — Ink at 45% opacity for placeholders and secondary information.                                                                 |
+| **White**       | `#FFFFFF`   | Solid surfaces — editor sheets, cards, modals, and elevated content areas.                                                                               |
+| **Background**  | `#F2F2EE`   | Soft warm stone background — designed specifically for frosted glass interfaces, providing subtle contrast while maintaining a calm, premium atmosphere. |
+
+### Optional Supporting Colors (Recommended)
+
+| Name              | Value                    | Usage                                            |
+| ----------------- | ------------------------ | ------------------------------------------------ |
+| **Glass Surface** | `rgba(255,255,255,0.55)` | Frosted cards, widgets, floating panels.         |
+| **Glass Border**  | `rgba(255,255,255,0.65)` | Subtle glass outlines and edge highlights.       |
+| **Divider**       | `rgba(51,51,51,0.08)`    | Layout separators and minimal boundaries.        |
+| **Amber Soft**    | `#FFB84D`                | Hover states, gentle highlights, and animations. |
+
+### Folder & Category Colors (Soft Pastel Collection)
+
+| Name     | Hex       |
+| -------- | --------- |
+| Coral    | `#FFAAA6` |
+| Peach    | `#FFDAB6` |
+| Lemon    | `#FFF3A6` |
+| Sage     | `#D4ECDD` |
+| Sky      | `#A8DADC` |
+| Lavender | `#D6C8FF` |
+| Blush    | `#FFC6FF` |
+
+The resulting identity becomes:
+* **Ink**: `#333333`
+* **Amber**: `#FFA322`
+* **Background**: `#F2F2EE`
+* **White**: `#FFFFFF`
+* **Glass**: Frosted White (`55%` opacity)
+* **Folders**: Soft Pastel Collection
+
 ---
 
 ## Shadows
