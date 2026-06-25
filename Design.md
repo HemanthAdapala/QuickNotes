@@ -26,6 +26,9 @@ Do not reinterpret spacing, proportions, typography, hierarchy, or composition u
 
 If implementation constraints exist, preserve the overall feeling and visual balance before introducing changes.
 
+> [!IMPORTANT]
+> **Hard Constraint**: Under no circumstances should the `AppBottomNavigationBar` implementation be changed or redesigned without explicit user approval.
+
 ---
 
 # Overall Design Language
