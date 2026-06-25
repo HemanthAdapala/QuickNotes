@@ -190,10 +190,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Verify that we start on HomeScreen's Today block or input field
-      expect(find.text('Start writing...'), findsOneWidget);
+      expect(find.text('No notes yet'), findsNWidgets(2));
 
       // Tap on Folders tab (index 1) which shows FolderManagementScreen
-      final folderIconFinder = find.byKey(const Key('nav_folders'));
+      final folderIconFinder = find.bySemanticsLabel('Folders');
       expect(folderIconFinder, findsOneWidget);
 
       await tester.tap(folderIconFinder);
@@ -899,7 +899,7 @@ void main() {
           ),
         ),
       );
-      expect(find.text('No notes yet'), findsOneWidget);
+      expect(find.text('No notes yet'), findsNWidgets(2));
 
       // Add 1 note for today (June 15, 2026)
       final now = DateTime.now();

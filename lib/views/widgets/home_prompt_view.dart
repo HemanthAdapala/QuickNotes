@@ -363,9 +363,14 @@ class _HomePromptViewState extends State<HomePromptView> {
         // ── Body ─────────────────────────────────────────────────────────────
         if (!hasNotes)
           Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: _EmptyStateColumn(onWriteNote: widget.onTap),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 80.0),
+              child: Center(
+                child: SingleChildScrollView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  child: _EmptyStateColumn(onWriteNote: widget.onTap),
+                ),
+              ),
             ),
           )
         else
@@ -506,7 +511,7 @@ class _EmptyStateColumn extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 120.0),
+          const SizedBox(height: 24.0),
         ],
       ),
     );
