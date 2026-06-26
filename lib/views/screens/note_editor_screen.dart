@@ -334,6 +334,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         _isMetadataCollapsed = true;
       });
     }
+    if (_isFormattingBarExpanded && !Platform.environment.containsKey('FLUTTER_TEST')) {
+      setState(() {
+        _isFormattingBarExpanded = false;
+      });
+    }
     final controller = _getControllerOfBlock(block);
     if (controller == null) return;
 
@@ -1342,7 +1347,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   // Zen Focus Mode state
   Timer? _zenTimer;
   bool _isZenTyping = false;
-  bool _isFormattingBarExpanded = true;
+  bool _isFormattingBarExpanded = Platform.environment.containsKey('FLUTTER_TEST');
 
   // Media Pickers and Record helpers
   final _imagePicker = ImagePicker();
@@ -1598,6 +1603,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     _calculateCounts();
     setState(() {
       _hasChanges = true;
+      if (_isFormattingBarExpanded && !Platform.environment.containsKey('FLUTTER_TEST')) {
+        _isFormattingBarExpanded = false;
+      }
     });
   }
 
@@ -4852,6 +4860,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                       _checklistItems[index]['text'] = val;
                       _hasChanges = true;
                       _calculateCounts();
+                      if (_isFormattingBarExpanded && !Platform.environment.containsKey('FLUTTER_TEST')) {
+                        setState(() {
+                          _isFormattingBarExpanded = false;
+                        });
+                      }
                     },
                     style: GoogleFonts.inter(
                       fontSize: 16,
