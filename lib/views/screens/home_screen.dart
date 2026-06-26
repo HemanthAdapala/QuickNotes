@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
-
+import '../widgets/glass_container.dart';
+import '../widgets/tactile_button.dart';
 
 import '../../providers/notes_provider.dart';
 import '../../themes/app_theme.dart';
@@ -40,6 +42,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _activeNavIndex = 0;
+  int _selectedBgIndex = 0;
 
   // ── FAB / prompt → new note ───────────────────────────────────────────────
 
@@ -93,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
         interactive: false,
         onTap: _openNewNote,
         onLastEditedNoteTap: _openNote,
+        isDarkBackground: _selectedBgIndex == 1 || _selectedBgIndex == 2,
       ),
     );
   }
@@ -124,6 +128,165 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildBackground() {
+    switch (_selectedBgIndex) {
+      case 1:
+        // B1: Aurora Midnight
+        return Container(
+          color: const Color(0xFF0C0D12),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -100,
+                top: -100,
+                width: 350,
+                height: 350,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF4F46E5).withValues(alpha: 0.22),
+                        const Color(0xFF4F46E5).withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: -80,
+                bottom: 80,
+                width: 300,
+                height: 300,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF06B6D4).withValues(alpha: 0.18),
+                        const Color(0xFF06B6D4).withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      case 2:
+        // B2: Liquid Obsidian
+        return Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF121214),
+                Color(0xFF2C1A4D),
+              ],
+            ),
+          ),
+        );
+      case 3:
+        // B3: Sandstone Warm Light
+        return Container(
+          color: const Color(0xFFF5F4F0),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -50,
+                bottom: 100,
+                width: 300,
+                height: 300,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFFF5A623).withValues(alpha: 0.10),
+                        const Color(0xFFF5A623).withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      case 4:
+        // B4: Split Geometric
+        return Column(
+          children: [
+            Expanded(
+              flex: 1,
+              child: Container(color: const Color(0xFFEAE8E2)),
+            ),
+            Expanded(
+              flex: 1,
+              child: Container(color: const Color(0xFF1C1C1E)),
+            ),
+          ],
+        );
+      case 0:
+      default:
+        // B0: Default Warm Stone
+        return Container(color: const Color(0xFFF2F2EE));
+    }
+  }
+
+  Widget _buildBackgroundSwitcher() {
+    return Positioned(
+      bottom: 80,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: GlassSurface(
+          height: 44,
+          borderRadius: BorderRadius.circular(22),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (int i = 0; i < 5; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
+                TactileButton(
+                  useAppleSpring: true,
+                  compressionScale: 0.85,
+                  settleDuration: const Duration(milliseconds: 600),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _selectedBgIndex = i;
+                    });
+                  },
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _selectedBgIndex == i
+                          ? const Color(0xFFF5A623)
+                          : Colors.white.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      'B$i',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: _selectedBgIndex == i ? Colors.white : const Color(0xFF333333),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Root build ───────────────────────────────────────────────────────────
 
   @override
@@ -132,6 +295,9 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
+          // Dynamic Background (only active/visible behind Home tab)
+          if (_activeNavIndex == 0) _buildBackground(),
+
           // Tab content — IndexedStack keeps all tabs alive
           IndexedStack(
             index: _activeNavIndex,
@@ -142,6 +308,9 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildSettingsBody(),
             ],
           ),
+
+          // Background Switcher Floating Bar (only visible on Home tab)
+          if (_activeNavIndex == 0) _buildBackgroundSwitcher(),
 
           // ── AppBottomNavigationBar (at bottom: 0) ──────────────────────────
           Positioned(

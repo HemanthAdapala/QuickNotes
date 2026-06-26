@@ -60,14 +60,14 @@ class AppBottomNavigationBar extends StatelessWidget {
                           AnimatedPositioned(
                             duration: kDurationNormal,
                             curve: Curves.easeInOutCubic,
-                            left: scale * (selectedIndex * 71.0 + (71.0 - 70.0) / 2.0),
-                            top: scale * (_controlHeight - 50.0) / 2.0,
-                            width: 70.0 * scale,
-                            height: 50.0 * scale,
+                            left: scale * (8.0 + selectedIndex * 67.0 + (67.0 - 62.0) / 2.0),
+                            top: scale * (_controlHeight - 48.0) / 2.0,
+                            width: 62.0 * scale,
+                            height: 48.0 * scale,
                             child: Container(
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF5A623),
-                                borderRadius: BorderRadius.circular(25.0 * scale),
+                                borderRadius: BorderRadius.circular(24.0 * scale),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.15),
@@ -79,21 +79,24 @@ class AppBottomNavigationBar extends StatelessWidget {
                             ),
                           ),
                         // Navigation buttons
-                        Row(
-                          children: [
-                            for (var index = 0; index < 4; index++)
-                              Expanded(
-                                child: _NavigationButton(
-                                  destination: destinations[index],
-                                  index: index,
-                                  selectedIndex: selectedIndex,
-                                  onDestinationSelected: onDestinationSelected,
-                                  iconSize: 22 * scale,
-                                  selectedColor: Colors.white, // Active icon changes to white
-                                  unselectedColor: const Color(0xFF333333), // Inactive is 333333
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8.0 * scale),
+                          child: Row(
+                            children: [
+                              for (var index = 0; index < 4; index++)
+                                Expanded(
+                                  child: _NavigationButton(
+                                    destination: destinations[index],
+                                    index: index,
+                                    selectedIndex: selectedIndex,
+                                    onDestinationSelected: onDestinationSelected,
+                                    iconSize: 22 * scale,
+                                    selectedColor: Colors.white, // Active icon changes to white
+                                    unselectedColor: const Color(0xFF333333), // Inactive is 333333
+                                  ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

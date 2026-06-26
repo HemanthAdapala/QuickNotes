@@ -62,6 +62,7 @@ class HomePromptView extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onTap;
   final ValueChanged<String>? onLastEditedNoteTap;
+  final bool isDarkBackground;
 
   const HomePromptView({
     super.key,
@@ -72,6 +73,7 @@ class HomePromptView extends StatefulWidget {
     this.onChanged,
     this.onTap,
     this.onLastEditedNoteTap,
+    this.isDarkBackground = false,
   });
 
   static final List<String> _prompts = [
@@ -280,7 +282,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 36,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF222222),
+                        color: widget.isDarkBackground ? Colors.white : const Color(0xFF222222),
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -368,7 +370,10 @@ class _HomePromptViewState extends State<HomePromptView> {
               child: Center(
                 child: SingleChildScrollView(
                   physics: const NeverScrollableScrollPhysics(),
-                  child: _EmptyStateColumn(onWriteNote: widget.onTap),
+                  child: _EmptyStateColumn(
+                    onWriteNote: widget.onTap,
+                    isDarkBackground: widget.isDarkBackground,
+                  ),
                 ),
               ),
             ),
@@ -442,8 +447,9 @@ class _HomePromptViewState extends State<HomePromptView> {
                                     _placeholderPrompt,
                                     style: GoogleFonts.inter(
                                       fontSize: 20.0,
-                                      color: const Color(0xFF333333)
-                                          .withOpacity(0.3),
+                                      color: widget.isDarkBackground
+                                          ? Colors.white.withOpacity(0.4)
+                                          : const Color(0xFF333333).withOpacity(0.3),
                                       height: 1.4,
                                     ),
                                   ),
@@ -468,8 +474,12 @@ class _HomePromptViewState extends State<HomePromptView> {
 
 class _EmptyStateColumn extends StatelessWidget {
   final VoidCallback? onWriteNote;
+  final bool isDarkBackground;
 
-  const _EmptyStateColumn({this.onWriteNote});
+  const _EmptyStateColumn({
+    this.onWriteNote,
+    this.isDarkBackground = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -486,7 +496,7 @@ class _EmptyStateColumn extends StatelessWidget {
             style: GoogleFonts.playfairDisplay(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF222222),
+              color: isDarkBackground ? Colors.white : const Color(0xFF222222),
             ),
           ),
           const SizedBox(height: 10.0),
