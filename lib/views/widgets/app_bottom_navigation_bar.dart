@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../core/animations/animation_constants.dart';
 import '../constants/app_bottom_navigation_assets.dart';
 
 class AppBottomNavigationBar extends StatelessWidget {
@@ -53,21 +54,41 @@ class AppBottomNavigationBar extends StatelessWidget {
                     width: _barWidth * scale,
                     height: _controlHeight * scale,
                     borderRadius: BorderRadius.circular(30 * scale),
-                    child: Row(
+                    child: Stack(
                       children: [
-                        for (var index = 0; index < 4; index++)
-                          Expanded(
-                            child: _NavigationButton(
-                              destination: destinations[index],
-                              index: index,
-                              selectedIndex: selectedIndex,
-                              onDestinationSelected: onDestinationSelected,
-                              iconSize: 22 * scale,
-                              selectedColor: scheme.onSurface,
-                              unselectedColor:
-                                  scheme.onSurface.withOpacity(0.62),
+                        // Sliding active tab indicator pill (Change 3)
+                        if (selectedIndex < 4)
+                          AnimatedPositioned(
+                            duration: kDurationNormal,
+                            curve: Curves.easeInOutCubic,
+                            left: scale * (selectedIndex * 71.0 + (71.0 - 48.0) / 2.0),
+                            top: scale * (_controlHeight - 32.0) / 2.0,
+                            width: 48.0 * scale,
+                            height: 32.0 * scale,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5A623).withValues(alpha: 0.20),
+                                borderRadius: BorderRadius.circular(16.0 * scale),
+                              ),
                             ),
                           ),
+                        // Navigation buttons
+                        Row(
+                          children: [
+                            for (var index = 0; index < 4; index++)
+                              Expanded(
+                                child: _NavigationButton(
+                                  destination: destinations[index],
+                                  index: index,
+                                  selectedIndex: selectedIndex,
+                                  onDestinationSelected: onDestinationSelected,
+                                  iconSize: 22 * scale,
+                                  selectedColor: const Color(0xFFF5A623), // Active icon changes to amber color
+                                  unselectedColor: Colors.white.withValues(alpha: 0.60), // Inactive remain white at 60%
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -83,7 +104,7 @@ class AppBottomNavigationBar extends StatelessWidget {
                       onDestinationSelected: onDestinationSelected,
                       iconSize: 22 * scale,
                       selectedColor: scheme.onSurface,
-                      unselectedColor: scheme.onSurface.withOpacity(0.72),
+                      unselectedColor: scheme.onSurface.withValues(alpha: 0.72),
                     ),
                   ),
                 ],
@@ -151,12 +172,12 @@ class _GlassSurface extends StatelessWidget {
         borderRadius: borderRadius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.14),
+            color: Colors.black.withValues(alpha: 0.14),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
           BoxShadow(
-            color: Colors.white.withOpacity(0.34),
+            color: Colors.white.withValues(alpha: 0.34),
             blurRadius: 18,
             offset: const Offset(-4, -6),
           ),
@@ -174,19 +195,19 @@ class _GlassSurface extends StatelessWidget {
               width: width,
               height: height,
               decoration: BoxDecoration(
-                color: scheme.surface.withOpacity(0.28),
+                color: scheme.surface.withValues(alpha: 0.28),
                 borderRadius: borderRadius,
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.34),
+                  color: Colors.white.withValues(alpha: 0.34),
                   width: 0.8,
                 ),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withOpacity(0.46),
-                    Colors.white.withOpacity(0.16),
-                    scheme.surfaceTint.withOpacity(0.08),
+                    Colors.white.withValues(alpha: 0.46),
+                    Colors.white.withValues(alpha: 0.16),
+                    scheme.surfaceTint.withValues(alpha: 0.08),
                   ],
                   stops: const [0, 0.56, 1],
                 ),
@@ -200,7 +221,7 @@ class _GlassSurface extends StatelessWidget {
   }
 }
 
-class _NavigationButton extends StatelessWidget {
+class _NavigationButton extends StatefulWidget {
   const _NavigationButton({
     required this.destination,
     required this.index,
@@ -220,38 +241,212 @@ class _NavigationButton extends StatelessWidget {
   final Color unselectedColor;
 
   @override
+  State<_NavigationButton> createState() => _NavigationButtonState();
+}
+
+class _NavigationButtonState extends State<_NavigationButton>
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+
+  late AnimationController _dotController;
+  late Animation<double> _dotAnimation;
+
+  static const List<Offset> _dotDirections = [
+    Offset(0.951, 0.309),   // 18 degrees
+    Offset(0.000, 1.000),   // 90 degrees
+    Offset(-0.951, 0.309),  // 162 degrees
+    Offset(-0.588, -0.809), // 234 degrees
+    Offset(0.588, -0.809),  // 306 degrees
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(vsync: this);
+    _scaleAnimation = const AlwaysStoppedAnimation<double>(1.0);
+
+    _dotController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _dotAnimation = _dotController;
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    _dotController.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(bool reduceMotion) {
+    if (reduceMotion) return;
+    _scaleController.stop();
+    _scaleController.duration = const Duration(milliseconds: 80);
+    setState(() {
+      _scaleAnimation = Tween<double>(
+        begin: _scaleAnimation.value,
+        end: 0.85,
+      ).animate(CurvedAnimation(
+        parent: _scaleController,
+        curve: Curves.easeIn,
+      ));
+    });
+    _scaleController.forward(from: 0.0);
+  }
+
+  void _handleTapCancel(bool reduceMotion) {
+    if (reduceMotion) return;
+    _scaleController.stop();
+    _scaleController.duration = const Duration(milliseconds: 150);
+    setState(() {
+      _scaleAnimation = Tween<double>(
+        begin: _scaleAnimation.value,
+        end: 1.0,
+      ).animate(CurvedAnimation(
+        parent: _scaleController,
+        curve: Curves.easeOut,
+      ));
+    });
+    _scaleController.forward(from: 0.0);
+  }
+
+  void _handleTap(bool reduceMotion) {
+    if (reduceMotion) {
+      widget.onDestinationSelected(widget.index);
+      return;
+    }
+
+    // Play haptic tick
+    HapticFeedback.selectionClick();
+
+    // Scale spring animation sequence
+    _scaleController.stop();
+    _scaleController.duration = const Duration(milliseconds: 400);
+    setState(() {
+      _scaleAnimation = TweenSequence<double>([
+        TweenSequenceItem(
+          tween: Tween<double>(begin: 0.85, end: 1.2)
+              .chain(CurveTween(curve: Curves.easeOut)),
+          weight: 60,
+        ),
+        TweenSequenceItem(
+          tween: Tween<double>(begin: 1.2, end: 1.0)
+              .chain(CurveTween(curve: Curves.elasticOut)),
+          weight: 40,
+        ),
+      ]).animate(_scaleController);
+    });
+    _scaleController.forward(from: 0.0);
+
+    // Emit particle dots
+    _dotController.forward(from: 0.0);
+
+    // Trigger tab navigation selection
+    widget.onDestinationSelected(widget.index);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isSelected = selectedIndex == index;
-    final color = isSelected ? selectedColor : unselectedColor;
+    final isSelected = widget.selectedIndex == widget.index;
+    final color = isSelected ? widget.selectedColor : widget.unselectedColor;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
 
     return Semantics(
       button: true,
       selected: isSelected,
-      label: destination.label,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: () {
-            HapticFeedback.selectionClick();
-            onDestinationSelected(index);
-          },
-          child: Center(
-            child: AnimatedScale(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOutCubic,
-              scale: isSelected ? 1.08 : 1,
-              child: SvgPicture.asset(
-                destination.iconAsset,
-                width: iconSize,
-                height: iconSize,
-                colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      label: widget.destination.label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => _handleTapDown(reduceMotion),
+        onTapCancel: () => _handleTapCancel(reduceMotion),
+        onTap: () => _handleTap(reduceMotion),
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_scaleController, _dotController]),
+          builder: (context, child) {
+            final currentScale = reduceMotion ? 1.0 : _scaleAnimation.value;
+            return Center(
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Transform.scale(
+                    scale: currentScale,
+                    child: AnimatedSwitcher(
+                      duration: kDurationNormal,
+                      transitionBuilder: (child, animation) {
+                        return ScaleTransition(
+                          scale: animation,
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: SvgPicture.asset(
+                        widget.destination.iconAsset,
+                        key: ValueKey(isSelected),
+                        width: widget.iconSize,
+                        height: widget.iconSize,
+                        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                      ),
+                    ),
+                  ),
+                  if (!reduceMotion)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          painter: _DotBurstPainter(
+                            progress: _dotAnimation.value,
+                            directions: _dotDirections,
+                            scale: widget.iconSize / 22.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
+  }
+}
+
+class _DotBurstPainter extends CustomPainter {
+  _DotBurstPainter({
+    required this.progress,
+    required this.directions,
+    required this.scale,
+  });
+
+  final double progress;
+  final List<Offset> directions;
+  final double scale;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress <= 0.0 || progress >= 1.0) return;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final paint = Paint()
+      ..color = const Color(0xFFF5A623).withValues(alpha: 1.0 - progress)
+      ..style = PaintingStyle.fill;
+
+    final currentRadius = 40.0 * scale * Curves.easeOut.transform(progress);
+    final dotRadius = 2.0 * scale; // 4px diameter, so 2px radius
+
+    for (final dir in directions) {
+      final dotOffset = center + dir * currentRadius;
+      canvas.drawCircle(dotOffset, dotRadius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DotBurstPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.scale != scale;
   }
 }
 
