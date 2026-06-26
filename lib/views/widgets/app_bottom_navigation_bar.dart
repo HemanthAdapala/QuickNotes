@@ -172,21 +172,29 @@ class _GlassSurface extends StatelessWidget {
         borderRadius: borderRadius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.14),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 24,
+            spreadRadius: -6,
+            offset: const Offset(0, 16),
           ),
           BoxShadow(
-            color: Colors.white.withValues(alpha: 0.34),
-            blurRadius: 18,
-            offset: const Offset(-4, -6),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            spreadRadius: -2,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.42),
+            blurRadius: 22,
+            spreadRadius: -10,
+            offset: const Offset(-8, -10),
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          filter: ImageFilter.blur(sigmaX: 4.5, sigmaY: 4.5),
           child: CustomPaint(
             foregroundPainter: _InnerGlassBorderPainter(
               borderRadius: borderRadius,
@@ -195,21 +203,22 @@ class _GlassSurface extends StatelessWidget {
               width: width,
               height: height,
               decoration: BoxDecoration(
-                color: scheme.surface.withValues(alpha: 0.28),
+                color: scheme.surface.withValues(alpha: 0.01),
                 borderRadius: borderRadius,
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.34),
+                  color: Colors.white.withValues(alpha: 0.30),
                   width: 0.8,
                 ),
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: const Alignment(-0.45, -0.8),
+                  end: const Alignment(0.45, 0.8),
                   colors: [
-                    Colors.white.withValues(alpha: 0.46),
-                    Colors.white.withValues(alpha: 0.16),
+                    Colors.white.withValues(alpha: 0.72),
+                    Colors.white.withValues(alpha: 0.0),
                     scheme.surfaceTint.withValues(alpha: 0.08),
+                    Colors.black.withValues(alpha: 0.035),
                   ],
-                  stops: const [0, 0.56, 1],
+                  stops: const [0, 0.42, 0.78, 1],
                 ),
               ),
               child: child,
@@ -287,7 +296,7 @@ class _NavigationButtonState extends State<_NavigationButton>
     setState(() {
       _scaleAnimation = Tween<double>(
         begin: _scaleAnimation.value,
-        end: 0.85,
+        end: 0.7,
       ).animate(CurvedAnimation(
         parent: _scaleController,
         curve: Curves.easeIn,
@@ -299,14 +308,14 @@ class _NavigationButtonState extends State<_NavigationButton>
   void _handleTapCancel(bool reduceMotion) {
     if (reduceMotion) return;
     _scaleController.stop();
-    _scaleController.duration = const Duration(milliseconds: 150);
+    _scaleController.duration = const Duration(milliseconds: 1000);
     setState(() {
       _scaleAnimation = Tween<double>(
         begin: _scaleAnimation.value,
         end: 1.0,
       ).animate(CurvedAnimation(
         parent: _scaleController,
-        curve: Curves.easeOut,
+        curve: Curves.elasticOut,
       ));
     });
     _scaleController.forward(from: 0.0);
@@ -323,20 +332,14 @@ class _NavigationButtonState extends State<_NavigationButton>
 
     // Scale spring animation sequence
     _scaleController.stop();
-    _scaleController.duration = const Duration(milliseconds: 400);
+    _scaleController.duration = const Duration(milliseconds: 1000);
     setState(() {
-      _scaleAnimation = TweenSequence<double>([
-        TweenSequenceItem(
-          tween: Tween<double>(begin: 0.85, end: 1.2)
-              .chain(CurveTween(curve: Curves.easeOut)),
-          weight: 60,
+      _scaleAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
+        CurvedAnimation(
+          parent: _scaleController,
+          curve: Curves.elasticOut,
         ),
-        TweenSequenceItem(
-          tween: Tween<double>(begin: 1.2, end: 1.0)
-              .chain(CurveTween(curve: Curves.elasticOut)),
-          weight: 40,
-        ),
-      ]).animate(_scaleController);
+      );
     });
     _scaleController.forward(from: 0.0);
 
@@ -457,36 +460,8 @@ class _InnerGlassBorderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final rrect = borderRadius.toRRect(rect).deflate(1);
-
-    final topHighlight = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xB3FFFFFF),
-          Color(0x00FFFFFF),
-        ],
-      ).createShader(rect);
-
-    final lowerShadow = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0x00000000),
-          Color(0x26000000),
-        ],
-      ).createShader(rect);
-
-    canvas
-      ..drawRRect(rrect, topHighlight)
-      ..drawRRect(rrect.deflate(1), lowerShadow);
+    // Flat Apple Liquid Glass - Bevel and 3D inner borders disabled (bevelStyle = 0.0)
+    return;
   }
 
   @override

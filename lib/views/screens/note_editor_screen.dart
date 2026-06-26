@@ -15,11 +15,9 @@ import '../../models/note.dart';
 import '../../models/folder.dart';
 import '../../providers/notes_provider.dart';
 import '../../services/vault_service.dart';
-import '../widgets/folder_selector_dialog.dart';
 import '../widgets/folder_selection_sheet.dart';
 import '../widgets/category_selection_sheet.dart';
 import '../widgets/blurred_bottom_sheet.dart';
-import '../widgets/home_prompt_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
@@ -1657,6 +1655,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
     return false;
   }
+
+
 
   void _calculateCounts() {
     String text = "";
@@ -3719,6 +3719,34 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     const textColor = Color(0xFF333333);
     const titleColor = Color(0xFF333333);
 
+    // Finalized Visual Styling (Glassmorphism & Shadows)
+    final customShadowList = [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.10),
+        blurRadius: 24,
+        spreadRadius: -6,
+        offset: const Offset(0, 16),
+      ),
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.04),
+        blurRadius: 8,
+        spreadRadius: -2,
+        offset: const Offset(0, 4),
+      ),
+      BoxShadow(
+        color: Colors.white.withValues(alpha: 0.42),
+        blurRadius: 22,
+        spreadRadius: -10,
+        offset: const Offset(-8, -10),
+      ),
+    ];
+    const double finalBlur = 4.5;
+    const double finalFrost = 0.0;
+    const double finalDepth = 0.0;
+    const double finalOutlineWidth = 0.8;
+    const double finalOutlineOpacity = 0.30;
+    const double finalBevelIntensity = 0.0;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2EE),
       body: SafeArea(
@@ -3753,14 +3781,25 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                       Align(
                         alignment: Alignment.centerLeft,
                         child: TactileButton(
+                          useAppleSpring: true,
+                          compressionScale: 0.7,
+                          settleDuration: const Duration(milliseconds: 1000),
+                          pressDuration: const Duration(milliseconds: 80),
+                          playSelectionHaptic: true,
                           onTap: () {
-                            HapticFeedback.lightImpact();
                             Navigator.of(context).maybePop();
                           },
                           child: GlassSurface(
                             width: 40,
                             height: 40,
                             borderRadius: BorderRadius.circular(20),
+                            customShadows: customShadowList,
+                            customBlurSigma: finalBlur,
+                            customFrostOpacity: finalFrost,
+                            customDepthOpacity: finalDepth,
+                            customOutlineWidth: finalOutlineWidth,
+                            customOutlineOpacity: finalOutlineOpacity,
+                            customBevelIntensity: finalBevelIntensity,
                             child: Center(
                               child: SvgPicture.asset(
                                 'assets/icons/angle_left.svg',
@@ -3778,14 +3817,25 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                       Align(
                         alignment: Alignment.center,
                         child: TactileButton(
+                          useAppleSpring: true,
+                          compressionScale: 0.7,
+                          settleDuration: const Duration(milliseconds: 1000),
+                          pressDuration: const Duration(milliseconds: 80),
+                          playSelectionHaptic: true,
                           onTap: () {
-                            HapticFeedback.lightImpact();
                             _showFolderSelectorDialog();
                           },
                           child: GlassSurface(
                             height: 40,
                             borderRadius: BorderRadius.circular(20),
                             padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            customShadows: customShadowList,
+                            customBlurSigma: finalBlur,
+                            customFrostOpacity: finalFrost,
+                            customDepthOpacity: finalDepth,
+                            customOutlineWidth: finalOutlineWidth,
+                            customOutlineOpacity: finalOutlineOpacity,
+                            customBevelIntensity: finalBevelIntensity,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -3823,13 +3873,24 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                           width: 90,
                           height: 40,
                           borderRadius: BorderRadius.circular(20),
+                          customShadows: customShadowList,
+                          customBlurSigma: finalBlur,
+                          customFrostOpacity: finalFrost,
+                          customDepthOpacity: finalDepth,
+                          customOutlineWidth: finalOutlineWidth,
+                          customOutlineOpacity: finalOutlineOpacity,
+                          customBevelIntensity: finalBevelIntensity,
                           child: Row(
                             children: [
                               // Pin Button
                               Expanded(
                                 child: TactileButton(
+                                  useAppleSpring: true,
+                                  compressionScale: 0.7,
+                                  settleDuration: const Duration(milliseconds: 1000),
+                                  pressDuration: const Duration(milliseconds: 80),
+                                  playSelectionHaptic: true,
                                   onTap: () {
-                                    HapticFeedback.lightImpact();
                                     setState(() {
                                       _isPinned = !_isPinned;
                                       _hasChanges = true;
@@ -3847,8 +3908,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                               // Options Button
                               Expanded(
                                 child: TactileButton(
+                                  useAppleSpring: true,
+                                  compressionScale: 0.7,
+                                  settleDuration: const Duration(milliseconds: 1000),
+                                  pressDuration: const Duration(milliseconds: 80),
+                                  playSelectionHaptic: true,
                                   onTap: () {
-                                    HapticFeedback.lightImpact();
                                     _showCommandPalette();
                                   },
                                   child: Center(
@@ -4173,8 +4238,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             // Floating pill format bar
             if (MediaQuery.of(context).viewInsets.bottom > 0 || Platform.environment.containsKey('FLUTTER_TEST'))
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 420),
-                curve: const Cubic(0.16, 1.0, 0.3, 1.0),
+                duration: const Duration(milliseconds: 1000),
+                curve: Curves.elasticOut,
                 bottom: 12,
                 left: targetLeft,
                 width: targetWidth,
@@ -4183,13 +4248,24 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   isExpanded: _isFormattingBarExpanded,
                   width: targetWidth,
                   height: 48,
+                  customShadows: customShadowList,
+                  customBlurSigma: finalBlur,
+                  customFrostOpacity: finalFrost,
+                  customDepthOpacity: finalDepth,
+                  customOutlineWidth: finalOutlineWidth,
+                  customOutlineOpacity: finalOutlineOpacity,
+                  customBevelIntensity: finalBevelIntensity,
                   child: _isFormattingBarExpanded
                       ? Row(
                           children: [
                             // Left chevron play 1
                             TactileButton(
+                              useAppleSpring: true,
+                              compressionScale: 0.7,
+                              settleDuration: const Duration(milliseconds: 1000),
+                              pressDuration: const Duration(milliseconds: 80),
+                              playSelectionHaptic: true,
                               onTap: () {
-                                HapticFeedback.lightImpact();
                                 _pageController.previousPage(
                                   duration: const Duration(milliseconds: 220),
                                   curve: Curves.easeOutCubic,
@@ -4227,8 +4303,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
                             // Right chevron play 2
                             TactileButton(
+                              useAppleSpring: true,
+                              compressionScale: 0.7,
+                              settleDuration: const Duration(milliseconds: 1000),
+                              pressDuration: const Duration(milliseconds: 80),
+                              playSelectionHaptic: true,
                               onTap: () {
-                                HapticFeedback.lightImpact();
                                 if (_currentPage == 2) {
                                   setState(() {
                                     _isFormattingBarExpanded = false;
@@ -4266,8 +4346,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                           ],
                         )
                       : TactileButton(
+                          useAppleSpring: true,
+                          compressionScale: 0.7,
+                          settleDuration: const Duration(milliseconds: 1000),
+                          pressDuration: const Duration(milliseconds: 80),
+                          playSelectionHaptic: true,
                           onTap: () {
-                            HapticFeedback.lightImpact();
                             setState(() {
                               _isFormattingBarExpanded = true;
                             });
