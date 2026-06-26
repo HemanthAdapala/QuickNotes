@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../themes/glassmorphism_presets.dart';
 
 class TactileButton extends StatefulWidget {
   final Widget child;
@@ -14,11 +15,11 @@ class TactileButton extends StatefulWidget {
     super.key,
     required this.child,
     required this.onTap,
-    this.compressionScale = 0.97,
-    this.pressDuration = const Duration(milliseconds: 100),
-    this.settleDuration = const Duration(milliseconds: 100),
-    this.useAppleSpring = false,
-    this.playSelectionHaptic = false,
+    this.compressionScale = MotionPresets.compressionScale,
+    this.pressDuration = MotionPresets.pressDuration,
+    this.settleDuration = MotionPresets.settleDuration,
+    this.useAppleSpring = true,
+    this.playSelectionHaptic = true,
   });
 
   @override

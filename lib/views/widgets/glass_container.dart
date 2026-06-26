@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../themes/glassmorphism_presets.dart';
 
 class GlassSurface extends StatelessWidget {
   const GlassSurface({
@@ -9,8 +10,8 @@ class GlassSurface extends StatelessWidget {
     this.height,
     this.borderRadius = const BorderRadius.all(Radius.circular(18)),
     this.padding = EdgeInsets.zero,
-    this.blurSigma = 18,
-    this.frostOpacity = 0.34,
+    this.blurSigma = GlassmorphismPresets.blurSigma,
+    this.frostOpacity = GlassmorphismPresets.frostOpacity,
     this.customShadows,
     this.customBlurSigma,
     this.customFrostOpacity,
@@ -44,36 +45,20 @@ class GlassSurface extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: borderRadius,
-        boxShadow: customShadows ?? [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 24,
-            spreadRadius: -6,
-            offset: const Offset(0, 16),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            spreadRadius: -2,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.42),
-            blurRadius: 22,
-            spreadRadius: -10,
-            offset: const Offset(-8, -10),
-          ),
-        ],
+        boxShadow: customShadows ?? GlassmorphismPresets.shadows,
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: customBlurSigma ?? blurSigma, sigmaY: customBlurSigma ?? blurSigma),
+          filter: ImageFilter.blur(
+            sigmaX: customBlurSigma ?? blurSigma,
+            sigmaY: customBlurSigma ?? blurSigma,
+          ),
           child: CustomPaint(
             foregroundPainter: _GlassRimPainter(
               borderRadius: borderRadius,
-              depthOpacity: customDepthOpacity ?? 0.18,
-              bevelIntensity: customBevelIntensity ?? 1.0,
+              depthOpacity: customDepthOpacity ?? GlassmorphismPresets.depthOpacity,
+              bevelIntensity: customBevelIntensity ?? GlassmorphismPresets.bevelIntensity,
               lightDirection: const Alignment(-0.45, -0.8),
             ),
             child: Container(
@@ -84,15 +69,19 @@ class GlassSurface extends StatelessWidget {
                 borderRadius: borderRadius,
                 color: customTintColor?.withValues(alpha: 0.04) ?? scheme.surface.withValues(alpha: 0.01),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: customOutlineOpacity ?? 0.36),
-                  width: customOutlineWidth ?? 0.8,
+                  color: Colors.white.withValues(
+                    alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
+                  ),
+                  width: customOutlineWidth ?? GlassmorphismPresets.outlineWidth,
                 ),
                 gradient: LinearGradient(
                   begin: const Alignment(-0.45, -0.8),
                   end: const Alignment(0.45, 0.8),
                   colors: [
                     Colors.white.withValues(alpha: 0.72),
-                    Colors.white.withValues(alpha: customFrostOpacity ?? frostOpacity),
+                    Colors.white.withValues(
+                      alpha: customFrostOpacity ?? frostOpacity,
+                    ),
                     customTintColor?.withValues(alpha: 0.12) ?? scheme.surfaceTint.withValues(alpha: 0.08),
                     Colors.black.withValues(alpha: 0.035),
                   ],
