@@ -29,7 +29,6 @@ class AppBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
-    final scheme = Theme.of(context).colorScheme;
 
     return SizedBox(
       height: _height + bottomInset,
@@ -61,14 +60,14 @@ class AppBottomNavigationBar extends StatelessWidget {
                           AnimatedPositioned(
                             duration: kDurationNormal,
                             curve: Curves.easeInOutCubic,
-                            left: scale * (selectedIndex * 71.0 + (71.0 - 48.0) / 2.0),
-                            top: scale * (_controlHeight - 32.0) / 2.0,
-                            width: 48.0 * scale,
-                            height: 32.0 * scale,
+                            left: scale * (selectedIndex * 71.0 + (71.0 - 90.0) / 2.0),
+                            top: scale * (_controlHeight - 50.0) / 2.0,
+                            width: 90.0 * scale,
+                            height: 50.0 * scale,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF5A623).withValues(alpha: 0.20),
-                                borderRadius: BorderRadius.circular(16.0 * scale),
+                                color: const Color(0xFFF5A623),
+                                borderRadius: BorderRadius.circular(25.0 * scale),
                               ),
                             ),
                           ),
@@ -83,8 +82,8 @@ class AppBottomNavigationBar extends StatelessWidget {
                                   selectedIndex: selectedIndex,
                                   onDestinationSelected: onDestinationSelected,
                                   iconSize: 22 * scale,
-                                  selectedColor: const Color(0xFFF5A623), // Active icon changes to amber color
-                                  unselectedColor: Colors.white.withValues(alpha: 0.60), // Inactive remain white at 60%
+                                  selectedColor: Colors.white, // Active icon changes to white
+                                  unselectedColor: const Color(0xFF333333), // Inactive is 333333
                                 ),
                               ),
                           ],
@@ -103,8 +102,8 @@ class AppBottomNavigationBar extends StatelessWidget {
                       selectedIndex: selectedIndex,
                       onDestinationSelected: onDestinationSelected,
                       iconSize: 22 * scale,
-                      selectedColor: scheme.onSurface,
-                      unselectedColor: scheme.onSurface.withValues(alpha: 0.72),
+                      selectedColor: Colors.white, // Active FAB is white
+                      unselectedColor: const Color(0xFF333333), // Inactive FAB is 333333
                     ),
                   ),
                 ],
