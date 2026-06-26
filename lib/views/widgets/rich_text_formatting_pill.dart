@@ -7,8 +7,9 @@ class RichTextFormattingPillContainer extends StatelessWidget {
   const RichTextFormattingPillContainer({
     super.key,
     required this.child,
+    required this.isExpanded,
     this.width = 347,
-    this.height = 60,
+    this.height = 48,
     this.padding = const EdgeInsets.symmetric(horizontal: 14),
     this.margin = EdgeInsets.zero,
     this.borderRadius,
@@ -19,6 +20,7 @@ class RichTextFormattingPillContainer extends StatelessWidget {
   });
 
   final Widget child;
+  final bool isExpanded;
   final double width;
   final double height;
   final EdgeInsetsGeometry padding;
@@ -32,7 +34,7 @@ class RichTextFormattingPillContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final radius = borderRadius ?? BorderRadius.circular(height / 2);
+    final radius = borderRadius ?? BorderRadius.circular(isExpanded ? 24 : height / 2);
 
     return Padding(
       padding: margin,
@@ -70,10 +72,12 @@ class RichTextFormattingPillContainer extends StatelessWidget {
                 depthOpacity: depthOpacity,
                 lightDirection: lightDirection,
               ),
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 420),
+                curve: const Cubic(0.16, 1.0, 0.3, 1.0),
                 width: width,
                 height: height,
-                padding: padding,
+                padding: isExpanded ? padding : EdgeInsets.zero,
                 decoration: BoxDecoration(
                   borderRadius: radius,
                   color: colors.surface.withValues(alpha: 0.01),
@@ -97,15 +101,32 @@ class RichTextFormattingPillContainer extends StatelessWidget {
                   ),
                 ),
                 child: IconTheme.merge(
-                  data: IconThemeData(
-                    color: colors.onSurface.withValues(alpha: 0.72),
+                  data: const IconThemeData(
+                    color: Color(0xFF333333),
                     size: 22,
                   ),
                   child: DefaultTextStyle.merge(
-                    style: TextStyle(
-                      color: colors.onSurface.withValues(alpha: 0.72),
+                    style: const TextStyle(
+                      color: Color(0xFF333333),
                     ),
-                    child: child,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: ScaleTransition(
+                            scale: Tween<double>(begin: 0.9, end: 1.0).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: KeyedSubtree(
+                        key: ValueKey(isExpanded),
+                        child: child,
+                      ),
+                    ),
                   ),
                 ),
               ),

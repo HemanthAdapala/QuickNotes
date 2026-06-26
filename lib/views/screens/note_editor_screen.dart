@@ -26,6 +26,7 @@ import '../widgets/rich_text_controller.dart';
 import '../widgets/paper_guide_painters.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/rich_text_formatting_pill.dart';
+import '../widgets/glass_container.dart';
 import 'package:flutter/services.dart';
 import '../../core/animations/page_transitions.dart';
 import 'dart:math';
@@ -1341,6 +1342,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   // Zen Focus Mode state
   Timer? _zenTimer;
   bool _isZenTyping = false;
+  bool _isFormattingBarExpanded = true;
 
   // Media Pickers and Record helpers
   final _imagePicker = ImagePicker();
@@ -1604,6 +1606,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     _startZenTimer();
     setState(() {
       _hasChanges = true;
+      if (_isFormattingBarExpanded && !Platform.environment.containsKey('FLUTTER_TEST')) {
+        _isFormattingBarExpanded = false;
+      }
     });
   }
 
@@ -2715,6 +2720,17 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               ),
               _buildCommandItem(
                 context,
+                icon: _isPreviewMarkdown ? Icons.edit_note : Icons.chrome_reader_mode,
+                label: _isPreviewMarkdown ? "Edit Note" : "Preview Markdown",
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _isPreviewMarkdown = !_isPreviewMarkdown;
+                  });
+                },
+              ),
+              _buildCommandItem(
+                context,
                 icon: _isFavorite ? Icons.star : Icons.star_border,
                 label: _isFavorite ? "Remove Favorite" : "Add Favorite",
                 onTap: () {
@@ -3686,6 +3702,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         ? (_contentController as RichTextEditingController).currentActiveStyle
         : const Style();
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double targetWidth = _isFormattingBarExpanded ? 354.0 : 48.0;
+    final double targetLeft = _isFormattingBarExpanded 
+        ? (screenWidth - targetWidth) / 2 
+        : (screenWidth - targetWidth - 24.0);
+
     const textColor = Color(0xFF333333);
     const titleColor = Color(0xFF333333);
 
@@ -3714,45 +3736,54 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                 const SizedBox(height: 24.0),
                 // Top Bar
                 Container(
-                  height: 38,
-                  margin: const EdgeInsets.symmetric(horizontal: 30),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  height: 40,
+                  margin: const EdgeInsets.symmetric(horizontal: 27),
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
                       // Back chevron button
-                      TactileButton(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.of(context).maybePop();
-                        },
-                        child: SizedBox(
-                          width: 38,
-                          height: 38,
-                          child: SvgPicture.asset(
-                            'assets/icons/angle_left.svg',
-                            colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                            fit: BoxFit.scaleDown,
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TactileButton(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.of(context).maybePop();
+                          },
+                          child: GlassSurface(
+                            width: 40,
+                            height: 40,
+                            borderRadius: BorderRadius.circular(20),
+                            child: Center(
+                              child: SvgPicture.asset(
+                                'assets/icons/angle_left.svg',
+                                width: 22,
+                                height: 22,
+                                colorFilter: const ColorFilter.mode(Color(0xFF333333), BlendMode.srcIn),
+                                fit: BoxFit.scaleDown,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                       
-                      // Folder Select Button (Disabled)
-                      IgnorePointer(
-                        ignoring: true,
-                        child: Opacity(
-                          opacity: 0.5,
-                          child: Container(
-                            height: 36,
-                            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF222222),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                      // Folder Select Button
+                      Align(
+                        alignment: Alignment.center,
+                        child: TactileButton(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            _showFolderSelectorDialog();
+                          },
+                          child: GlassSurface(
+                            height: 40,
+                            borderRadius: BorderRadius.circular(20),
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 80),
+                                  constraints: const BoxConstraints(maxWidth: 120),
                                   child: Text(
                                     currentFolderName,
                                     maxLines: 1,
@@ -3760,16 +3791,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                                     style: GoogleFonts.inter(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.white,
+                                      color: const Color(0xFF333333),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 4.0),
+                                const SizedBox(width: 6.0),
                                 SvgPicture.asset(
                                   'assets/icons/angle_small_down_topbar.svg',
-                                  width: 16,
-                                  height: 16,
-                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                  width: 22,
+                                  height: 22,
+                                  colorFilter: const ColorFilter.mode(Color(0xFF333333), BlendMode.srcIn),
                                 ),
                               ],
                             ),
@@ -3778,76 +3809,56 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                       ),
                       
                       // Actions Row (Pin + Options)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Pin Button
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isPinned = !_isPinned;
-                                _hasChanges = true;
-                              });
-                            },
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF222222),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                                  size: 18,
-                                  color: _isPinned ? const Color(0xFFF9D423) : Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8.0),
-                          
-                          // Edit and Options Menu Pill
-                          Container(
-                            width: 88,
-                            height: 36,
-                            child: Stack(
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/icons/top_bar_group4.svg',
-                                  width: 88,
-                                  height: 36,
-                                ),
-                                // Left button (toggles preview mode)
-                                Positioned(
-                                  left: 0,
-                                  top: 0,
-                                  width: 44,
-                                  height: 36,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _isPreviewMarkdown = !_isPreviewMarkdown;
-                                      });
-                                    },
-                                    child: Container(color: Colors.transparent),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GlassSurface(
+                          width: 90,
+                          height: 40,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Row(
+                            children: [
+                              // Pin Button
+                              Expanded(
+                                child: TactileButton(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    setState(() {
+                                      _isPinned = !_isPinned;
+                                      _hasChanges = true;
+                                    });
+                                  },
+                                  child: Center(
+                                    child: Icon(
+                                      _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                                      size: 22,
+                                      color: _isPinned ? const Color(0xFFFFA322) : const Color(0xFF333333),
+                                    ),
                                   ),
                                 ),
-                                // Right button (opens command palette)
-                                Positioned(
-                                  left: 44,
-                                  top: 0,
-                                  width: 44,
-                                  height: 36,
-                                  child: GestureDetector(
-                                    onTap: _showCommandPalette,
-                                    child: Container(color: Colors.transparent),
+                              ),
+                              // Options Button
+                              Expanded(
+                                child: TactileButton(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    _showCommandPalette();
+                                  },
+                                  child: Center(
+                                    child: SvgPicture.asset(
+                                      'assets/icons/circle_ellipsis.svg',
+                                      width: 22,
+                                      height: 22,
+                                      colorFilter: const ColorFilter.mode(
+                                        Color(0xFF333333),
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
@@ -4153,65 +4164,116 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             
             // Floating pill format bar
             if (MediaQuery.of(context).viewInsets.bottom > 0 || Platform.environment.containsKey('FLUTTER_TEST'))
-              Positioned(
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 420),
+                curve: const Cubic(0.16, 1.0, 0.3, 1.0),
                 bottom: 12,
-                left: 24,
-                right: 24,
-                child: Center(
-                  child: RichTextFormattingPillContainer(
-                    width: 354,
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      children: [
-                        // Left chevron play 1
-                        IconButton(
-                          tooltip: 'Previous tools',
-                          onPressed: () {
-                            _pageController.previousPage(
-                              duration: const Duration(milliseconds: 220),
-                              curve: Curves.easeOutCubic,
-                            );
-                          },
-                          icon: const RichTextFormattingPillIcon(
-                            assetName: 'assets/icons/play_1.svg',
-                            semanticLabel: 'Previous tools',
-                          ),
-                        ),
-                        
-                        // Sliding PageView
-                        Expanded(
-                          child: PageView(
-                            controller: _pageController,
-                            onPageChanged: (page) {
-                              setState(() {
-                                _currentPage = page;
-                              });
-                            },
-                            children: [
-                              _buildFigmaPage0(activeStyle),
-                              _buildFigmaPage1(activeStyle),
-                              _buildFigmaPage2(activeStyle),
-                            ],
-                          ),
-                        ),
+                left: targetLeft,
+                width: targetWidth,
+                height: 48,
+                child: RichTextFormattingPillContainer(
+                  isExpanded: _isFormattingBarExpanded,
+                  width: targetWidth,
+                  height: 48,
+                  child: _isFormattingBarExpanded
+                      ? Row(
+                          children: [
+                            // Left chevron play 1
+                            TactileButton(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                _pageController.previousPage(
+                                  duration: const Duration(milliseconds: 220),
+                                  curve: Curves.easeOutCubic,
+                                );
+                              },
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                alignment: Alignment.center,
+                                child: const RichTextFormattingPillIcon(
+                                  assetName: 'assets/icons/play_1.svg',
+                                  size: 22,
+                                  color: Color(0xFF333333),
+                                  semanticLabel: 'Previous tools',
+                                ),
+                              ),
+                            ),
+                            
+                            // Sliding PageView
+                            Expanded(
+                              child: PageView(
+                                controller: _pageController,
+                                onPageChanged: (page) {
+                                  setState(() {
+                                    _currentPage = page;
+                                  });
+                                },
+                                children: [
+                                  _buildFigmaPage0(activeStyle),
+                                  _buildFigmaPage1(activeStyle),
+                                  _buildFigmaPage2(activeStyle),
+                                ],
+                              ),
+                            ),
 
-                        // Right chevron play 2
-                        IconButton(
-                          tooltip: 'Next tools',
-                          onPressed: () {
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 220),
-                              curve: Curves.easeOutCubic,
-                            );
+                            // Right chevron play 2
+                            TactileButton(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                if (_currentPage == 2) {
+                                  setState(() {
+                                    _isFormattingBarExpanded = false;
+                                  });
+                                } else {
+                                  _pageController.nextPage(
+                                    duration: const Duration(milliseconds: 220),
+                                    curve: Curves.easeOutCubic,
+                                  );
+                                }
+                              },
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                alignment: Alignment.center,
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 180),
+                                  child: _currentPage == 2
+                                      ? const Icon(
+                                          Icons.unfold_less_rounded,
+                                          key: ValueKey('collapse'),
+                                          size: 22,
+                                          color: Color(0xFF333333),
+                                        )
+                                      : const RichTextFormattingPillIcon(
+                                          key: ValueKey('next'),
+                                          assetName: 'assets/icons/play_2.svg',
+                                          size: 22,
+                                          color: Color(0xFF333333),
+                                          semanticLabel: 'Next tools',
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : TactileButton(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            setState(() {
+                              _isFormattingBarExpanded = true;
+                            });
                           },
-                          icon: const RichTextFormattingPillIcon(
-                            assetName: 'assets/icons/play_2.svg',
-                            semanticLabel: 'Next tools',
+                          child: const SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Icon(
+                              Icons.edit_note_rounded,
+                              color: Color(0xFF333333),
+                              size: 24,
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
                 ),
               ),
             
@@ -4225,93 +4287,60 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   Widget _buildFigmaPage0(Style activeStyle) {
-    final inactiveColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Tooltip(
-          message: 'Bold',
-          child: GestureDetector(
-            onTap: () => _wrapSelection('**', '**'),
-            child: Text(
-              "B",
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: activeStyle.bold ? const Color(0xFFFFA322) : inactiveColor,
-              ),
-            ),
+        _buildFormattingTextButton(
+          text: "B",
+          onTap: () => _wrapSelection('**', '**'),
+          isActive: activeStyle.bold,
+          style: GoogleFonts.inter(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
+          tooltip: 'Bold',
         ),
-        Tooltip(
-          message: 'Italic',
-          child: GestureDetector(
-            onTap: () => _wrapSelection('*', '*'),
-            child: Text(
-              "I",
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.normal,
-                color: activeStyle.italic ? const Color(0xFFFFA322) : inactiveColor,
-              ),
-            ),
+        _buildFormattingTextButton(
+          text: "I",
+          onTap: () => _wrapSelection('*', '*'),
+          isActive: activeStyle.italic,
+          style: GoogleFonts.inter(
+            fontSize: 22,
+            fontStyle: FontStyle.italic,
           ),
+          tooltip: 'Italic',
         ),
-        Tooltip(
-          message: 'Underline',
-          child: GestureDetector(
-            onTap: () => _wrapSelection('<u>', '</u>'),
-            child: Text(
-              "U",
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                decoration: TextDecoration.underline,
-                color: activeStyle.underline ? const Color(0xFFFFA322) : inactiveColor,
-              ),
-            ),
+        _buildFormattingTextButton(
+          text: "U",
+          onTap: () => _wrapSelection('<u>', '</u>'),
+          isActive: activeStyle.underline,
+          style: GoogleFonts.inter(
+            fontSize: 22,
+            decoration: TextDecoration.underline,
           ),
+          tooltip: 'Underline',
         ),
-        Tooltip(
-          message: 'Strikethrough',
-          child: GestureDetector(
-            onTap: () => _wrapSelection('~~', '~~'),
-            child: Text(
-              "T",
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                decoration: TextDecoration.lineThrough,
-                color: activeStyle.strikethrough ? const Color(0xFFFFA322) : inactiveColor,
-              ),
-            ),
+        _buildFormattingTextButton(
+          text: "T",
+          onTap: () => _wrapSelection('~~', '~~'),
+          isActive: activeStyle.strikethrough,
+          style: GoogleFonts.inter(
+            fontSize: 22,
+            decoration: TextDecoration.lineThrough,
           ),
+          tooltip: 'Strikethrough',
         ),
-        Tooltip(
-          message: 'Highlight',
-          child: GestureDetector(
-            onTap: () => _wrapSelection('highlight', ''),
-            child: SvgPicture.asset(
-              'assets/icons/highlighter.svg',
-              width: 16,
-              height: 16,
-              colorFilter: ColorFilter.mode(
-                activeStyle.highlight != null ? const Color(0xFFFFA322) : inactiveColor,
-                BlendMode.srcIn,
-              ),
-            ),
-          ),
+        _buildFormattingIconButton(
+          assetName: 'assets/icons/highlighter.svg',
+          onTap: () => _wrapSelection('highlight', ''),
+          isActive: activeStyle.highlight != null,
+          tooltip: 'Highlight',
         ),
-        Tooltip(
-          message: 'Link',
-          child: GestureDetector(
-            onTap: () => _wrapSelection('[', '](url)'),
-            child: SvgPicture.asset(
-              'assets/icons/link.svg',
-              width: 16,
-              height: 16,
-              colorFilter: ColorFilter.mode(inactiveColor, BlendMode.srcIn),
-            ),
-          ),
+        _buildFormattingIconButton(
+          assetName: 'assets/icons/link.svg',
+          onTap: () => _wrapSelection('[', '](url)'),
+          isActive: false,
+          tooltip: 'Link',
         ),
       ],
     );
@@ -4409,18 +4438,99 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     );
   }
 
-  Widget _buildPage1TextButton(String text, VoidCallback onTap, bool isActive, {required String tooltip}) {
-    final inactiveColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72);
+  Widget _buildFormattingTextButton({
+    required String text,
+    required VoidCallback onTap,
+    required bool isActive,
+    required TextStyle style,
+    required String tooltip,
+  }) {
+    final inactiveColor = const Color(0xFF333333);
+    final activeColor = const Color(0xFFFFA322);
+    final activeBgColor = activeColor.withValues(alpha: 0.15);
+
     return Tooltip(
       message: tooltip,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
         child: Container(
-          width: 32,
-          height: 32,
+          width: 36,
+          height: 36,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isActive ? const Color(0xFFFFA322).withValues(alpha: 0.15) : Colors.transparent,
+            color: isActive ? activeBgColor : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            text,
+            style: style.copyWith(
+              color: isActive ? activeColor : inactiveColor,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormattingIconButton({
+    required String assetName,
+    required VoidCallback onTap,
+    required bool isActive,
+    required String tooltip,
+  }) {
+    final inactiveColor = const Color(0xFF333333);
+    final activeColor = const Color(0xFFFFA322);
+    final activeBgColor = activeColor.withValues(alpha: 0.15);
+
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        child: Container(
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isActive ? activeBgColor : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: SvgPicture.asset(
+            assetName,
+            width: 22,
+            height: 22,
+            colorFilter: ColorFilter.mode(
+              isActive ? activeColor : inactiveColor,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPage1TextButton(String text, VoidCallback onTap, bool isActive, {required String tooltip}) {
+    final inactiveColor = const Color(0xFF333333);
+    final activeColor = const Color(0xFFFFA322);
+    final activeBgColor = activeColor.withValues(alpha: 0.15);
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        child: Container(
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isActive ? activeBgColor : Colors.transparent,
             shape: BoxShape.circle,
           ),
           child: Text(
@@ -4428,7 +4538,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: isActive ? const Color(0xFFFFA322) : inactiveColor,
+              color: isActive ? activeColor : inactiveColor,
             ),
           ),
         ),
@@ -4437,23 +4547,28 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   Widget _buildPage1IconButton(IconData icon, VoidCallback onTap, bool isActive, {required String tooltip}) {
-    final inactiveColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72);
+    final inactiveColor = const Color(0xFF333333);
+    final activeColor = const Color(0xFFFFA322);
+    final activeBgColor = activeColor.withValues(alpha: 0.15);
     return Tooltip(
       message: tooltip,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
         child: Container(
-          width: 32,
-          height: 32,
+          width: 36,
+          height: 36,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isActive ? const Color(0xFFFFA322).withValues(alpha: 0.15) : Colors.transparent,
+            color: isActive ? activeBgColor : Colors.transparent,
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
-            size: 20,
-            color: isActive ? const Color(0xFFFFA322) : inactiveColor,
+            size: 22,
+            color: isActive ? activeColor : inactiveColor,
           ),
         ),
       ),
