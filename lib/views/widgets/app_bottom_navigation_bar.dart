@@ -1,7 +1,8 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter/services.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/animations/animation_constants.dart';
@@ -185,7 +186,10 @@ class _GlassSurface extends StatelessWidget {
       child: ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 4.5, sigmaY: 4.5),
+          filter: ImageFilter.blur(
+            sigmaX: GlassmorphismPresets.blurSigma,
+            sigmaY: GlassmorphismPresets.blurSigma,
+          ),
           child: CustomPaint(
             foregroundPainter: _InnerGlassBorderPainter(
               borderRadius: borderRadius,
@@ -196,13 +200,14 @@ class _GlassSurface extends StatelessWidget {
               decoration: BoxDecoration(
                 color: GlassmorphismPresets.fillColor,
                 borderRadius: borderRadius,
+                boxShadow: GlassmorphismPresets.innerShadows,
                 border: Border.all(
                   color: Colors.white.withValues(alpha: 0.30),
                   width: 0.8,
                 ),
                 gradient: LinearGradient(
-                  begin: const Alignment(-0.45, -0.8),
-                  end: const Alignment(0.45, 0.8),
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                   colors: [
                     Colors.white.withValues(alpha: 0.72),
                     Colors.white.withValues(alpha: 0.0),

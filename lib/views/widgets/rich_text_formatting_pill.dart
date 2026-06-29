@@ -1,7 +1,8 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 import '../../themes/glassmorphism_presets.dart';
 
 class RichTextFormattingPillContainer extends StatelessWidget {
@@ -63,13 +64,16 @@ class RichTextFormattingPillContainer extends StatelessWidget {
         child: ClipRRect(
           borderRadius: radius,
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: customBlurSigma ?? blurSigma, sigmaY: customBlurSigma ?? blurSigma),
+            filter: ImageFilter.blur(
+              sigmaX: customBlurSigma ?? GlassmorphismPresets.blurSigma,
+              sigmaY: customBlurSigma ?? GlassmorphismPresets.blurSigma,
+            ),
             child: CustomPaint(
               foregroundPainter: _RichTextPillGlassPainter(
                 borderRadius: radius,
-                depthOpacity: customDepthOpacity ?? depthOpacity,
-                bevelIntensity: customBevelIntensity ?? 1.0,
-                lightDirection: lightDirection,
+                depthOpacity: customDepthOpacity ?? GlassmorphismPresets.depthOpacity,
+                bevelIntensity: customBevelIntensity ?? GlassmorphismPresets.bevelIntensity,
+                lightDirection: Alignment.topCenter,
               ),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 420),
@@ -80,19 +84,17 @@ class RichTextFormattingPillContainer extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: radius,
                   color: customTintColor ?? GlassmorphismPresets.fillColor,
+                  boxShadow: customShadows ?? GlassmorphismPresets.innerShadows,
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: customOutlineOpacity ?? 0.36),
-                    width: customOutlineWidth ?? 0.8,
+                    color: Colors.white.withValues(alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity),
+                    width: customOutlineWidth ?? GlassmorphismPresets.outlineWidth,
                   ),
                   gradient: LinearGradient(
-                    begin: lightDirection,
-                    end: Alignment(
-                      -lightDirection.x,
-                      -lightDirection.y,
-                    ),
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                     colors: [
                       Colors.white.withValues(alpha: 0.72),
-                      Colors.white.withValues(alpha: customFrostOpacity ?? frostOpacity),
+                      Colors.white.withValues(alpha: customFrostOpacity ?? GlassmorphismPresets.frostOpacity),
                       customTintColor?.withValues(alpha: 0.12) ?? colors.surfaceTint.withValues(alpha: 0.08),
                       Colors.black.withValues(alpha: 0.035),
                     ],

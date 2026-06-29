@@ -7,12 +7,18 @@ This document establishes the project-level design tokens and behavioral rules f
 ## 1. Glassmorphism Design System (Liquid Glass)
 Whenever building or modifying any glass-like surface or widget (e.g. `GlassSurface`, `RichTextFormattingPillContainer`):
 * **Do NOT use default/frosty glass settings**. Always default to the approved **Liquid Glass** values:
-  * **Blur Sigma**: `4.5` (`ImageFilter.blur(sigmaX: 4.5, sigmaY: 4.5)`)
+  * **Blur Sigma**: `3.0` (`ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0)`)
   * **Frost Opacity**: `0.0` (Do not add a white frosty color tint overlay)
-  * **Default Fill Color**: `#999999` at `33%` opacity (`const Color(0x54999999)`)
+  * **Default Fill Color**: `Colors.transparent` (no fill)
   * **Outline/Border Width**: `0.8`
   * **Outline/Border Opacity**: `0.30` (30% white opacity gradient/border)
-  * **Bevel & 3D Depth Style**: `0.0` (Do not draw nested inner 3D highlights or embossed borders; keep it flat and clean)
+  * **Bevel & 3D Depth Style**: `0.20` (Light from above: 0 degrees, 20% opacity)
+  * **Depth Opacity**: `0.30` (Depth: 30%)
+  * **Inner Shadows**: Always apply the 4-layer inset shadow stack:
+    1. `BoxShadow(offset: Offset(0, 1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true)`
+    2. `BoxShadow(offset: Offset(0, -1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true)`
+    3. `BoxShadow(offset: Offset(0, 40), blurRadius: 10, spreadRadius: -40, color: Color(0xFF282828), inset: true)`
+    4. `BoxShadow(offset: Offset(0, -40), blurRadius: 10, spreadRadius: -40, color: Color(0xFF282828), inset: true)`
 * **Shadow Style (S0)**: Always apply the 4-layer high-visibility shadow stack:
   ```dart
   boxShadow: [

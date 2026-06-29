@@ -26,14 +26,14 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
   String _selectedShadowPreset = 'S0';
 
   // 1. Visual Style State Values
-  double _blurSigma = 18.0;
-  double _frostOpacity = 0.34;
-  double _depthOpacity = 0.18;
+  double _blurSigma = 3.0;
+  double _frostOpacity = 0.0;
+  double _depthOpacity = 0.30;
   Color? _tintColor;
   String _tintName = 'None';
   double _outlineWidth = 0.8;
-  double _outlineOpacity = 0.36;
-  double _bevelIntensity = 0.0; // Defaults to flat Apple Liquid Glass!
+  double _outlineOpacity = 0.30;
+  double _bevelIntensity = 0.20; // Defaults to bevel intensity from Figma values!
 
   // Liquid Glass Renderer Settings
   bool _useShaderGlass = true;

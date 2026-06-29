@@ -1,5 +1,6 @@
 import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 import '../../themes/glassmorphism_presets.dart';
 
 class GlassSurface extends StatelessWidget {
@@ -59,7 +60,7 @@ class GlassSurface extends StatelessWidget {
               borderRadius: borderRadius,
               depthOpacity: customDepthOpacity ?? GlassmorphismPresets.depthOpacity,
               bevelIntensity: customBevelIntensity ?? GlassmorphismPresets.bevelIntensity,
-              lightDirection: const Alignment(-0.45, -0.8),
+              lightDirection: Alignment.topCenter,
             ),
             child: Container(
               width: width,
@@ -68,6 +69,7 @@ class GlassSurface extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: borderRadius,
                 color: customTintColor ?? GlassmorphismPresets.fillColor,
+                boxShadow: GlassmorphismPresets.innerShadows,
                 border: Border.all(
                   color: Colors.white.withValues(
                     alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
@@ -75,8 +77,8 @@ class GlassSurface extends StatelessWidget {
                   width: customOutlineWidth ?? GlassmorphismPresets.outlineWidth,
                 ),
                 gradient: LinearGradient(
-                  begin: const Alignment(-0.45, -0.8),
-                  end: const Alignment(0.45, 0.8),
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                   colors: [
                     Colors.white.withValues(alpha: 0.72),
                     Colors.white.withValues(
