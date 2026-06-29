@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/animations/animation_constants.dart';
+import '../../themes/glassmorphism_presets.dart';
 import '../constants/app_bottom_navigation_assets.dart';
 
 class AppBottomNavigationBar extends StatelessWidget {
@@ -179,26 +180,7 @@ class _GlassSurface extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: borderRadius,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 24,
-            spreadRadius: -6,
-            offset: const Offset(0, 16),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            spreadRadius: -2,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.42),
-            blurRadius: 22,
-            spreadRadius: -10,
-            offset: const Offset(-8, -10),
-          ),
-        ],
+        boxShadow: GlassmorphismPresets.shadows,
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
@@ -212,7 +194,7 @@ class _GlassSurface extends StatelessWidget {
               width: width,
               height: height,
               decoration: BoxDecoration(
-                color: scheme.surface.withValues(alpha: 0.01),
+                color: GlassmorphismPresets.fillColor,
                 borderRadius: borderRadius,
                 border: Border.all(
                   color: Colors.white.withValues(alpha: 0.30),

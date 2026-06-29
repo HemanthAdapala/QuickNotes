@@ -9,29 +9,36 @@ Whenever building or modifying any glass-like surface or widget (e.g. `GlassSurf
 * **Do NOT use default/frosty glass settings**. Always default to the approved **Liquid Glass** values:
   * **Blur Sigma**: `4.5` (`ImageFilter.blur(sigmaX: 4.5, sigmaY: 4.5)`)
   * **Frost Opacity**: `0.0` (Do not add a white frosty color tint overlay)
+  * **Default Fill Color**: `#999999` at `33%` opacity (`const Color(0x54999999)`)
   * **Outline/Border Width**: `0.8`
   * **Outline/Border Opacity**: `0.30` (30% white opacity gradient/border)
   * **Bevel & 3D Depth Style**: `0.0` (Do not draw nested inner 3D highlights or embossed borders; keep it flat and clean)
-* **Shadow Style (S0)**: Always apply the three-layer frosted glow drop shadow system:
+* **Shadow Style (S0)**: Always apply the 4-layer high-visibility shadow stack:
   ```dart
   boxShadow: [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.10),
-      blurRadius: 24,
-      spreadRadius: -6,
-      offset: const Offset(0, 16),
+      offset: const Offset(1.25, 0),
+      blurRadius: 0,
+      spreadRadius: -0.75,
+      color: const Color(0xFFD0D0D0),
     ),
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.04),
-      blurRadius: 8,
-      spreadRadius: -2,
-      offset: const Offset(0, 4),
+      offset: const Offset(-1.25, 0),
+      blurRadius: 0,
+      spreadRadius: -0.75,
+      color: const Color(0xFFD0D0D0),
     ),
     BoxShadow(
-      color: Colors.white.withValues(alpha: 0.42),
-      blurRadius: 22,
-      spreadRadius: -10,
-      offset: const Offset(-8, -10),
+      offset: const Offset(0, 0),
+      blurRadius: 0,
+      spreadRadius: 0.5,
+      color: const Color(0xFFCCCCCC),
+    ),
+    BoxShadow(
+      offset: const Offset(0, 8),
+      blurRadius: 15,
+      spreadRadius: 0,
+      color: Colors.black.withValues(alpha: 0.02),
     ),
   ]
   ```

@@ -8,24 +8,32 @@ class GlassmorphismPresets {
   static const double outlineOpacity = 0.30;
   static const double bevelIntensity = 0.0;
 
-  static final List<BoxShadow> shadows = [
+  static const Color fillColor = Color(0x54999999);
+
+  static const List<BoxShadow> shadows = [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.10),
-      blurRadius: 24,
-      spreadRadius: -6,
-      offset: const Offset(0, 16),
+      offset: Offset(1.25, 0),
+      blurRadius: 0,
+      spreadRadius: -0.75,
+      color: Color(0xFFD0D0D0),
     ),
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.04),
-      blurRadius: 8,
-      spreadRadius: -2,
-      offset: const Offset(0, 4),
+      offset: Offset(-1.25, 0),
+      blurRadius: 0,
+      spreadRadius: -0.75,
+      color: Color(0xFFD0D0D0),
     ),
     BoxShadow(
-      color: Colors.white.withValues(alpha: 0.42),
-      blurRadius: 22,
-      spreadRadius: -10,
-      offset: const Offset(-8, -10),
+      offset: Offset(0, 0),
+      blurRadius: 0,
+      spreadRadius: 0.5,
+      color: Color(0xFFCCCCCC),
+    ),
+    BoxShadow(
+      offset: Offset(0, 8),
+      blurRadius: 15,
+      spreadRadius: 0,
+      color: Color(0x05000000), // #000000 at 2% opacity
     ),
   ];
 }

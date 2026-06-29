@@ -25,6 +25,7 @@ import '../widgets/paper_guide_painters.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/rich_text_formatting_pill.dart';
 import '../widgets/glass_container.dart';
+import '../../themes/glassmorphism_presets.dart';
 import 'package:flutter/services.dart';
 import '../../core/animations/page_transitions.dart';
 import 'dart:math';
@@ -3719,33 +3720,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     const textColor = Color(0xFF333333);
     const titleColor = Color(0xFF333333);
 
-    // Finalized Visual Styling (Glassmorphism & Shadows)
-    final customShadowList = [
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.10),
-        blurRadius: 24,
-        spreadRadius: -6,
-        offset: const Offset(0, 16),
-      ),
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.04),
-        blurRadius: 8,
-        spreadRadius: -2,
-        offset: const Offset(0, 4),
-      ),
-      BoxShadow(
-        color: Colors.white.withValues(alpha: 0.42),
-        blurRadius: 22,
-        spreadRadius: -10,
-        offset: const Offset(-8, -10),
-      ),
-    ];
-    const double finalBlur = 4.5;
-    const double finalFrost = 0.0;
-    const double finalDepth = 0.0;
-    const double finalOutlineWidth = 0.8;
-    const double finalOutlineOpacity = 0.30;
-    const double finalBevelIntensity = 0.0;
+    // Finalized Visual Styling (Glassmorphism & Shadows) uses default presets now
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2EE),
@@ -3793,13 +3768,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                             width: 40,
                             height: 40,
                             borderRadius: BorderRadius.circular(20),
-                            customShadows: customShadowList,
-                            customBlurSigma: finalBlur,
-                            customFrostOpacity: finalFrost,
-                            customDepthOpacity: finalDepth,
-                            customOutlineWidth: finalOutlineWidth,
-                            customOutlineOpacity: finalOutlineOpacity,
-                            customBevelIntensity: finalBevelIntensity,
                             child: Center(
                               child: SvgPicture.asset(
                                 'assets/icons/angle_left.svg',
@@ -3829,13 +3797,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                             height: 40,
                             borderRadius: BorderRadius.circular(20),
                             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            customShadows: customShadowList,
-                            customBlurSigma: finalBlur,
-                            customFrostOpacity: finalFrost,
-                            customDepthOpacity: finalDepth,
-                            customOutlineWidth: finalOutlineWidth,
-                            customOutlineOpacity: finalOutlineOpacity,
-                            customBevelIntensity: finalBevelIntensity,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -3873,13 +3834,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                           width: 90,
                           height: 40,
                           borderRadius: BorderRadius.circular(20),
-                          customShadows: customShadowList,
-                          customBlurSigma: finalBlur,
-                          customFrostOpacity: finalFrost,
-                          customDepthOpacity: finalDepth,
-                          customOutlineWidth: finalOutlineWidth,
-                          customOutlineOpacity: finalOutlineOpacity,
-                          customBevelIntensity: finalBevelIntensity,
                           child: Row(
                             children: [
                               // Pin Button
@@ -4248,13 +4202,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   isExpanded: _isFormattingBarExpanded,
                   width: targetWidth,
                   height: 48,
-                  customShadows: customShadowList,
-                  customBlurSigma: finalBlur,
-                  customFrostOpacity: finalFrost,
-                  customDepthOpacity: finalDepth,
-                  customOutlineWidth: finalOutlineWidth,
-                  customOutlineOpacity: finalOutlineOpacity,
-                  customBevelIntensity: finalBevelIntensity,
                   child: _isFormattingBarExpanded
                       ? Row(
                           children: [

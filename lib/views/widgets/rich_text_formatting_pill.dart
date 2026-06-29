@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../themes/glassmorphism_presets.dart';
 
 class RichTextFormattingPillContainer extends StatelessWidget {
   const RichTextFormattingPillContainer({
@@ -57,26 +58,7 @@ class RichTextFormattingPillContainer extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: radius,
-          boxShadow: customShadows ?? [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
-              blurRadius: 24,
-              spreadRadius: -6,
-              offset: const Offset(0, 16),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              spreadRadius: -2,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.white.withValues(alpha: 0.42),
-              blurRadius: 22,
-              spreadRadius: -10,
-              offset: const Offset(-8, -10),
-            ),
-          ],
+          boxShadow: customShadows ?? GlassmorphismPresets.shadows,
         ),
         child: ClipRRect(
           borderRadius: radius,
@@ -97,7 +79,7 @@ class RichTextFormattingPillContainer extends StatelessWidget {
                 padding: isExpanded ? padding : EdgeInsets.zero,
                 decoration: BoxDecoration(
                   borderRadius: radius,
-                  color: customTintColor?.withValues(alpha: 0.04) ?? colors.surface.withValues(alpha: 0.01),
+                  color: customTintColor ?? GlassmorphismPresets.fillColor,
                   border: Border.all(
                     color: Colors.white.withValues(alpha: customOutlineOpacity ?? 0.36),
                     width: customOutlineWidth ?? 0.8,

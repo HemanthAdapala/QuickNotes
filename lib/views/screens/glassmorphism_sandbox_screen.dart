@@ -180,22 +180,28 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
       case 'S0':
         return [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 24,
-            spreadRadius: -6,
-            offset: const Offset(0, 16),
+            offset: const Offset(1.25, 0),
+            blurRadius: 0,
+            spreadRadius: -0.75,
+            color: const Color(0xFFD0D0D0),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            spreadRadius: -2,
-            offset: const Offset(0, 4),
+            offset: const Offset(-1.25, 0),
+            blurRadius: 0,
+            spreadRadius: -0.75,
+            color: const Color(0xFFD0D0D0),
           ),
           BoxShadow(
-            color: Colors.white.withValues(alpha: 0.42),
-            blurRadius: 22,
-            spreadRadius: -10,
-            offset: const Offset(-8, -10),
+            offset: const Offset(0, 0),
+            blurRadius: 0,
+            spreadRadius: 0.5,
+            color: const Color(0xFFCCCCCC),
+          ),
+          BoxShadow(
+            offset: const Offset(0, 8),
+            blurRadius: 15,
+            spreadRadius: 0,
+            color: Colors.black.withValues(alpha: 0.02),
           ),
         ];
       case 'S1':

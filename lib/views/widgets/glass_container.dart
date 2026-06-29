@@ -67,7 +67,7 @@ class GlassSurface extends StatelessWidget {
               padding: padding,
               decoration: BoxDecoration(
                 borderRadius: borderRadius,
-                color: customTintColor?.withValues(alpha: 0.04) ?? scheme.surface.withValues(alpha: 0.01),
+                color: customTintColor ?? GlassmorphismPresets.fillColor,
                 border: Border.all(
                   color: Colors.white.withValues(
                     alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
