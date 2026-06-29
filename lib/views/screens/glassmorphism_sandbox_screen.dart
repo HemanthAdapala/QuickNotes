@@ -623,48 +623,57 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                     ),
                   ),
 
-                  if (!_isPanelCollapsed) ...[
-                    // Tab Headers Selection
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextButton(
-                              style: TextButton.styleFrom(
-                                backgroundColor: _showVisualsTab ? const Color(0xFFFFA322) : Colors.black12,
-                                foregroundColor: _showVisualsTab ? Colors.white : Colors.black87,
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  if (!_isPanelCollapsed)
+                    SizedBox(
+                      height: size.height * 0.4,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Tab Headers Selection
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: _showVisualsTab ? const Color(0xFFFFA322) : Colors.black12,
+                                        foregroundColor: _showVisualsTab ? Colors.white : Colors.black87,
+                                        padding: const EdgeInsets.symmetric(vertical: 10),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () => setState(() => _showVisualsTab = true),
+                                      child: Text('Visual Style', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: !_showVisualsTab ? const Color(0xFFFFA322) : Colors.black12,
+                                        foregroundColor: !_showVisualsTab ? Colors.white : Colors.black87,
+                                        padding: const EdgeInsets.symmetric(vertical: 10),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () => setState(() => _showVisualsTab = false),
+                                      child: Text('Motion Physics', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              onPressed: () => setState(() => _showVisualsTab = true),
-                              child: Text('Visual Style', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextButton(
-                              style: TextButton.styleFrom(
-                                backgroundColor: !_showVisualsTab ? const Color(0xFFFFA322) : Colors.black12,
-                                foregroundColor: !_showVisualsTab ? Colors.white : Colors.black87,
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              onPressed: () => setState(() => _showVisualsTab = false),
-                              child: Text('Motion Physics', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 12),
+
+                            // Active Tab Contents
+                            Padding(
+                              padding: const EdgeInsets.only(left: 24, right: 24, bottom: 28),
+                              child: _showVisualsTab ? _buildVisualsTab() : _buildMotionTab(),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-
-                    // Active Tab Contents
-                    Padding(
-                      padding: const EdgeInsets.only(left: 24, right: 24, bottom: 28),
-                      child: _showVisualsTab ? _buildVisualsTab() : _buildMotionTab(),
-                    ),
-                  ],
                 ],
               ),
             ),
