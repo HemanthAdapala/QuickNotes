@@ -12,12 +12,17 @@ class GlassmorphismSandboxScreen extends StatefulWidget {
 }
 
 class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen> with TickerProviderStateMixin {
-  // Pill position
+  // Pill positions
   Offset _pillPosition = const Offset(100, 250);
+  Offset _dockPosition = const Offset(60, 360);
   bool _initialized = false;
 
   // Active Tab
   bool _showVisualsTab = true;
+
+  // Background and Shadow Style selection
+  String _bgType = 'Image';
+  String _selectedShadowPreset = 'S0';
 
   // 1. Visual Style State Values
   double _blurSigma = 18.0;
@@ -142,13 +147,92 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
     }
   }
 
+  Widget _buildBackground() {
+    switch (_bgType) {
+      case 'White':
+        return Container(color: Colors.white);
+      case 'Black':
+        return Container(color: const Color(0xFF0F0F0F));
+      case 'Cream':
+        return Container(color: const Color(0xFFF5F0E8));
+      case 'Grey':
+        return Container(color: Colors.grey.shade800);
+      case 'Image':
+      default:
+        return Image.asset(
+          'assets/icons/glass_background.jpg',
+          fit: BoxFit.cover,
+        );
+    }
+  }
+
+  List<BoxShadow>? _getShadows() {
+    switch (_selectedShadowPreset) {
+      case 'S0':
+        return [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 24,
+            spreadRadius: -6,
+            offset: const Offset(0, 16),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            spreadRadius: -2,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.42),
+            blurRadius: 22,
+            spreadRadius: -10,
+            offset: const Offset(-8, -10),
+          ),
+        ];
+      case 'S1':
+        return [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            spreadRadius: -4,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            spreadRadius: -2,
+            offset: const Offset(0, 2),
+          ),
+        ];
+      case 'S2':
+        return [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 32,
+            spreadRadius: -6,
+            offset: const Offset(0, 20),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            spreadRadius: -3,
+            offset: const Offset(0, 6),
+          ),
+        ];
+      case 'None':
+      default:
+        return const [];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     
     // Position the pill in the center on first launch
     if (!_initialized) {
-      _pillPosition = Offset((size.width - 250) / 2, (size.height - 65) / 2 - 80);
+      _pillPosition = Offset((size.width - 250) / 2, (size.height - 65) / 2 - 120);
+      _dockPosition = Offset((size.width - 264) / 2, (size.height - 50) / 2 + 60);
       _initialized = true;
     }
 
@@ -158,12 +242,9 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Background Image
+          // 1. Background
           Positioned.fill(
-            child: Image.asset(
-              'assets/icons/glass_background.jpg',
-              fit: BoxFit.cover,
-            ),
+            child: _buildBackground(),
           ),
 
           // 2. Background Texts Layer (Behind the pill)
@@ -210,16 +291,22 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Liquid Glass Dock',
+                            'Apple Liquid Glass Playground',
                             style: GoogleFonts.inter(
-                              fontSize: 12,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: const Color(0xFFFFA322),
                               letterSpacing: 1.5,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          const LiquidGlassDock(),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Drag the dock and pill around to test refraction on different backgrounds.',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: Colors.white70,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -315,6 +402,7 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                             customOutlineOpacity: _outlineOpacity,
                             customOutlineWidth: _outlineWidth,
                             customBevelIntensity: _bevelIntensity,
+                            customShadows: _getShadows(),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(32.5),
                               child: Stack(
@@ -408,6 +496,23 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                   );
                 },
               ),
+            ),
+          ),
+
+          // 3b. Draggable Liquid Glass Dock
+          Positioned(
+            left: _dockPosition.dx,
+            top: _dockPosition.dy,
+            child: GestureDetector(
+              onPanUpdate: (details) {
+                setState(() {
+                  _dockPosition = Offset(
+                    (_dockPosition.dx + details.delta.dx).clamp(0.0, size.width - 264),
+                    (_dockPosition.dy + details.delta.dy).clamp(0.0, size.height - 180),
+                  );
+                });
+              },
+              child: const LiquidGlassDock(),
             ),
           ),
 
@@ -649,6 +754,70 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                 ),
               );
             },
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Background Style Choice Selector
+        Text(
+          'Background Style:',
+          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 28,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: ['Image', 'White', 'Black', 'Cream', 'Grey'].map((type) {
+              final isSelected = _bgType == type;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(type, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  selected: isSelected,
+                  selectedColor: const Color(0xFFFFA322),
+                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  showCheckmark: false,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _bgType = type);
+                    }
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Shadow Preset Choice Selector
+        Text(
+          'Shadow Preset:',
+          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 28,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: ['S0', 'S1', 'S2', 'None'].map((preset) {
+              final isSelected = _selectedShadowPreset == preset;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(preset, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  selected: isSelected,
+                  selectedColor: const Color(0xFFFFA322),
+                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  showCheckmark: false,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _selectedShadowPreset = preset);
+                    }
+                  },
+                ),
+              );
+            }).toList(),
           ),
         ),
       ],
