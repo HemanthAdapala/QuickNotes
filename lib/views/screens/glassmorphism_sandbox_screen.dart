@@ -41,7 +41,6 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
   double _refractiveIndex = 1.5;
   double _saturation = 1.2;
   double _lightIntensity = 1.0;
-  double _outlineIntensity = 0.5;
   double _blendStrength = 35.0;
 
   // 2. Motion Physics State Values
@@ -354,7 +353,6 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
               glassColor: (_tintColor ?? Colors.white).withValues(alpha: _frostOpacity),
               refractiveIndex: _refractiveIndex,
               lightIntensity: _lightIntensity,
-              outlineIntensity: _outlineIntensity,
               saturation: _saturation,
             ),
             child: LiquidGlassBlendGroup(
