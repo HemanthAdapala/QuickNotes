@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/liquid_glass_dock.dart';
 
@@ -33,6 +34,15 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
   double _outlineWidth = 0.8;
   double _outlineOpacity = 0.36;
   double _bevelIntensity = 0.0; // Defaults to flat Apple Liquid Glass!
+
+  // Liquid Glass Renderer Settings
+  bool _useShaderGlass = true;
+  double _thickness = 20.0;
+  double _refractiveIndex = 1.5;
+  double _saturation = 1.2;
+  double _lightIntensity = 1.0;
+  double _outlineIntensity = 0.5;
+  double _blendStrength = 35.0;
 
   // 2. Motion Physics State Values
   bool _isMorphed = true; // start morphed (wide pill shape)
@@ -335,184 +345,204 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
             ),
           ),
 
-          // 3. Draggable & Clickable Pill
-          Positioned(
-            left: _pillPosition.dx,
-            top: _pillPosition.dy,
-            child: GestureDetector(
-              onPanUpdate: (details) {
-                setState(() {
-                  _pillPosition = Offset(
-                    (_pillPosition.dx + details.delta.dx).clamp(0.0, size.width - targetWidth),
-                    (_pillPosition.dy + details.delta.dy).clamp(0.0, size.height - 180),
-                  );
-                });
-              },
-              onTapDown: (_) {
-                _triggerHaptic();
-                _releaseController.stop();
-                _pressController.forward(from: 0.0);
-                if (_selectedTapStyle == 'Shimmer Sweep') {
-                  _shimmerController.forward(from: 0.0);
-                }
-              },
-              onTapCancel: () {
-                _pressController.stop();
-                _releaseController.duration = Duration(milliseconds: _settleDurationMs);
-                _releaseController.forward(from: 0.0);
-              },
-              onTapUp: (_) {
-                _pressController.stop();
-                _releaseController.duration = Duration(milliseconds: _settleDurationMs);
-                _releaseController.forward(from: 0.0);
-                if (_selectedTapStyle == 'Particle Burst') {
-                  _particleController.forward(from: 0.0);
-                }
-              },
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_pressController, _releaseController, _particleController, _shimmerController]),
-                builder: (context, child) {
-                  // Calculate compression scale
-                  double scale = 1.0;
-                  if (_pressController.isAnimating || _pressController.value > 0.0) {
-                    scale = 1.0 - (_pressController.value * (1.0 - _tapCompressionScale));
-                  } else if (_releaseController.isAnimating) {
-                    final releaseVal = CurvedAnimation(parent: _releaseController, curve: _getSettleCurve()).value;
-                    scale = _tapCompressionScale + (releaseVal * (1.0 - _tapCompressionScale));
-                  }
+          // 3. Draggable overlays with real LiquidGlass Layer & Blending
+          LiquidGlassLayer(
+            fake: !_useShaderGlass,
+            settings: LiquidGlassSettings(
+              thickness: _thickness,
+              blur: _blurSigma,
+              glassColor: (_tintColor ?? Colors.white).withValues(alpha: _frostOpacity),
+              refractiveIndex: _refractiveIndex,
+              lightIntensity: _lightIntensity,
+              outlineIntensity: _outlineIntensity,
+              saturation: _saturation,
+            ),
+            child: LiquidGlassBlendGroup(
+              blend: _blendStrength,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // 3a. Draggable & Clickable Glass Pill
+                  Positioned(
+                    left: _pillPosition.dx,
+                    top: _pillPosition.dy,
+                    child: GestureDetector(
+                      onPanUpdate: (details) {
+                        setState(() {
+                          _pillPosition = Offset(
+                            (_pillPosition.dx + details.delta.dx).clamp(0.0, size.width - targetWidth),
+                            (_pillPosition.dy + details.delta.dy).clamp(0.0, size.height - 180),
+                          );
+                        });
+                      },
+                      onTapDown: (_) {
+                        _triggerHaptic();
+                        _releaseController.stop();
+                        _pressController.forward(from: 0.0);
+                        if (_selectedTapStyle == 'Shimmer Sweep') {
+                          _shimmerController.forward(from: 0.0);
+                        }
+                      },
+                      onTapCancel: () {
+                        _pressController.stop();
+                        _releaseController.duration = Duration(milliseconds: _settleDurationMs);
+                        _releaseController.forward(from: 0.0);
+                      },
+                      onTapUp: (_) {
+                        _pressController.stop();
+                        _releaseController.duration = Duration(milliseconds: _settleDurationMs);
+                        _releaseController.forward(from: 0.0);
+                        if (_selectedTapStyle == 'Particle Burst') {
+                          _particleController.forward(from: 0.0);
+                        }
+                      },
+                      child: AnimatedBuilder(
+                        animation: Listenable.merge([_pressController, _releaseController, _particleController, _shimmerController]),
+                        builder: (context, child) {
+                          // Calculate compression scale
+                          double scale = 1.0;
+                          if (_pressController.isAnimating || _pressController.value > 0.0) {
+                            scale = 1.0 - (_pressController.value * (1.0 - _tapCompressionScale));
+                          } else if (_releaseController.isAnimating) {
+                            final releaseVal = CurvedAnimation(parent: _releaseController, curve: _getSettleCurve()).value;
+                            scale = _tapCompressionScale + (releaseVal * (1.0 - _tapCompressionScale));
+                          }
 
-                  return Transform.scale(
-                    scale: scale,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.center,
-                      children: [
-                        // Glass Pill morphing width
-                        AnimatedContainer(
-                          duration: Duration(milliseconds: _morphDurationMs),
-                          curve: _getMorphCurve(),
-                          width: targetWidth,
-                          height: 65,
-                          child: GlassSurface(
-                            borderRadius: BorderRadius.circular(32.5),
-                            customBlurSigma: _blurSigma,
-                            customFrostOpacity: _frostOpacity,
-                            customDepthOpacity: _depthOpacity,
-                            customTintColor: _tintColor,
-                            customOutlineOpacity: _outlineOpacity,
-                            customOutlineWidth: _outlineWidth,
-                            customBevelIntensity: _bevelIntensity,
-                            customShadows: _getShadows(),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(32.5),
-                              child: Stack(
-                                children: [
-                                  // Shimmer Sweep overlay
-                                  if (_selectedTapStyle == 'Shimmer Sweep')
-                                    Positioned.fill(
-                                      child: IgnorePointer(
-                                        child: CustomPaint(
-                                          painter: _ShimmerSweepPainter(progress: _shimmerController.value),
-                                        ),
-                                      ),
-                                    ),
-                                  // Content Crossfade
-                                  Center(
-                                    child: AnimatedCrossFade(
-                                      firstChild: Container(
-                                        width: 65,
-                                        height: 65,
-                                        alignment: Alignment.center,
-                                        child: Icon(
-                                          Icons.blur_on_rounded,
-                                          color: _tintColor != null ? const Color(0xFF333333) : const Color(0xFFFFA322),
-                                          size: 24,
-                                        ),
-                                      ),
-                                      secondChild: SizedBox(
-                                        width: 250,
-                                        height: 65,
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.blur_on_rounded,
-                                              color: _tintColor != null ? const Color(0xFF333333) : const Color(0xFFFFA322),
-                                              size: 24,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'Glass Pill',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: const Color(0xFF333333),
+                          return Transform.scale(
+                            scale: scale,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              alignment: Alignment.center,
+                              children: [
+                                // Glass Pill morphing width
+                                AnimatedContainer(
+                                  duration: Duration(milliseconds: _morphDurationMs),
+                                  curve: _getMorphCurve(),
+                                  width: targetWidth,
+                                  height: 65,
+                                  child: LiquidGlass.grouped(
+                                    shape: LiquidRoundedSuperellipse(borderRadius: 32.5),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(32.5),
+                                      child: Stack(
+                                        children: [
+                                          // Shimmer Sweep overlay
+                                          if (_selectedTapStyle == 'Shimmer Sweep')
+                                            Positioned.fill(
+                                              child: IgnorePointer(
+                                                child: CustomPaint(
+                                                  painter: _ShimmerSweepPainter(progress: _shimmerController.value),
+                                                ),
                                               ),
                                             ),
-                                          ],
-                                        ),
+                                          // Content Crossfade
+                                          Center(
+                                            child: AnimatedCrossFade(
+                                              firstChild: Container(
+                                                width: 65,
+                                                height: 65,
+                                                alignment: Alignment.center,
+                                                child: Icon(
+                                                  Icons.blur_on_rounded,
+                                                  color: _tintColor != null ? const Color(0xFF333333) : const Color(0xFFFFA322),
+                                                  size: 24,
+                                                ),
+                                              ),
+                                              secondChild: SizedBox(
+                                                width: 250,
+                                                height: 65,
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.blur_on_rounded,
+                                                      color: _tintColor != null ? const Color(0xFF333333) : const Color(0xFFFFA322),
+                                                      size: 24,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      'Glass Pill',
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 16,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: const Color(0xFF333333),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              crossFadeState: _isMorphed ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                                              duration: Duration(milliseconds: (_morphDurationMs * 0.4).toInt()),
+                                            ),
+                                          ),
+                                          // Material Ripple overlay
+                                          if (_selectedTapStyle == 'Material Ripple')
+                                            Positioned.fill(
+                                              child: Material(
+                                                color: Colors.transparent,
+                                                child: InkWell(
+                                                  borderRadius: BorderRadius.circular(32.5),
+                                                  onTap: () {},
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ),
-                                      crossFadeState: _isMorphed ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                                      duration: Duration(milliseconds: (_morphDurationMs * 0.4).toInt()),
                                     ),
                                   ),
-                                  // Material Ripple overlay
-                                  if (_selectedTapStyle == 'Material Ripple')
-                                    Positioned.fill(
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(32.5),
-                                          onTap: () {},
+                                ),
+                                // Particle Burst overlay (drawn outside so they fly off bounds)
+                                if (_selectedTapStyle == 'Particle Burst')
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: CustomPaint(
+                                        painter: _DotBurstPainter(
+                                          progress: _particleController.value,
+                                          directions: const [
+                                            Offset(0.951, 0.309),   // 18 degrees
+                                            Offset(0.000, 1.000),   // 90 degrees
+                                            Offset(-0.951, 0.309),  // 162 degrees
+                                            Offset(-0.588, -0.809), // 234 degrees
+                                            Offset(0.588, -0.809),  // 306 degrees
+                                          ],
+                                          scale: 1.2,
                                         ),
                                       ),
                                     ),
-                                ],
-                              ),
+                                  ),
+                              ],
                             ),
-                          ),
-                        ),
-                        // Particle Burst overlay (drawn outside so they fly off bounds)
-                        if (_selectedTapStyle == 'Particle Burst')
-                          Positioned.fill(
-                            child: IgnorePointer(
-                              child: CustomPaint(
-                                painter: _DotBurstPainter(
-                                  progress: _particleController.value,
-                                  directions: const [
-                                    Offset(0.951, 0.309),   // 18 degrees
-                                    Offset(0.000, 1.000),   // 90 degrees
-                                    Offset(-0.951, 0.309),  // 162 degrees
-                                    Offset(-0.588, -0.809), // 234 degrees
-                                    Offset(0.588, -0.809),  // 306 degrees
-                                  ],
-                                  scale: 1.2,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
+                          );
+                        },
+                      ),
                     ),
-                  );
-                },
-              ),
-            ),
-          ),
+                  ),
 
-          // 3b. Draggable Liquid Glass Dock
-          Positioned(
-            left: _dockPosition.dx,
-            top: _dockPosition.dy,
-            child: GestureDetector(
-              onPanUpdate: (details) {
-                setState(() {
-                  _dockPosition = Offset(
-                    (_dockPosition.dx + details.delta.dx).clamp(0.0, size.width - 264),
-                    (_dockPosition.dy + details.delta.dy).clamp(0.0, size.height - 180),
-                  );
-                });
-              },
-              child: const LiquidGlassDock(),
+                  // 3b. Draggable Liquid Glass Dock
+                  Positioned(
+                    left: _dockPosition.dx,
+                    top: _dockPosition.dy,
+                    child: GestureDetector(
+                      onPanUpdate: (details) {
+                        setState(() {
+                          _dockPosition = Offset(
+                            (_dockPosition.dx + details.delta.dx).clamp(0.0, size.width - 264),
+                            (_dockPosition.dy + details.delta.dy).clamp(0.0, size.height - 180),
+                          );
+                        });
+                      },
+                      child: LiquidGlass.grouped(
+                        shape: LiquidRoundedSuperellipse(borderRadius: 25.0),
+                        child: const SizedBox(
+                          width: 264,
+                          height: 50,
+                          child: LiquidGlassDock(useRawLayout: true),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -820,6 +850,82 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
             }).toList(),
           ),
         ),
+        const SizedBox(height: 16),
+
+        // -------------------------------------------------------------
+        // Liquid Glass Shader controls
+        // -------------------------------------------------------------
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Use Real Glass Shader:',
+              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+            ),
+            Switch(
+              value: _useShaderGlass,
+              activeColor: const Color(0xFFFFA322),
+              onChanged: (val) => setState(() => _useShaderGlass = val),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        if (_useShaderGlass) ...[
+          // Thickness Slider
+          _buildSliderRow(
+            label: 'Glass Thickness',
+            value: _thickness,
+            min: 0.0,
+            max: 60.0,
+            displayValue: _thickness.toStringAsFixed(1),
+            onChanged: (val) => setState(() => _thickness = val),
+          ),
+          const SizedBox(height: 10),
+
+          // Refractive Index Slider
+          _buildSliderRow(
+            label: 'Refractive Index',
+            value: _refractiveIndex,
+            min: 1.0,
+            max: 2.0,
+            displayValue: _refractiveIndex.toStringAsFixed(2),
+            onChanged: (val) => setState(() => _refractiveIndex = val),
+          ),
+          const SizedBox(height: 10),
+
+          // Saturation Slider
+          _buildSliderRow(
+            label: 'Saturation',
+            value: _saturation,
+            min: 0.5,
+            max: 2.0,
+            displayValue: _saturation.toStringAsFixed(2),
+            onChanged: (val) => setState(() => _saturation = val),
+          ),
+          const SizedBox(height: 10),
+
+          // Light Intensity Slider
+          _buildSliderRow(
+            label: 'Light Intensity',
+            value: _lightIntensity,
+            min: 0.0,
+            max: 3.0,
+            displayValue: _lightIntensity.toStringAsFixed(2),
+            onChanged: (val) => setState(() => _lightIntensity = val),
+          ),
+          const SizedBox(height: 10),
+
+          // Blend Strength Slider
+          _buildSliderRow(
+            label: 'Blend Strength',
+            value: _blendStrength,
+            min: 0.0,
+            max: 100.0,
+            displayValue: _blendStrength.toStringAsFixed(1),
+            onChanged: (val) => setState(() => _blendStrength = val),
+          ),
+        ],
       ],
     );
   }

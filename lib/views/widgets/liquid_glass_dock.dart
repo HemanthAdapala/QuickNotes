@@ -3,10 +3,28 @@ import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 
 class LiquidGlassDock extends StatelessWidget {
-  const LiquidGlassDock({super.key});
+  const LiquidGlassDock({super.key, this.useRawLayout = false});
+
+  final bool useRawLayout;
 
   @override
   Widget build(BuildContext context) {
+    if (useRawLayout) {
+      return SizedBox(
+        width: 264,
+        height: 50,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildDockIcon(Icons.phone_iphone_rounded, Colors.green.shade600),
+            _buildDockIcon(Icons.chat_bubble_rounded, Colors.blue.shade600),
+            _buildDockIcon(Icons.explore_rounded, Colors.orange.shade600),
+            _buildDockIcon(Icons.music_note_rounded, Colors.pink.shade600),
+          ],
+        ),
+      );
+    }
+
     return SizedBox(
       width: 264,
       height: 50,
