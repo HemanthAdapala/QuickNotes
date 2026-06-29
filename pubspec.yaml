@@ -47,7 +47,8 @@ dependencies:
   home_widget: ^0.9.1
   flutter_svg: ^2.3.0
   shimmer: ^3.0.0
-
+  flutter_inset_shadow: ^2.0.3
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:

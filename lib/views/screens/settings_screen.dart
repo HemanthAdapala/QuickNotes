@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../providers/notes_provider.dart';
 import '../widgets/tactile_button.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'glassmorphism_sandbox_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final bool isDarkMode;
@@ -178,6 +179,22 @@ class SettingsScreen extends StatelessWidget {
                           provider.setZenMode(val);
                         },
                       ),
+                    ),
+
+                    // Glassmorphism Sandbox Tile
+                    _buildSettingsTile(
+                      leadingIcon: const Icon(Icons.science_outlined, color: Color(0xFF1C1C1C), size: 22),
+                      title: "Glassmorphism Sandbox",
+                      isActive: false,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const GlassmorphismSandboxScreen(),
+                          ),
+                        );
+                      },
                     ),
 
                     _buildSettingsTile(

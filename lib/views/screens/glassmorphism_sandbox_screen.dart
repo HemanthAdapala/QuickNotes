@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/glass_container.dart';
+import '../widgets/liquid_glass_dock.dart';
 
 class GlassmorphismSandboxScreen extends StatefulWidget {
   const GlassmorphismSandboxScreen({super.key});
@@ -203,19 +204,26 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                         height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 24),
                     Center(
-                      child: Text(
-                        'Refraction Demo',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 42,
-                          fontStyle: FontStyle.italic,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white.withValues(alpha: 0.5),
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Liquid Glass Dock',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFFFA322),
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const LiquidGlassDock(),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 24),
                     Text(
                       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
                       style: GoogleFonts.inter(
