@@ -184,30 +184,32 @@ class _GlassSurface extends StatelessWidget {
             foregroundPainter: _InnerGlassBorderPainter(
               borderRadius: borderRadius,
             ),
-            child: Container(
+            child: SizedBox(
               width: width,
               height: height,
-              decoration: BoxDecoration(
-                color: GlassmorphismPresets.fillColor,
-                borderRadius: borderRadius,
-                boxShadow: GlassmorphismPresets.innerShadows,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.45),
-                  width: 0.8,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: GlassmorphismPresets.fillColor,
+                  borderRadius: borderRadius,
+                  boxShadow: GlassmorphismPresets.innerShadows,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.45),
+                    width: 0.8,
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.72),
+                      Colors.white.withValues(alpha: 0.0),
+                      scheme.surfaceTint.withValues(alpha: 0.08),
+                      Colors.black.withValues(alpha: 0.035),
+                    ],
+                    stops: const [0, 0.42, 0.78, 1],
+                  ),
                 ),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.72),
-                    Colors.white.withValues(alpha: 0.0),
-                    scheme.surfaceTint.withValues(alpha: 0.08),
-                    Colors.black.withValues(alpha: 0.035),
-                  ],
-                  stops: const [0, 0.42, 0.78, 1],
-                ),
+                child: child,
               ),
-              child: child,
             ),
           ),
         ),

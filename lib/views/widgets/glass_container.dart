@@ -108,27 +108,31 @@ class GlassSurface extends StatelessWidget {
               bevelIntensity: customBevelIntensity ?? GlassmorphismPresets.bevelIntensity,
               lightDirection: Alignment.topCenter,
             ),
-            child: Container(
+            child: SizedBox(
               width: width,
               height: height,
-              padding: padding,
-              decoration: BoxDecoration(
-                borderRadius: borderRadius,
-                color: customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor,
-                boxShadow: GlassmorphismPresets.innerShadows,
-                border: Border.all(
-                  color: (customTintColor ?? Colors.white).withValues(
-                    alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
+              child: Padding(
+                padding: padding,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: borderRadius,
+                    color: customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor,
+                    boxShadow: GlassmorphismPresets.innerShadows,
+                    border: Border.all(
+                      color: (customTintColor ?? Colors.white).withValues(
+                        alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
+                      ),
+                      width: customOutlineWidth ?? GlassmorphismPresets.outlineWidth,
+                    ),
                   ),
-                  width: customOutlineWidth ?? GlassmorphismPresets.outlineWidth,
+                  child: Stack(
+                    fit: StackFit.passthrough,
+                    children: [
+                      Positioned.fill(child: backgroundWidget),
+                      child,
+                    ],
+                  ),
                 ),
-              ),
-              child: Stack(
-                fit: StackFit.passthrough,
-                children: [
-                  Positioned.fill(child: backgroundWidget),
-                  child,
-                ],
               ),
             ),
           ),

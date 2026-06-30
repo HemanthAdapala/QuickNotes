@@ -123,51 +123,53 @@ class RichTextFormattingPillContainer extends StatelessWidget {
                 width: width,
                 height: height,
                 padding: isExpanded ? padding : EdgeInsets.zero,
-                decoration: BoxDecoration(
-                  borderRadius: radius,
-                  color: customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor,
-                  boxShadow: customShadows ?? GlassmorphismPresets.innerShadows,
-                  border: Border.all(
-                    color: (customTintColor ?? Colors.white).withValues(
-                      alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
-                    ),
-                    width: customOutlineWidth ?? GlassmorphismPresets.outlineWidth,
-                  ),
-                ),
-                child: Stack(
-                  fit: StackFit.passthrough,
-                  children: [
-                    Positioned.fill(child: backgroundWidget),
-                    IconTheme.merge(
-                      data: const IconThemeData(
-                        color: Color(0xFF333333),
-                        size: 22,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: radius,
+                    color: customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor,
+                    boxShadow: customShadows ?? GlassmorphismPresets.innerShadows,
+                    border: Border.all(
+                      color: (customTintColor ?? Colors.white).withValues(
+                        alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
                       ),
-                      child: DefaultTextStyle.merge(
-                        style: const TextStyle(
+                      width: customOutlineWidth ?? GlassmorphismPresets.outlineWidth,
+                    ),
+                  ),
+                  child: Stack(
+                    fit: StackFit.passthrough,
+                    children: [
+                      Positioned.fill(child: backgroundWidget),
+                      IconTheme.merge(
+                        data: const IconThemeData(
                           color: Color(0xFF333333),
+                          size: 22,
                         ),
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 220),
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
-                          transitionBuilder: (child, animation) {
-                            return FadeTransition(
-                              opacity: animation,
-                              child: ScaleTransition(
-                                scale: Tween<double>(begin: 0.9, end: 1.0).animate(animation),
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: KeyedSubtree(
-                            key: ValueKey(isExpanded),
-                            child: child,
+                        child: DefaultTextStyle.merge(
+                          style: const TextStyle(
+                            color: Color(0xFF333333),
+                          ),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 220),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            transitionBuilder: (child, animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: ScaleTransition(
+                                  scale: Tween<double>(begin: 0.9, end: 1.0).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: KeyedSubtree(
+                              key: ValueKey(isExpanded),
+                              child: child,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
