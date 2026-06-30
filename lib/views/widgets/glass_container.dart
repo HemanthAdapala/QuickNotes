@@ -45,6 +45,50 @@ class GlassSurface extends StatelessWidget {
     final activeBlur = customBlurSigma ?? blurSigma ?? GlassmorphismPresets.blurSigma;
     final activeFrost = customFrostOpacity ?? frostOpacity ?? GlassmorphismPresets.frostOpacity;
 
+    final Widget backgroundWidget;
+    if (customTintColor != null) {
+      // Apple Tinted Glass System:
+      // 1. White Backing (FFFFFF, 94% opacity)
+      // 2. Tint Color (Accent Color, 20% opacity with BlendMode.plusDarker)
+      backgroundWidget = Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: borderRadius,
+              color: Colors.white.withValues(alpha: 0.94),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: borderRadius,
+              color: customTintColor!.withValues(alpha: 0.20),
+              backgroundBlendMode: BlendMode.multiply,
+            ),
+          ),
+        ],
+      );
+    } else {
+      backgroundWidget = Container(
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.white.withValues(alpha: 0.72),
+              Colors.white.withValues(
+                alpha: activeFrost,
+              ),
+              scheme.surfaceTint.withValues(alpha: 0.08),
+              Colors.black.withValues(alpha: 0.035),
+            ],
+            stops: const [0, 0.42, 0.78, 1],
+          ),
+        ),
+      );
+    }
+
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: borderRadius,
@@ -70,29 +114,22 @@ class GlassSurface extends StatelessWidget {
               padding: padding,
               decoration: BoxDecoration(
                 borderRadius: borderRadius,
-                color: customTintColor ?? GlassmorphismPresets.fillColor,
+                color: customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor,
                 boxShadow: GlassmorphismPresets.innerShadows,
                 border: Border.all(
-                  color: Colors.white.withValues(
+                  color: (customTintColor ?? Colors.white).withValues(
                     alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
                   ),
                   width: customOutlineWidth ?? GlassmorphismPresets.outlineWidth,
                 ),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.72),
-                    Colors.white.withValues(
-                      alpha: activeFrost,
-                    ),
-                    customTintColor?.withValues(alpha: 0.12) ?? scheme.surfaceTint.withValues(alpha: 0.08),
-                    Colors.black.withValues(alpha: 0.035),
-                  ],
-                  stops: const [0, 0.42, 0.78, 1],
-                ),
               ),
-              child: child,
+              child: Stack(
+                fit: StackFit.passthrough,
+                children: [
+                  Positioned.fill(child: backgroundWidget),
+                  child,
+                ],
+              ),
             ),
           ),
         ),

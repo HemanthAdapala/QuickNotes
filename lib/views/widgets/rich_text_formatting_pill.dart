@@ -54,6 +54,48 @@ class RichTextFormattingPillContainer extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final radius = borderRadius ?? BorderRadius.circular(isExpanded ? 24 : height / 2);
 
+    final Widget backgroundWidget;
+    if (customTintColor != null) {
+      // Apple Tinted Glass System:
+      // 1. White Backing (FFFFFF, 94% opacity)
+      // 2. Tint Color (Accent Color, 20% opacity with BlendMode.plusDarker)
+      backgroundWidget = Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              color: Colors.white.withValues(alpha: 0.94),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              color: customTintColor!.withValues(alpha: 0.20),
+              backgroundBlendMode: BlendMode.multiply,
+            ),
+          ),
+        ],
+      );
+    } else {
+      backgroundWidget = Container(
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.white.withValues(alpha: 0.72),
+              Colors.white.withValues(alpha: customFrostOpacity ?? GlassmorphismPresets.frostOpacity),
+              colors.surfaceTint.withValues(alpha: 0.08),
+              Colors.black.withValues(alpha: 0.035),
+            ],
+            stops: const [0, 0.42, 0.78, 1],
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: margin,
       child: DecoratedBox(
@@ -83,52 +125,49 @@ class RichTextFormattingPillContainer extends StatelessWidget {
                 padding: isExpanded ? padding : EdgeInsets.zero,
                 decoration: BoxDecoration(
                   borderRadius: radius,
-                  color: customTintColor ?? GlassmorphismPresets.fillColor,
+                  color: customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor,
                   boxShadow: customShadows ?? GlassmorphismPresets.innerShadows,
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity),
+                    color: (customTintColor ?? Colors.white).withValues(
+                      alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
+                    ),
                     width: customOutlineWidth ?? GlassmorphismPresets.outlineWidth,
                   ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.72),
-                      Colors.white.withValues(alpha: customFrostOpacity ?? GlassmorphismPresets.frostOpacity),
-                      customTintColor?.withValues(alpha: 0.12) ?? colors.surfaceTint.withValues(alpha: 0.08),
-                      Colors.black.withValues(alpha: 0.035),
-                    ],
-                    stops: const [0, 0.42, 0.78, 1],
-                  ),
                 ),
-                child: IconTheme.merge(
-                  data: const IconThemeData(
-                    color: Color(0xFF333333),
-                    size: 22,
-                  ),
-                  child: DefaultTextStyle.merge(
-                    style: const TextStyle(
-                      color: Color(0xFF333333),
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 220),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: ScaleTransition(
-                            scale: Tween<double>(begin: 0.9, end: 1.0).animate(animation),
+                child: Stack(
+                  fit: StackFit.passthrough,
+                  children: [
+                    Positioned.fill(child: backgroundWidget),
+                    IconTheme.merge(
+                      data: const IconThemeData(
+                        color: Color(0xFF333333),
+                        size: 22,
+                      ),
+                      child: DefaultTextStyle.merge(
+                        style: const TextStyle(
+                          color: Color(0xFF333333),
+                        ),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          transitionBuilder: (child, animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: ScaleTransition(
+                                scale: Tween<double>(begin: 0.9, end: 1.0).animate(animation),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: KeyedSubtree(
+                            key: ValueKey(isExpanded),
                             child: child,
                           ),
-                        );
-                      },
-                      child: KeyedSubtree(
-                        key: ValueKey(isExpanded),
-                        child: child,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
