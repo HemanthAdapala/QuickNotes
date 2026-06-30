@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
+
 import '../widgets/glass_container.dart';
 import '../widgets/liquid_glass_dock.dart';
 
@@ -351,21 +352,9 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
           ),
 
           // 3. Draggable overlays with real LiquidGlass Layer & Blending
-          LiquidGlassLayer(
-            fake: !_useShaderGlass,
-            settings: LiquidGlassSettings(
-              thickness: _thickness,
-              blur: _blurSigma,
-              glassColor: (_tintColor ?? Colors.white).withValues(alpha: _frostOpacity),
-              refractiveIndex: _refractiveIndex,
-              lightIntensity: _lightIntensity,
-              saturation: _saturation,
-            ),
-            child: LiquidGlassBlendGroup(
-              blend: _blendStrength,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
                   // 3a. Draggable & Clickable Glass Pill
                   Positioned(
                     left: _pillPosition.dx,
@@ -424,8 +413,16 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                                   curve: _getMorphCurve(),
                                   width: targetWidth,
                                   height: 65,
-                                  child: LiquidGlass.grouped(
-                                    shape: LiquidRoundedSuperellipse(borderRadius: 32.5),
+                                  child: GlassSurface(
+                                    borderRadius: BorderRadius.circular(32.5),
+                                    customBlurSigma: _blurSigma,
+                                    customFrostOpacity: _frostOpacity,
+                                    customDepthOpacity: _depthOpacity,
+                                    customTintColor: _tintColor,
+                                    customOutlineWidth: _outlineWidth,
+                                    customOutlineOpacity: _outlineOpacity,
+                                    customBevelIntensity: _bevelIntensity,
+                                    customShadows: _getShadows(),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(32.5),
                                       child: Stack(
@@ -535,20 +532,11 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                           );
                         });
                       },
-                      child: LiquidGlass.grouped(
-                        shape: LiquidRoundedSuperellipse(borderRadius: 25.0),
-                        child: const SizedBox(
-                          width: 264,
-                          height: 50,
-                          child: LiquidGlassDock(useRawLayout: true),
-                        ),
-                      ),
+                      child: const LiquidGlassDock(useRawLayout: false),
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
 
           // 4. Back navigation button (Floating in top-left)
           Positioned(
@@ -865,80 +853,6 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
         ),
         const SizedBox(height: 16),
 
-        // -------------------------------------------------------------
-        // Liquid Glass Shader controls
-        // -------------------------------------------------------------
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Use Real Glass Shader:',
-              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
-            ),
-            Switch(
-              value: _useShaderGlass,
-              activeColor: const Color(0xFFFFA322),
-              onChanged: (val) => setState(() => _useShaderGlass = val),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-
-        if (_useShaderGlass) ...[
-          // Thickness Slider
-          _buildSliderRow(
-            label: 'Glass Thickness',
-            value: _thickness,
-            min: 0.0,
-            max: 60.0,
-            displayValue: _thickness.toStringAsFixed(1),
-            onChanged: (val) => setState(() => _thickness = val),
-          ),
-          const SizedBox(height: 10),
-
-          // Refractive Index Slider
-          _buildSliderRow(
-            label: 'Refractive Index',
-            value: _refractiveIndex,
-            min: 1.0,
-            max: 2.0,
-            displayValue: _refractiveIndex.toStringAsFixed(2),
-            onChanged: (val) => setState(() => _refractiveIndex = val),
-          ),
-          const SizedBox(height: 10),
-
-          // Saturation Slider
-          _buildSliderRow(
-            label: 'Saturation',
-            value: _saturation,
-            min: 0.5,
-            max: 2.0,
-            displayValue: _saturation.toStringAsFixed(2),
-            onChanged: (val) => setState(() => _saturation = val),
-          ),
-          const SizedBox(height: 10),
-
-          // Light Intensity Slider
-          _buildSliderRow(
-            label: 'Light Intensity',
-            value: _lightIntensity,
-            min: 0.0,
-            max: 3.0,
-            displayValue: _lightIntensity.toStringAsFixed(2),
-            onChanged: (val) => setState(() => _lightIntensity = val),
-          ),
-          const SizedBox(height: 10),
-
-          // Blend Strength Slider
-          _buildSliderRow(
-            label: 'Blend Strength',
-            value: _blendStrength,
-            min: 0.0,
-            max: 100.0,
-            displayValue: _blendStrength.toStringAsFixed(1),
-            onChanged: (val) => setState(() => _blendStrength = val),
-          ),
-        ],
       ],
     );
   }
