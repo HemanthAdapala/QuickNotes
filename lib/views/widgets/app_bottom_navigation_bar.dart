@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/animations/animation_constants.dart';
 import '../../themes/glassmorphism_presets.dart';
+import 'glass_container.dart';
 import '../constants/app_bottom_navigation_assets.dart';
 
 class AppBottomNavigationBar extends StatelessWidget {
@@ -66,18 +67,10 @@ class AppBottomNavigationBar extends StatelessWidget {
                             top: scale * (_controlHeight - 48.0) / 2.0,
                             width: 62.0 * scale,
                             height: 48.0 * scale,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF5A623),
-                                borderRadius: BorderRadius.circular(24.0 * scale),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.15),
-                                    blurRadius: 8.0 * scale,
-                                    offset: Offset(0, 4.0 * scale),
-                                  ),
-                                ],
-                              ),
+                            child: GlassSurface(
+                              borderRadius: BorderRadius.circular(24.0 * scale),
+                              customTintColor: const Color(0x80F5A623),
+                              child: const SizedBox.expand(),
                             ),
                           ),
                         // Navigation buttons

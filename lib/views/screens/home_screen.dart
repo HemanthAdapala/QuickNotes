@@ -46,62 +46,42 @@ class _HomeScreenState extends State<HomeScreen> {
   int _activeNavIndex = 0;
   int _selectedBgIndex = 0;
 
-  // ── Glassmorphism Visual Layer States ──────────────────────────────────────
-  bool _enableD1 = true;
-  bool _enableD2 = true;
-  bool _enableD3 = true;
-  bool _enableD4 = true;
-  bool _enableFillColor = false;
-  bool _enableBevel = true;
-  bool _enableI1 = true;
-  bool _enableI2 = true;
-  bool _enableI3 = true;
-  bool _enableI4 = true;
+  @override
+  void initState() {
+    super.initState();
+    _updatePresetsForBackground(_selectedBgIndex);
+  }
 
-  void _updatePresets() {
-    final List<BoxShadow> activeShadows = [];
-    if (_enableD1) {
-      activeShadows.add(const BoxShadow(offset: Offset(1.25, 0), blurRadius: 0, spreadRadius: -0.75, color: Color(0xFFD0D0D0)));
-    }
-    if (_enableD2) {
-      activeShadows.add(const BoxShadow(offset: Offset(-1.25, 0), blurRadius: 0, spreadRadius: -0.75, color: Color(0xFFD0D0D0)));
-    }
-    if (_enableD3) {
-      activeShadows.add(const BoxShadow(offset: Offset(0, 0), blurRadius: 0, spreadRadius: 0.5, color: Color(0xFFCCCCCC)));
-    }
-    if (_enableD4) {
-      activeShadows.add(const BoxShadow(offset: Offset(0, 8), blurRadius: 15, spreadRadius: 0, color: Color(0x05000000)));
-    }
-    GlassmorphismPresets.shadows = activeShadows;
+  void _updatePresetsForBackground(int index) {
+    final isDark = index == 1 || index == 2 || index == 6;
 
-    final List<BoxShadow> activeInnerShadows = [];
-    if (_enableI1) {
-      activeInnerShadows.add(const BoxShadow(offset: Offset(0, 1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true));
-    }
-    if (_enableI2) {
-      activeInnerShadows.add(const BoxShadow(offset: Offset(0, -1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true));
-    }
-    if (_enableI3) {
-      activeInnerShadows.add(const BoxShadow(offset: Offset(0, 40), blurRadius: 10, spreadRadius: -40, color: Color(0xFF282828), inset: true));
-    }
-    if (_enableI4) {
-      activeInnerShadows.add(const BoxShadow(offset: Offset(0, -40), blurRadius: 10, spreadRadius: -40, color: Color(0xFF282828), inset: true));
-    }
-    GlassmorphismPresets.innerShadows = activeInnerShadows;
-
-    if (_enableFillColor) {
-      GlassmorphismPresets.fillColor = const Color(0x54999999);
+    if (isDark) {
+      // Dark Mode Preset: D1, D2, D3, D4, FL, BV, I1, I2
+      GlassmorphismPresets.shadows = const [
+        BoxShadow(offset: Offset(1.25, 0), blurRadius: 0, spreadRadius: -0.75, color: Color(0xFFD0D0D0)),
+        BoxShadow(offset: Offset(-1.25, 0), blurRadius: 0, spreadRadius: -0.75, color: Color(0xFFD0D0D0)),
+        BoxShadow(offset: Offset(0, 0), blurRadius: 0, spreadRadius: 0.5, color: Color(0xFFCCCCCC)),
+        BoxShadow(offset: Offset(0, 8), blurRadius: 15, spreadRadius: 0, color: Color(0x05000000)),
+      ];
+      GlassmorphismPresets.innerShadows = const [
+        BoxShadow(offset: Offset(0, 1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true),
+        BoxShadow(offset: Offset(0, -1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true),
+      ];
     } else {
-      GlassmorphismPresets.fillColor = Colors.transparent;
+      // Light Mode Preset: D4, FL, BV, I1, I2
+      GlassmorphismPresets.shadows = const [
+        BoxShadow(offset: Offset(0, 8), blurRadius: 15, spreadRadius: 0, color: Color(0x05000000)),
+      ];
+      GlassmorphismPresets.innerShadows = const [
+        BoxShadow(offset: Offset(0, 1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true),
+        BoxShadow(offset: Offset(0, -1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true),
+      ];
     }
 
-    if (_enableBevel) {
-      GlassmorphismPresets.bevelIntensity = 0.20;
-      GlassmorphismPresets.depthOpacity = 0.30;
-    } else {
-      GlassmorphismPresets.bevelIntensity = 0.0;
-      GlassmorphismPresets.depthOpacity = 0.0;
-    }
+    // Both modes have FL (Fill Layer) and BV (Bevel) enabled
+    GlassmorphismPresets.fillColor = const Color(0x54999999);
+    GlassmorphismPresets.bevelIntensity = 0.20;
+    GlassmorphismPresets.depthOpacity = 0.30;
   }
 
   // ── FAB / prompt → new note ───────────────────────────────────────────────
@@ -300,134 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _buildEffectToggle(String label, bool active, VoidCallback onTap) {
-    return TactileButton(
-      useAppleSpring: true,
-      compressionScale: 0.85,
-      settleDuration: const Duration(milliseconds: 600),
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        width: 36,
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: active
-              ? const Color(0xFFF5A623)
-              : Colors.white.withValues(alpha: 0.15),
-          shape: BoxShape.circle,
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: active ? Colors.white : const Color(0xFF333333),
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildEffectsSwitcher() {
-    return Positioned(
-      bottom: 135,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: GlassSurface(
-          borderRadius: BorderRadius.circular(22),
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildEffectToggle('D1', _enableD1, () {
-                    setState(() {
-                      _enableD1 = !_enableD1;
-                      _updatePresets();
-                    });
-                  }),
-                  const SizedBox(width: 6),
-                  _buildEffectToggle('D2', _enableD2, () {
-                    setState(() {
-                      _enableD2 = !_enableD2;
-                      _updatePresets();
-                    });
-                  }),
-                  const SizedBox(width: 6),
-                  _buildEffectToggle('D3', _enableD3, () {
-                    setState(() {
-                      _enableD3 = !_enableD3;
-                      _updatePresets();
-                    });
-                  }),
-                  const SizedBox(width: 6),
-                  _buildEffectToggle('D4', _enableD4, () {
-                    setState(() {
-                      _enableD4 = !_enableD4;
-                      _updatePresets();
-                    });
-                  }),
-                  const SizedBox(width: 6),
-                  _buildEffectToggle('FL', _enableFillColor, () {
-                    setState(() {
-                      _enableFillColor = !_enableFillColor;
-                      _updatePresets();
-                    });
-                  }),
-                  const SizedBox(width: 6),
-                  _buildEffectToggle('BV', _enableBevel, () {
-                    setState(() {
-                      _enableBevel = !_enableBevel;
-                      _updatePresets();
-                    });
-                  }),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildEffectToggle('I1', _enableI1, () {
-                    setState(() {
-                      _enableI1 = !_enableI1;
-                      _updatePresets();
-                    });
-                  }),
-                  const SizedBox(width: 6),
-                  _buildEffectToggle('I2', _enableI2, () {
-                    setState(() {
-                      _enableI2 = !_enableI2;
-                      _updatePresets();
-                    });
-                  }),
-                  const SizedBox(width: 6),
-                  _buildEffectToggle('I3', _enableI3, () {
-                    setState(() {
-                      _enableI3 = !_enableI3;
-                      _updatePresets();
-                    });
-                  }),
-                  const SizedBox(width: 6),
-                  _buildEffectToggle('I4', _enableI4, () {
-                    setState(() {
-                      _enableI4 = !_enableI4;
-                      _updatePresets();
-                    });
-                  }),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildBackgroundSwitcher() {
     return Positioned(
@@ -452,6 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     HapticFeedback.lightImpact();
                     setState(() {
                       _selectedBgIndex = i;
+                      _updatePresetsForBackground(i);
                     });
                   },
                   child: Container(
@@ -505,10 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           // Background Switcher Floating Bar (only visible on Home tab)
-          if (_activeNavIndex == 0) ...[
-            _buildBackgroundSwitcher(),
-            _buildEffectsSwitcher(),
-          ],
+          if (_activeNavIndex == 0) _buildBackgroundSwitcher(),
 
           // ── AppBottomNavigationBar (at bottom: 0) ──────────────────────────
           Positioned(
