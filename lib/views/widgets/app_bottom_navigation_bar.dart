@@ -23,10 +23,10 @@ class AppBottomNavigationBar extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final List<AppBottomNavigationDestination> destinations;
 
-  static const double _figmaWidth = 356;
-  static const double _barWidth = 284;
-  static const double _height = 68;
-  static const double _controlHeight = 60;
+  static const double _figmaWidth = 318;
+  static const double _barWidth = 264;
+  static const double _height = 58;
+  static const double _controlHeight = 50;
   static const double _gap = 4;
 
   @override
@@ -50,12 +50,12 @@ class AppBottomNavigationBar extends StatelessWidget {
               width: width,
               height: _height * scale,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _GlassSurface(
                     width: _barWidth * scale,
                     height: _controlHeight * scale,
-                    borderRadius: BorderRadius.circular(30 * scale),
+                    borderRadius: BorderRadius.circular(25 * scale),
                     child: Stack(
                       children: [
                         // Sliding active tab indicator pill (Change 3)
@@ -63,36 +63,33 @@ class AppBottomNavigationBar extends StatelessWidget {
                           AnimatedPositioned(
                             duration: kDurationNormal,
                             curve: Curves.easeInOutCubic,
-                            left: scale * (8.0 + selectedIndex * 67.0 + (67.0 - 62.0) / 2.0),
-                            top: scale * (_controlHeight - 48.0) / 2.0,
-                            width: 62.0 * scale,
-                            height: 48.0 * scale,
+                            left: (40.0 + selectedIndex * (184.0 / 3.0) - 35.0) * scale,
+                            top: scale * (50.0 - 43.0) / 2.0,
+                            width: 70.0 * scale,
+                            height: 43.0 * scale,
                             child: GlassSurface(
-                              borderRadius: BorderRadius.circular(24.0 * scale),
+                              borderRadius: BorderRadius.circular(21.5 * scale),
                               customTintColor: const Color(0xFFFFA322),
                               child: const SizedBox.expand(),
                             ),
                           ),
                         // Navigation buttons
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8.0 * scale),
-                          child: Row(
-                            children: [
-                              for (var index = 0; index < 4; index++)
-                                Expanded(
-                                  child: _NavigationButton(
-                                    destination: destinations[index],
-                                    index: index,
-                                    selectedIndex: selectedIndex,
-                                    onDestinationSelected: onDestinationSelected,
-                                    iconSize: 22 * scale,
-                                    selectedColor: Colors.white, // Active icon changes to white
-                                    unselectedColor: const Color(0xFF333333), // Inactive is 333333
-                                  ),
-                                ),
-                            ],
+                        for (var index = 0; index < 4; index++)
+                          Positioned(
+                            left: (40.0 + index * (184.0 / 3.0) - 35.0) * scale,
+                            top: 0,
+                            width: 70.0 * scale,
+                            height: 50.0 * scale,
+                            child: _NavigationButton(
+                              destination: destinations[index],
+                              index: index,
+                              selectedIndex: selectedIndex,
+                              onDestinationSelected: onDestinationSelected,
+                              iconSize: 22 * scale,
+                              selectedColor: Colors.white, // Active icon changes to white
+                              unselectedColor: const Color(0xFF333333), // Inactive is 333333
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -100,7 +97,7 @@ class AppBottomNavigationBar extends StatelessWidget {
                   _GlassSurface(
                     width: _controlHeight * scale,
                     height: _controlHeight * scale,
-                    borderRadius: BorderRadius.circular(30 * scale),
+                    borderRadius: BorderRadius.circular(25 * scale),
                     child: _NavigationButton(
                       destination: destinations[4],
                       index: 4,
@@ -195,7 +192,7 @@ class _GlassSurface extends StatelessWidget {
                 borderRadius: borderRadius,
                 boxShadow: GlassmorphismPresets.innerShadows,
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.30),
+                  color: Colors.white.withValues(alpha: 0.45),
                   width: 0.8,
                 ),
                 gradient: LinearGradient(
