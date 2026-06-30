@@ -69,7 +69,7 @@ class AppBottomNavigationBar extends StatelessWidget {
                             height: 48.0 * scale,
                             child: GlassSurface(
                               borderRadius: BorderRadius.circular(24.0 * scale),
-                              customTintColor: const Color(0xFFF5A623),
+                              customTintColor: const Color(0xFFFFA322),
                               child: const SizedBox.expand(),
                             ),
                           ),

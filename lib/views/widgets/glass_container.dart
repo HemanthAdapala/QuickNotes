@@ -62,7 +62,7 @@ class GlassSurface extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               borderRadius: borderRadius,
-              color: customTintColor!.withValues(alpha: 0.20),
+              color: customTintColor!.withValues(alpha: 0.92),
               backgroundBlendMode: BlendMode.multiply,
             ),
           ),

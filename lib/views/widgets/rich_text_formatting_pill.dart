@@ -71,7 +71,7 @@ class RichTextFormattingPillContainer extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               borderRadius: radius,
-              color: customTintColor!.withValues(alpha: 0.20),
+              color: customTintColor!.withValues(alpha: 0.92),
               backgroundBlendMode: BlendMode.multiply,
             ),
           ),
