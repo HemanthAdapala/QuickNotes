@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/tactile_button.dart';
+import '../../themes/glassmorphism_presets.dart';
 
 import '../../providers/notes_provider.dart';
 import '../../themes/app_theme.dart';
@@ -43,6 +45,64 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _activeNavIndex = 0;
   int _selectedBgIndex = 0;
+
+  // ── Glassmorphism Visual Layer States ──────────────────────────────────────
+  bool _enableD1 = true;
+  bool _enableD2 = true;
+  bool _enableD3 = true;
+  bool _enableD4 = true;
+  bool _enableFillColor = false;
+  bool _enableBevel = true;
+  bool _enableI1 = true;
+  bool _enableI2 = true;
+  bool _enableI3 = true;
+  bool _enableI4 = true;
+
+  void _updatePresets() {
+    final List<BoxShadow> activeShadows = [];
+    if (_enableD1) {
+      activeShadows.add(const BoxShadow(offset: Offset(1.25, 0), blurRadius: 0, spreadRadius: -0.75, color: Color(0xFFD0D0D0)));
+    }
+    if (_enableD2) {
+      activeShadows.add(const BoxShadow(offset: Offset(-1.25, 0), blurRadius: 0, spreadRadius: -0.75, color: Color(0xFFD0D0D0)));
+    }
+    if (_enableD3) {
+      activeShadows.add(const BoxShadow(offset: Offset(0, 0), blurRadius: 0, spreadRadius: 0.5, color: Color(0xFFCCCCCC)));
+    }
+    if (_enableD4) {
+      activeShadows.add(const BoxShadow(offset: Offset(0, 8), blurRadius: 15, spreadRadius: 0, color: Color(0x05000000)));
+    }
+    GlassmorphismPresets.shadows = activeShadows;
+
+    final List<BoxShadow> activeInnerShadows = [];
+    if (_enableI1) {
+      activeInnerShadows.add(const BoxShadow(offset: Offset(0, 1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true));
+    }
+    if (_enableI2) {
+      activeInnerShadows.add(const BoxShadow(offset: Offset(0, -1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true));
+    }
+    if (_enableI3) {
+      activeInnerShadows.add(const BoxShadow(offset: Offset(0, 40), blurRadius: 10, spreadRadius: -40, color: Color(0xFF282828), inset: true));
+    }
+    if (_enableI4) {
+      activeInnerShadows.add(const BoxShadow(offset: Offset(0, -40), blurRadius: 10, spreadRadius: -40, color: Color(0xFF282828), inset: true));
+    }
+    GlassmorphismPresets.innerShadows = activeInnerShadows;
+
+    if (_enableFillColor) {
+      GlassmorphismPresets.fillColor = const Color(0x54999999);
+    } else {
+      GlassmorphismPresets.fillColor = Colors.transparent;
+    }
+
+    if (_enableBevel) {
+      GlassmorphismPresets.bevelIntensity = 0.20;
+      GlassmorphismPresets.depthOpacity = 0.30;
+    } else {
+      GlassmorphismPresets.bevelIntensity = 0.0;
+      GlassmorphismPresets.depthOpacity = 0.0;
+    }
+  }
 
   // ── FAB / prompt → new note ───────────────────────────────────────────────
 
@@ -96,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
         interactive: false,
         onTap: _openNewNote,
         onLastEditedNoteTap: _openNote,
-        isDarkBackground: _selectedBgIndex == 1 || _selectedBgIndex == 2,
+        isDarkBackground: _selectedBgIndex == 1 || _selectedBgIndex == 2 || _selectedBgIndex == 6,
       ),
     );
   }
@@ -227,11 +287,146 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         );
+      case 5:
+        // B5: Solid White
+        return Container(color: const Color(0xFFFFFFFF));
+      case 6:
+        // B6: Solid Black
+        return Container(color: const Color(0xFF000000));
       case 0:
       default:
         // B0: Default Warm Stone
         return Container(color: const Color(0xFFF2F2EE));
     }
+  }
+
+  Widget _buildEffectToggle(String label, bool active, VoidCallback onTap) {
+    return TactileButton(
+      useAppleSpring: true,
+      compressionScale: 0.85,
+      settleDuration: const Duration(milliseconds: 600),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active
+              ? const Color(0xFFF5A623)
+              : Colors.white.withValues(alpha: 0.15),
+          shape: BoxShape.circle,
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: active ? Colors.white : const Color(0xFF333333),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEffectsSwitcher() {
+    return Positioned(
+      bottom: 135,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: GlassSurface(
+          borderRadius: BorderRadius.circular(22),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildEffectToggle('D1', _enableD1, () {
+                    setState(() {
+                      _enableD1 = !_enableD1;
+                      _updatePresets();
+                    });
+                  }),
+                  const SizedBox(width: 6),
+                  _buildEffectToggle('D2', _enableD2, () {
+                    setState(() {
+                      _enableD2 = !_enableD2;
+                      _updatePresets();
+                    });
+                  }),
+                  const SizedBox(width: 6),
+                  _buildEffectToggle('D3', _enableD3, () {
+                    setState(() {
+                      _enableD3 = !_enableD3;
+                      _updatePresets();
+                    });
+                  }),
+                  const SizedBox(width: 6),
+                  _buildEffectToggle('D4', _enableD4, () {
+                    setState(() {
+                      _enableD4 = !_enableD4;
+                      _updatePresets();
+                    });
+                  }),
+                  const SizedBox(width: 6),
+                  _buildEffectToggle('FL', _enableFillColor, () {
+                    setState(() {
+                      _enableFillColor = !_enableFillColor;
+                      _updatePresets();
+                    });
+                  }),
+                  const SizedBox(width: 6),
+                  _buildEffectToggle('BV', _enableBevel, () {
+                    setState(() {
+                      _enableBevel = !_enableBevel;
+                      _updatePresets();
+                    });
+                  }),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildEffectToggle('I1', _enableI1, () {
+                    setState(() {
+                      _enableI1 = !_enableI1;
+                      _updatePresets();
+                    });
+                  }),
+                  const SizedBox(width: 6),
+                  _buildEffectToggle('I2', _enableI2, () {
+                    setState(() {
+                      _enableI2 = !_enableI2;
+                      _updatePresets();
+                    });
+                  }),
+                  const SizedBox(width: 6),
+                  _buildEffectToggle('I3', _enableI3, () {
+                    setState(() {
+                      _enableI3 = !_enableI3;
+                      _updatePresets();
+                    });
+                  }),
+                  const SizedBox(width: 6),
+                  _buildEffectToggle('I4', _enableI4, () {
+                    setState(() {
+                      _enableI4 = !_enableI4;
+                      _updatePresets();
+                    });
+                  }),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildBackgroundSwitcher() {
@@ -247,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              for (int i = 0; i < 5; i++) ...[
+              for (int i = 0; i < 7; i++) ...[
                 if (i > 0) const SizedBox(width: 6),
                 TactileButton(
                   useAppleSpring: true,
@@ -310,7 +505,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           // Background Switcher Floating Bar (only visible on Home tab)
-          if (_activeNavIndex == 0) _buildBackgroundSwitcher(),
+          if (_activeNavIndex == 0) ...[
+            _buildBackgroundSwitcher(),
+            _buildEffectsSwitcher(),
+          ],
 
           // ── AppBottomNavigationBar (at bottom: 0) ──────────────────────────
           Positioned(

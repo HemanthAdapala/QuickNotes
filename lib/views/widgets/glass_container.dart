@@ -11,8 +11,8 @@ class GlassSurface extends StatelessWidget {
     this.height,
     this.borderRadius = const BorderRadius.all(Radius.circular(18)),
     this.padding = EdgeInsets.zero,
-    this.blurSigma = GlassmorphismPresets.blurSigma,
-    this.frostOpacity = GlassmorphismPresets.frostOpacity,
+    this.blurSigma,
+    this.frostOpacity,
     this.customShadows,
     this.customBlurSigma,
     this.customFrostOpacity,
@@ -28,8 +28,8 @@ class GlassSurface extends StatelessWidget {
   final double? height;
   final BorderRadius borderRadius;
   final EdgeInsetsGeometry padding;
-  final double blurSigma;
-  final double frostOpacity;
+  final double? blurSigma;
+  final double? frostOpacity;
   final List<BoxShadow>? customShadows;
   final double? customBlurSigma;
   final double? customFrostOpacity;
@@ -42,6 +42,8 @@ class GlassSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final activeBlur = customBlurSigma ?? blurSigma ?? GlassmorphismPresets.blurSigma;
+    final activeFrost = customFrostOpacity ?? frostOpacity ?? GlassmorphismPresets.frostOpacity;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -52,8 +54,8 @@ class GlassSurface extends StatelessWidget {
         borderRadius: borderRadius,
         child: BackdropFilter(
           filter: ImageFilter.blur(
-            sigmaX: customBlurSigma ?? blurSigma,
-            sigmaY: customBlurSigma ?? blurSigma,
+            sigmaX: activeBlur,
+            sigmaY: activeBlur,
           ),
           child: CustomPaint(
             foregroundPainter: _GlassRimPainter(
@@ -82,7 +84,7 @@ class GlassSurface extends StatelessWidget {
                   colors: [
                     Colors.white.withValues(alpha: 0.72),
                     Colors.white.withValues(
-                      alpha: customFrostOpacity ?? frostOpacity,
+                      alpha: activeFrost,
                     ),
                     customTintColor?.withValues(alpha: 0.12) ?? scheme.surfaceTint.withValues(alpha: 0.08),
                     Colors.black.withValues(alpha: 0.035),
