@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'glass_container.dart';
+import 'tactile_button.dart';
+import '../../themes/glassmorphism_presets.dart';
 import '../../core/animations/animation_constants.dart';
 import '../../models/note.dart';
 
@@ -264,9 +266,13 @@ class _HomePromptViewState extends State<HomePromptView> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                GestureDetector(
-                  onTap: widget.onProfileTap,
-                  behavior: HitTestBehavior.opaque,
+                TactileButton(
+                  onTap: widget.onProfileTap ?? () {},
+                  useAppleSpring: true,
+                  compressionScale: MotionPresets.compressionScale,
+                  settleDuration: MotionPresets.settleDuration,
+                  pressDuration: MotionPresets.pressDuration,
+                  playSelectionHaptic: true,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -296,9 +302,13 @@ class _HomePromptViewState extends State<HomePromptView> {
                     ],
                   ),
                 ),
-                GestureDetector(
-                  onTap: widget.onMoreOptionsTap,
-                  behavior: HitTestBehavior.opaque,
+                TactileButton(
+                  onTap: widget.onMoreOptionsTap ?? () {},
+                  useAppleSpring: true,
+                  compressionScale: MotionPresets.compressionScale,
+                  settleDuration: MotionPresets.settleDuration,
+                  pressDuration: MotionPresets.pressDuration,
+                  playSelectionHaptic: true,
                   child: GlassSurface.bottomBar(
                     width: 40.0,
                     height: 40.0,
