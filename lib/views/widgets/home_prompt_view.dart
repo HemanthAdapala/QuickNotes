@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'glass_container.dart';
 import '../../core/animations/animation_constants.dart';
 import '../../models/note.dart';
 
@@ -64,6 +66,9 @@ class HomePromptView extends StatefulWidget {
   final ValueChanged<String>? onLastEditedNoteTap;
   final bool isDarkBackground;
   final bool showPrompt;
+  final bool showProfileHeader;
+  final VoidCallback? onProfileTap;
+  final VoidCallback? onMoreOptionsTap;
 
   const HomePromptView({
     super.key,
@@ -76,6 +81,9 @@ class HomePromptView extends StatefulWidget {
     this.onLastEditedNoteTap,
     this.isDarkBackground = false,
     this.showPrompt = true,
+    this.showProfileHeader = false,
+    this.onProfileTap,
+    this.onMoreOptionsTap,
   });
 
   static final List<String> _prompts = [
@@ -248,121 +256,238 @@ class _HomePromptViewState extends State<HomePromptView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header (always visible) ───────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 45.0),
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0.0, end: 1.0),
-                duration:
-                    isTest ? Duration.zero : const Duration(milliseconds: 800),
-                curve: Curves.easeOutCubic,
-                builder: (context, value, child) => Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, 12 * (1 - value)),
-                    child: child,
+        // ── Header Section ───────────────────────────────────────────────────
+        if (widget.showProfileHeader) ...[
+          // Top Row: Avatar + Name (Left), Options (Right)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 0.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: widget.onProfileTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 40.0,
+                        height: 40.0,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE2E2DF),
+                          shape: BoxShape.circle,
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: SvgPicture.asset(
+                          "assets/Profile Icons/maxim_transparent.svg",
+                          width: 40.0,
+                          height: 40.0,
+                        ),
+                      ),
+                      const SizedBox(width: 10.0),
+                      Text(
+                        "Hemanth Adapala",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w500,
+                          color: widget.isDarkBackground ? Colors.white : const Color(0xFF1C1C1E),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      greeting,
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF8E8E93),
+                GestureDetector(
+                  onTap: widget.onMoreOptionsTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: GlassSurface(
+                    width: 40.0,
+                    height: 40.0,
+                    borderRadius: BorderRadius.circular(20.0),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 4.0,
+                            height: 4.0,
+                            decoration: BoxDecoration(
+                              color: widget.isDarkBackground ? Colors.white.withOpacity(0.8) : const Color(0xFF1C1C1E).withOpacity(0.8),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 3.0),
+                          Container(
+                            width: 4.0,
+                            height: 4.0,
+                            decoration: BoxDecoration(
+                              color: widget.isDarkBackground ? Colors.white.withOpacity(0.8) : const Color(0xFF1C1C1E).withOpacity(0.8),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 3.0),
+                          Container(
+                            width: 4.0,
+                            height: 4.0,
+                            decoration: BoxDecoration(
+                              color: widget.isDarkBackground ? Colors.white.withOpacity(0.8) : const Color(0xFF1C1C1E).withOpacity(0.8),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 3.0),
-                    Text(
-                      formattedDay,
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w700,
-                        color: widget.isDarkBackground ? Colors.white : const Color(0xFF222222),
-                        letterSpacing: -0.5,
-                      ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24.0),
+          // Greeting Text
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Hi HA,",
+                  style: GoogleFonts.inter(
+                    fontSize: 36.0,
+                    fontWeight: FontWeight.bold,
+                    color: widget.isDarkBackground ? Colors.white : const Color(0xFF1C1C1E),
+                    height: 1.1,
+                  ),
+                ),
+                Text(
+                  greeting.toLowerCase(),
+                  style: GoogleFonts.inter(
+                    fontSize: 36.0,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF8E8E93),
+                    height: 1.1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24.0),
+        ] else ...[
+          // Default Date/Greeting Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 45.0),
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.0, end: 1.0),
+                  duration:
+                      isTest ? Duration.zero : const Duration(milliseconds: 800),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) => Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 12 * (1 - value)),
+                      child: child,
                     ),
-                    const SizedBox(height: 3.0),
-                    Row(
-                      children: [
-                        Text(
-                          formattedDate.toUpperCase(),
-                          style: GoogleFonts.outfit(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF8E8E93),
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                        const SizedBox(width: 8.0),
-                        Text(
-                          '•',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: const Color(0xFF8E8E93).withOpacity(0.5),
-                          ),
-                        ),
-                        const SizedBox(width: 8.0),
-                        Text(
-                          'TODAY',
-                          style: GoogleFonts.outfit(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFFFA322),
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3.0),
-                    if (countText.isNotEmpty)
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        countText,
+                        greeting,
                         style: GoogleFonts.outfit(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF8E8E93),
                         ),
                       ),
-                    if (contextualLine != null) ...[
-                      const SizedBox(height: 2.0),
-                      AnimatedSwitcher(
-                        duration: kDurationNormal,
-                        switchInCurve: kCurveEnter,
-                        switchOutCurve: kCurveExit,
-                        transitionBuilder: (child, animation) =>
-                            FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0, 0.35),
-                              end: Offset.zero,
-                            ).animate(CurvedAnimation(
-                              parent: animation,
-                              curve: kCurveEnter,
-                            )),
-                            child: child,
-                          ),
-                        ),
-                        child: SizedBox(
-                          key: ValueKey(contextualKey),
-                          child: contextualLine,
+                      const SizedBox(height: 3.0),
+                      Text(
+                        formattedDay,
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w700,
+                          color: widget.isDarkBackground ? Colors.white : const Color(0xFF222222),
+                          letterSpacing: -0.5,
                         ),
                       ),
+                      const SizedBox(height: 3.0),
+                      Row(
+                        children: [
+                          Text(
+                            formattedDate.toUpperCase(),
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF8E8E93),
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          const SizedBox(width: 8.0),
+                          Text(
+                            '•',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: const Color(0xFF8E8E93).withOpacity(0.5),
+                            ),
+                          ),
+                          const SizedBox(width: 8.0),
+                          Text(
+                            'TODAY',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFFFA322),
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3.0),
+                      if (countText.isNotEmpty)
+                        Text(
+                          countText,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF8E8E93),
+                          ),
+                        ),
+                      if (contextualLine != null) ...[
+                        const SizedBox(height: 2.0),
+                        AnimatedSwitcher(
+                          duration: kDurationNormal,
+                          switchInCurve: kCurveEnter,
+                          switchOutCurve: kCurveExit,
+                          transitionBuilder: (child, animation) =>
+                              FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0, 0.35),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: animation,
+                                curve: kCurveEnter,
+                              )),
+                              child: child,
+                            ),
+                          ),
+                          child: SizedBox(
+                            key: ValueKey(contextualKey),
+                            child: contextualLine,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14.0),
-            ],
+                const SizedBox(height: 14.0),
+              ],
+            ),
           ),
-        ),
+        ],
 
         // ── Body ─────────────────────────────────────────────────────────────
         if (widget.showPrompt) ...[

@@ -312,6 +312,17 @@ class _HomeScreenState extends State<HomeScreen> {
         onLastEditedNoteTap: _openNote,
         isDarkBackground: selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6,
         showPrompt: _isNotesActive,
+        showProfileHeader: !_isNotesActive,
+        onProfileTap: () {
+          HapticFeedback.selectionClick();
+          setState(() {
+            _activeNavIndex = 3; // open Settings/Profile View
+          });
+        },
+        onMoreOptionsTap: () {
+          HapticFeedback.selectionClick();
+          // Leave empty for now, just clickable
+        },
       ),
     );
   }
