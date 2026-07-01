@@ -342,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 24.0,
+              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 34.0,
               child: TweenAnimationBuilder<double>(
                 key: const ValueKey('task_widget_entry'),
                 tween: Tween<double>(begin: 0.0, end: 1.0),
@@ -360,6 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Center(
                   child: TaskWidget(
                     onEdit: _openNewTask,
+                    totalTasks: 4,
                   ),
                 ),
               ),
