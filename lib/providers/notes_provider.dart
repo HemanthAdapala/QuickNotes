@@ -44,6 +44,7 @@ class NotesProvider with ChangeNotifier {
   // Theme and Zen settings state
   bool _isDarkMode = false;
   bool _isZenModeEnabled = false;
+  int _selectedBgIndex = 0;
 
   // Predefined default categories
   static const List<String> categories = [
@@ -65,6 +66,7 @@ class NotesProvider with ChangeNotifier {
   bool get isVaultUnlocked => _isVaultUnlocked;
   bool get isDarkMode => false;
   bool get isZenModeEnabled => _isZenModeEnabled;
+  int get selectedBgIndex => _selectedBgIndex;
   List<Folder> get folders => _folders;
   List<Note> get trashNotes => _notes.where((n) => n.isDeleted).toList();
   List<Note> get allActiveNotes => _notes.where((n) => !n.isDeleted).toList();
@@ -157,6 +159,11 @@ class NotesProvider with ChangeNotifier {
 
   void setZenMode(bool value) {
     _isZenModeEnabled = value;
+    notifyListeners();
+  }
+
+  void setSelectedBgIndex(int index) {
+    _selectedBgIndex = index;
     notifyListeners();
   }
 

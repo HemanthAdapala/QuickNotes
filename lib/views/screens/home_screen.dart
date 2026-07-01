@@ -44,12 +44,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _activeNavIndex = 0;
-  int _selectedBgIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _updatePresetsForBackground(_selectedBgIndex);
+    final initialIndex = Provider.of<NotesProvider>(context, listen: false).selectedBgIndex;
+    _updatePresetsForBackground(initialIndex);
   }
 
   void _updatePresetsForBackground(int index) {
@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Home tab body — exact reference layout ───────────────────────────────
 
-  Widget _buildHomeBody() {
+  Widget _buildHomeBody(int selectedBgIndex) {
     return SafeArea(
       bottom: false, // bottom handled by nav bar + system padding
       child: HomePromptView(
@@ -136,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
         interactive: false,
         onTap: _openNewNote,
         onLastEditedNoteTap: _openNote,
-        isDarkBackground: _selectedBgIndex == 1 || _selectedBgIndex == 2 || _selectedBgIndex == 6,
+        isDarkBackground: selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6,
       ),
     );
   }
@@ -168,8 +168,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBackground() {
-    switch (_selectedBgIndex) {
+  Widget _buildBackground(int selectedBgIndex) {
+    switch (selectedBgIndex) {
       case 1:
         // B1: Aurora Midnight
         return Container(
@@ -282,84 +282,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-  Widget _buildBackgroundSwitcher() {
-    return Positioned(
-      bottom: 80,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: GlassSurface(
-          height: 44,
-          borderRadius: BorderRadius.circular(22),
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (int i = 0; i < 7; i++) ...[
-                if (i > 0) const SizedBox(width: 6),
-                TactileButton(
-                  useAppleSpring: true,
-                  compressionScale: 0.85,
-                  settleDuration: const Duration(milliseconds: 600),
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    setState(() {
-                      _selectedBgIndex = i;
-                      _updatePresetsForBackground(i);
-                    });
-                  },
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _selectedBgIndex == i
-                          ? const Color(0xFFF5A623)
-                          : Colors.white.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      'B$i',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _selectedBgIndex == i ? Colors.white : const Color(0xFF333333),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   // ── Root build ───────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    final notesProvider = Provider.of<NotesProvider>(context);
+    final selectedBgIndex = notesProvider.selectedBgIndex;
+    _updatePresetsForBackground(selectedBgIndex);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // Dynamic Background (only active/visible behind Home tab)
-          if (_activeNavIndex == 0) _buildBackground(),
+          if (_activeNavIndex == 0) _buildBackground(selectedBgIndex),
 
           // Tab content — IndexedStack keeps all tabs alive
           IndexedStack(
             index: _activeNavIndex,
             children: [
-              _buildHomeBody(),
+              _buildHomeBody(selectedBgIndex),
               _buildFoldersBody(),
               _buildCalendarBody(),
               _buildSettingsBody(),
             ],
           ),
-
-          // Background Switcher Floating Bar (only visible on Home tab)
-          if (_activeNavIndex == 0) _buildBackgroundSwitcher(),
 
           // ── AppBottomNavigationBar (at bottom: 0) ──────────────────────────
           Positioned(

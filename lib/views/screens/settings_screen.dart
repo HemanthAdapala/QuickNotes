@@ -181,6 +181,93 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
 
+                    // Dynamic Background Selector Card
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Container(
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEAE8E2).withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFFEAE8E2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.palette_outlined, color: Color(0xFF1C1C1C), size: 22),
+                                const SizedBox(width: 12),
+                                Text(
+                                  "Dynamic Background",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1C1C1C),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                for (int i = 0; i < 7; i++)
+                                  TactileButton(
+                                    useAppleSpring: true,
+                                    compressionScale: 0.85,
+                                    settleDuration: const Duration(milliseconds: 600),
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      provider.setSelectedBgIndex(i);
+                                    },
+                                    child: Container(
+                                      width: 38,
+                                      height: 38,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: provider.selectedBgIndex == i
+                                            ? const Color(0xFFFFA322)
+                                            : Colors.white.withValues(alpha: 0.7),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: provider.selectedBgIndex == i
+                                              ? const Color(0xFFFFA322)
+                                              : const Color(0xFFD1D0C9),
+                                          width: 1,
+                                        ),
+                                        boxShadow: provider.selectedBgIndex == i
+                                            ? [
+                                                BoxShadow(
+                                                  color: const Color(0xFFFFA322).withValues(alpha: 0.25),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 4),
+                                                )
+                                              ]
+                                            : null,
+                                      ),
+                                      child: Text(
+                                        'B$i',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: provider.selectedBgIndex == i
+                                              ? Colors.white
+                                              : const Color(0xFF333333),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
                     // Glassmorphism Sandbox Tile
                     _buildSettingsTile(
                       leadingIcon: const Icon(Icons.science_outlined, color: Color(0xFF1C1C1C), size: 22),
