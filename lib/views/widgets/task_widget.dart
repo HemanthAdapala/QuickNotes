@@ -167,7 +167,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   Widget _buildBackgroundCard(int index, int totalCards) {
     final double offset = 10.0 * index;
     final double opacity = 0.25 + index * 0.25;
-    const double blurSigma = 1.2;
+    const double blurSigma = 4.0; // Figma Uniform layer blur 4
 
     Widget cardContent = Container(
       decoration: const BoxDecoration(
@@ -229,7 +229,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
       top: offset,
       left: 0,
       right: 0,
-      height: 37.0, // exactly the blue header peak height
+      height: 50.0, // extra height to allow blur bleeding downwards under the front cards
       child: Opacity(
         opacity: opacity,
         child: cardContent,
