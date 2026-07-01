@@ -257,7 +257,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                         ),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 20.0),
+                        padding: const EdgeInsets.fromLTRB(9.0, 20.0, 9.0, 20.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -309,135 +309,155 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                             const SizedBox(height: 16.0),
 
                             // Slider row (Drag to mark done & edit button)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 6.0, right: 5.0),
-                              child: Row(
-                                children: [
-                                  // Slider background track: width 251, height 50
-                                  GestureDetector(
-                                    onHorizontalDragStart: _handleDragStart,
-                                    onHorizontalDragUpdate: _handleDragUpdate,
-                                    onHorizontalDragEnd: _handleDragEnd,
-                                    child: Container(
-                                      width: 251.0,
-                                      height: 50.0,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFCCCCCC).withValues(alpha: 0.35),
-                                        borderRadius: BorderRadius.circular(25.0),
-                                      ),
-                                      child: Stack(
-                                        children: [
-                                          // Slider track text: "Drag to mark done"
-                                          Center(
-                                            child: Row(
-                                              mainAxisAlignment: MainAxisAlignment.center,
+                            Row(
+                              children: [
+                                // Slider background track: width 251, height 50
+                                GestureDetector(
+                                  onHorizontalDragStart: _handleDragStart,
+                                  onHorizontalDragUpdate: _handleDragUpdate,
+                                  onHorizontalDragEnd: _handleDragEnd,
+                                  child: Container(
+                                    width: 251.0,
+                                    height: 50.0,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFCCCCCC).withValues(alpha: 0.35),
+                                      borderRadius: BorderRadius.circular(25.0),
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        // Blue Slide Fill (Fades in during drag, hidden at start)
+                                        if (progress > 0)
+                                          Positioned(
+                                            left: 0,
+                                            top: 0,
+                                            bottom: 0,
+                                            width: _dragX + 20.0,
+                                            child: Opacity(
+                                              opacity: progress.clamp(0.0, 1.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    colors: [
+                                                      Color(0xFF0088FF),
+                                                      Color(0xFF66B2FF),
+                                                    ],
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(25.0),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+
+                                        // Slider track text: "Drag to mark done"
+                                        Center(
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              const SizedBox(width: 32.0), // Spacer for checkmark
+                                              Text(
+                                                "Drag to mark done",
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 16.0,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: progress > 0.5 ? Colors.white : const Color(0xFF777777),
+                                                  height: 22.0 / 16.0,
+                                                  letterSpacing: -0.43,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4.0),
+                                              SvgPicture.asset(
+                                                "assets/New Icons/fi-rr-angle-double-small-right.svg",
+                                                width: 14.0,
+                                                height: 14.0,
+                                                colorFilter: ColorFilter.mode(
+                                                  progress > 0.5 ? Colors.white : const Color(0xFF777777),
+                                                  BlendMode.srcIn,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        // Sliding checkmark button: size 40x40
+                                        Positioned(
+                                          left: _dragX,
+                                          top: 5.0,
+                                          width: 40.0,
+                                          height: 40.0,
+                                          child: ScaleTransition(
+                                            scale: _successScaleAnimation,
+                                            child: Stack(
+                                              clipBehavior: Clip.none,
                                               children: [
-                                                const SizedBox(width: 32.0), // Spacer for checkmark
-                                                Text(
-                                                  "Drag to mark done",
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 16.0,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: const Color(0xFF777777),
-                                                    height: 22.0 / 16.0,
-                                                    letterSpacing: -0.43,
+                                                // Particle success layer
+                                                Positioned.fill(
+                                                  child: CustomPaint(
+                                                    painter: _ParticlePainter(
+                                                      particles: _particles,
+                                                      animVal: _particleAnimation.value,
+                                                    ),
                                                   ),
                                                 ),
-                                                const SizedBox(width: 4.0),
-                                                SvgPicture.asset(
-                                                  "assets/New Icons/fi-rr-angle-double-small-right.svg",
-                                                  width: 14.0,
-                                                  height: 14.0,
-                                                  colorFilter: const ColorFilter.mode(
-                                                    Color(0xFF777777),
-                                                    BlendMode.srcIn,
+                                                // Actual checkmark circular button
+                                                Container(
+                                                  decoration: const BoxDecoration(
+                                                    color: Colors.white,
+                                                    shape: BoxShape.circle,
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Color(0x20000000),
+                                                        blurRadius: 4.0,
+                                                        offset: Offset(0, 2),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  alignment: Alignment.center,
+                                                  child: SvgPicture.asset(
+                                                    "assets/New Icons/fi-rr-check.svg",
+                                                    width: 22.0,
+                                                    height: 22.0,
+                                                    colorFilter: const ColorFilter.mode(
+                                                      Color(0xFF0088FF),
+                                                      BlendMode.srcIn,
+                                                    ),
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
-
-                                          // Sliding checkmark button: size 40x40
-                                          Positioned(
-                                            left: _dragX,
-                                            top: 5.0,
-                                            width: 40.0,
-                                            height: 40.0,
-                                            child: ScaleTransition(
-                                              scale: _successScaleAnimation,
-                                              child: Stack(
-                                                clipBehavior: Clip.none,
-                                                children: [
-                                                  // Particle success layer
-                                                  Positioned.fill(
-                                                    child: CustomPaint(
-                                                      painter: _ParticlePainter(
-                                                        particles: _particles,
-                                                        animVal: _particleAnimation.value,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  // Actual checkmark circular button
-                                                  Container(
-                                                    decoration: const BoxDecoration(
-                                                      color: Colors.white,
-                                                      shape: BoxShape.circle,
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: Color(0x20000000),
-                                                          blurRadius: 4.0,
-                                                          offset: Offset(0, 2),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    alignment: Alignment.center,
-                                                    child: SvgPicture.asset(
-                                                      "assets/New Icons/fi-rr-check.svg",
-                                                      width: 22.0,
-                                                      height: 22.0,
-                                                      colorFilter: const ColorFilter.mode(
-                                                        Color(0xFF0088FF),
-                                                        BlendMode.srcIn,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 3.0),
+                                // Task Editing button: 50x50, pencil icon
+                                TactileButton(
+                                  onTap: widget.onEdit ?? () {},
+                                  child: Container(
+                                    width: 50.0,
+                                    height: 50.0,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF2F2EE),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E2DF),
+                                        width: 1.0,
+                                      ),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: SvgPicture.asset(
+                                      "assets/app_bottom_navigation_bar_Icons/pencil.svg",
+                                      width: 22.0,
+                                      height: 22.0,
+                                      colorFilter: const ColorFilter.mode(
+                                        Color(0xFF1C1C1E),
+                                        BlendMode.srcIn,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 10.0),
-                                  // Task Editing button: 50x50, pencil icon
-                                  TactileButton(
-                                    onTap: widget.onEdit ?? () {},
-                                    child: Container(
-                                      width: 50.0,
-                                      height: 50.0,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF2F2EE),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: const Color(0xFFE2E2DF),
-                                          width: 1.0,
-                                        ),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: SvgPicture.asset(
-                                        "assets/app_bottom_navigation_bar_Icons/pencil.svg",
-                                        width: 22.0,
-                                        height: 22.0,
-                                        colorFilter: const ColorFilter.mode(
-                                          Color(0xFF1C1C1E),
-                                          BlendMode.srcIn,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
