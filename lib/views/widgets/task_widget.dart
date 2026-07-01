@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,7 +26,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   // Slider Drag State
   double _dragX = 5.0; // Starts with a 5px margin
   final double _minDrag = 5.0;
-  final double _maxDrag = 206.0; // 251 (track width) - 40 (tick width) - 5 (margin)
+  final double _maxDrag = 211.0; // Slide all the way to the absolute edge
   int _lastHapticCheckpoint = 0;
 
   // Animation Controllers
@@ -165,67 +166,73 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
   Widget _buildBackgroundCard(int index, int totalCards) {
     final double offset = 10.0 * index;
-    final double scale = 1.0 - (totalCards - 1 - index) * 0.03;
     final double opacity = 0.25 + index * 0.25;
+    final double blurSigma = (totalCards - 1 - index) * 1.5;
+
+    Widget cardContent = Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF0088FF),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30.0),
+          topRight: Radius.circular(30.0),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      alignment: Alignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            "Tue, 1 June 2026",
+            style: GoogleFonts.inter(
+              fontSize: 16.0,
+              fontWeight: FontWeight.w400,
+              color: Colors.white,
+              height: 22.0 / 16.0,
+              letterSpacing: -0.43,
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SvgPicture.asset(
+                "assets/New Icons/fi-rr-time-past.svg",
+                width: 22.0,
+                height: 22.0,
+                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              ),
+              const SizedBox(width: 6.0),
+              Text(
+                "02:00 AM",
+                style: GoogleFonts.inter(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white,
+                  height: 22.0 / 16.0,
+                  letterSpacing: -0.43,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (blurSigma > 0.0) {
+      cardContent = ImageFiltered(
+        imageFilter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+        child: cardContent,
+      );
+    }
 
     return Positioned(
       top: offset,
       left: 0,
       right: 0,
       height: 37.0, // exactly the blue header peak height
-      child: Transform.scale(
-        scale: scale,
-        child: Opacity(
-          opacity: opacity,
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF0088FF),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(30.0),
-                topRight: Radius.circular(30.0),
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Tue, 1 June 2026",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
-                    height: 22.0 / 16.0,
-                    letterSpacing: -0.43,
-                  ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SvgPicture.asset(
-                      "assets/New Icons/fi-rr-time-past.svg",
-                      width: 22.0,
-                      height: 22.0,
-                      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                    ),
-                    const SizedBox(width: 6.0),
-                    Text(
-                      "02:00 AM",
-                      style: GoogleFonts.inter(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                        height: 22.0 / 16.0,
-                        letterSpacing: -0.43,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
+      child: Opacity(
+        opacity: opacity,
+        child: cardContent,
       ),
     );
   }
