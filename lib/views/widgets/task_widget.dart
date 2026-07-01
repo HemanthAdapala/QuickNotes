@@ -167,7 +167,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   Widget _buildBackgroundCard(int index, int totalCards) {
     final double offset = 10.0 * index;
     final double opacity = 0.25 + index * 0.25;
-    final double blurSigma = (totalCards - 1 - index) * 1.5;
+    const double blurSigma = 1.2;
 
     Widget cardContent = Container(
       decoration: const BoxDecoration(
