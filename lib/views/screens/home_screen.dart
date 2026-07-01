@@ -21,6 +21,7 @@ import 'settings_screen.dart';
 import 'note_calendar_screen.dart';
 import 'create_task_screen.dart';
 import '../widgets/notes_and_task_pill.dart';
+import '../widgets/task_widget.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Calendar tab content
@@ -335,6 +336,34 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildSettingsBody(),
             ],
           ),
+
+          // Task Widget (only visible on Home tab when Tasks view is selected)
+          if (_activeNavIndex == 0 && !_isNotesActive)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 24.0,
+              child: TweenAnimationBuilder<double>(
+                key: const ValueKey('task_widget_entry'),
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 15 * (1 - value)),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Center(
+                  child: TaskWidget(
+                    onEdit: _openNewTask,
+                  ),
+                ),
+              ),
+            ),
 
           // Segmented Control Pill (only visible on Home tab, placed 10px above bottom bar)
           if (_activeNavIndex == 0)
