@@ -48,7 +48,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _activeNavIndex = 0;
   bool _isNotesActive = true;
-  double _debugBlurSigma = 4.0;
 
   @override
   void initState() {
@@ -343,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 34.0,
+              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 10.0,
               child: TweenAnimationBuilder<double>(
                 key: const ValueKey('task_widget_entry'),
                 tween: Tween<double>(begin: 0.0, end: 1.0),
@@ -362,69 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: TaskWidget(
                     onEdit: _openNewTask,
                     totalTasks: 4,
-                    blurSigma: _debugBlurSigma,
                   ),
-                ),
-              ),
-            ),
-
-          // Floating Testing Panel for Blur Sigma Adjustment
-          if (_activeNavIndex == 0 && !_isNotesActive)
-            Positioned(
-              top: MediaQuery.paddingOf(context).top + 16.0,
-              right: 16.0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 8.0,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Blur Sigma: ${_debugBlurSigma.toStringAsFixed(1)}",
-                      style: GoogleFonts.inter(
-                        fontSize: 14.0,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8.0),
-                    SizedBox(
-                      width: 150.0,
-                      height: 30.0,
-                      child: SliderTheme(
-                        data: SliderThemeData(
-                          trackHeight: 4.0,
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8.0),
-                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 16.0),
-                          activeTrackColor: const Color(0xFF0088FF),
-                          inactiveTrackColor: const Color(0xFFE2E2DF),
-                          thumbColor: const Color(0xFF0088FF),
-                        ),
-                        child: Slider(
-                          value: _debugBlurSigma,
-                          min: 0.0,
-                          max: 10.0,
-                          divisions: 100,
-                          onChanged: (val) {
-                            setState(() {
-                              _debugBlurSigma = val;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),

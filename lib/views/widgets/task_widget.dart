@@ -10,14 +10,12 @@ class TaskWidget extends StatefulWidget {
   final VoidCallback? onComplete;
   final VoidCallback? onEdit;
   final int totalTasks;
-  final double blurSigma;
 
   const TaskWidget({
     super.key,
     this.onComplete,
     this.onEdit,
     this.totalTasks = 4,
-    this.blurSigma = 4.0,
   });
 
   @override
@@ -168,7 +166,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
   Widget _buildBackgroundCard(int index, int totalCards) {
     final double offset = 37.0 * index;
-    final double blurSigma = widget.blurSigma;
+    final int dist = totalCards - 1 - index;
+    final double blurSigma = 1.0 + (dist - 1) * 0.1;
 
     Widget cardContent = Container(
       width: 322.0,
