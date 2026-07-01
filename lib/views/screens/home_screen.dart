@@ -499,7 +499,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 10.0 + _overallHeight + 16.0,
+              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 20.0 + 413.0 + 16.0,
               height: 40.0,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
@@ -557,7 +557,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 10.0,
+              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 20.0,
               child: TweenAnimationBuilder<double>(
                 key: const ValueKey('task_widget_entry'),
                 tween: Tween<double>(begin: 0.0, end: 1.0),

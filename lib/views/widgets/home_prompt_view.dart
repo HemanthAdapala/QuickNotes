@@ -299,7 +299,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                 GestureDetector(
                   onTap: widget.onMoreOptionsTap,
                   behavior: HitTestBehavior.opaque,
-                  child: GlassSurface(
+                  child: GlassSurface.bottomBar(
                     width: 40.0,
                     height: 40.0,
                     borderRadius: BorderRadius.circular(20.0),

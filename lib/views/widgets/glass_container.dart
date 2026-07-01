@@ -21,7 +21,23 @@ class GlassSurface extends StatelessWidget {
     this.customOutlineOpacity,
     this.customOutlineWidth,
     this.customBevelIntensity,
+    this.useBottomBarPreset = false,
   });
+
+  const GlassSurface.bottomBar({
+    Key? key,
+    required Widget child,
+    double? width,
+    double? height,
+    BorderRadius borderRadius = const BorderRadius.all(Radius.circular(25)),
+  }) : this(
+         key: key,
+         child: child,
+         width: width,
+         height: height,
+         borderRadius: borderRadius,
+         useBottomBarPreset: true,
+       );
 
   final Widget child;
   final double? width;
@@ -38,6 +54,7 @@ class GlassSurface extends StatelessWidget {
   final double? customOutlineOpacity;
   final double? customOutlineWidth;
   final double? customBevelIntensity;
+  final bool useBottomBarPreset;
 
   @override
   Widget build(BuildContext context) {
@@ -92,22 +109,24 @@ class GlassSurface extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: borderRadius,
-        boxShadow: customShadows ?? GlassmorphismPresets.shadows,
+        boxShadow: useBottomBarPreset ? GlassmorphismPresets.shadows : (customShadows ?? GlassmorphismPresets.shadows),
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
           filter: ImageFilter.blur(
-            sigmaX: activeBlur,
-            sigmaY: activeBlur,
+            sigmaX: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
+            sigmaY: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
           ),
           child: CustomPaint(
-            foregroundPainter: _GlassRimPainter(
-              borderRadius: borderRadius,
-              depthOpacity: customDepthOpacity ?? GlassmorphismPresets.depthOpacity,
-              bevelIntensity: customBevelIntensity ?? GlassmorphismPresets.bevelIntensity,
-              lightDirection: Alignment.topCenter,
-            ),
+            foregroundPainter: useBottomBarPreset
+                ? _InnerGlassBorderPainter(borderRadius: borderRadius)
+                : _GlassRimPainter(
+                    borderRadius: borderRadius,
+                    depthOpacity: customDepthOpacity ?? GlassmorphismPresets.depthOpacity,
+                    bevelIntensity: customBevelIntensity ?? GlassmorphismPresets.bevelIntensity,
+                    lightDirection: Alignment.topCenter,
+                  ),
             child: SizedBox(
               width: width,
               height: height,
@@ -116,13 +135,17 @@ class GlassSurface extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     borderRadius: borderRadius,
-                    color: customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor,
+                    color: useBottomBarPreset
+                        ? GlassmorphismPresets.fillColor
+                        : (customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor),
                     boxShadow: GlassmorphismPresets.innerShadows,
                     border: Border.all(
-                      color: (customTintColor ?? Colors.white).withValues(
-                        alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
-                      ),
-                      width: customOutlineWidth ?? GlassmorphismPresets.outlineWidth,
+                      color: useBottomBarPreset
+                          ? Colors.white.withValues(alpha: 0.45)
+                          : (customTintColor ?? Colors.white).withValues(
+                              alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
+                            ),
+                      width: useBottomBarPreset ? 0.8 : (customOutlineWidth ?? GlassmorphismPresets.outlineWidth),
                     ),
                   ),
                   child: Stack(
@@ -139,6 +162,39 @@ class GlassSurface extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _InnerGlassBorderPainter extends CustomPainter {
+  const _InnerGlassBorderPainter({required this.borderRadius});
+
+  final BorderRadius borderRadius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.white.withValues(alpha: 0.20),
+          Colors.white.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0.4, 0.4, size.width - 0.8, size.height - 0.8),
+      borderRadius.topLeft,
+    );
+
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(_InnerGlassBorderPainter oldDelegate) {
+    return oldDelegate.borderRadius != borderRadius;
   }
 }
 
