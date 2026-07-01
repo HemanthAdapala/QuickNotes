@@ -15,7 +15,7 @@ class TaskWidget extends StatefulWidget {
     super.key,
     this.onComplete,
     this.onEdit,
-    this.totalTasks = 4,
+    this.totalTasks = 3,
   });
 
   @override
@@ -244,12 +244,17 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
       );
     }
 
+    final double scale = 1.0 - dist * 0.03;
+
     return Positioned(
       top: offset,
       left: 0,
       right: 0,
       height: 339.0,
-      child: cardContent,
+      child: Transform.scale(
+        scale: scale,
+        child: cardContent,
+      ),
     );
   }
 
@@ -259,7 +264,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final double cardScale = 1.0 + (progress * 0.02); // Sensory drag scale lift
     final double cardShadowBlur = 16.0 + (progress * 8.0); // Shadow lift blur (16 to 24)
 
-    final int numCards = widget.totalTasks.clamp(1, 4);
+    final int numCards = widget.totalTasks.clamp(1, 3);
     const double cardOffset = 37.0;
     final double overallHeight = 339.0 + (numCards - 1) * cardOffset;
 

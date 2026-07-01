@@ -360,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Center(
                   child: TaskWidget(
                     onEdit: _openNewTask,
-                    totalTasks: 4,
+                    totalTasks: 3,
                   ),
                 ),
               ),
