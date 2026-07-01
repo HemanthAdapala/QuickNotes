@@ -168,53 +168,71 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
   Widget _buildBackgroundCard(int index, int totalCards) {
     final double offset = 10.0 * index;
-    final double opacity = 0.25 + index * 0.25;
     final double blurSigma = widget.blurSigma;
 
     Widget cardContent = Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0088FF),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30.0),
-          topRight: Radius.circular(30.0),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Tue, 1 June 2026",
-            style: GoogleFonts.inter(
-              fontSize: 16.0,
-              fontWeight: FontWeight.w400,
-              color: Colors.white,
-              height: 22.0 / 16.0,
-              letterSpacing: -0.43,
-            ),
+      width: 322.0,
+      height: 339.0,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0088FF),
+        borderRadius: BorderRadius.circular(30.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x40000000), // Black 25% opacity
+            blurRadius: 16.0,
+            offset: Offset(0, 0),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset(
-                "assets/New Icons/fi-rr-time-past.svg",
-                width: 22.0,
-                height: 22.0,
-                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Perfectly vertically aligned header date/time
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 37.0, // center aligned in the visible peak
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Tue, 1 June 2026",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                      height: 22.0 / 16.0,
+                      letterSpacing: -0.43,
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        "assets/New Icons/fi-rr-time-past.svg",
+                        width: 22.0,
+                        height: 22.0,
+                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                      ),
+                      const SizedBox(width: 6.0),
+                      Text(
+                        "02:00 AM",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
+                          height: 22.0 / 16.0,
+                          letterSpacing: -0.43,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 6.0),
-              Text(
-                "02:00 AM",
-                style: GoogleFonts.inter(
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.white,
-                  height: 22.0 / 16.0,
-                  letterSpacing: -0.43,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -231,11 +249,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
       top: offset,
       left: 0,
       right: 0,
-      height: 50.0, // extra height to allow blur bleeding downwards under the front cards
-      child: Opacity(
-        opacity: opacity,
-        child: cardContent,
-      ),
+      height: 339.0,
+      child: cardContent,
     );
   }
 
