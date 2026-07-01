@@ -10,12 +10,14 @@ class TaskWidget extends StatefulWidget {
   final VoidCallback? onComplete;
   final VoidCallback? onEdit;
   final int totalTasks;
+  final double blurSigma;
 
   const TaskWidget({
     super.key,
     this.onComplete,
     this.onEdit,
     this.totalTasks = 4,
+    this.blurSigma = 4.0,
   });
 
   @override
@@ -167,7 +169,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   Widget _buildBackgroundCard(int index, int totalCards) {
     final double offset = 10.0 * index;
     final double opacity = 0.25 + index * 0.25;
-    const double blurSigma = 4.0; // Figma Uniform layer blur 4
+    final double blurSigma = widget.blurSigma;
 
     Widget cardContent = Container(
       decoration: const BoxDecoration(
