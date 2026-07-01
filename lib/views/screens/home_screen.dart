@@ -19,6 +19,8 @@ import 'note_editor_screen.dart';
 import 'folder_management_screen.dart';
 import 'settings_screen.dart';
 import 'note_calendar_screen.dart';
+import 'create_task_screen.dart';
+import '../widgets/notes_and_task_pill.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Calendar tab content
@@ -44,6 +46,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _activeNavIndex = 0;
+  bool _isNotesActive = true;
 
   @override
   void initState() {
@@ -122,6 +125,31 @@ class _HomeScreenState extends State<HomeScreen> {
       FabMorphPageRoute(
         fabBounds: Rect.fromLTWH(fabLeft, fabTop, fabSize, fabSize),
         builder: (_) => const NoteEditorScreen(),
+      ),
+    );
+  }
+
+  void _openNewTask() {
+    HapticFeedback.lightImpact();
+
+    final size = MediaQuery.of(context).size;
+    final double bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    // Compute dynamic width and scale of the bottom bar
+    final double barWidth = size.width < 402 ? (size.width - 48) : 354;
+    final double barScale = barWidth / 354;
+    final double barHeight = 83 * barScale;
+
+    // Compute FAB screen bounds so the morph starts at the exact visual center/size
+    final double fabSize = 50 * barScale;
+    final double fabLeft = size.width / 2 - fabSize / 2;
+    final double fabTop = size.height - 32 - bottomPadding - barHeight;
+
+    Navigator.push(
+      context,
+      FabMorphPageRoute(
+        fabBounds: Rect.fromLTWH(fabLeft, fabTop, fabSize, fabSize),
+        builder: (_) => CreateTaskScreen(initialDate: DateTime.now()),
       ),
     );
   }
@@ -308,6 +336,24 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
 
+          // Segmented Control Pill (only visible on Home tab, placed 10px above bottom bar)
+          if (_activeNavIndex == 0)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0,
+              child: Center(
+                child: NotesAndTaskPill(
+                  isNotesActive: _isNotesActive,
+                  onChanged: (val) {
+                    setState(() {
+                      _isNotesActive = val;
+                    });
+                  },
+                ),
+              ),
+            ),
+
           // ── AppBottomNavigationBar (at bottom: 0) ──────────────────────────
           Positioned(
             left: 0,
@@ -315,9 +361,14 @@ class _HomeScreenState extends State<HomeScreen> {
             bottom: 0,
             child: AppBottomNavigationBar(
               selectedIndex: _activeNavIndex,
+              activeColor: _isNotesActive ? const Color(0xFFFFA322) : const Color(0xFF0088FF),
               onDestinationSelected: (i) {
                 if (i == 4) {
-                  _openNewNote();
+                  if (_isNotesActive) {
+                    _openNewNote();
+                  } else {
+                    _openNewTask();
+                  }
                 } else {
                   HapticFeedback.lightImpact();
                   setState(() => _activeNavIndex = i);

@@ -16,12 +16,14 @@ class AppBottomNavigationBar extends StatelessWidget {
     required this.selectedIndex,
     required this.onDestinationSelected,
     this.destinations = AppBottomNavigationDestination.defaults,
+    this.activeColor,
   })  : assert(destinations.length == 5),
         assert(selectedIndex >= 0 && selectedIndex < destinations.length);
 
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final List<AppBottomNavigationDestination> destinations;
+  final Color? activeColor;
 
   static const double _figmaWidth = 318;
   static const double _barWidth = 264;
@@ -69,7 +71,7 @@ class AppBottomNavigationBar extends StatelessWidget {
                             height: 43.0 * scale,
                             child: GlassSurface(
                               borderRadius: BorderRadius.circular(21.5 * scale),
-                              customTintColor: const Color(0xFFFFA322),
+                              customTintColor: activeColor ?? const Color(0xFFFFA322),
                               child: const SizedBox.expand(),
                             ),
                           ),
