@@ -4,18 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
+import '../../models/task_item.dart';
 import 'tactile_button.dart';
 
 class TaskWidget extends StatefulWidget {
-  final VoidCallback? onComplete;
+  final ValueChanged<String>? onComplete;
   final VoidCallback? onEdit;
-  final int totalTasks;
+  final List<TaskItem> tasks;
 
   const TaskWidget({
     super.key,
+    required this.tasks,
     this.onComplete,
     this.onEdit,
-    this.totalTasks = 3,
   });
 
   @override
@@ -142,7 +144,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     // After success animation, reset back to start with a delay
     Future.delayed(const Duration(milliseconds: 1400), () {
       if (mounted) {
-        widget.onComplete?.call();
+        if (widget.tasks.isNotEmpty) {
+          widget.onComplete?.call(widget.tasks.first.id);
+        }
         _triggerReset();
       }
     });
@@ -168,6 +172,10 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final double offset = 37.0 * index;
     final int dist = totalCards - 1 - index;
     final double blurSigma = 1.0 + (dist - 1) * 0.1;
+
+    final task = widget.tasks[totalCards - 1 - index];
+    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(task.dueDate);
+    final formattedTime = DateFormat('hh:mm a').format(task.dueDate);
 
     Widget cardContent = Container(
       width: 322.0,
@@ -198,7 +206,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Tue, 1 June 2026",
+                    formattedDate,
                     style: GoogleFonts.inter(
                       fontSize: 16.0,
                       fontWeight: FontWeight.w400,
@@ -218,7 +226,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                       ),
                       const SizedBox(width: 6.0),
                       Text(
-                        "02:00 AM",
+                        formattedTime,
                         style: GoogleFonts.inter(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w400,
@@ -260,13 +268,86 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.tasks.isEmpty) {
+      return SizedBox(
+        width: 322.0,
+        height: 339.0,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30.0),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x1F000000),
+                blurRadius: 16.0,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 64.0,
+                height: 64.0,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0088FF).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.check_circle_outline,
+                  size: 40.0,
+                  color: Color(0xFF0088FF),
+                ),
+              ),
+              const SizedBox(height: 16.0),
+              Text(
+                "All Caught Up!",
+                style: GoogleFonts.inter(
+                  fontSize: 22.0,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1C1C1E),
+                ),
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                "No pending tasks in this section.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14.0,
+                  color: const Color(0xFF8E8E93),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final progress = _dragProgress;
     final double cardScale = 1.0 + (progress * 0.02); // Sensory drag scale lift
     final double cardShadowBlur = 16.0 + (progress * 8.0); // Shadow lift blur (16 to 24)
 
-    final int numCards = widget.totalTasks.clamp(1, 3);
+    final int numCards = widget.tasks.length.clamp(1, 3);
     const double cardOffset = 37.0;
     final double overallHeight = 339.0 + (numCards - 1) * cardOffset;
+
+    final task = widget.tasks.first;
+    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(task.dueDate);
+    final formattedTime = DateFormat('hh:mm a').format(task.dueDate);
+
+    final String priority = task.priority;
+    final Color priorityColor;
+    if (priority.toLowerCase() == 'high') {
+      priorityColor = const Color(0xFFFF383C);
+    } else if (priority.toLowerCase() == 'medium') {
+      priorityColor = const Color(0xFFFFA322);
+    } else if (priority.toLowerCase() == 'low') {
+      priorityColor = const Color(0xFF0088FF);
+    } else {
+      priorityColor = const Color(0xFF8E8E93);
+    }
 
     return SizedBox(
       width: 322.0,
@@ -327,7 +408,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                          "Tue, 1 June 2026",
+                                          formattedDate,
                                           style: GoogleFonts.inter(
                                             fontSize: 16.0,
                                             fontWeight: FontWeight.w400,
@@ -347,7 +428,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                             ),
                                             const SizedBox(width: 6.0),
                                             Text(
-                                              "02:00 AM",
+                                              formattedTime,
                                               style: GoogleFonts.inter(
                                                 fontSize: 16.0,
                                                 fontWeight: FontWeight.w400,
@@ -388,42 +469,44 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Priority flag pill (FF383C)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFF383C).withValues(alpha: 0.10),
-                                      borderRadius: BorderRadius.circular(30.0),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SvgPicture.asset(
-                                          "assets/New Icons/flag-alt 1.svg",
-                                          width: 14.0,
-                                          height: 14.0,
-                                          colorFilter: const ColorFilter.mode(Color(0xFFFF383C), BlendMode.srcIn),
-                                        ),
-                                        const SizedBox(width: 4.0),
-                                        Text(
-                                          "High",
-                                          style: GoogleFonts.inter(
-                                            fontSize: 16.0,
-                                            fontWeight: FontWeight.w400,
-                                            color: const Color(0xFFFF383C),
-                                            height: 22.0 / 16.0,
-                                            letterSpacing: -0.43,
+                                  // Priority flag pill
+                                  if (priority.toLowerCase() != 'none') ...[
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+                                      decoration: BoxDecoration(
+                                        color: priorityColor.withValues(alpha: 0.10),
+                                        borderRadius: BorderRadius.circular(30.0),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SvgPicture.asset(
+                                            "assets/New Icons/flag-alt 1.svg",
+                                            width: 14.0,
+                                            height: 14.0,
+                                            colorFilter: ColorFilter.mode(priorityColor, BlendMode.srcIn),
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 4.0),
+                                          Text(
+                                            priority,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 16.0,
+                                              fontWeight: FontWeight.w400,
+                                              color: priorityColor,
+                                              height: 22.0 / 16.0,
+                                              letterSpacing: -0.43,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 12.0),
+                                    const SizedBox(height: 12.0),
+                                  ],
 
                                   // Title Text: Inter, bold, 40-size, line height 22
                                   Expanded(
                                     child: Text(
-                                      "Wiring\nDashboard\nAnalytics",
+                                      task.title,
                                       style: GoogleFonts.inter(
                                         fontSize: 40.0,
                                         fontWeight: FontWeight.bold,

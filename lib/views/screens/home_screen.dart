@@ -22,6 +22,7 @@ import 'note_calendar_screen.dart';
 import 'create_task_screen.dart';
 import '../widgets/notes_and_task_pill.dart';
 import '../widgets/task_widget.dart';
+import '../../models/task_item.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Calendar tab content
@@ -48,12 +49,156 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _activeNavIndex = 0;
   bool _isNotesActive = true;
+  String _activeFilter = 'All';
+  late final List<TaskItem> _mockTasks;
 
   @override
   void initState() {
     super.initState();
     final initialIndex = Provider.of<NotesProvider>(context, listen: false).selectedBgIndex;
     _updatePresetsForBackground(initialIndex);
+
+    final now = DateTime.now();
+    _mockTasks = [
+      TaskItem(
+        id: '1',
+        title: 'Wiring Dashboard Analytics',
+        dueDate: now.subtract(const Duration(hours: 1)),
+        priority: 'High',
+      ),
+      TaskItem(
+        id: '2',
+        title: 'Review PR Comments',
+        dueDate: now.add(const Duration(hours: 2)),
+        priority: 'Medium',
+      ),
+      TaskItem(
+        id: '3',
+        title: 'Update API Spec',
+        dueDate: now.add(const Duration(hours: 4)),
+        priority: 'Low',
+      ),
+      TaskItem(
+        id: '4',
+        title: 'Sync with PM',
+        dueDate: now.add(const Duration(hours: 6)),
+        priority: 'None',
+      ),
+      TaskItem(
+        id: '5',
+        title: 'Draft Q3 Goals',
+        dueDate: now.add(const Duration(days: 3)),
+        priority: 'High',
+      ),
+      TaskItem(
+        id: '6',
+        title: 'Refactor Auth Flow',
+        dueDate: now.add(const Duration(days: 4)),
+        priority: 'High',
+      ),
+      TaskItem(
+        id: '7',
+        title: 'Fix Memory Leaks',
+        dueDate: now.add(const Duration(days: 5)),
+        priority: 'Medium',
+      ),
+      TaskItem(
+        id: '8',
+        title: 'Design App Icon',
+        dueDate: now.add(const Duration(days: 6)),
+        priority: 'Low',
+      ),
+      TaskItem(
+        id: '9',
+        title: 'Monthly Client Report',
+        dueDate: now.add(const Duration(days: 12)),
+        priority: 'Medium',
+      ),
+      TaskItem(
+        id: '10',
+        title: 'Database Migration',
+        dueDate: now.add(const Duration(days: 15)),
+        priority: 'High',
+      ),
+      TaskItem(
+        id: '11',
+        title: 'Performance Audit',
+        dueDate: now.add(const Duration(days: 20)),
+        priority: 'Low',
+      ),
+      TaskItem(
+        id: '12',
+        title: 'Update User Docs',
+        dueDate: now.add(const Duration(days: 25)),
+        priority: 'None',
+      ),
+    ];
+  }
+
+  List<TaskItem> get _filteredTasks {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final weekEnd = today.add(const Duration(days: 7));
+    final monthEnd = today.add(const Duration(days: 30));
+
+    final activeTasks = _mockTasks.where((t) => !t.completed).toList();
+
+    switch (_activeFilter) {
+      case 'Today':
+        return activeTasks.where((t) {
+          final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
+          return d.isAtSameMomentAs(today);
+        }).toList();
+      case 'Weekly':
+        return activeTasks.where((t) {
+          final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
+          return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(weekEnd.add(const Duration(days: 1)));
+        }).toList();
+      case 'Monthly':
+        return activeTasks.where((t) {
+          final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
+          return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(monthEnd.add(const Duration(days: 1)));
+        }).toList();
+      case 'All':
+      default:
+        return activeTasks;
+    }
+  }
+
+  int _countForFilter(String filter) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final weekEnd = today.add(const Duration(days: 7));
+    final monthEnd = today.add(const Duration(days: 30));
+
+    final activeTasks = _mockTasks.where((t) => !t.completed).toList();
+
+    switch (filter) {
+      case 'Today':
+        return activeTasks.where((t) {
+          final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
+          return d.isAtSameMomentAs(today);
+        }).toList().length;
+      case 'Weekly':
+        return activeTasks.where((t) {
+          final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
+          return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(weekEnd.add(const Duration(days: 1)));
+        }).toList().length;
+      case 'Monthly':
+        return activeTasks.where((t) {
+          final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
+          return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(monthEnd.add(const Duration(days: 1)));
+        }).toList().length;
+      case 'All':
+      default:
+        return activeTasks.length;
+    }
+  }
+
+  double get _overallHeight {
+    final int numCards = _filteredTasks.length.clamp(1, 3);
+    const double cardOffset = 37.0;
+    return 339.0 + (numCards - 1) * cardOffset;
   }
 
   void _updatePresetsForBackground(int index) {
@@ -166,6 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: _openNewNote,
         onLastEditedNoteTap: _openNote,
         isDarkBackground: selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6,
+        showPrompt: _isNotesActive,
       ),
     );
   }
@@ -337,6 +483,64 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
 
+          // Scrollable filter bar (only visible on Home tab when Tasks view is selected)
+          if (_activeNavIndex == 0 && !_isNotesActive)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 10.0 + _overallHeight + 16.0,
+              height: 40.0,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                itemCount: 4,
+                itemBuilder: (context, index) {
+                  final filters = ['All', 'Today', 'Weekly', 'Monthly'];
+                  final filter = filters[index];
+                  final bool isSelected = _activeFilter == filter;
+                  
+                  final String text;
+                  if (filter == 'All') {
+                    text = 'All';
+                  } else if (filter == 'Today') {
+                    text = "Today's Tasks ${_countForFilter('Today')}";
+                  } else if (filter == 'Weekly') {
+                    text = "Weekly Tasks ${_countForFilter('Weekly')}";
+                  } else {
+                    text = "Monthly Tasks ${_countForFilter('Monthly')}";
+                  }
+
+                  return Padding(
+                    padding: EdgeInsets.only(right: index == 3 ? 0.0 : 12.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() {
+                          _activeFilter = filter;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFF0088FF) : const Color(0x29787880),
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          text,
+                          style: GoogleFonts.inter(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected ? Colors.white : const Color(0xFF1C1C1E),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
           // Task Widget (only visible on Home tab when Tasks view is selected)
           if (_activeNavIndex == 0 && !_isNotesActive)
             Positioned(
@@ -359,8 +563,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 child: Center(
                   child: TaskWidget(
+                    tasks: _filteredTasks,
                     onEdit: _openNewTask,
-                    totalTasks: 3,
+                    onComplete: (taskId) {
+                      setState(() {
+                        _mockTasks.firstWhere((t) => t.id == taskId).completed = true;
+                      });
+                    },
                   ),
                 ),
               ),

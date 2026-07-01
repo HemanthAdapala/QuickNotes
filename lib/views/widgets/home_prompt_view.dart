@@ -63,6 +63,7 @@ class HomePromptView extends StatefulWidget {
   final VoidCallback? onTap;
   final ValueChanged<String>? onLastEditedNoteTap;
   final bool isDarkBackground;
+  final bool showPrompt;
 
   const HomePromptView({
     super.key,
@@ -74,6 +75,7 @@ class HomePromptView extends StatefulWidget {
     this.onTap,
     this.onLastEditedNoteTap,
     this.isDarkBackground = false,
+    this.showPrompt = true,
   });
 
   static final List<String> _prompts = [
@@ -363,106 +365,109 @@ class _HomePromptViewState extends State<HomePromptView> {
         ),
 
         // ── Body ─────────────────────────────────────────────────────────────
-        if (!hasNotes)
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 80.0),
-              child: Center(
-                child: SingleChildScrollView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  child: _EmptyStateColumn(
-                    onWriteNote: widget.onTap,
-                    isDarkBackground: widget.isDarkBackground,
+        if (widget.showPrompt) ...[
+          // ── Body ─────────────────────────────────────────────────────────────
+          if (!hasNotes)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 80.0),
+                child: Center(
+                  child: SingleChildScrollView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    child: _EmptyStateColumn(
+                      onWriteNote: widget.onTap,
+                      isDarkBackground: widget.isDarkBackground,
+                    ),
                   ),
                 ),
               ),
-            ),
-          )
-        else
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0.0, end: 1.0),
-                    duration: isTest
-                        ? Duration.zero
-                        : const Duration(milliseconds: 1000),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, child) {
-                      final opacity =
-                          isTest ? 1.0 : (value - 0.2).clamp(0.0, 1.0) / 0.8;
-                      return Opacity(
-                        opacity: opacity,
-                        child: Transform.translate(
-                          offset: Offset(0, 8 * (1 - opacity)),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: GestureDetector(
-                      onTap: widget.interactive ? null : widget.onTap,
-                      behavior: HitTestBehavior.opaque,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (!widget.interactive) ...[
-                            const Padding(
-                              padding: EdgeInsets.only(top: 3.0),
-                              child: _BlinkingCaret(
-                                height: 22.0,
-                                color: Color(0xFFFFA322),
-                              ),
-                            ),
-                            const SizedBox(width: 8.0),
-                          ],
-                          Expanded(
-                            child: widget.interactive
-                                ? TextField(
-                                    controller: widget.controller,
-                                    focusNode: widget.focusNode,
-                                    maxLines: null,
-                                    keyboardType: TextInputType.multiline,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 20.0,
-                                      color: const Color(0xFF333333),
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: _placeholderPrompt,
-                                      hintStyle: GoogleFonts.inter(
-                                        fontSize: 20.0,
-                                        color: const Color(0xFF333333)
-                                            .withOpacity(0.3),
-                                      ),
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.zero,
-                                      filled: false,
-                                    ),
-                                    onChanged: widget.onChanged,
-                                  )
-                                : Text(
-                                    _placeholderPrompt,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 20.0,
-                                      color: widget.isDarkBackground
-                                          ? Colors.white.withOpacity(0.4)
-                                          : const Color(0xFF333333).withOpacity(0.3),
-                                      height: 1.4,
-                                    ),
-                                  ),
+            )
+          else
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0.0, end: 1.0),
+                      duration: isTest
+                          ? Duration.zero
+                          : const Duration(milliseconds: 1000),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, child) {
+                        final opacity =
+                            isTest ? 1.0 : (value - 0.2).clamp(0.0, 1.0) / 0.8;
+                        return Opacity(
+                          opacity: opacity,
+                          child: Transform.translate(
+                            offset: Offset(0, 8 * (1 - opacity)),
+                            child: child,
                           ),
-                        ],
+                        );
+                      },
+                      child: GestureDetector(
+                        onTap: widget.interactive ? null : widget.onTap,
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!widget.interactive) ...[
+                              const Padding(
+                                padding: EdgeInsets.only(top: 3.0),
+                                child: _BlinkingCaret(
+                                  height: 22.0,
+                                  color: Color(0xFFFFA322),
+                                ),
+                              ),
+                              const SizedBox(width: 8.0),
+                            ],
+                            Expanded(
+                              child: widget.interactive
+                                  ? TextField(
+                                      controller: widget.controller,
+                                      focusNode: widget.focusNode,
+                                      maxLines: null,
+                                      keyboardType: TextInputType.multiline,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 20.0,
+                                        color: const Color(0xFF333333),
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: _placeholderPrompt,
+                                        hintStyle: GoogleFonts.inter(
+                                          fontSize: 20.0,
+                                          color: const Color(0xFF333333)
+                                              .withOpacity(0.3),
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.zero,
+                                        filled: false,
+                                      ),
+                                      onChanged: widget.onChanged,
+                                    )
+                                  : Text(
+                                      _placeholderPrompt,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 20.0,
+                                        color: widget.isDarkBackground
+                                            ? Colors.white.withOpacity(0.4)
+                                            : const Color(0xFF333333).withOpacity(0.3),
+                                        height: 1.4,
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 120.0),
-                ],
+                    const SizedBox(height: 120.0),
+                  ],
+                ),
               ),
             ),
-          ),
+        ],
       ],
     );
   }
