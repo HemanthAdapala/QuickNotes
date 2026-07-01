@@ -167,7 +167,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   }
 
   Widget _buildBackgroundCard(int index, int totalCards) {
-    final double offset = 10.0 * index;
+    final double offset = 37.0 * index;
     final double blurSigma = widget.blurSigma;
 
     Widget cardContent = Container(
@@ -261,7 +261,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final double cardShadowBlur = 16.0 + (progress * 8.0); // Shadow lift blur (16 to 24)
 
     final int numCards = widget.totalTasks.clamp(1, 4);
-    const double cardOffset = 10.0;
+    const double cardOffset = 37.0;
     final double overallHeight = 339.0 + (numCards - 1) * cardOffset;
 
     return SizedBox(
