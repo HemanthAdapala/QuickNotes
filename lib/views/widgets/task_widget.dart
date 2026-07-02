@@ -34,6 +34,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   // Animation Controllers
   late AnimationController _resetController;
   late AnimationController _successController;
+  late AnimationController _entranceController;
+  late List<Animation<double>> _cardEntranceAnimations;
   late Animation<double> _successScaleAnimation;
   late Animation<double> _particleAnimation;
 
@@ -81,12 +83,31 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
         size: 3.0 + random.nextDouble() * 4.0,
       ));
     }
+
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _cardEntranceAnimations = List.generate(3, (dist) {
+      final start = dist * 0.1; // 0.0, 0.1, 0.2 delay
+      final end = (start + 0.6).clamp(0.0, 1.0);
+      return Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+          parent: _entranceController,
+          curve: Interval(start, end, curve: Curves.easeOutBack),
+        ),
+      );
+    });
+
+    _entranceController.forward();
   }
 
   @override
   void dispose() {
     _resetController.dispose();
     _successController.dispose();
+    _entranceController.dispose();
     super.dispose();
   }
 
@@ -253,16 +274,27 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     }
 
     final double scale = 1.0 - dist * 0.03;
+    final anim = _cardEntranceAnimations[dist];
 
-    return Positioned(
-      top: offset,
-      left: 0,
-      right: 0,
-      height: 339.0,
-      child: Transform.scale(
-        scale: scale,
-        child: cardContent,
-      ),
+    return AnimatedBuilder(
+      animation: anim,
+      builder: (context, child) {
+        final double slideOffset = 60.0 * (1.0 - anim.value);
+        return Positioned(
+          top: offset + slideOffset,
+          left: 0,
+          right: 0,
+          height: 339.0,
+          child: Opacity(
+            opacity: anim.value.clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: scale,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: cardContent,
     );
   }
 
@@ -365,7 +397,20 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
             left: 0,
             right: 0,
             height: 339.0,
-            child: Center(
+            child: AnimatedBuilder(
+              animation: _cardEntranceAnimations[0],
+              builder: (context, child) {
+                final anim = _cardEntranceAnimations[0];
+                final double slideOffset = 60.0 * (1.0 - anim.value);
+                return Transform.translate(
+                  offset: Offset(0, slideOffset),
+                  child: Opacity(
+                    opacity: anim.value.clamp(0.0, 1.0),
+                    child: child,
+                  ),
+                );
+              },
+              child: Center(
               child: Transform.scale(
                 scale: cardScale,
                 child: Container(
@@ -681,7 +726,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
               ),
             ),
           ),
-        ],
+        ),
+      ],
       ),
     );
   }
