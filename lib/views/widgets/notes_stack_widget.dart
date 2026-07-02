@@ -126,15 +126,17 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     final tweenX = Tween<double>(begin: _swipeX, end: targetX);
     final tweenY = Tween<double>(begin: _swipeY, end: targetY);
 
-    _cycleController.addListener(() {
+    void listener() {
       setState(() {
         _swipeX = tweenX.evaluate(_cycleController);
         _swipeY = tweenY.evaluate(_cycleController);
       });
-    });
+    }
+
+    _cycleController.addListener(listener);
 
     _cycleController.forward(from: 0.0).then((_) {
-      _cycleController.removeListener(() {});
+      _cycleController.removeListener(listener);
       _cycleController.reset();
 
       if (mounted && _currentNotesList.isNotEmpty) {
@@ -156,15 +158,17 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     final tweenX = Tween<double>(begin: _swipeX, end: 0.0);
     final tweenY = Tween<double>(begin: _swipeY, end: 0.0);
 
-    _resetController.addListener(() {
+    void listener() {
       setState(() {
         _swipeX = tweenX.evaluate(_resetController);
         _swipeY = tweenY.evaluate(_resetController);
       });
-    });
+    }
+
+    _resetController.addListener(listener);
 
     _resetController.forward(from: 0.0).then((_) {
-      _resetController.removeListener(() {});
+      _resetController.removeListener(listener);
       _resetController.reset();
       _isAnimatingSwipe = false;
     });

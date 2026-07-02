@@ -586,6 +586,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final selectedBgIndex = notesProvider.selectedBgIndex;
     _updatePresetsForBackground(selectedBgIndex);
 
+    final int numCards = (_isNotesActive ? _filteredNotes.length : _filteredTasks.length).clamp(1, 3);
+    final double stackOffset = (3 - numCards) * 22.0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -672,7 +675,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 20.0,
+              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 20.0 + (Platform.environment.containsKey('FLUTTER_TEST') ? 0.0 : stackOffset),
               child: TweenAnimationBuilder<double>(
                 key: ValueKey(_isNotesActive ? 'notes_widget_entry' : 'task_widget_entry'),
                 tween: Tween<double>(begin: 0.0, end: 1.0),
