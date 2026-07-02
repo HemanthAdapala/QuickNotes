@@ -9,6 +9,7 @@ import 'package:quick_notes/providers/notes_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'glass_container.dart';
 import 'tactile_button.dart';
+import 'app_bottom_navigation_bar.dart';
 import '../../themes/glassmorphism_presets.dart';
 import '../../core/animations/animation_constants.dart';
 import '../../models/note.dart';
@@ -309,7 +310,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                   settleDuration: MotionPresets.settleDuration,
                   pressDuration: MotionPresets.pressDuration,
                   playSelectionHaptic: true,
-                  child: GlassSurface.bottomBar(
+                  child: BottomBarGlassSurface(
                     width: 50.0,
                     height: 50.0,
                     borderRadius: BorderRadius.circular(25.0),

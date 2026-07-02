@@ -54,7 +54,7 @@ class AppBottomNavigationBar extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _GlassSurface(
+                  BottomBarGlassSurface(
                     width: _barWidth * scale,
                     height: _controlHeight * scale,
                     borderRadius: BorderRadius.circular(25 * scale),
@@ -96,7 +96,7 @@ class AppBottomNavigationBar extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: _gap * scale),
-                  _GlassSurface(
+                  BottomBarGlassSurface(
                     width: _controlHeight * scale,
                     height: _controlHeight * scale,
                     borderRadius: BorderRadius.circular(25 * scale),
@@ -153,8 +153,8 @@ class AppBottomNavigationDestination {
   ];
 }
 
-class _GlassSurface extends StatelessWidget {
-  const _GlassSurface({
+class BottomBarGlassSurface extends StatelessWidget {
+  const BottomBarGlassSurface({
     required this.width,
     required this.height,
     required this.borderRadius,
