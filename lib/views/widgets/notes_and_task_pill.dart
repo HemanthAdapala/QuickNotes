@@ -42,7 +42,7 @@ class NotesAndTaskPill extends StatelessWidget {
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOutCubic,
               decoration: BoxDecoration(
-                color: const Color(0xFF0088FF),
+                color: isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
                 borderRadius: isNotesActive
                     ? const BorderRadius.only(
                         topLeft: Radius.circular(30.0),
@@ -83,10 +83,10 @@ class NotesAndTaskPill extends StatelessWidget {
                       'Notes',
                       style: GoogleFonts.inter(
                         fontSize: 16.0,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         height: 22.0 / 16.0,
                         letterSpacing: -0.43,
-                        color: const Color(0xFF1C1C1E),
+                        color: isNotesActive ? const Color(0xFF1C1C1E) : const Color(0xFF8E8E93),
                       ),
                     ),
                   ),
@@ -102,10 +102,10 @@ class NotesAndTaskPill extends StatelessWidget {
                       'Tasks',
                       style: GoogleFonts.inter(
                         fontSize: 16.0,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         height: 22.0 / 16.0,
                         letterSpacing: -0.43,
-                        color: const Color(0xFF1C1C1E),
+                        color: !isNotesActive ? Colors.white : const Color(0xFF8E8E93),
                       ),
                     ),
                   ),

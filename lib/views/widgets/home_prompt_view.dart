@@ -71,6 +71,7 @@ class HomePromptView extends StatefulWidget {
   final bool showProfileHeader;
   final VoidCallback? onProfileTap;
   final VoidCallback? onMoreOptionsTap;
+  final String? greetingOverride;
 
   const HomePromptView({
     super.key,
@@ -86,6 +87,7 @@ class HomePromptView extends StatefulWidget {
     this.showProfileHeader = false,
     this.onProfileTap,
     this.onMoreOptionsTap,
+    this.greetingOverride,
   });
 
   static final List<String> _prompts = [
@@ -165,7 +167,9 @@ class _HomePromptViewState extends State<HomePromptView> {
 
     final hour = widget.date.hour;
     final String greeting;
-    if (hour >= 5 && hour < 12) {
+    if (widget.greetingOverride != null) {
+      greeting = widget.greetingOverride!;
+    } else if (hour >= 5 && hour < 12) {
       greeting = "Good Morning";
     } else if (hour >= 12 && hour < 17) {
       greeting = "Good Afternoon";
