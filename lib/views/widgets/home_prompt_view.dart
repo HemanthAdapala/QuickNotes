@@ -310,35 +310,35 @@ class _HomePromptViewState extends State<HomePromptView> {
                   pressDuration: MotionPresets.pressDuration,
                   playSelectionHaptic: true,
                   child: GlassSurface.bottomBar(
-                    width: 40.0,
-                    height: 40.0,
-                    borderRadius: BorderRadius.circular(20.0),
+                    width: 50.0,
+                    height: 50.0,
+                    borderRadius: BorderRadius.circular(25.0),
                     child: Center(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            width: 4.0,
-                            height: 4.0,
+                            width: 5.0,
+                            height: 5.0,
                             decoration: BoxDecoration(
                               color: widget.isDarkBackground ? Colors.white.withOpacity(0.8) : const Color(0xFF1C1C1E).withOpacity(0.8),
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 3.0),
+                          const SizedBox(width: 4.0),
                           Container(
-                            width: 4.0,
-                            height: 4.0,
+                            width: 5.0,
+                            height: 5.0,
                             decoration: BoxDecoration(
                               color: widget.isDarkBackground ? Colors.white.withOpacity(0.8) : const Color(0xFF1C1C1E).withOpacity(0.8),
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 3.0),
+                          const SizedBox(width: 4.0),
                           Container(
-                            width: 4.0,
-                            height: 4.0,
+                            width: 5.0,
+                            height: 5.0,
                             decoration: BoxDecoration(
                               color: widget.isDarkBackground ? Colors.white.withOpacity(0.8) : const Color(0xFF1C1C1E).withOpacity(0.8),
                               shape: BoxShape.circle,
