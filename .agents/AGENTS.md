@@ -48,6 +48,7 @@ Whenever building or modifying any glass-like surface or widget (e.g. `GlassSurf
     ),
   ]
   ```
+* **Bottom Bar Liquid Glass Preset**: Always use `BottomBarGlassSurface` (imported from `app_bottom_navigation_bar.dart`) whenever the user requests to "Apply BottomBarGlassSurface" or "use bottom bar liquid glass preset". This class is pre-configured with the exact gradient, borders, and no-bevel flat style matching the bottom navigation bar.
 
 ---
 

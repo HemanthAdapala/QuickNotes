@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'glass_container.dart';
 import 'tactile_button.dart';
 import 'app_bottom_navigation_bar.dart';
 import '../../themes/glassmorphism_presets.dart';

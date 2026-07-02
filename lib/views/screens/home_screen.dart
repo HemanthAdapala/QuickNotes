@@ -494,20 +494,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
 
-          // DUPLICATED BOTTOM NAVIGATION BAR FOR VISUAL INSPECTION
-          if (_activeNavIndex == 0 && !_isNotesActive)
-            Positioned(
-              left: 24,
-              right: 24,
-              top: 180,
-              child: IgnorePointer(
-                child: AppBottomNavigationBar(
-                  selectedIndex: 0,
-                  activeColor: const Color(0xFF0088FF),
-                  onDestinationSelected: (i) {},
-                ),
-              ),
-            ),
+
 
           // Scrollable filter bar (only visible on Home tab when Tasks view is selected)
           if (_activeNavIndex == 0 && !_isNotesActive)
