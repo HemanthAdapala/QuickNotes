@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -20,6 +21,7 @@ class NotesProvider with ChangeNotifier {
   List<Note> _notes = [];
   List<Folder> _folders = [];
   bool _isLoading = false;
+  bool _isDisposed = false;
 
   int _currentPage = 0;
   bool _hasMoreNotes = true;
@@ -64,7 +66,7 @@ class NotesProvider with ChangeNotifier {
   String get selectedTag => _selectedTag;
   String? get selectedFolderId => _selectedFolderId;
   bool get isVaultUnlocked => _isVaultUnlocked;
-  bool get isDarkMode => false;
+  bool get isDarkMode => _isDarkMode;
   bool get isZenModeEnabled => _isZenModeEnabled;
   int get selectedBgIndex => _selectedBgIndex;
   List<Folder> get folders => _folders;
@@ -147,6 +149,19 @@ class NotesProvider with ChangeNotifier {
     loadNotes();
   }
 
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _searchDebouncer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (_isDisposed) return;
+    super.notifyListeners();
+  }
+
   void toggleTheme() {
     _isDarkMode = !_isDarkMode;
     notifyListeners();
@@ -169,6 +184,10 @@ class NotesProvider with ChangeNotifier {
 
   // Initialize notifications helper
   Future<void> _initNotifications() async {
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      debugPrint("Skipping local notifications initialization in testing environment.");
+      return;
+    }
     try {
       tz.initializeTimeZones();
       
@@ -781,12 +800,6 @@ class NotesProvider with ChangeNotifier {
 
   Future<void> deleteFolder(String id) async {
     try {
-      // Detach notes referencing this folder in the database to prevent data loss (DB-level optimized)
-      await _dbService.detachNotesFromFolder(id);
-      
-      // Detach child folders referencing this parent folder (DB-level optimized)
-      await _dbService.detachChildFolders(id);
-
       await _dbService.deleteFolder(id);
       if (_selectedFolderId == id) {
         _selectedFolderId = null;

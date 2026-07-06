@@ -3829,7 +3829,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                 }
                               }
                             },
-                            child: SingleChildScrollView(
+                            child: RepaintBoundary(
+                              child: SingleChildScrollView(
                               controller: _scrollController,
                               padding: const EdgeInsets.only(
                                 left: 24.0,
@@ -3897,6 +3898,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                     ),
                                 ],
                               ),
+                            ),
                             ),
                           ),
                         ),

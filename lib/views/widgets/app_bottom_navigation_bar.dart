@@ -177,40 +177,42 @@ class BottomBarGlassSurface extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: GlassmorphismPresets.blurSigma,
-            sigmaY: GlassmorphismPresets.blurSigma,
-          ),
-          child: CustomPaint(
-            foregroundPainter: _InnerGlassBorderPainter(
-              borderRadius: borderRadius,
+        child: RepaintBoundary(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: GlassmorphismPresets.blurSigma,
+              sigmaY: GlassmorphismPresets.blurSigma,
             ),
-            child: SizedBox(
-              width: width,
-              height: height,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: GlassmorphismPresets.fillColor,
-                  borderRadius: borderRadius,
-                  boxShadow: GlassmorphismPresets.innerShadows,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.45),
-                    width: 0.8,
+            child: CustomPaint(
+              foregroundPainter: _InnerGlassBorderPainter(
+                borderRadius: borderRadius,
+              ),
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: GlassmorphismPresets.fillColor,
+                    borderRadius: borderRadius,
+                    boxShadow: GlassmorphismPresets.innerShadows,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.45),
+                      width: 0.8,
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.72),
+                        Colors.white.withValues(alpha: 0.0),
+                        scheme.surfaceTint.withValues(alpha: 0.08),
+                        Colors.black.withValues(alpha: 0.035),
+                      ],
+                      stops: const [0, 0.42, 0.78, 1],
+                    ),
                   ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.72),
-                      Colors.white.withValues(alpha: 0.0),
-                      scheme.surfaceTint.withValues(alpha: 0.08),
-                      Colors.black.withValues(alpha: 0.035),
-                    ],
-                    stops: const [0, 0.42, 0.78, 1],
-                  ),
+                  child: child,
                 ),
-                child: child,
               ),
             ),
           ),
@@ -355,11 +357,16 @@ class _NavigationButtonState extends State<_NavigationButton>
         onTapDown: (_) => _handleTapDown(reduceMotion),
         onTapCancel: () => _handleTapCancel(reduceMotion),
         onTap: () => _handleTap(reduceMotion),
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_scaleController, _dotController]),
-          builder: (context, child) {
-            final currentScale = reduceMotion ? 1.0 : _scaleAnimation.value;
-            return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 48.0,
+            minHeight: 48.0,
+          ),
+          child: AnimatedBuilder(
+            animation: Listenable.merge([_scaleController, _dotController]),
+            builder: (context, child) {
+              final currentScale = reduceMotion ? 1.0 : _scaleAnimation.value;
+              return Center(
               child: Stack(
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
@@ -389,11 +396,13 @@ class _NavigationButtonState extends State<_NavigationButton>
                   if (!reduceMotion)
                     Positioned.fill(
                       child: IgnorePointer(
-                        child: CustomPaint(
-                          painter: _DotBurstPainter(
-                            progress: _dotAnimation.value,
-                            directions: _dotDirections,
-                            scale: widget.iconSize / 22.0,
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            painter: _DotBurstPainter(
+                              progress: _dotAnimation.value,
+                              directions: _dotDirections,
+                              scale: widget.iconSize / 22.0,
+                            ),
                           ),
                         ),
                       ),
@@ -403,6 +412,7 @@ class _NavigationButtonState extends State<_NavigationButton>
             );
           },
         ),
+      ),
       ),
     );
   }

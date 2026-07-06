@@ -59,27 +59,28 @@ class GlassSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeBlur = customBlurSigma ?? blurSigma ?? GlassmorphismPresets.blurSigma;
     final activeFrost = customFrostOpacity ?? frostOpacity ?? GlassmorphismPresets.frostOpacity;
 
     final Widget backgroundWidget;
     if (customTintColor != null) {
       // Apple Tinted Glass System:
-      // 1. White Backing (FFFFFF, 94% opacity)
-      // 2. Tint Color (Accent Color, 20% opacity with BlendMode.plusDarker)
+      // 1. Base Backing (FFFFFF/000000, 94% opacity)
+      // 2. Tint Color (Accent Color, 20-92% opacity)
       backgroundWidget = Stack(
         fit: StackFit.expand,
         children: [
           Container(
             decoration: BoxDecoration(
               borderRadius: borderRadius,
-              color: Colors.white.withValues(alpha: 0.94),
+              color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.94),
             ),
           ),
           Container(
             decoration: BoxDecoration(
               borderRadius: borderRadius,
-              color: customTintColor!.withValues(alpha: 0.92),
+              color: customTintColor!.withValues(alpha: isDark ? 0.40 : 0.92),
               backgroundBlendMode: BlendMode.multiply,
             ),
           ),
@@ -92,14 +93,21 @@ class GlassSurface extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.white.withValues(alpha: 0.72),
-              Colors.white.withValues(
-                alpha: activeFrost,
-              ),
-              scheme.surfaceTint.withValues(alpha: 0.08),
-              Colors.black.withValues(alpha: 0.035),
-            ],
+            colors: isDark
+                ? [
+                    Colors.black.withValues(alpha: 0.45),
+                    Colors.black.withValues(alpha: 0.25),
+                    scheme.surfaceTint.withValues(alpha: 0.12),
+                    Colors.black.withValues(alpha: 0.50),
+                  ]
+                : [
+                    Colors.white.withValues(alpha: 0.72),
+                    Colors.white.withValues(
+                      alpha: activeFrost,
+                    ),
+                    scheme.surfaceTint.withValues(alpha: 0.08),
+                    Colors.black.withValues(alpha: 0.035),
+                  ],
             stops: const [0, 0.42, 0.78, 1],
           ),
         ),
@@ -113,47 +121,49 @@ class GlassSurface extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
-            sigmaY: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
-          ),
-          child: CustomPaint(
-            foregroundPainter: useBottomBarPreset
-                ? _InnerGlassBorderPainter(borderRadius: borderRadius)
-                : _GlassRimPainter(
-                    borderRadius: borderRadius,
-                    depthOpacity: customDepthOpacity ?? GlassmorphismPresets.depthOpacity,
-                    bevelIntensity: customBevelIntensity ?? GlassmorphismPresets.bevelIntensity,
-                    lightDirection: Alignment.topCenter,
-                  ),
-            child: SizedBox(
-              width: width,
-              height: height,
-              child: Padding(
-                padding: padding,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: borderRadius,
-                    color: useBottomBarPreset
-                        ? GlassmorphismPresets.fillColor
-                        : (customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor),
-                    boxShadow: GlassmorphismPresets.innerShadows,
-                    border: Border.all(
-                      color: useBottomBarPreset
-                          ? Colors.white.withValues(alpha: 0.45)
-                          : (customTintColor ?? Colors.white).withValues(
-                              alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
-                            ),
-                      width: useBottomBarPreset ? 0.8 : (customOutlineWidth ?? GlassmorphismPresets.outlineWidth),
+        child: RepaintBoundary(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
+              sigmaY: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
+            ),
+            child: CustomPaint(
+              foregroundPainter: useBottomBarPreset
+                  ? _InnerGlassBorderPainter(borderRadius: borderRadius)
+                  : _GlassRimPainter(
+                      borderRadius: borderRadius,
+                      depthOpacity: customDepthOpacity ?? GlassmorphismPresets.depthOpacity,
+                      bevelIntensity: customBevelIntensity ?? GlassmorphismPresets.bevelIntensity,
+                      lightDirection: Alignment.topCenter,
                     ),
-                  ),
-                  child: Stack(
-                    fit: StackFit.passthrough,
-                    children: [
-                      Positioned.fill(child: backgroundWidget),
-                      child,
-                    ],
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: Padding(
+                  padding: padding,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: borderRadius,
+                      color: useBottomBarPreset
+                          ? GlassmorphismPresets.fillColor
+                          : (customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor),
+                      boxShadow: GlassmorphismPresets.innerShadows,
+                      border: Border.all(
+                        color: useBottomBarPreset
+                            ? Colors.white.withValues(alpha: 0.45)
+                            : (customTintColor ?? Colors.white).withValues(
+                                alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
+                              ),
+                        width: useBottomBarPreset ? 0.8 : (customOutlineWidth ?? GlassmorphismPresets.outlineWidth),
+                      ),
+                    ),
+                    child: Stack(
+                      fit: StackFit.passthrough,
+                      children: [
+                        Positioned.fill(child: backgroundWidget),
+                        child,
+                      ],
+                    ),
                   ),
                 ),
               ),

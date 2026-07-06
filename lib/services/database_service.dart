@@ -451,14 +451,43 @@ class DatabaseService {
 
   Future<int> deleteFolder(String id) async {
     if (kIsWeb) {
+      for (var i = 0; i < _webNotes.length; i++) {
+        if (_webNotes[i].folderId == id) {
+          _webNotes[i] = _webNotes[i].copyWith(clearFolder: true);
+        }
+      }
+      for (var i = 0; i < _webFolders.length; i++) {
+        if (_webFolders[i].parentId == id) {
+          _webFolders[i] = Folder(
+            id: _webFolders[i].id,
+            name: _webFolders[i].name,
+            parentId: null,
+            createdAt: _webFolders[i].createdAt,
+          );
+        }
+      }
       _webFolders.removeWhere((f) => f.id == id);
       return 1;
     }
     final db = await instance.database;
-    return await timedQuery('deleteFolder', () => db.delete(
-      'folders',
-      where: 'id = ?',
-      whereArgs: [id],
-    ));
+    return await db.transaction((txn) async {
+      await txn.update(
+        'notes',
+        {'folderId': null},
+        where: 'folderId = ?',
+        whereArgs: [id],
+      );
+      await txn.update(
+        'folders',
+        {'parentId': null},
+        where: 'parentId = ?',
+        whereArgs: [id],
+      );
+      return await txn.delete(
+        'folders',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    });
   }
 }
