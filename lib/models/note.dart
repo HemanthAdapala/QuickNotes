@@ -79,17 +79,32 @@ class Note {
 
     final lines = content.split('\n');
     final List<String> cleanLines = [];
+    int sequentialNumber = 0;
 
     for (var line in lines) {
       var trimmed = line.trim();
-      if (trimmed.isEmpty) continue;
+      if (trimmed.isEmpty) {
+        sequentialNumber = 0;
+        continue;
+      }
 
       // Skip dividers
-      if (trimmed == '---' || trimmed == '***' || trimmed == '___') continue;
+      if (trimmed == '---' || trimmed == '***' || trimmed == '___') {
+        sequentialNumber = 0;
+        continue;
+      }
 
       // Skip image block lines
       final imageReg = RegExp(r'^!\[(.*?)\]\((.*?)\)$');
-      if (imageReg.hasMatch(trimmed)) continue;
+      if (imageReg.hasMatch(trimmed)) {
+        sequentialNumber = 0;
+        continue;
+      }
+
+      // Reset numbering if this line is not a numbered list item
+      if (!trimmed.startsWith('1. ')) {
+        sequentialNumber = 0;
+      }
 
       // Strip headings prefix
       if (trimmed.startsWith('#')) {
@@ -115,9 +130,16 @@ class Note {
         }
       }
 
-      // Strip checklist prefix
-      if (trimmed.startsWith('- [ ] ') || trimmed.startsWith('- [x] ') || trimmed.startsWith('- [X] ')) {
-        trimmed = trimmed.substring(6).trim();
+      // Handle checklist, bullet list, and numbered list prefixes
+      if (trimmed.startsWith('- [ ] ')) {
+        trimmed = '☐ ' + trimmed.substring(6).trim();
+      } else if (trimmed.startsWith('- [x] ') || trimmed.startsWith('- [X] ')) {
+        trimmed = '☑ ' + trimmed.substring(6).trim();
+      } else if (trimmed.startsWith('- ')) {
+        trimmed = '• ' + trimmed.substring(2).trim();
+      } else if (trimmed.startsWith('1. ')) {
+        sequentialNumber++;
+        trimmed = '$sequentialNumber. ' + trimmed.substring(3).trim();
       }
 
       // Strip inline image syntax: ![alt](url) -> replace with empty string
