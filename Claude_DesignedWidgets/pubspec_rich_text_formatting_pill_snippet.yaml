@@ -1,9 +1,0 @@
-dependencies:
-  flutter_svg: ^2.0.10+1
-
-flutter:
-  assets:
-    - assets/icons/play_1.svg
-    - assets/icons/play_2.svg
-    - assets/icons/highlighter.svg
-    - assets/icons/link.svg
