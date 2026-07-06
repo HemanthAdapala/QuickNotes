@@ -2496,38 +2496,38 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
 
     if (newBlock is ParagraphBlock) {
-      newBlock.controller.styledChars = styledChars;
       newBlock.controller.text = text;
+      newBlock.controller.styledChars = styledChars;
       newBlock.controller.selection = selection;
       _setupBlockFocusNode(newBlock.focusNode);
       _setupBlockController(newBlock);
     } else if (newBlock is HeadingBlock) {
-      newBlock.controller.styledChars = styledChars;
       newBlock.controller.text = text;
+      newBlock.controller.styledChars = styledChars;
       newBlock.controller.selection = selection;
       _setupBlockFocusNode(newBlock.focusNode);
       _setupBlockController(newBlock);
     } else if (newBlock is QuoteBlock) {
-      newBlock.controller.styledChars = styledChars;
       newBlock.controller.text = text;
+      newBlock.controller.styledChars = styledChars;
       newBlock.controller.selection = selection;
       _setupBlockFocusNode(newBlock.focusNode);
       _setupBlockController(newBlock);
     } else if (newBlock is ChecklistBlock) {
-      newBlock.controller.styledChars = styledChars;
       newBlock.controller.text = text;
+      newBlock.controller.styledChars = styledChars;
       newBlock.controller.selection = selection;
       _setupBlockFocusNode(newBlock.focusNode);
       _setupBlockController(newBlock);
     } else if (newBlock is BulletedListBlock) {
-      newBlock.controller.styledChars = styledChars;
       newBlock.controller.text = text;
+      newBlock.controller.styledChars = styledChars;
       newBlock.controller.selection = selection;
       _setupBlockFocusNode(newBlock.focusNode);
       _setupBlockController(newBlock);
     } else if (newBlock is NumberedListBlock) {
-      newBlock.controller.styledChars = styledChars;
       newBlock.controller.text = text;
+      newBlock.controller.styledChars = styledChars;
       newBlock.controller.selection = selection;
       _setupBlockFocusNode(newBlock.focusNode);
       _setupBlockController(newBlock);

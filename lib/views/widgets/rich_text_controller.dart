@@ -1378,8 +1378,38 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
     bool italic = false;
     bool underline = false;
     bool strikethrough = false;
+    Color? color;
+    Color? highlight;
 
     while (idx < line.length) {
+      // Parse <span color="0x..." highlight="0x..."> tags
+      if (idx + 5 < line.length && line.substring(idx, idx + 5) == '<span') {
+        int closeTag = line.indexOf('>', idx + 5);
+        if (closeTag != -1) {
+          final tagContent = line.substring(idx, closeTag);
+          final colorMatch = RegExp(r'color="0x([0-9a-fA-F]+)"').firstMatch(tagContent);
+          if (colorMatch != null) {
+            final colorHex = colorMatch.group(1)!;
+            color = Color(int.parse(colorHex, radix: 16));
+          }
+          final highlightMatch = RegExp(r'highlight="0x([0-9a-fA-F]+)"').firstMatch(tagContent);
+          if (highlightMatch != null) {
+            final highlightHex = highlightMatch.group(1)!;
+            highlight = Color(int.parse(highlightHex, radix: 16));
+          }
+          idx = closeTag + 1;
+          continue;
+        }
+      }
+
+      // Parse </span> tags
+      if (idx + 6 < line.length && line.substring(idx, idx + 7) == '</span>') {
+        color = null;
+        highlight = null;
+        idx += 7;
+        continue;
+      }
+
       if (line[idx] == '!' && idx + 1 < line.length && line[idx + 1] == '[') {
         int closeBracket = line.indexOf(']', idx + 2);
         if (closeBracket != -1 &&
@@ -1462,6 +1492,8 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
             align: align,
             listType: listType,
             checked: checked,
+            color: color,
+            highlight: highlight,
           ),
         ));
         idx++;
@@ -1489,6 +1521,8 @@ String generateInlineMarkdown(List<StyledChar> lineChars) {
   bool italic = false;
   bool underline = false;
   bool strikethrough = false;
+  Color? color;
+  Color? highlight;
 
   for (int i = 0; i < lineChars.length; i++) {
     final style = lineChars[i].style;
@@ -1511,6 +1545,11 @@ String generateInlineMarkdown(List<StyledChar> lineChars) {
         sb.write('~~');
         strikethrough = false;
       }
+      if (color != null || highlight != null) {
+        sb.write('</span>');
+        color = null;
+        highlight = null;
+      }
 
       final urlBuffer = StringBuffer(style.imageUrl!);
       if (style.imageWidth != null || style.imageHeight != null) {
@@ -1527,6 +1566,20 @@ String generateInlineMarkdown(List<StyledChar> lineChars) {
       final altText = style.imageCaption ?? '';
       sb.write('![$altText](${urlBuffer.toString()})');
       continue;
+    }
+
+    if (style.color != color || style.highlight != highlight) {
+      if (color != null || highlight != null) {
+        sb.write('</span>');
+      }
+      color = style.color;
+      highlight = style.highlight;
+      if (color != null || highlight != null) {
+        sb.write('<span');
+        if (color != null) sb.write(' color="0x${color.value.toRadixString(16)}"');
+        if (highlight != null) sb.write(' highlight="0x${highlight.value.toRadixString(16)}"');
+        sb.write('>');
+      }
     }
 
     if (style.bold != bold) {
@@ -1553,6 +1606,7 @@ String generateInlineMarkdown(List<StyledChar> lineChars) {
   if (italic) sb.write('*');
   if (underline) sb.write('</u>');
   if (strikethrough) sb.write('~~');
+  if (color != null || highlight != null) sb.write('</span>');
 
   return sb.toString();
 }

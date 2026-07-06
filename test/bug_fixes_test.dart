@@ -118,7 +118,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       final titleFinder = find.byWidgetPredicate(
-        (widget) => widget is TextField && widget.decoration?.hintText == 'Note Title',
+        (widget) => widget is TextField && widget.decoration?.hintText == 'Title',
       );
       expect(titleFinder, findsOneWidget);
 
@@ -545,7 +545,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       final paragraphFields = tester.widgetList<TextField>(find.byWidgetPredicate(
-        (w) => w is TextField && w.decoration?.hintText != 'Note Title',
+        (w) => w is TextField && w.decoration?.hintText != 'Title',
       )).toList();
       expect(paragraphFields.length, equals(2));
       expect(paragraphFields[0].controller?.text, equals('Hello'));
