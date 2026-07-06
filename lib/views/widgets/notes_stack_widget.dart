@@ -14,11 +14,13 @@ import 'tactile_button.dart';
 class NotesStackWidget extends StatefulWidget {
   final List<Note> notes;
   final ValueChanged<Note> onEdit;
+  final double width;
 
   const NotesStackWidget({
     super.key,
     required this.notes,
     required this.onEdit,
+    this.width = 322.0,
   });
 
   @override
@@ -267,7 +269,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     final formattedTime = DateFormat('hh:mm a').format(note.createdAt);
 
     Widget cardContent = Container(
-      width: 322.0,
+      width: widget.width,
       height: 339.0,
       decoration: BoxDecoration(
         color: const Color(0xFFFFCC00), // Yellow Accent Header background color
@@ -370,7 +372,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
   Widget build(BuildContext context) {
     if (_currentNotesList.isEmpty) {
       return SizedBox(
-        width: 322.0,
+        width: widget.width,
         height: 339.0,
         child: Container(
           decoration: BoxDecoration(
@@ -447,7 +449,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     final double rotationAngle = (_swipeX / 400.0) * (pi / 24.0);
 
     return SizedBox(
-      width: 322.0,
+      width: widget.width,
       height: overallHeight,
       child: Stack(
         clipBehavior: Clip.none,
@@ -477,11 +479,15 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
               },
               child: GestureDetector(
                 onPanUpdate: _handlePanUpdate,
-              onPanEnd: _handlePanEnd,
-              child: Transform.rotate(
-                angle: rotationAngle,
+                onPanEnd: _handlePanEnd,
+                child: Hero(
+                  tag: 'hero_note_card_${note.id}',
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: Transform.rotate(
+                      angle: rotationAngle,
                 child: Container(
-                  width: 322.0,
+                  width: widget.width,
                   height: 339.0,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30.0),
@@ -564,7 +570,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
                         Positioned(
                           top: 37.0,
                           left: 0,
-                          width: 322.0,
+                          width: widget.width,
                           height: 302.0,
                           child: Container(
                             decoration: const BoxDecoration(
@@ -669,7 +675,9 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
             ),
           ),
         ),
-      ],
+      ),
+    ),
+  ],
       ),
     );
   }

@@ -63,7 +63,7 @@ Avoid dependencies for basic buttons, toggles, sheets, card expansion, opacity/s
 
 ## Reusable Patterns
 
-For implementation snippets and reusable widgets/mixins, read `references/flutter-motion-patterns.md` when building code.
+For implementation snippets and reusable widgets/mixins, read `./flutter-motion-patterns.md` when building code.
 
 Use those snippets as starting points, then adapt names, theming, imports, and architecture to the user's app.
 

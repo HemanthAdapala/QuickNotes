@@ -11,6 +11,7 @@ import '../../models/folder.dart';
 import '../../providers/notes_provider.dart';
 import '../../themes/app_theme.dart';
 import '../widgets/tactile_button.dart';
+import '../widgets/app_header_bar.dart';
 import '../widgets/folder_selection_sheet.dart';
 import '../widgets/blurred_bottom_sheet.dart';
 
@@ -242,66 +243,35 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         bottom: false,
         child: Column(
           children: [
-            const SizedBox(height: 24.0),
-            // Header Bar
-            Container(
-              height: 38,
-              margin: const EdgeInsets.symmetric(horizontal: 30),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  TactileButton(
-                    onTap: () => Navigator.pop(context),
-                    child: SizedBox(
-                      width: 38,
-                      height: 38,
-                      child: SvgPicture.asset(
-                        'assets/icons/angle_left.svg',
-                        colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                        fit: BoxFit.scaleDown,
-                      ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              child: AppHeaderBar(
+                leftWidth: 44.0,
+                onLeftTap: () => Navigator.pop(context),
+                leftChild: SvgPicture.asset(
+                  'assets/icons/angle_left.svg',
+                  width: 22,
+                  height: 22,
+                  colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                ),
+                title: "Create Task",
+                rightWidth: 44.0,
+                rightChild: TactileButton(
+                  useAppleSpring: true,
+                  compressionScale: 0.7,
+                  settleDuration: const Duration(milliseconds: 1000),
+                  onTap: _isTitleNotEmpty ? _saveTask : () {},
+                  child: Center(
+                    child: Icon(
+                      Icons.check_rounded,
+                      color: _isTitleNotEmpty ? const Color(0xFF1C1C1E) : const Color(0xFF1C1C1E).withOpacity(0.3),
+                      size: 22,
                     ),
                   ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        "Create Task",
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1C1C1E),
-                        ),
-                      ),
-                    ),
-                  ),
-                  TactileButton(
-                    onTap: _isTitleNotEmpty ? _saveTask : () {},
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-                      decoration: BoxDecoration(
-                        color: _isTitleNotEmpty
-                            ? const Color(0xFFF3EAC0)
-                            : const Color(0xFFF3EAC0).withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        "Save",
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _isTitleNotEmpty
-                              ? const Color(0xFF222222)
-                              : const Color(0xFF222222).withOpacity(0.4),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-            const SizedBox(height: 24.0),
+            const SizedBox(height: 12.0),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),

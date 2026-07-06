@@ -355,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
     HapticFeedback.lightImpact();
     Navigator.push(
       context,
-      buildPageRoute(NoteEditorScreen(note: note)),
+      buildFadePageRoute(NoteEditorScreen(note: note)),
     );
   }
 
@@ -583,6 +583,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final notesProvider = Provider.of<NotesProvider>(context);
+    final double screenWidth = MediaQuery.of(context).size.width;
     final selectedBgIndex = notesProvider.selectedBgIndex;
     _updatePresetsForBackground(selectedBgIndex);
 
@@ -693,10 +694,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Center(
                   child: _isNotesActive
                       ? NotesStackWidget(
+                          width: screenWidth - 48.0,
                           notes: _filteredNotes,
                           onEdit: (note) => _openNote(note.id),
                         )
                       : TaskWidget(
+                          width: screenWidth - 48.0,
                           tasks: _filteredTasks,
                           onEdit: _openNewTask,
                           onComplete: (taskId) {

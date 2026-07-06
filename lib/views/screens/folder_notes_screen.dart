@@ -31,6 +31,7 @@ import '../../core/animations/search_route.dart';
 import 'search_screen.dart';
 import '../../core/animations/bottom_sheet_transition.dart';
 import '../widgets/tactile_button.dart';
+import '../widgets/app_header_bar.dart';
 import '../widgets/living_writing_experience.dart';
 import '../widgets/pin_lock_sheet.dart';
 import 'note_editor_screen.dart';
@@ -646,56 +647,45 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
                     children: [
                       // Nav bar row — exact same pattern as Home Screen / Note Editor
                       Positioned(
-                        top:   24,
-                        left:  0,
-                        right: 0,
-                        child: Container(
-                          height: 38,
-                          margin: const EdgeInsets.symmetric(horizontal: 30),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Back button
-                              TactileButton(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.of(context).maybePop();
-                                },
-                                child: SizedBox(
-                                  width: 38, height: 38,
-                                  child: SvgPicture.asset(
-                                    'assets/icons/angle_left.svg',
-                                    colorFilter: const ColorFilter.mode(
-                                      isDark ? Colors.white : AppColors.ink,
-                                      BlendMode.srcIn,
-                                    ),
-                                    fit: BoxFit.scaleDown,
-                                  ),
+                        top: 12,
+                        left: 24,
+                        right: 24,
+                        child: AppHeaderBar(
+                          leftWidth: 44.0,
+                          onLeftTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.of(context).maybePop();
+                          },
+                          leftChild: SvgPicture.asset(
+                            'assets/icons/angle_left.svg',
+                            width: 22,
+                            height: 22,
+                            colorFilter: ColorFilter.mode(
+                              isDark ? Colors.white : AppColors.ink,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          rightWidth: 44.0,
+                          rightChild: TactileButton(
+                            useAppleSpring: true,
+                            compressionScale: 0.7,
+                            settleDuration: const Duration(milliseconds: 1000),
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(context).push(SearchRoute(
+                                builder: (_) => SearchScreen(
+                                  initialScope: 'notes',
+                                  presetFolder: widget.folder.id,
                                 ),
+                              ));
+                            },
+                            child: Center(
+                              child: Icon(
+                                Icons.search_rounded,
+                                size: 22,
+                                color: isDark ? Colors.white : AppColors.ink,
                               ),
-                              const Spacer(),
-                              // Search icon — opens SearchScreen pre-scoped to this folder
-                              TactileButton(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.of(context).push(SearchRoute(
-                                    builder: (_) => SearchScreen(
-                                      initialScope: 'notes',
-                                      presetFolder: widget.folder.id,
-                                    ),
-                                  ));
-                                },
-                                child: const SizedBox(
-                                  width: 38, height: 38,
-                                  child: Icon(
-                                    Icons.search_rounded,
-                                    size:  24,
-                                    color: isDark ? Colors.white : AppColors.ink,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ),

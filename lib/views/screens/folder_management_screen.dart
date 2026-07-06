@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../providers/notes_provider.dart';
 import '../../models/folder.dart';
 import '../widgets/tactile_button.dart';
+import '../widgets/app_header_bar.dart';
 import '../widgets/living_writing_experience.dart';
 import 'folder_notes_screen.dart';
 import 'category_details_screen.dart';
@@ -322,65 +323,42 @@ class _FolderManagementScreenState extends State<FolderManagementScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Bar
-              Container(
-                height: 38,
-                margin: const EdgeInsets.symmetric(horizontal: 30),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    TactileButton(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        widget.onNavigateToTab?.call(0);
-                      },
-                      child: SizedBox(
-                        width: 38,
-                        height: 38,
-                        child: SvgPicture.asset(
-                          'assets/icons/angle_left.svg',
-                          colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                          fit: BoxFit.scaleDown,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                child: AppHeaderBar(
+                  leftWidth: 44.0,
+                  onLeftTap: () {
+                    HapticFeedback.lightImpact();
+                    widget.onNavigateToTab?.call(0);
+                  },
+                  leftChild: SvgPicture.asset(
+                    'assets/icons/angle_left.svg',
+                    width: 22,
+                    height: 22,
+                    colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                  ),
+                  title: "My Notes",
+                  rightWidth: 44.0,
+                  rightChild: TactileButton(
+                    useAppleSpring: true,
+                    compressionScale: 0.7,
+                    settleDuration: const Duration(milliseconds: 1000),
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.of(context).push(SearchRoute(
+                        builder: (_) => const SearchScreen(
+                          initialScope: 'all',
                         ),
+                      ));
+                    },
+                    child: const Center(
+                      child: Icon(
+                        Icons.search_rounded,
+                        color: Color(0xFF1C1C1E),
+                        size: 22,
                       ),
                     ),
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          "My Notes",
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF1C1C1E),
-                          ),
-                        ),
-                      ),
-                    ),
-                    TactileButton(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.of(context).push(SearchRoute(
-                          builder: (_) => const SearchScreen(
-                            initialScope: 'all',
-                          ),
-                        ));
-                      },
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF222222),
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.search_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: 28),

@@ -8,8 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'tactile_button.dart';
-import 'app_bottom_navigation_bar.dart';
-import '../../themes/glassmorphism_presets.dart';
+import 'app_header_bar.dart';
 import '../../core/animations/animation_constants.dart';
 import '../../models/note.dart';
 
@@ -265,95 +264,80 @@ class _HomePromptViewState extends State<HomePromptView> {
         // ── Header Section ───────────────────────────────────────────────────
         if (widget.showProfileHeader) ...[
           // Top Row: Avatar + Name (Left), Options (Right)
+          // Top Row: Avatar + Name (Left), Options (Right)
           Padding(
-            padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 0.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TactileButton(
-                  onTap: widget.onProfileTap ?? () {},
-                  useAppleSpring: true,
-                  compressionScale: MotionPresets.compressionScale,
-                  settleDuration: MotionPresets.settleDuration,
-                  pressDuration: MotionPresets.pressDuration,
-                  playSelectionHaptic: true,
+            padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
+            child: AppHeaderBar(
+              leftWidth: 44.0,
+              onLeftTap: widget.onProfileTap ?? () {},
+              leftChild: Container(
+                width: 34.0,
+                height: 34.0,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE2E2DF),
+                  shape: BoxShape.circle,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: SvgPicture.asset(
+                  "assets/Profile Icons/maxim_transparent.svg",
+                  width: 34.0,
+                  height: 34.0,
+                ),
+              ),
+              titleWidget: Row(
+                children: [
+                  const SizedBox(width: 54.0), // avatar (44) + gap (10)
+                  Text(
+                    "Hemanth Adapala",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.w500,
+                      color: widget.isDarkBackground ? Colors.white : const Color(0xFF1C1C1E),
+                    ),
+                  ),
+                ],
+              ),
+              rightWidth: 44.0,
+              rightChild: TactileButton(
+                useAppleSpring: true,
+                compressionScale: 0.7,
+                settleDuration: const Duration(milliseconds: 1000),
+                onTap: widget.onMoreOptionsTap ?? () {},
+                child: Center(
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 40.0,
-                        height: 40.0,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFE2E2DF),
+                        width: 5.0,
+                        height: 5.0,
+                        decoration: BoxDecoration(
+                          color: widget.isDarkBackground ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
                           shape: BoxShape.circle,
                         ),
-                        clipBehavior: Clip.antiAlias,
-                        child: SvgPicture.asset(
-                          "assets/Profile Icons/maxim_transparent.svg",
-                          width: 40.0,
-                          height: 40.0,
+                      ),
+                      const SizedBox(width: 4.0),
+                      Container(
+                        width: 5.0,
+                        height: 5.0,
+                        decoration: BoxDecoration(
+                          color: widget.isDarkBackground ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                          shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 10.0),
-                      Text(
-                        "Hemanth Adapala",
-                        style: GoogleFonts.inter(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.w500,
-                          color: widget.isDarkBackground ? Colors.white : const Color(0xFF1C1C1E),
+                      const SizedBox(width: 4.0),
+                      Container(
+                        width: 5.0,
+                        height: 5.0,
+                        decoration: BoxDecoration(
+                          color: widget.isDarkBackground ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                          shape: BoxShape.circle,
                         ),
                       ),
                     ],
                   ),
                 ),
-                TactileButton(
-                  onTap: widget.onMoreOptionsTap ?? () {},
-                  useAppleSpring: true,
-                  compressionScale: MotionPresets.compressionScale,
-                  settleDuration: MotionPresets.settleDuration,
-                  pressDuration: MotionPresets.pressDuration,
-                  playSelectionHaptic: true,
-                  child: BottomBarGlassSurface(
-                    width: 50.0,
-                    height: 50.0,
-                    borderRadius: BorderRadius.circular(25.0),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 5.0,
-                            height: 5.0,
-                            decoration: BoxDecoration(
-                              color: widget.isDarkBackground ? Colors.white.withOpacity(0.8) : const Color(0xFF1C1C1E).withOpacity(0.8),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 4.0),
-                          Container(
-                            width: 5.0,
-                            height: 5.0,
-                            decoration: BoxDecoration(
-                              color: widget.isDarkBackground ? Colors.white.withOpacity(0.8) : const Color(0xFF1C1C1E).withOpacity(0.8),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 4.0),
-                          Container(
-                            width: 5.0,
-                            height: 5.0,
-                            decoration: BoxDecoration(
-                              color: widget.isDarkBackground ? Colors.white.withOpacity(0.8) : const Color(0xFF1C1C1E).withOpacity(0.8),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 24.0),

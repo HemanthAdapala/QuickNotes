@@ -28,7 +28,10 @@ import '../widgets/glass_container.dart';
 import '../../themes/glassmorphism_presets.dart';
 import 'package:flutter/services.dart';
 import '../../core/animations/page_transitions.dart';
+import '../widgets/app_bottom_navigation_bar.dart';
+import '../widgets/app_header_bar.dart';
 import 'dart:math';
+import 'dart:ui';
 
 
 class NoteEditorScreen extends StatefulWidget {
@@ -3691,40 +3694,30 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
   */
 
-  Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
+Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     final notesProvider = Provider.of<NotesProvider>(context);
-    
-    // Resolve folder name
-    String currentFolderName = "Folder";
-    if (_folderId != null) {
-      final folder = notesProvider.folders.firstWhere(
-        (f) => f.id == _folderId,
-        orElse: () => Folder(id: '', name: 'Folder', createdAt: DateTime.now()),
-      );
-      currentFolderName = folder.name;
-    }
-    
-    String currentCategoryName = _category.isEmpty ? "Category" : _category;
-    final dateStr = DateFormat('MMM d, yyyy').format(widget.note?.updatedAt ?? DateTime.now());
     
     final activeStyle = (_contentController is RichTextEditingController)
         ? (_contentController as RichTextEditingController).currentActiveStyle
         : const Style();
-
+    
+    final noteDate = widget.note?.createdAt ?? DateTime.now();
+    final dateStr = DateFormat('EEE, d MMMM yyyy').format(noteDate);
+    final timeStr = DateFormat('hh:mm a').format(noteDate);
+    
     final screenWidth = MediaQuery.of(context).size.width;
-    final double targetWidth = _isFormattingBarExpanded ? 354.0 : 48.0;
+    final double targetWidth = _isFormattingBarExpanded ? (screenWidth - 48.0) : 48.0;
     final double targetLeft = _isFormattingBarExpanded 
-        ? (screenWidth - targetWidth) / 2 
+        ? 24.0 
         : (screenWidth - targetWidth - 24.0);
 
-    const textColor = Color(0xFF333333);
-    const titleColor = Color(0xFF333333);
-
-    // Finalized Visual Styling (Glassmorphism & Shadows) uses default presets now
+    const textColor = Color(0xFF1C1C1E);
+    const titleColor = Color(0xFF1C1C1E);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2EE),
       body: SafeArea(
+        bottom: false,
         child: Stack(
           children: [
             if (_paperGuideVisible && (_paperGuideType == 'grid' || _paperGuideType == 'dots'))
@@ -3741,144 +3734,60 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   ),
                 ),
               ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 24.0),
-                // Top Bar
-                Container(
-                  height: 40,
-                  margin: const EdgeInsets.symmetric(horizontal: 27),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Back chevron button
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TactileButton(
-                          useAppleSpring: true,
-                          compressionScale: 0.7,
-                          settleDuration: const Duration(milliseconds: 1000),
-                          pressDuration: const Duration(milliseconds: 80),
-                          playSelectionHaptic: true,
-                          onTap: () {
-                            Navigator.of(context).maybePop();
-                          },
-                          child: GlassSurface(
-                            width: 40,
-                            height: 40,
-                            borderRadius: BorderRadius.circular(20),
-                            child: Center(
-                              child: SvgPicture.asset(
-                                'assets/icons/angle_left.svg',
-                                width: 22,
-                                height: 22,
-                                colorFilter: const ColorFilter.mode(Color(0xFF333333), BlendMode.srcIn),
-                                fit: BoxFit.scaleDown,
+
+            // Note Card Hero Container
+            Positioned(
+              left: 0.0,
+              right: 0.0,
+              top: 74.0, // starts below the top bar buttons
+              bottom: 0.0,
+              child: Stack(
+                children: [
+                  // 1. Background Card (Hero-wrapped)
+                  Positioned.fill(
+                    child: Hero(
+                      tag: 'hero_note_card_${widget.note?.id ?? 'new'}',
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 20.0,
+                                offset: const Offset(0, -4),
                               ),
-                            ),
+                            ],
                           ),
-                        ),
-                      ),
-                      
-                      // Folder Select Button
-                      Align(
-                        alignment: Alignment.center,
-                        child: TactileButton(
-                          useAppleSpring: true,
-                          compressionScale: 0.7,
-                          settleDuration: const Duration(milliseconds: 1000),
-                          pressDuration: const Duration(milliseconds: 80),
-                          playSelectionHaptic: true,
-                          onTap: () {
-                            _showFolderSelectorDialog();
-                          },
-                          child: GlassSurface(
-                            height: 40,
-                            borderRadius: BorderRadius.circular(20),
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 120),
-                                  child: Text(
-                                    currentFolderName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF333333),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 6.0),
-                                SvgPicture.asset(
-                                  'assets/icons/angle_small_down_topbar.svg',
-                                  width: 22,
-                                  height: 22,
-                                  colorFilter: const ColorFilter.mode(Color(0xFF333333), BlendMode.srcIn),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                      // Actions Row (Pin + Options)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: GlassSurface(
-                          width: 90,
-                          height: 40,
-                          borderRadius: BorderRadius.circular(20),
-                          child: Row(
+                          child: Stack(
                             children: [
-                              // Pin Button
-                              Expanded(
-                                child: TactileButton(
-                                  useAppleSpring: true,
-                                  compressionScale: 0.7,
-                                  settleDuration: const Duration(milliseconds: 1000),
-                                  pressDuration: const Duration(milliseconds: 80),
-                                  playSelectionHaptic: true,
-                                  onTap: () {
-                                    setState(() {
-                                      _isPinned = !_isPinned;
-                                      _hasChanges = true;
-                                    });
-                                  },
-                                  child: Center(
-                                    child: Icon(
-                                      _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                                      size: 22,
-                                      color: _isPinned ? const Color(0xFFFFA322) : const Color(0xFF333333),
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                               height: 100.0,
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFFCC00),
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(30.0),
+                                      topRight: Radius.circular(30.0),
                                     ),
                                   ),
                                 ),
                               ),
-                              // Options Button
-                              Expanded(
-                                child: TactileButton(
-                                  useAppleSpring: true,
-                                  compressionScale: 0.7,
-                                  settleDuration: const Duration(milliseconds: 1000),
-                                  pressDuration: const Duration(milliseconds: 80),
-                                  playSelectionHaptic: true,
-                                  onTap: () {
-                                    _showCommandPalette();
-                                  },
-                                  child: Center(
-                                    child: SvgPicture.asset(
-                                      'assets/icons/circle_ellipsis.svg',
-                                      width: 22,
-                                      height: 22,
-                                      colorFilter: const ColorFilter.mode(
-                                        Color(0xFF333333),
-                                        BlendMode.srcIn,
-                                      ),
+                              Positioned(
+                                top: 50.0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(30.0),
+                                      topRight: Radius.circular(30.0),
                                     ),
                                   ),
                                 ),
@@ -3887,311 +3796,230 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                
-                // Writing canvas
-                Expanded(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      if (_noteType == 'checklist') {
-                        if (_checklistFocusNodes.isNotEmpty) {
-                          final fn = _checklistFocusNodes.last;
-                          final ctrl = _checklistControllers.last;
-                          fn.requestFocus();
-                          ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
-                        }
-                      } else {
-                        if (_blocks.isNotEmpty) {
-                          final lastTextBlock = _blocks.lastWhere(
-                            (b) => b is ParagraphBlock || b is HeadingBlock || b is QuoteBlock || b is ChecklistBlock,
-                            orElse: () => _blocks.last,
-                          );
-                          final fn = _getFocusNodeOfBlock(lastTextBlock);
-                          final ctrl = _getControllerOfBlock(lastTextBlock);
-                          if (fn != null && ctrl != null) {
-                            fn.requestFocus();
-                            ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
-                          }
-                        }
-                      }
-                    },
-                    child: SingleChildScrollView(
-                    controller: _scrollController,
-                    padding: EdgeInsets.only(
-                      left: 32.0,
-                      right: 32.0,
-                      top: 4.0,
-                      bottom: (MediaQuery.of(context).viewInsets.bottom > 0 || Platform.environment.containsKey('FLUTTER_TEST')) ? 80.0 : 40.0,
                     ),
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+
+                  // 2. Scrollable Writing Content Area & Sticky Translucent Blur Header
+                  Positioned.fill(
+                    child: Stack(
                       children: [
-                        // Title
-                        TextField(
-                          controller: _titleController,
-                          focusNode: _titleFocusNode,
-                          maxLines: 1,
-                          scrollPadding: const EdgeInsets.only(bottom: 90.0),
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 30.0,
-                            fontWeight: FontWeight.bold,
-                            color: titleColor,
-                            height: 1.15,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: "Note Title",
-                            hintStyle: GoogleFonts.playfairDisplay(
-                              fontSize: 30.0,
-                              fontWeight: FontWeight.bold,
-                              color: titleColor.withAlpha(80),
-                              height: 1.15,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            filled: false,
-                          ),
-                          onChanged: (val) {
-                            setState(() {
-                              _hasChanges = true;
-                            });
-                          },
-                        ),
-                        
-                        AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: _isMetadataCollapsed ? 0.0 : 1.0,
-                          child: AnimatedAlign(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
-                            alignment: Alignment.topCenter,
-                            heightFactor: _isMetadataCollapsed ? 0.0 : 1.0,
-                            child: ClipRect(
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              if (_noteType == 'checklist') {
+                                if (_checklistFocusNodes.isNotEmpty) {
+                                  final fn = _checklistFocusNodes.last;
+                                  final ctrl = _checklistControllers.last;
+                                  fn.requestFocus();
+                                  ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
+                                }
+                              } else {
+                                if (_blocks.isNotEmpty) {
+                                  final lastTextBlock = _blocks.lastWhere(
+                                    (b) => b is ParagraphBlock || b is HeadingBlock || b is QuoteBlock || b is ChecklistBlock,
+                                    orElse: () => _blocks.last,
+                                  );
+                                  final fn = _getFocusNodeOfBlock(lastTextBlock);
+                                  final ctrl = _getControllerOfBlock(lastTextBlock);
+                                  if (fn != null && ctrl != null) {
+                                    fn.requestFocus();
+                                    ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
+                                  }
+                                }
+                              }
+                            },
+                            child: SingleChildScrollView(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.only(
+                                left: 24.0,
+                                right: 24.0,
+                                top: 59.0, // Date bar (50) + padding (9)
+                                bottom: 120.0,
+                              ),
+                              physics: const BouncingScrollPhysics(),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const SizedBox(height: 4.0),
-                                  // Metadata Row (Date, Folder, Category, Options)
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: SingleChildScrollView(
-                                          scrollDirection: Axis.horizontal,
-                                          physics: const BouncingScrollPhysics(),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              // Date & Reminder Button
-                                              GestureDetector(
-                                                onTap: _pickReminder,
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.calendar_today_outlined,
-                                                      size: 14,
-                                                      color: textColor.withValues(alpha: 0.5),
-                                                    ),
-                                                    const SizedBox(width: 4.0),
-                                                    Text(
-                                                      dateStr,
-                                                      style: GoogleFonts.inter(
-                                                        fontSize: 13,
-                                                        fontWeight: FontWeight.w400,
-                                                        color: textColor.withValues(alpha: 0.5),
-                                                      ),
-                                                    ),
-                                                    if (_reminderTime != null) ...[
-                                                      const SizedBox(width: 4.0),
-                                                      Icon(
-                                                        Icons.notifications_active_outlined,
-                                                        size: 14,
-                                                        color: theme.colorScheme.primary,
-                                                      ),
-                                                    ],
-                                                  ],
-                                                ),
-                                              ),
-                                              
-                                              // Separator
-                                              Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                child: Text(
-                                                  "•",
-                                                  style: TextStyle(
-                                                    color: textColor.withValues(alpha: 0.3),
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                              ),
-                                              
-                                              // Folder Button
-                                              GestureDetector(
-                                                onTap: _showFolderSelectorDialog,
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    SvgPicture.asset(
-                                                      'assets/icons/folder_open_folder.svg',
-                                                      width: 18,
-                                                      height: 18,
-                                                      colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                                                    ),
-                                                    const SizedBox(width: 4.0),
-                                                    ConstrainedBox(
-                                                      constraints: const BoxConstraints(maxWidth: 60),
-                                                      child: Text(
-                                                        currentFolderName,
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        style: GoogleFonts.inter(
-                                                          fontSize: 13,
-                                                          fontWeight: FontWeight.w500,
-                                                          color: textColor.withValues(alpha: 0.7),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 2.0),
-                                                    Icon(
-                                                      Icons.keyboard_arrow_down_rounded,
-                                                      size: 14,
-                                                      color: textColor.withValues(alpha: 0.4),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              
-                                              // Separator
-                                              Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                child: Text(
-                                                  "•",
-                                                  style: TextStyle(
-                                                    color: textColor.withValues(alpha: 0.3),
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                              ),
-                                              
-                                              // Category Button
-                                              GestureDetector(
-                                                onTap: _showCategorySelectorDialog,
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    SvgPicture.asset(
-                                                      'assets/icons/category.svg',
-                                                      width: 18,
-                                                      height: 18,
-                                                      colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                                                    ),
-                                                    const SizedBox(width: 4.0),
-                                                    ConstrainedBox(
-                                                      constraints: const BoxConstraints(maxWidth: 80),
-                                                      child: Text(
-                                                        currentCategoryName,
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        style: GoogleFonts.inter(
-                                                          fontSize: 13,
-                                                          fontWeight: FontWeight.w500,
-                                                          color: textColor.withValues(alpha: 0.7),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 2.0),
-                                                    Icon(
-                                                      Icons.keyboard_arrow_down_rounded,
-                                                      size: 14,
-                                                      color: textColor.withValues(alpha: 0.4),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8.0),
-                                      // Delete Button
-                                      GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _showDeletePopup = true;
-                                          });
-                                        },
-                                        child: SvgPicture.asset(
-                                          'assets/icons/circle_ellipsis.svg',
-                                          width: 20,
-                                          height: 20,
-                                          colorFilter: ColorFilter.mode(textColor.withValues(alpha: 0.5), BlendMode.srcIn),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (_tags.isNotEmpty) ...[
-                                    const SizedBox(height: 6.0),
-                                    Wrap(
-                                      spacing: 8.0,
-                                      runSpacing: 4.0,
-                                      children: _tags.map((tag) {
-                                        return Chip(
-                                          label: Text("#$tag"),
-                                          labelStyle: GoogleFonts.inter(fontSize: 12, color: textColor),
-                                          backgroundColor: const Color(0xFF222222).withValues(alpha: 0.08),
-                                          onDeleted: () {
-                                            setState(() {
-                                              _tags.remove(tag);
-                                              _hasChanges = true;
-                                            });
-                                          },
-                                        );
-                                      }).toList(),
+                                  // Title
+                                  TextField(
+                                    controller: _titleController,
+                                    focusNode: _titleFocusNode,
+                                    maxLines: 1,
+                                    scrollPadding: const EdgeInsets.only(bottom: 90.0),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 24.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: titleColor,
+                                      height: 1.15,
                                     ),
-                                  ],
+                                    decoration: InputDecoration(
+                                      hintText: "Title",
+                                      hintStyle: GoogleFonts.inter(
+                                        fontSize: 24.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: titleColor.withOpacity(0.3),
+                                        height: 1.15,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.zero,
+                                      filled: false,
+                                    ),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _hasChanges = true;
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(height: 4.0),
+                                  
+                                  // Checklist / Markdown / Block Editor
+                                  if (_noteType == 'checklist')
+                                    _buildChecklistEditor(textColor)
+                                  else if (_isPreviewMarkdown)
+                                    _buildMarkdownPreview(textColor)
+                                  else
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        ...() {
+                                          final List<Widget> list = [];
+                                          for (int i = 0; i < _blocks.length; i++) {
+                                            list.add(_buildBlockWidget(_blocks[i], textColor, titleColor));
+                                            if (i < _blocks.length - 1) {
+                                              final spacing = _getSpacingBetween(_blocks[i], _blocks[i + 1]);
+                                              list.add(SizedBox(height: spacing));
+                                            }
+                                          }
+                                          return list;
+                                        }(),
+                                      ],
+                                    ),
                                 ],
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 6.0),
-                        
-                        // Render Checklist mode OR Markdown body OR block text editor
-                        if (_noteType == 'checklist')
-                          _buildChecklistEditor(textColor)
-                        else if (_isPreviewMarkdown)
-                          _buildMarkdownPreview(textColor)
-                        else
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ...() {
-                                final List<Widget> list = [];
-                                for (int i = 0; i < _blocks.length; i++) {
-                                  list.add(_buildBlockWidget(_blocks[i], textColor, titleColor));
-                                  if (i < _blocks.length - 1) {
-                                    final spacing = _getSpacingBetween(_blocks[i], _blocks[i + 1]);
-                                    list.add(SizedBox(height: spacing));
-                                  }
-                                }
-                                return list;
-                              }(),
-                            ],
+
+                        // Sticky Yellow Header with Blur
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 50.0,
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(30.0),
+                              topRight: Radius.circular(30.0),
+                            ),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                              child: Container(
+                                color: const Color(0xFFFFCC00).withOpacity(0.9),
+                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                alignment: Alignment.center,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      dateStr,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.w400,
+                                        color: const Color(0xFF1C1C1E),
+                                        letterSpacing: -0.43,
+                                      ),
+                                    ),
+                                    Text(
+                                      timeStr,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.w400,
+                                        color: const Color(0xFF1C1C1E),
+                                        letterSpacing: -0.43,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
+                        ),
                       ],
                     ),
-                    ),
                   ),
+                ],
+              ),
+            ),
+
+            // 3. Unified Top Header Overlay
+            Positioned(
+              top: 12.0,
+              left: 24.0,
+              right: 24.0,
+              child: AppHeaderBar(
+                leftWidth: 44.0,
+                onLeftTap: () {
+                  Navigator.of(context).maybePop();
+                },
+                leftChild: SvgPicture.asset(
+                  'assets/icons/angle_left.svg',
+                  width: 22,
+                  height: 22,
+                  colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
                 ),
-              ],
+                rightWidth: 96.0,
+                rightChild: Row(
+                  children: [
+                    // Folder Select Button
+                    Expanded(
+                      child: TactileButton(
+                        useAppleSpring: true,
+                        compressionScale: 0.7,
+                        settleDuration: const Duration(milliseconds: 1000),
+                        onTap: () {
+                          _showFolderSelectorDialog();
+                        },
+                        child: Center(
+                          child: SvgPicture.asset(
+                            'assets/icons/bottom_navigation/folder-open.svg',
+                            width: 22,
+                            height: 22,
+                            colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Separator line
+                    Container(
+                      width: 1.0,
+                      height: 18.0,
+                      color: const Color(0xFF1C1C1E).withOpacity(0.15),
+                    ),
+                    // Options Button
+                    Expanded(
+                      child: TactileButton(
+                        useAppleSpring: true,
+                        compressionScale: 0.7,
+                        settleDuration: const Duration(milliseconds: 1000),
+                        onTap: () {
+                          _showCommandPalette();
+                        },
+                        child: const Center(
+                          child: Icon(
+                            Icons.more_horiz_rounded,
+                            size: 22,
+                            color: Color(0xFF1C1C1E),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             
-            // Floating pill format bar
-            if (MediaQuery.of(context).viewInsets.bottom > 0 || Platform.environment.containsKey('FLUTTER_TEST'))
-              AnimatedPositioned(
+            AnimatedPositioned(
                 duration: const Duration(milliseconds: 1000),
                 curve: Curves.elasticOut,
                 bottom: 12,

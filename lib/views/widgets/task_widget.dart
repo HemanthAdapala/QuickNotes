@@ -12,12 +12,14 @@ class TaskWidget extends StatefulWidget {
   final ValueChanged<String>? onComplete;
   final VoidCallback? onEdit;
   final List<TaskItem> tasks;
+  final double width;
 
   const TaskWidget({
     super.key,
     required this.tasks,
     this.onComplete,
     this.onEdit,
+    this.width = 322.0,
   });
 
   @override
@@ -199,7 +201,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final formattedTime = DateFormat('hh:mm a').format(task.dueDate);
 
     Widget cardContent = Container(
-      width: 322.0,
+      width: widget.width,
       height: 339.0,
       decoration: BoxDecoration(
         color: const Color(0xFF0088FF),
@@ -302,7 +304,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     if (widget.tasks.isEmpty) {
       return SizedBox(
-        width: 322.0,
+        width: widget.width,
         height: 339.0,
         child: Container(
           decoration: BoxDecoration(
@@ -382,7 +384,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     }
 
     return SizedBox(
-      width: 322.0,
+      width: widget.width,
       height: overallHeight,
       child: Stack(
         clipBehavior: Clip.none,
@@ -414,7 +416,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
               child: Transform.scale(
                 scale: cardScale,
                 child: Container(
-                  width: 322.0,
+                  width: widget.width,
                   height: 339.0,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30.0),
@@ -497,7 +499,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                         Positioned(
                           top: 37.0,
                           left: 0,
-                          width: 322.0,
+                          width: widget.width,
                           height: 302.0,
                           child: Container(
                             decoration: const BoxDecoration(

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/notes_provider.dart';
 import '../widgets/tactile_button.dart';
+import '../widgets/app_header_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'glassmorphism_sandbox_screen.dart';
 
@@ -65,44 +66,21 @@ class SettingsScreen extends StatelessWidget {
         bottom: false,
         child: Column(
           children: [
-            const SizedBox(height: 24.0),
-            // Header Bar
-            Container(
-              height: 38,
-              margin: const EdgeInsets.symmetric(horizontal: 30),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  TactileButton(
-                    onTap: onMenuTap,
-                    child: SizedBox(
-                      width: 38,
-                      height: 38,
-                      child: SvgPicture.asset(
-                        'assets/icons/angle_left.svg',
-                        colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                        fit: BoxFit.scaleDown,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        "Settings",
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1C1C1E),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 38), // spacer to center the title
-                ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              child: AppHeaderBar(
+                leftWidth: 44.0,
+                onLeftTap: onMenuTap,
+                leftChild: SvgPicture.asset(
+                  'assets/icons/angle_left.svg',
+                  width: 22,
+                  height: 22,
+                  colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                ),
+                title: "Settings",
               ),
             ),
-            const SizedBox(height: 24.0),
+            const SizedBox(height: 12.0),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),

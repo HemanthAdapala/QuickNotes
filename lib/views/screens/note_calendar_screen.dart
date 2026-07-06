@@ -11,6 +11,7 @@ import '../../models/folder.dart';
 import '../../providers/notes_provider.dart';
 import '../../themes/app_theme.dart';
 import '../widgets/tactile_button.dart';
+import '../widgets/app_header_bar.dart';
 import 'note_editor_screen.dart';
 import 'create_task_screen.dart';
 import '../../core/animations/page_transitions.dart';
@@ -332,70 +333,45 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
         bottom: false,
         child: Column(
           children: [
-            const SizedBox(height: 24.0),
-            // Header Bar
-            Container(
-              height: 38,
-              margin: const EdgeInsets.symmetric(horizontal: 30),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  TactileButton(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      widget.onNavigateToTab?.call(0);
-                    },
-                    child: SizedBox(
-                      width: 38,
-                      height: 38,
-                      child: SvgPicture.asset(
-                        'assets/icons/angle_left.svg',
-                        colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                        fit: BoxFit.scaleDown,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        "Note Calendar",
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1C1C1E),
-                        ),
-                      ),
-                    ),
-                  ),
-                  TactileButton(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.of(context).push(SearchRoute(
-                        builder: (_) => const SearchScreen(
-                          initialScope: 'tasks',
-                        ),
-                      ));
-                    },
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF222222),
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.search_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24.0),
+             Padding(
+               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+               child: AppHeaderBar(
+                 leftWidth: 44.0,
+                 onLeftTap: () {
+                   HapticFeedback.lightImpact();
+                   widget.onNavigateToTab?.call(0);
+                 },
+                 leftChild: SvgPicture.asset(
+                   'assets/icons/angle_left.svg',
+                   width: 22,
+                   height: 22,
+                   colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                 ),
+                 title: "Note Calendar",
+                 rightWidth: 44.0,
+                 rightChild: TactileButton(
+                   useAppleSpring: true,
+                   compressionScale: 0.7,
+                   settleDuration: const Duration(milliseconds: 1000),
+                   onTap: () {
+                     HapticFeedback.lightImpact();
+                     Navigator.of(context).push(SearchRoute(
+                       builder: (_) => const SearchScreen(
+                         initialScope: 'tasks',
+                       ),
+                     ));
+                   },
+                   child: const Center(
+                     child: Icon(
+                       Icons.search_rounded,
+                       color: Color(0xFF1C1C1E),
+                       size: 22,
+                     ),
+                   ),
+                 ),
+               ),
+             ),
+             const SizedBox(height: 12.0),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
