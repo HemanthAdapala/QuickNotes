@@ -7,8 +7,8 @@ class AppColors {
   /// Primary dark — used for all text and UI elements (#333333)
   static const Color ink = Color(0xFF333333);
 
-  /// Accent amber — "Today" label, active highlights (#FFA322)
-  static const Color amber = Color(0xFFFFA322);
+  /// Accent amber — "Today" label, active highlights (#FFCC00)
+  static const Color amber = Color(0xFFFFCC00);
 
   /// Placeholder / muted text — ink at 45% opacity
   static const Color placeholder = Color(0x73333333);
@@ -29,7 +29,7 @@ class AppColors {
   static const Color divider = Color(0x14333333);
 
   /// Amber Soft - Hover states, gentle highlights, and animations
-  static const Color amberSoft = Color(0xFFFFB84D);
+  static const Color amberSoft = Color(0xFFFFE57F);
 }
 
 class AppTextStyles {

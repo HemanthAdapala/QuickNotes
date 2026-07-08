@@ -798,6 +798,15 @@ class NotesProvider with ChangeNotifier {
     }
   }
 
+  Future<void> updateFolder(Folder folder) async {
+    try {
+      await _dbService.updateFolder(folder);
+      await loadFolders();
+    } catch (e) {
+      debugPrint("Error updating folder: $e");
+    }
+  }
+
   Future<void> deleteFolder(String id) async {
     try {
       await _dbService.deleteFolder(id);

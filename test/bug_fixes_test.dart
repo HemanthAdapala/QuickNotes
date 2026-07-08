@@ -284,7 +284,7 @@ void main() {
       await tester.pump(const Duration(seconds: 11));
     });
 
-    testWidgets('Rich formatting toolbar and PageView navigation check', (WidgetTester tester) async {
+    testWidgets('Rich formatting toolbar category and subsection navigation check', (WidgetTester tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -318,46 +318,56 @@ void main() {
       await tester.tap(contentFinder);
       await tester.pump();
 
-      // Verify that the formatting toolbar with PageView is present
-      final pageViewFinder = find.byType(PageView);
-      expect(pageViewFinder, findsOneWidget);
+      // Find Aa category button (it is a text button "Aa")
+      final aaFinder = find.text('Aa');
+      expect(aaFinder, findsOneWidget);
+      await tester.tap(aaFinder);
+      await tester.pumpAndSettle();
 
-      // Page 0: Text style options
+      // Verify that the Aa subsection options are present
       expect(find.byTooltip('Bold'), findsOneWidget);
       expect(find.byTooltip('Italic'), findsOneWidget);
       expect(find.byTooltip('Underline'), findsOneWidget);
       expect(find.byTooltip('Strikethrough'), findsOneWidget);
-      expect(find.byTooltip('Highlight'), findsOneWidget);
-      expect(find.byTooltip('Link'), findsOneWidget);
 
-      // Find both left and right arrow buttons (RichTextFormattingPillIcon)
-      final arrowButtons = find.byType(RichTextFormattingPillIcon);
-      expect(arrowButtons, findsNWidgets(2));
-
-      // Tap the right arrow button (last in widget tree) to slide to Page 1
-      await tester.tap(arrowButtons.last);
+      // Slide to page 2 of categories by tapping right arrow (chevron_right)
+      final rightArrowFinder = find.byIcon(Icons.chevron_right_rounded);
+      expect(rightArrowFinder, findsOneWidget);
+      await tester.tap(rightArrowFinder);
       await tester.pumpAndSettle();
 
-      // Page 1: Headings & Lists options
+      // Verify page 2 has Headings icon (Icons.title_rounded)
+      final headingsCategoryFinder = find.byIcon(Icons.title_rounded);
+      expect(headingsCategoryFinder, findsOneWidget);
+      await tester.tap(headingsCategoryFinder);
+      await tester.pumpAndSettle();
+
+      // Verify Headings subsection is visible
       expect(find.byTooltip('Heading 1'), findsOneWidget);
       expect(find.byTooltip('Heading 2'), findsOneWidget);
       expect(find.byTooltip('Heading 3'), findsOneWidget);
-      expect(find.byTooltip('Bullet List'), findsOneWidget);
-      expect(find.byTooltip('Numbered List'), findsOneWidget);
-      expect(find.byTooltip('Checklist'), findsOneWidget);
 
-      // Tap the right arrow button again to slide to Page 2
-      await tester.tap(arrowButtons.last);
+      // Verify paper settings is present on page 2
+      expect(find.byIcon(Icons.grid_on_rounded), findsOneWidget);
+
+      // Go back to page 1 of categories
+      final leftArrowFinder = find.byIcon(Icons.chevron_left_rounded);
+      expect(leftArrowFinder, findsOneWidget);
+      await tester.tap(leftArrowFinder);
       await tester.pumpAndSettle();
 
-      // Page 2: Alignments & Actions options
+      // Tap Alignment category
+      final alignCategoryFinder = find.byIcon(Icons.format_align_left_rounded);
+      expect(alignCategoryFinder, findsOneWidget);
+      await tester.tap(alignCategoryFinder);
+      await tester.pumpAndSettle();
+
+      // Verify Alignment subsection is visible
       expect(find.byTooltip('Align Left'), findsOneWidget);
       expect(find.byTooltip('Align Center'), findsOneWidget);
       expect(find.byTooltip('Align Right'), findsOneWidget);
       expect(find.byTooltip('Align Justify'), findsOneWidget);
-      expect(find.byTooltip('Attach Image'), findsOneWidget);
-      expect(find.byTooltip('Record Audio'), findsOneWidget);
-      expect(find.byTooltip('Hide Keyboard'), findsOneWidget);
+
       await tester.pump(const Duration(seconds: 11));
     });
 
@@ -518,12 +528,11 @@ void main() {
       final pageViewFinder = find.byType(PageView);
       expect(pageViewFinder, findsOneWidget);
 
-      final arrowButtons = find.byType(RichTextFormattingPillIcon);
-      expect(arrowButtons, findsNWidgets(2));
-
-      await tester.tap(arrowButtons.last);
-      await tester.pumpAndSettle();
-      await tester.tap(arrowButtons.last);
+      final attachmentCategoryFinder = find.byWidgetPredicate(
+        (widget) => widget is SvgPicture && widget.toString().contains('link.svg'),
+      );
+      expect(attachmentCategoryFinder, findsOneWidget);
+      await tester.tap(attachmentCategoryFinder);
       await tester.pumpAndSettle();
 
       final attachImageFinder = find.byTooltip('Attach Image');

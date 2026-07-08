@@ -208,19 +208,19 @@ class SettingsScreen extends StatelessWidget {
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
                                         color: provider.selectedBgIndex == i
-                                            ? const Color(0xFFFFA322)
+                                            ? const Color(0xFFFFCC00)
                                             : Colors.white.withValues(alpha: 0.7),
                                         shape: BoxShape.circle,
                                         border: Border.all(
                                           color: provider.selectedBgIndex == i
-                                              ? const Color(0xFFFFA322)
+                                              ? const Color(0xFFFFCC00)
                                               : const Color(0xFFD1D0C9),
                                           width: 1,
                                         ),
                                         boxShadow: provider.selectedBgIndex == i
                                             ? [
                                                 BoxShadow(
-                                                  color: const Color(0xFFFFA322).withValues(alpha: 0.25),
+                                                  color: const Color(0xFFFFCC00).withValues(alpha: 0.25),
                                                   blurRadius: 8,
                                                   offset: const Offset(0, 4),
                                                 )

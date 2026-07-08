@@ -101,33 +101,11 @@ class Note {
         continue;
       }
 
+      final numListRegex = RegExp(r'^(\d+)\.\s(.*)$');
+
       // Reset numbering if this line is not a numbered list item
-      if (!trimmed.startsWith('1. ')) {
+      if (!numListRegex.hasMatch(trimmed)) {
         sequentialNumber = 0;
-      }
-
-      // Strip headings prefix
-      if (trimmed.startsWith('#')) {
-        int hashCount = 0;
-        while (hashCount < trimmed.length && trimmed[hashCount] == '#') {
-          hashCount++;
-        }
-        if (hashCount < trimmed.length && trimmed[hashCount] == ' ') {
-          trimmed = trimmed.substring(hashCount + 1).trim();
-        }
-      }
-
-      // Strip blockquotes prefix
-      if (trimmed.startsWith('>')) {
-        int quoteCount = 0;
-        while (quoteCount < trimmed.length && trimmed[quoteCount] == '>') {
-          quoteCount++;
-        }
-        if (quoteCount < trimmed.length && trimmed[quoteCount] == ' ') {
-          trimmed = trimmed.substring(quoteCount + 1).trim();
-        } else {
-          trimmed = trimmed.substring(quoteCount).trim();
-        }
       }
 
       // Handle checklist, bullet list, and numbered list prefixes
@@ -137,9 +115,11 @@ class Note {
         trimmed = '☑ ' + trimmed.substring(6).trim();
       } else if (trimmed.startsWith('- ')) {
         trimmed = '• ' + trimmed.substring(2).trim();
-      } else if (trimmed.startsWith('1. ')) {
+      } else if (numListRegex.hasMatch(trimmed)) {
+        final match = numListRegex.firstMatch(trimmed)!;
+        final content = match.group(2) ?? '';
         sequentialNumber++;
-        trimmed = '$sequentialNumber. ' + trimmed.substring(3).trim();
+        trimmed = '$sequentialNumber. ' + content.trim();
       }
 
       // Strip inline image syntax: ![alt](url) -> replace with empty string

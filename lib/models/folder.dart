@@ -3,12 +3,16 @@ class Folder {
   final String name;
   final String? parentId; // null represents root folder level
   final DateTime createdAt;
+  final String? colorHex;
+  final String? sticker;
 
   Folder({
     required this.id,
     required this.name,
     this.parentId,
     required this.createdAt,
+    this.colorHex,
+    this.sticker,
   });
 
   Map<String, dynamic> toMap() {
@@ -17,6 +21,8 @@ class Folder {
       'name': name,
       'parentId': parentId,
       'createdAt': createdAt.toIso8601String(),
+      'colorHex': colorHex,
+      'sticker': sticker,
     };
   }
 
@@ -26,6 +32,26 @@ class Folder {
       name: map['name'] as String,
       parentId: map['parentId'] as String?,
       createdAt: DateTime.parse(map['createdAt'] as String),
+      colorHex: map['colorHex'] as String?,
+      sticker: map['sticker'] as String?,
+    );
+  }
+
+  Folder copyWith({
+    String? name,
+    String? parentId,
+    String? colorHex,
+    bool clearColorHex = false,
+    String? sticker,
+    bool clearSticker = false,
+  }) {
+    return Folder(
+      id: id,
+      name: name ?? this.name,
+      parentId: parentId ?? this.parentId,
+      createdAt: createdAt,
+      colorHex: clearColorHex ? null : (colorHex ?? this.colorHex),
+      sticker: clearSticker ? null : (sticker ?? this.sticker),
     );
   }
 }

@@ -18,6 +18,7 @@ import '../../services/vault_service.dart';
 import '../widgets/folder_selection_sheet.dart';
 import '../widgets/category_selection_sheet.dart';
 import '../widgets/blurred_bottom_sheet.dart';
+import '../widgets/rich_text_selection_toolbar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
@@ -33,6 +34,8 @@ import '../widgets/app_header_bar.dart';
 import 'dart:math';
 import 'dart:ui';
 
+
+enum _ActiveCategory { none, aa, alignment, list, attachment, headings }
 
 class NoteEditorScreen extends StatefulWidget {
   final Note? note;
@@ -247,6 +250,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   void _setupBlockFocusNode(FocusNode focusNode) {
     focusNode.addListener(() {
       if (focusNode.hasFocus) {
+        if (!_isFormattingBarExpanded) {
+          setState(() {
+            _isFormattingBarExpanded = true;
+          });
+        }
         for (final block in _blocks) {
           if (_getFocusNodeOfBlock(block) == focusNode) {
             _lastFocusedBlock = block;
@@ -336,11 +344,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         _isMetadataCollapsed = true;
       });
     }
-    if (_isFormattingBarExpanded && !Platform.environment.containsKey('FLUTTER_TEST')) {
+    if (_activeCategory != _ActiveCategory.none && !Platform.environment.containsKey('FLUTTER_TEST')) {
       setState(() {
-        _isFormattingBarExpanded = false;
+        _activeCategory = _ActiveCategory.none;
       });
     }
+    _startZenTimer();
     final controller = _getControllerOfBlock(block);
     if (controller == null) return;
 
@@ -804,6 +813,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           focusNode: block.focusNode,
           maxLines: null,
           keyboardType: TextInputType.multiline,
+          contextMenuBuilder: _buildContextMenu,
           scrollPadding: const EdgeInsets.only(bottom: 90.0),
           textAlign: block.controller.styledChars.isNotEmpty
               ? block.controller.styledChars.first.style.align
@@ -875,6 +885,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           focusNode: block.focusNode,
           maxLines: null,
           keyboardType: TextInputType.multiline,
+          contextMenuBuilder: _buildContextMenu,
           scrollPadding: const EdgeInsets.only(bottom: 90.0),
           style: GoogleFonts.outfit(
             fontSize: fontSize,
@@ -947,6 +958,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             focusNode: block.focusNode,
             maxLines: null,
             keyboardType: TextInputType.multiline,
+            contextMenuBuilder: _buildContextMenu,
             scrollPadding: const EdgeInsets.only(bottom: 90.0),
             style: GoogleFonts.inter(
               fontSize: 16.0,
@@ -1042,6 +1054,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   focusNode: block.focusNode,
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
+                  contextMenuBuilder: _buildContextMenu,
                   scrollPadding: const EdgeInsets.only(bottom: 90.0),
                   style: GoogleFonts.inter(
                     fontSize: 16.0,
@@ -1117,6 +1130,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   focusNode: block.focusNode,
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
+                  contextMenuBuilder: _buildContextMenu,
                   scrollPadding: const EdgeInsets.only(bottom: 90.0),
                   style: GoogleFonts.inter(
                     fontSize: 16.0,
@@ -1197,6 +1211,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   focusNode: block.focusNode,
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
+                  contextMenuBuilder: _buildContextMenu,
                   scrollPadding: const EdgeInsets.only(bottom: 90.0),
                   style: GoogleFonts.inter(
                     fontSize: 16.0,
@@ -1349,7 +1364,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   // Zen Focus Mode state
   Timer? _zenTimer;
   bool _isZenTyping = false;
-  bool _isFormattingBarExpanded = Platform.environment.containsKey('FLUTTER_TEST');
+  bool _isFormattingBarExpanded = true;
+  _ActiveCategory _activeCategory = _ActiveCategory.none;
+
+  Color get _tintColor => _noteType == 'checklist' ? const Color(0xFF0088FF) : const Color(0xFFFFCC00);
 
   // Media Pickers and Record helpers
   final _imagePicker = ImagePicker();
@@ -1434,7 +1452,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     _contentController.addListener(_onContentTextChanged);
     
     _titleFocusNode.addListener(() {
-      if (!_titleFocusNode.hasFocus) {
+      if (_titleFocusNode.hasFocus) {
+        if (_isFormattingBarExpanded && !Platform.environment.containsKey('FLUTTER_TEST')) {
+          setState(() {
+            _isFormattingBarExpanded = false;
+          });
+        }
+      } else {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && !_anyBlockHasFocus && _isMetadataCollapsed) {
             setState(() {
@@ -1605,10 +1629,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     _calculateCounts();
     setState(() {
       _hasChanges = true;
-      if (_isFormattingBarExpanded && !Platform.environment.containsKey('FLUTTER_TEST')) {
-        _isFormattingBarExpanded = false;
+      if (_activeCategory != _ActiveCategory.none && !Platform.environment.containsKey('FLUTTER_TEST')) {
+        _activeCategory = _ActiveCategory.none;
       }
     });
+  }
+
+  Widget _buildContextMenu(BuildContext context, EditableTextState editableTextState) {
+    return RichTextSelectionToolbar(editableTextState: editableTextState);
   }
 
   void _onContentTextChanged() {
@@ -1616,8 +1644,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     _startZenTimer();
     setState(() {
       _hasChanges = true;
-      if (_isFormattingBarExpanded && !Platform.environment.containsKey('FLUTTER_TEST')) {
-        _isFormattingBarExpanded = false;
+      if (_activeCategory != _ActiveCategory.none && !Platform.environment.containsKey('FLUTTER_TEST')) {
+        _activeCategory = _ActiveCategory.none;
       }
     });
   }
@@ -1700,6 +1728,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       final fn = FocusNode();
       fn.addListener(() {
         if (fn.hasFocus) {
+          if (!_isFormattingBarExpanded) {
+            setState(() {
+              _isFormattingBarExpanded = true;
+            });
+          }
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (fn.context != null) {
               Scrollable.ensureVisible(
@@ -1744,6 +1777,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       final fn = FocusNode();
       fn.addListener(() {
         if (fn.hasFocus) {
+          if (!_isFormattingBarExpanded) {
+            setState(() {
+              _isFormattingBarExpanded = true;
+            });
+          }
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (fn.context != null) {
               Scrollable.ensureVisible(
@@ -3697,8 +3735,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     final notesProvider = Provider.of<NotesProvider>(context);
     
-    final activeStyle = (_contentController is RichTextEditingController)
-        ? (_contentController as RichTextEditingController).currentActiveStyle
+    final RichTextEditingController? currentController = (_noteType == 'text')
+        ? _activeController
+        : (_contentController is RichTextEditingController ? _contentController as RichTextEditingController : null);
+    final activeStyle = currentController != null
+        ? currentController.currentActiveStyle
         : const Style();
     
     final noteDate = widget.note?.createdAt ?? DateTime.now();
@@ -3707,6 +3748,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     
     final screenWidth = MediaQuery.of(context).size.width;
     final double targetWidth = _isFormattingBarExpanded ? (screenWidth - 48.0) : 48.0;
+    final double targetHeight = !_isFormattingBarExpanded ? 48.0 : (_activeCategory != _ActiveCategory.none ? 100.0 : 50.0);
     final double targetLeft = _isFormattingBarExpanded 
         ? 24.0 
         : (screenWidth - targetWidth - 24.0);
@@ -3847,6 +3889,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                     controller: _titleController,
                                     focusNode: _titleFocusNode,
                                     maxLines: 1,
+                                    contextMenuBuilder: _buildContextMenu,
                                     scrollPadding: const EdgeInsets.only(bottom: 90.0),
                                     style: GoogleFonts.inter(
                                       fontSize: 24.0,
@@ -3959,17 +4002,23 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
               top: 12.0,
               left: 24.0,
               right: 24.0,
-              child: AppHeaderBar(
-                leftWidth: 44.0,
-                onLeftTap: () {
-                  Navigator.of(context).maybePop();
-                },
-                leftChild: SvgPicture.asset(
-                  'assets/icons/angle_left.svg',
-                  width: 22,
-                  height: 22,
-                  colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                ),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                opacity: (notesProvider.isZenModeEnabled && _isZenTyping) ? 0.0 : 1.0,
+                child: IgnorePointer(
+                  ignoring: notesProvider.isZenModeEnabled && _isZenTyping,
+                  child: AppHeaderBar(
+                    leftWidth: 44.0,
+                    onLeftTap: () {
+                      Navigator.of(context).maybePop();
+                    },
+                    leftChild: SvgPicture.asset(
+                      'assets/icons/angle_left.svg',
+                      width: 22,
+                      height: 22,
+                      colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                    ),
                 rightWidth: 96.0,
                 rightChild: Row(
                   children: [
@@ -4020,6 +4069,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                 ),
               ),
             ),
+          ),
+        ),
             
             AnimatedPositioned(
                 duration: const Duration(milliseconds: 1000),
@@ -4027,124 +4078,70 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                 bottom: 12,
                 left: targetLeft,
                 width: targetWidth,
-                height: 48,
-                child: RichTextFormattingPillContainer(
-                  isExpanded: _isFormattingBarExpanded,
-                  width: targetWidth,
-                  height: 48,
-                  child: _isFormattingBarExpanded
-                      ? Row(
-                          children: [
-                            // Left chevron play 1
-                            TactileButton(
-                              useAppleSpring: true,
-                              compressionScale: 0.7,
-                              settleDuration: const Duration(milliseconds: 1000),
-                              pressDuration: const Duration(milliseconds: 80),
-                              playSelectionHaptic: true,
-                              onTap: () {
-                                _pageController.previousPage(
-                                  duration: const Duration(milliseconds: 220),
-                                  curve: Curves.easeOutCubic,
-                                );
-                              },
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                alignment: Alignment.center,
-                                child: const RichTextFormattingPillIcon(
-                                  assetName: 'assets/icons/play_1.svg',
-                                  size: 22,
-                                  color: Color(0xFF333333),
-                                  semanticLabel: 'Previous tools',
-                                ),
-                              ),
-                            ),
-                            
-                            // Sliding PageView
-                            Expanded(
-                              child: PageView(
-                                controller: _pageController,
-                                onPageChanged: (page) {
-                                  setState(() {
-                                    _currentPage = page;
-                                  });
-                                },
-                                children: [
-                                  _buildFigmaPage0(activeStyle),
-                                  _buildFigmaPage1(activeStyle),
-                                  _buildFigmaPage2(activeStyle),
-                                ],
-                              ),
-                            ),
-
-                            // Right chevron play 2
-                            TactileButton(
-                              useAppleSpring: true,
-                              compressionScale: 0.7,
-                              settleDuration: const Duration(milliseconds: 1000),
-                              pressDuration: const Duration(milliseconds: 80),
-                              playSelectionHaptic: true,
-                              onTap: () {
-                                if (_currentPage == 2) {
-                                  setState(() {
-                                    _isFormattingBarExpanded = false;
-                                  });
-                                } else {
-                                  _pageController.nextPage(
-                                    duration: const Duration(milliseconds: 220),
-                                    curve: Curves.easeOutCubic,
-                                  );
-                                }
-                              },
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                alignment: Alignment.center,
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 180),
-                                  child: _currentPage == 2
-                                      ? const Icon(
-                                          Icons.unfold_less_rounded,
-                                          key: ValueKey('collapse'),
-                                          size: 22,
-                                          color: Color(0xFF333333),
-                                        )
-                                      : const RichTextFormattingPillIcon(
-                                          key: ValueKey('next'),
-                                          assetName: 'assets/icons/play_2.svg',
-                                          size: 22,
-                                          color: Color(0xFF333333),
-                                          semanticLabel: 'Next tools',
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : TactileButton(
-                          useAppleSpring: true,
-                          compressionScale: 0.7,
-                          settleDuration: const Duration(milliseconds: 1000),
-                          pressDuration: const Duration(milliseconds: 80),
-                          playSelectionHaptic: true,
-                          onTap: () {
+                height: targetHeight,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  opacity: (notesProvider.isZenModeEnabled && _isZenTyping) ? 0.0 : 1.0,
+                  child: IgnorePointer(
+                    ignoring: notesProvider.isZenModeEnabled && _isZenTyping,
+                    child: GestureDetector(
+                      onVerticalDragEnd: (details) {
+                        if (details.primaryVelocity != null && details.primaryVelocity! > 100) {
+                          if (_activeCategory != _ActiveCategory.none) {
                             setState(() {
-                              _isFormattingBarExpanded = true;
+                              _activeCategory = _ActiveCategory.none;
                             });
-                          },
-                          child: const SizedBox(
-                            width: 48,
-                            height: 48,
-                            child: Icon(
-                              Icons.edit_note_rounded,
-                              color: Color(0xFF333333),
-                              size: 24,
+                          }
+                        }
+                      },
+                  child: RichTextFormattingPillContainer(
+                    width: targetWidth,
+                    height: targetHeight,
+                    child: !_isFormattingBarExpanded
+                        ? TactileButton(
+                            useAppleSpring: true,
+                            compressionScale: 0.7,
+                            settleDuration: const Duration(milliseconds: 1000),
+                            pressDuration: const Duration(milliseconds: 80),
+                            playSelectionHaptic: true,
+                            onTap: () {
+                              setState(() {
+                                _isFormattingBarExpanded = true;
+                              });
+                            },
+                            child: const SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: Icon(
+                                Icons.edit_note_rounded,
+                                color: Color(0xFF333333),
+                                size: 24,
+                              ),
                             ),
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 1000),
+                                curve: Curves.elasticOut,
+                                height: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
+                                child: _activeCategory != _ActiveCategory.none
+                                    ? _buildSubsectionRow(activeStyle, _focusedBlock)
+                                    : const SizedBox.shrink(),
+                              ),
+                              SizedBox(
+                                height: 50.0,
+                                child: _buildCategoriesRow(activeStyle),
+                              ),
+                            ],
                           ),
-                        ),
+                  ),
                 ),
               ),
+            ),
+          ),
             
             // Custom Delete Popup
             if (_showDeletePopup)
@@ -4155,159 +4152,127 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     );
   }
 
-  Widget _buildFigmaPage0(Style activeStyle) {
+  Widget _buildSubsectionRow(Style activeStyle, NoteBlock? block) {
+    Widget child;
+    switch (_activeCategory) {
+      case _ActiveCategory.aa:
+        child = _buildAaSubsection(activeStyle);
+        break;
+      case _ActiveCategory.alignment:
+        child = _buildAlignmentSubsection(activeStyle);
+        break;
+      case _ActiveCategory.list:
+        child = _buildListSubsection(block);
+        break;
+      case _ActiveCategory.attachment:
+        child = _buildAttachmentSubsection();
+        break;
+      case _ActiveCategory.headings:
+        child = _buildHeadingsSubsection(block);
+        break;
+      default:
+        child = const SizedBox.shrink();
+    }
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      child: KeyedSubtree(
+        key: ValueKey(_activeCategory),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildCategoriesRow(Style activeStyle) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildFormattingTextButton(
-          text: "B",
-          onTap: () => _wrapSelection('**', '**'),
-          isActive: activeStyle.bold,
-          style: GoogleFonts.inter(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-          tooltip: 'Bold',
-        ),
-        _buildFormattingTextButton(
-          text: "I",
-          onTap: () => _wrapSelection('*', '*'),
-          isActive: activeStyle.italic,
-          style: GoogleFonts.inter(
-            fontSize: 22,
-            fontStyle: FontStyle.italic,
-          ),
-          tooltip: 'Italic',
-        ),
-        _buildFormattingTextButton(
-          text: "U",
-          onTap: () => _wrapSelection('<u>', '</u>'),
-          isActive: activeStyle.underline,
-          style: GoogleFonts.inter(
-            fontSize: 22,
-            decoration: TextDecoration.underline,
-          ),
-          tooltip: 'Underline',
-        ),
-        _buildFormattingTextButton(
-          text: "T",
-          onTap: () => _wrapSelection('~~', '~~'),
-          isActive: activeStyle.strikethrough,
-          style: GoogleFonts.inter(
-            fontSize: 22,
-            decoration: TextDecoration.lineThrough,
-          ),
-          tooltip: 'Strikethrough',
-        ),
-        _buildFormattingIconButton(
-          assetName: 'assets/icons/highlighter.svg',
-          onTap: () => _wrapSelection('highlight', ''),
-          isActive: activeStyle.highlight != null,
-          tooltip: 'Highlight',
-        ),
-        _buildFormattingIconButton(
-          assetName: 'assets/icons/link.svg',
-          onTap: () => _wrapSelection('[', '](url)'),
+        // Left Page Arrow
+        _buildCategoryIconButton(
+          icon: const Icon(Icons.chevron_left_rounded, size: 24),
+          onTap: () {
+            if (_currentPage > 0) {
+              _pageController.previousPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOutCubic,
+              );
+            }
+          },
           isActive: false,
-          tooltip: 'Link',
+          isEnabled: _currentPage > 0,
         ),
-      ],
-    );
-  }
-
-  Widget _buildFigmaPage1(Style activeStyle) {
-    final block = _focusedBlock;
-    final isH1 = block is HeadingBlock && block.level == 1;
-    final isH2 = block is HeadingBlock && block.level == 2;
-    final isH3 = block is HeadingBlock && block.level == 3;
-    final isBullet = block is BulletedListBlock;
-    final isNumber = block is NumberedListBlock;
-    final isCheckbox = block is ChecklistBlock;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildPage1TextButton("H1", () {
-          if (block != null) {
-            if (isH1) {
-              _toggleBlockType(block, ParagraphBlock);
-            } else {
-              _toggleBlockType(block, HeadingBlock, headingLevel: 1);
-            }
-          }
-        }, isH1, tooltip: 'Heading 1'),
-        _buildPage1TextButton("H2", () {
-          if (block != null) {
-            if (isH2) {
-              _toggleBlockType(block, ParagraphBlock);
-            } else {
-              _toggleBlockType(block, HeadingBlock, headingLevel: 2);
-            }
-          }
-        }, isH2, tooltip: 'Heading 2'),
-        _buildPage1TextButton("H3", () {
-          if (block != null) {
-            if (isH3) {
-              _toggleBlockType(block, ParagraphBlock);
-            } else {
-              _toggleBlockType(block, HeadingBlock, headingLevel: 3);
-            }
-          }
-        }, isH3, tooltip: 'Heading 3'),
-        _buildPage1IconButton(Icons.format_list_bulleted_rounded, () {
-          if (block != null) {
-            if (isBullet) {
-              _toggleBlockType(block, ParagraphBlock);
-            } else {
-              _toggleBlockType(block, BulletedListBlock);
-            }
-          }
-        }, isBullet, tooltip: 'Bullet List'),
-        _buildPage1IconButton(Icons.format_list_numbered_rounded, () {
-          if (block != null) {
-            if (isNumber) {
-              _toggleBlockType(block, ParagraphBlock);
-            } else {
-              _toggleBlockType(block, NumberedListBlock);
-            }
-          }
-        }, isNumber, tooltip: 'Numbered List'),
-        _buildPage1IconButton(Icons.add_task_rounded, () {
-          if (block != null) {
-            if (isCheckbox) {
-              _toggleBlockType(block, ParagraphBlock);
-            } else {
-              _toggleBlockType(block, ChecklistBlock);
-            }
-          }
-        }, isCheckbox, tooltip: 'Checklist'),
-        _buildPage1IconButton(Icons.grid_on_rounded, _showPaperSettingsBottomSheet, false, tooltip: 'Paper Settings'),
-      ],
-    );
-  }
-
-  Widget _buildFigmaPage2(Style activeStyle) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildPage1IconButton(Icons.format_align_left_rounded, () => _wrapSelection('<p align="left">', '</p>'), activeStyle.align == TextAlign.left, tooltip: 'Align Left'),
-        _buildPage1IconButton(Icons.format_align_center_rounded, () => _wrapSelection('<p align="center">', '</p>'), activeStyle.align == TextAlign.center, tooltip: 'Align Center'),
-        _buildPage1IconButton(Icons.format_align_right_rounded, () => _wrapSelection('<p align="right">', '</p>'), activeStyle.align == TextAlign.right, tooltip: 'Align Right'),
-        const Opacity(
-          opacity: 0.0,
-          child: Tooltip(
-            message: 'Align Justify',
-            child: SizedBox(width: 0, height: 0),
+        
+        // Sliding Categories
+        Expanded(
+          child: PageView(
+            controller: _pageController,
+            onPageChanged: (page) {
+              setState(() {
+                _currentPage = page;
+              });
+            },
+            children: [
+              _buildCategoryPage1(activeStyle),
+              _buildCategoryPage2(),
+            ],
           ),
         ),
-        _buildPage1IconButton(Icons.camera_alt_outlined, () => _showGalleryBottomSheet(context), false, tooltip: 'Attach Image'),
-        _buildPage1IconButton(Icons.mic_none_rounded, _startRecording, false, tooltip: 'Record Audio'),
-        _buildPage1IconButton(Icons.keyboard_hide_rounded, () => FocusScope.of(context).unfocus(), false, tooltip: 'Hide Keyboard'),
+
+        // Right Page Arrow
+        _buildCategoryIconButton(
+          icon: const Icon(Icons.chevron_right_rounded, size: 24),
+          onTap: () {
+            if (_currentPage < 1) {
+              _pageController.nextPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOutCubic,
+              );
+            }
+          },
+          isActive: false,
+          isEnabled: _currentPage < 1,
+        ),
       ],
     );
   }
 
-  Widget _buildFormattingTextButton({
+  Widget _buildSubsectionIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required bool isActive,
+    required String tooltip,
+  }) {
+    final inactiveColor = const Color(0xFF333333);
+    final activeColor = _tintColor;
+    final activeBgColor = activeColor.withValues(alpha: 0.15);
+
+    return Tooltip(
+      message: tooltip,
+      child: TactileButton(
+        useAppleSpring: true,
+        compressionScale: 0.7,
+        settleDuration: const Duration(milliseconds: 1000),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: isActive ? activeBgColor : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 22,
+            color: isActive ? activeColor : inactiveColor,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubsectionTextButton({
     required String text,
     required VoidCallback onTap,
     required bool isActive,
@@ -4315,12 +4280,15 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     required String tooltip,
   }) {
     final inactiveColor = const Color(0xFF333333);
-    final activeColor = const Color(0xFFFFA322);
+    final activeColor = _tintColor;
     final activeBgColor = activeColor.withValues(alpha: 0.15);
 
     return Tooltip(
       message: tooltip,
-      child: GestureDetector(
+      child: TactileButton(
+        useAppleSpring: true,
+        compressionScale: 0.7,
+        settleDuration: const Duration(milliseconds: 1000),
         onTap: () {
           HapticFeedback.lightImpact();
           onTap();
@@ -4344,103 +4312,424 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     );
   }
 
-  Widget _buildFormattingIconButton({
-    required String assetName,
+  Widget _buildAaSubsection(Style activeStyle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildSubsectionTextButton(
+          text: "B",
+          onTap: () => _wrapSelection('**', '**'),
+          isActive: activeStyle.bold,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+          tooltip: 'Bold',
+        ),
+        _buildSubsectionTextButton(
+          text: "I",
+          onTap: () => _wrapSelection('*', '*'),
+          isActive: activeStyle.italic,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontStyle: FontStyle.italic,
+          ),
+          tooltip: 'Italic',
+        ),
+        _buildSubsectionTextButton(
+          text: "U",
+          onTap: () => _wrapSelection('<u>', '</u>'),
+          isActive: activeStyle.underline,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            decoration: TextDecoration.underline,
+          ),
+          tooltip: 'Underline',
+        ),
+        _buildSubsectionTextButton(
+          text: "T",
+          onTap: () => _wrapSelection('~~', '~~'),
+          isActive: activeStyle.strikethrough,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            decoration: TextDecoration.lineThrough,
+          ),
+          tooltip: 'Strikethrough',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAlignmentSubsection(Style activeStyle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildSubsectionIconButton(
+          icon: Icons.format_align_left_rounded,
+          onTap: () => _wrapSelection('<p align="left">', '</p>'),
+          isActive: activeStyle.align == TextAlign.left,
+          tooltip: 'Align Left',
+        ),
+        _buildSubsectionIconButton(
+          icon: Icons.format_align_center_rounded,
+          onTap: () => _wrapSelection('<p align="center">', '</p>'),
+          isActive: activeStyle.align == TextAlign.center,
+          tooltip: 'Align Center',
+        ),
+        _buildSubsectionIconButton(
+          icon: Icons.format_align_right_rounded,
+          onTap: () => _wrapSelection('<p align="right">', '</p>'),
+          isActive: activeStyle.align == TextAlign.right,
+          tooltip: 'Align Right',
+        ),
+        _buildSubsectionIconButton(
+          icon: Icons.format_align_justify_rounded,
+          onTap: () => _wrapSelection('<p align="justify">', '</p>'),
+          isActive: activeStyle.align == TextAlign.justify,
+          tooltip: 'Align Justify',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildListSubsection(NoteBlock? block) {
+    final isBullet = block is BulletedListBlock;
+    final isNumber = block is NumberedListBlock;
+    final isCheckbox = block is ChecklistBlock;
+    final isQuote = block is QuoteBlock;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildSubsectionIconButton(
+          icon: Icons.format_list_bulleted_rounded,
+          onTap: () {
+            if (block != null) {
+              if (isBullet) {
+                _toggleBlockType(block, ParagraphBlock);
+              } else {
+                _toggleBlockType(block, BulletedListBlock);
+              }
+            }
+          },
+          isActive: isBullet,
+          tooltip: 'Bullet List',
+        ),
+        _buildSubsectionIconButton(
+          icon: Icons.format_list_numbered_rounded,
+          onTap: () {
+            if (block != null) {
+              if (isNumber) {
+                _toggleBlockType(block, ParagraphBlock);
+              } else {
+                _toggleBlockType(block, NumberedListBlock);
+              }
+            }
+          },
+          isActive: isNumber,
+          tooltip: 'Numbered List',
+        ),
+        _buildSubsectionIconButton(
+          icon: Icons.add_task_rounded,
+          onTap: () {
+            if (block != null) {
+              if (isCheckbox) {
+                _toggleBlockType(block, ParagraphBlock);
+              } else {
+                _toggleBlockType(block, ChecklistBlock);
+              }
+            }
+          },
+          isActive: isCheckbox,
+          tooltip: 'Checklist',
+        ),
+        _buildSubsectionIconButton(
+          icon: Icons.format_quote_rounded,
+          onTap: () {
+            if (block != null) {
+              if (isQuote) {
+                _toggleBlockType(block, ParagraphBlock);
+              } else {
+                _toggleBlockType(block, QuoteBlock);
+              }
+            }
+          },
+          isActive: isQuote,
+          tooltip: 'Quote Block',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttachmentSubsection() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildSubsectionIconButton(
+          icon: Icons.link_rounded,
+          onTap: () => _wrapSelection('[', '](url)'),
+          isActive: false,
+          tooltip: 'Link',
+        ),
+        _buildSubsectionIconButton(
+          icon: Icons.camera_alt_outlined,
+          onTap: () => _showGalleryBottomSheet(context),
+          isActive: false,
+          tooltip: 'Attach Image',
+        ),
+        _buildSubsectionIconButton(
+          icon: Icons.mic_none_rounded,
+          onTap: _startRecording,
+          isActive: false,
+          tooltip: 'Record Audio',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeadingsSubsection(NoteBlock? block) {
+    final isH1 = block is HeadingBlock && block.level == 1;
+    final isH2 = block is HeadingBlock && block.level == 2;
+    final isH3 = block is HeadingBlock && block.level == 3;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildSubsectionTextButton(
+          text: "H1",
+          onTap: () {
+            if (block != null) {
+              if (isH1) {
+                _toggleBlockType(block, ParagraphBlock);
+              } else {
+                _toggleBlockType(block, HeadingBlock, headingLevel: 1);
+              }
+            }
+          },
+          isActive: isH1,
+          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold),
+          tooltip: 'Heading 1',
+        ),
+        _buildSubsectionTextButton(
+          text: "H2",
+          onTap: () {
+            if (block != null) {
+              if (isH2) {
+                _toggleBlockType(block, ParagraphBlock);
+              } else {
+                _toggleBlockType(block, HeadingBlock, headingLevel: 2);
+              }
+            }
+          },
+          isActive: isH2,
+          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold),
+          tooltip: 'Heading 2',
+        ),
+        _buildSubsectionTextButton(
+          text: "H3",
+          onTap: () {
+            if (block != null) {
+              if (isH3) {
+                _toggleBlockType(block, ParagraphBlock);
+              } else {
+                _toggleBlockType(block, HeadingBlock, headingLevel: 3);
+              }
+            }
+          },
+          isActive: isH3,
+          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold),
+          tooltip: 'Heading 3',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryIconButton({
+    required Widget icon,
     required VoidCallback onTap,
     required bool isActive,
-    required String tooltip,
+    bool isEnabled = true,
   }) {
     final inactiveColor = const Color(0xFF333333);
-    final activeColor = const Color(0xFFFFA322);
-    final activeBgColor = activeColor.withValues(alpha: 0.15);
 
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Container(
-          width: 36,
-          height: 36,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isActive ? activeBgColor : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-          child: SvgPicture.asset(
-            assetName,
-            width: 22,
-            height: 22,
-            colorFilter: ColorFilter.mode(
-              isActive ? activeColor : inactiveColor,
-              BlendMode.srcIn,
-            ),
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.35,
+      child: Tooltip(
+        message: '',
+        child: TactileButton(
+          useAppleSpring: true,
+          compressionScale: 0.7,
+          settleDuration: const Duration(milliseconds: 1000),
+          onTap: isEnabled ? onTap : () {},
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: isActive
+                ? GlassSurface(
+                    borderRadius: BorderRadius.circular(22),
+                    customTintColor: _tintColor,
+                    child: Center(
+                      child: IconTheme.merge(
+                        data: const IconThemeData(
+                          color: Colors.white,
+                        ),
+                        child: icon,
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: IconTheme.merge(
+                      data: IconThemeData(
+                        color: inactiveColor,
+                      ),
+                      child: icon,
+                    ),
+                  ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPage1TextButton(String text, VoidCallback onTap, bool isActive, {required String tooltip}) {
-    final inactiveColor = const Color(0xFF333333);
-    final activeColor = const Color(0xFFFFA322);
-    final activeBgColor = activeColor.withValues(alpha: 0.15);
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Container(
-          width: 36,
-          height: 36,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isActive ? activeBgColor : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-          child: Text(
-            text,
+  Widget _buildCategoryPage1(Style activeStyle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildCategoryIconButton(
+          icon: Text(
+            "Aa",
             style: GoogleFonts.inter(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: isActive ? activeColor : inactiveColor,
+              color: _activeCategory == _ActiveCategory.aa ? Colors.white : const Color(0xFF333333),
             ),
           ),
+          onTap: () {
+            setState(() {
+              if (_activeCategory == _ActiveCategory.aa) {
+                _activeCategory = _ActiveCategory.none;
+              } else {
+                _activeCategory = _ActiveCategory.aa;
+              }
+            });
+          },
+          isActive: _activeCategory == _ActiveCategory.aa,
         ),
-      ),
+        _buildCategoryIconButton(
+          icon: const Icon(
+            Icons.format_align_left_rounded,
+            size: 22,
+          ),
+          onTap: () {
+            setState(() {
+              if (_activeCategory == _ActiveCategory.alignment) {
+                _activeCategory = _ActiveCategory.none;
+              } else {
+                _activeCategory = _ActiveCategory.alignment;
+              }
+            });
+          },
+          isActive: _activeCategory == _ActiveCategory.alignment,
+        ),
+        _buildCategoryIconButton(
+          icon: const Icon(
+            Icons.add_task_rounded,
+            size: 22,
+          ),
+          onTap: () {
+            setState(() {
+              if (_activeCategory == _ActiveCategory.list) {
+                _activeCategory = _ActiveCategory.none;
+              } else {
+                _activeCategory = _ActiveCategory.list;
+              }
+            });
+          },
+          isActive: _activeCategory == _ActiveCategory.list,
+        ),
+        _buildCategoryIconButton(
+          icon: const RichTextFormattingPillIcon(
+            assetName: 'assets/icons/highlighter.svg',
+            size: 22,
+          ),
+          onTap: () {
+            _wrapSelection('highlight', '');
+          },
+          isActive: activeStyle.highlight != null,
+        ),
+        _buildCategoryIconButton(
+          icon: const RichTextFormattingPillIcon(
+            assetName: 'assets/icons/link.svg',
+            size: 22,
+          ),
+          onTap: () {
+            setState(() {
+              if (_activeCategory == _ActiveCategory.attachment) {
+                _activeCategory = _ActiveCategory.none;
+              } else {
+                _activeCategory = _ActiveCategory.attachment;
+              }
+            });
+          },
+          isActive: _activeCategory == _ActiveCategory.attachment,
+        ),
+      ],
     );
   }
 
-  Widget _buildPage1IconButton(IconData icon, VoidCallback onTap, bool isActive, {required String tooltip}) {
-    final inactiveColor = const Color(0xFF333333);
-    final activeColor = const Color(0xFFFFA322);
-    final activeBgColor = activeColor.withValues(alpha: 0.15);
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Container(
-          width: 36,
-          height: 36,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isActive ? activeBgColor : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
+  Widget _buildCategoryPage2() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildCategoryIconButton(
+          icon: const Icon(
+            Icons.title_rounded,
             size: 22,
-            color: isActive ? activeColor : inactiveColor,
           ),
+          onTap: () {
+            setState(() {
+              if (_activeCategory == _ActiveCategory.headings) {
+                _activeCategory = _ActiveCategory.none;
+              } else {
+                _activeCategory = _ActiveCategory.headings;
+              }
+            });
+          },
+          isActive: _activeCategory == _ActiveCategory.headings,
         ),
-      ),
+        _buildCategoryIconButton(
+          icon: const Icon(
+            Icons.grid_on_rounded,
+            size: 22,
+          ),
+          onTap: () {
+            _showPaperSettingsBottomSheet();
+          },
+          isActive: false,
+        ),
+        _buildCategoryIconButton(
+          icon: const Icon(
+            Icons.keyboard_hide_rounded,
+            size: 22,
+          ),
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          isActive: false,
+        ),
+        _buildCategoryIconButton(
+          icon: const Icon(
+            Icons.unfold_less_rounded,
+            size: 22,
+          ),
+          onTap: () {
+            setState(() {
+              _isFormattingBarExpanded = false;
+            });
+          },
+          isActive: false,
+        ),
+      ],
     );
   }
 
@@ -4716,16 +5005,13 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                   child: TextField(
                     controller: itemController,
                     focusNode: _checklistFocusNodes[index],
+                    contextMenuBuilder: _buildContextMenu,
                     scrollPadding: const EdgeInsets.only(bottom: 90.0),
                     onChanged: (val) {
                       _checklistItems[index]['text'] = val;
                       _hasChanges = true;
                       _calculateCounts();
-                      if (_isFormattingBarExpanded && !Platform.environment.containsKey('FLUTTER_TEST')) {
-                        setState(() {
-                          _isFormattingBarExpanded = false;
-                        });
-                      }
+                      _startZenTimer();
                     },
                     style: GoogleFonts.inter(
                       fontSize: 16,

@@ -54,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _activeFilter = 'All';
   late final List<TaskItem> _mockTasks;
   late final List<Note> _mockNotes;
+  final GlobalKey<FolderManagementScreenState> _foldersKey = GlobalKey<FolderManagementScreenState>();
 
   @override
   void initState() {
@@ -416,6 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
       bottom: false, // bottom handled by nav bar + system padding
       child: HomePromptView(
         date: DateTime.now(),
+        isNotesActive: _isNotesActive,
         interactive: false,
         onTap: _openNewNote,
         onLastEditedNoteTap: _openNote,
@@ -441,6 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFoldersBody() {
     return FolderManagementScreen(
+      key: _foldersKey,
       onMenuTap: () {},
       onNavigateToTab: (i) => setState(() => _activeNavIndex = i),
     );
@@ -740,10 +743,14 @@ class _HomeScreenState extends State<HomeScreen> {
               activeColor: _isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
               onDestinationSelected: (i) {
                 if (i == 4) {
-                  if (_isNotesActive) {
-                    _openNewNote();
+                  if (_activeNavIndex == 1) {
+                    _foldersKey.currentState?.showCreateFolderDialog();
                   } else {
-                    _openNewTask();
+                    if (_isNotesActive) {
+                      _openNewNote();
+                    } else {
+                      _openNewTask();
+                    }
                   }
                 } else {
                   HapticFeedback.lightImpact();

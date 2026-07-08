@@ -5,6 +5,7 @@ import '../../themes/glassmorphism_presets.dart';
 class TactileButton extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
+  final GestureLongPressStartCallback? onLongPressStart;
   final double compressionScale;
   final Duration pressDuration;
   final Duration settleDuration;
@@ -15,6 +16,7 @@ class TactileButton extends StatefulWidget {
     super.key,
     required this.child,
     required this.onTap,
+    this.onLongPressStart,
     this.compressionScale = MotionPresets.compressionScale,
     this.pressDuration = MotionPresets.pressDuration,
     this.settleDuration = MotionPresets.settleDuration,
@@ -113,6 +115,7 @@ class _TactileButtonState extends State<TactileButton> with TickerProviderStateM
       onTapDown: (_) => _handleTapDown(),
       onTapUp: (_) => _handleTapUp(),
       onTapCancel: () => _handleTapCancel(),
+      onLongPressStart: widget.onLongPressStart,
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: widget.child,

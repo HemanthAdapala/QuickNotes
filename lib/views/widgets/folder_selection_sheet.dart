@@ -59,48 +59,6 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String?>(
-                    value: selectedParentId,
-                    dropdownColor: const Color(0xFFF2F2EE),
-                    style: GoogleFonts.plusJakartaSans(color: Colors.black),
-                    decoration: InputDecoration(
-                      labelText: "Parent Folder (Optional)",
-                      labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF8C8987)),
-                      border: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFE6E3D2)),
-                      ),
-                      enabledBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFE6E3D2)),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: [
-                      const DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text("None (Root Folder)"),
-                      ),
-                      ...hierarchical.map((item) {
-                        final folder = item.folder;
-                        final depth = item.depth;
-                        final indent = "  " * depth;
-                        final prefix = depth > 0 ? "└─ " : "";
-                        return DropdownMenuItem<String?>(
-                          value: folder.id,
-                          child: Text(
-                            "$indent$prefix${folder.name}",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }),
-                    ],
-                    onChanged: (val) {
-                      setDialogState(() {
-                        selectedParentId = val;
-                      });
-                    },
-                  ),
                 ],
               ),
               actions: [
@@ -117,7 +75,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                     if (name.isNotEmpty) {
                       Provider.of<NotesProvider>(context, listen: false).createFolder(
                         name,
-                        parentId: selectedParentId,
+                        parentId: null,
                       );
                       _folderNameController.clear();
                       Navigator.pop(context);

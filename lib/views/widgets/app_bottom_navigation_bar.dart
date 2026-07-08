@@ -71,7 +71,7 @@ class AppBottomNavigationBar extends StatelessWidget {
                             height: 43.0 * scale,
                             child: GlassSurface(
                               borderRadius: BorderRadius.circular(21.5 * scale),
-                              customTintColor: activeColor ?? const Color(0xFFFFA322),
+                              customTintColor: activeColor ?? const Color(0xFFFFCC00),
                               child: const SizedBox.expand(),
                             ),
                           ),
@@ -155,16 +155,19 @@ class AppBottomNavigationDestination {
 
 class BottomBarGlassSurface extends StatelessWidget {
   const BottomBarGlassSurface({
+    super.key,
     required this.width,
     required this.height,
     required this.borderRadius,
     required this.child,
+    this.useFrost = false,
   });
 
   final double width;
   final double height;
   final BorderRadius borderRadius;
   final Widget child;
+  final bool useFrost;
 
   @override
   Widget build(BuildContext context) {
@@ -196,15 +199,15 @@ class BottomBarGlassSurface extends StatelessWidget {
                     borderRadius: borderRadius,
                     boxShadow: GlassmorphismPresets.innerShadows,
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.45),
+                      color: Colors.white.withValues(alpha: useFrost ? 0.65 : 0.45),
                       width: 0.8,
                     ),
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.white.withValues(alpha: 0.72),
-                        Colors.white.withValues(alpha: 0.0),
+                        Colors.white.withValues(alpha: useFrost ? 0.85 : 0.72),
+                        Colors.white.withValues(alpha: useFrost ? 0.45 : 0.0),
                         scheme.surfaceTint.withValues(alpha: 0.08),
                         Colors.black.withValues(alpha: 0.035),
                       ],
@@ -384,13 +387,20 @@ class _NavigationButtonState extends State<_NavigationButton>
                           ),
                         );
                       },
-                      child: SvgPicture.asset(
-                        widget.destination.iconAsset,
-                        key: ValueKey(isSelected),
-                        width: widget.iconSize,
-                        height: widget.iconSize,
-                        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-                      ),
+                      child: (widget.index == 4 && widget.selectedIndex == 1)
+                          ? Icon(
+                              Icons.add_rounded,
+                              key: const ValueKey('plus_icon'),
+                              size: widget.iconSize,
+                              color: color,
+                            )
+                          : SvgPicture.asset(
+                              widget.destination.iconAsset,
+                              key: ValueKey(isSelected),
+                              width: widget.iconSize,
+                              height: widget.iconSize,
+                              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                            ),
                     ),
                   ),
                   if (!reduceMotion)

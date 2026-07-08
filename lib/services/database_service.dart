@@ -27,10 +27,10 @@ class DatabaseService {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'quick_notes.db');
 
-    // Open/Create the database (version 8)
+    // Open/Create the database (version 9)
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -71,7 +71,9 @@ class DatabaseService {
         id TEXT PRIMARY KEY,
         name TEXT,
         parentId TEXT,
-        createdAt TEXT
+        createdAt TEXT,
+        colorHex TEXT,
+        sticker TEXT
       )
     ''');
 
@@ -159,6 +161,12 @@ class DatabaseService {
         await db.execute('CREATE INDEX IF NOT EXISTS idx_folders_createdAt ON folders(createdAt)');
       } catch (_) {}
     }
+    if (oldVersion < 9) {
+      try {
+        await db.execute('ALTER TABLE folders ADD COLUMN colorHex TEXT');
+        await db.execute('ALTER TABLE folders ADD COLUMN sticker TEXT');
+      } catch (_) {}
+    }
   }
 
   // --- Performance Timing Helper ---
@@ -202,8 +210,7 @@ class DatabaseService {
     }
     final db = await instance.database;
     final List<Map<String, dynamic>> maps = await timedQuery('queryAll', () => db.rawQuery('''
-      SELECT id, title, isPinned, isFavorite, isArchived, category, noteType, tags, attachments, isLocked, reminderTime, createdAt, updatedAt, colorValue, isDeleted, folderId, isHabit, habitRecurrence, habitStreak, habitLastCompleted, previewText, paperSettings,
-      CASE WHEN noteType = 'checklist' THEN content ELSE SUBSTR(content, 1, 150) END AS content
+      SELECT id, title, isPinned, isFavorite, isArchived, category, noteType, tags, attachments, isLocked, reminderTime, createdAt, updatedAt, colorValue, isDeleted, folderId, isHabit, habitRecurrence, habitStreak, habitLastCompleted, previewText, paperSettings, content
       FROM notes
       ORDER BY isPinned DESC, updatedAt DESC
     '''));
@@ -275,8 +282,7 @@ class DatabaseService {
     }
     final db = await instance.database;
     final List<Map<String, dynamic>> maps = await timedQuery('search', () => db.rawQuery('''
-      SELECT id, title, isPinned, isFavorite, isArchived, category, noteType, tags, attachments, isLocked, reminderTime, createdAt, updatedAt, colorValue, isDeleted, folderId, isHabit, habitRecurrence, habitStreak, habitLastCompleted, previewText, paperSettings,
-      CASE WHEN noteType = 'checklist' THEN content ELSE SUBSTR(content, 1, 150) END AS content
+      SELECT id, title, isPinned, isFavorite, isArchived, category, noteType, tags, attachments, isLocked, reminderTime, createdAt, updatedAt, colorValue, isDeleted, folderId, isHabit, habitRecurrence, habitStreak, habitLastCompleted, previewText, paperSettings, content
       FROM notes
       WHERE title LIKE ? OR content LIKE ? OR tags LIKE ?
       ORDER BY isPinned DESC, updatedAt DESC
@@ -489,5 +495,22 @@ class DatabaseService {
         whereArgs: [id],
       );
     });
+  }
+
+  Future<int> updateFolder(Folder folder) async {
+    if (kIsWeb) {
+      final index = _webFolders.indexWhere((f) => f.id == folder.id);
+      if (index != -1) {
+        _webFolders[index] = folder;
+      }
+      return 1;
+    }
+    final db = await instance.database;
+    return await timedQuery('updateFolder', () => db.update(
+      'folders',
+      folder.toMap(),
+      where: 'id = ?',
+      whereArgs: [folder.id],
+    ));
   }
 }

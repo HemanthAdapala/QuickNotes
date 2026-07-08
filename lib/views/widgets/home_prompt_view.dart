@@ -71,6 +71,7 @@ class HomePromptView extends StatefulWidget {
   final VoidCallback? onProfileTap;
   final VoidCallback? onMoreOptionsTap;
   final String? greetingOverride;
+  final bool isNotesActive;
 
   const HomePromptView({
     super.key,
@@ -87,6 +88,7 @@ class HomePromptView extends StatefulWidget {
     this.onProfileTap,
     this.onMoreOptionsTap,
     this.greetingOverride,
+    this.isNotesActive = true,
   });
 
   static final List<String> _prompts = [
@@ -218,7 +220,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
-                  color: const Color(0xFFFFA322),
+                  color: widget.isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
                 ),
               ),
               TextSpan(
@@ -436,7 +438,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                             style: GoogleFonts.outfit(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFFFFA322),
+                              color: widget.isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
                               letterSpacing: 0.8,
                             ),
                           ),
@@ -537,11 +539,11 @@ class _HomePromptViewState extends State<HomePromptView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (!widget.interactive) ...[
-                              const Padding(
+                              Padding(
                                 padding: EdgeInsets.only(top: 3.0),
                                 child: _BlinkingCaret(
                                   height: 22.0,
-                                  color: Color(0xFFFFA322),
+                                  color: widget.isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
                                 ),
                               ),
                               const SizedBox(width: 8.0),

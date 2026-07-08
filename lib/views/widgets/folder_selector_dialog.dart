@@ -50,40 +50,6 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String?>(
-                    initialValue: selectedParentId,
-                    decoration: const InputDecoration(
-                      labelText: "Parent Folder (Optional)",
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: [
-                      const DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text("None (Root Folder)"),
-                      ),
-                      ...hierarchical.map((item) {
-                        final folder = item.folder;
-                        final depth = item.depth;
-                        final indent = "  " * depth;
-                        final prefix = depth > 0 ? "└─ " : "";
-                        return DropdownMenuItem<String?>(
-                          value: folder.id,
-                          child: Text(
-                            "$indent$prefix${folder.name}",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }),
-                    ],
-                    onChanged: (val) {
-                      setDialogState(() {
-                        selectedParentId = val;
-                      });
-                    },
-                  ),
                 ],
               ),
               actions: [
@@ -100,7 +66,7 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
                     if (name.isNotEmpty) {
                       Provider.of<NotesProvider>(context, listen: false).createFolder(
                         name,
-                        parentId: selectedParentId,
+                        parentId: null,
                       );
                       _folderNameController.clear();
                       Navigator.pop(context);

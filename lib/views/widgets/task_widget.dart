@@ -376,7 +376,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     if (priority.toLowerCase() == 'high') {
       priorityColor = const Color(0xFFFF383C);
     } else if (priority.toLowerCase() == 'medium') {
-      priorityColor = const Color(0xFFFFA322);
+      priorityColor = const Color(0xFFFFCC00);
     } else if (priority.toLowerCase() == 'low') {
       priorityColor = const Color(0xFF0088FF);
     } else {
