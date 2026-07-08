@@ -42,6 +42,7 @@ class NoteEditorScreen extends StatefulWidget {
   final String defaultCategory;
   final String defaultNoteType;
   final String? defaultFolderId;
+  static bool useSingleDocumentEditor = true;
 
   const NoteEditorScreen({
     super.key,
@@ -61,7 +62,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   final _scrollController = ScrollController();
   bool _isMetadataCollapsed = false;
   bool _isKeyboardVisible = false;
-  late final TextEditingController _contentController;
+  late final RichTextEditingController _contentController;
   final _tagController = TextEditingController();
   List<NoteBlock> _blocks = [];
   int _nextIdCounter = 0;
@@ -1417,10 +1418,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           _checklistItems = [];
         }
         _checklistControllers = _checklistItems.map((item) => TextEditingController(text: item['text'] ?? "")).toList();
-        _contentController = TextEditingController();
+        _contentController = RichTextEditingController();
       } else {
-        _contentController = TextEditingController();
-        _blocks = parseMarkdownToBlocks(widget.note!.content);
+        _contentController = RichTextEditingController();
+        if (NoteEditorScreen.useSingleDocumentEditor) {
+          _contentController.onStyleChanged = () {
+            if (mounted) setState(() {});
+          };
+          _contentController.onReplaceImage = _showReplaceGalleryBottomSheet;
+          _contentController.setMarkdown(widget.note!.content);
+        } else {
+          _blocks = parseMarkdownToBlocks(widget.note!.content);
+        }
       }
     } else {
       _category = widget.defaultCategory;
@@ -1436,14 +1445,17 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       _paperGuideOpacity = 0.15;
       _paperGuideColor = 0;
 
-      if (_noteType == 'text') {
-        _contentController = TextEditingController();
+      _contentController = RichTextEditingController();
+      _contentController.onStyleChanged = () {
+        if (mounted) setState(() {});
+      };
+      _contentController.onReplaceImage = _showReplaceGalleryBottomSheet;
+
+      if (!NoteEditorScreen.useSingleDocumentEditor && _noteType == 'text') {
         final firstBlock = ParagraphBlock(id: _generateId());
         _setupBlockFocusNode(firstBlock.focusNode);
         _setupBlockController(firstBlock);
         _blocks = [firstBlock];
-      } else {
-        _contentController = TextEditingController();
       }
     }
     _calculateCounts();
@@ -1666,6 +1678,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   RichTextEditingController? get _activeController {
+    if (NoteEditorScreen.useSingleDocumentEditor) return _contentController;
     final block = _focusedBlock;
     if (block is ParagraphBlock) return block.controller;
     if (block is HeadingBlock) return block.controller;
@@ -1678,9 +1691,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
   bool get _anyBlockHasFocus {
     if (_titleFocusNode.hasFocus) return true;
-    for (final block in _blocks) {
-      final fn = _getFocusNodeOfBlock(block);
-      if (fn != null && fn.hasFocus) return true;
+    if (NoteEditorScreen.useSingleDocumentEditor) {
+      if (_contentFocusNode.hasFocus) return true;
+    } else {
+      for (final block in _blocks) {
+        final fn = _getFocusNodeOfBlock(block);
+        if (fn != null && fn.hasFocus) return true;
+      }
     }
     for (final fn in _checklistFocusNodes) {
       if (fn.hasFocus) return true;
@@ -1695,15 +1712,19 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     if (_noteType == 'checklist') {
       text = _checklistItems.map((e) => e['text'].toString()).join(" ");
     } else {
-      text = _blocks.map((b) {
-        if (b is ParagraphBlock) return b.controller.text;
-        if (b is HeadingBlock) return b.controller.text;
-        if (b is QuoteBlock) return b.controller.text;
-        if (b is ChecklistBlock) return b.controller.text;
-        if (b is BulletedListBlock) return b.controller.text;
-        if (b is NumberedListBlock) return b.controller.text;
-        return "";
-      }).join(" ").trim();
+      if (NoteEditorScreen.useSingleDocumentEditor) {
+        text = _contentController.text;
+      } else {
+        text = _blocks.map((b) {
+          if (b is ParagraphBlock) return b.controller.text;
+          if (b is HeadingBlock) return b.controller.text;
+          if (b is QuoteBlock) return b.controller.text;
+          if (b is ChecklistBlock) return b.controller.text;
+          if (b is BulletedListBlock) return b.controller.text;
+          if (b is NumberedListBlock) return b.controller.text;
+          return "";
+        }).join(" ").trim();
+      }
     }
     setState(() {
       _charCount = text.length;
@@ -2007,6 +2028,19 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   Future<void> _insertSelectedImages(List<String> paths) async {
+    if (_noteType == 'text' && NoteEditorScreen.useSingleDocumentEditor) {
+      for (final path in paths) {
+        _contentController.insertImage(path);
+      }
+      setState(() {
+        _hasChanges = true;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _contentFocusNode.requestFocus();
+      });
+      return;
+    }
+
     for (final path in paths) {
       if (_noteType == 'text') {
         final activeBlock = _focusedBlock;
@@ -2211,6 +2245,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   void _replaceImage(int index, String newPath, {int? stackImageIndex}) {
+    if (_noteType == 'text' && NoteEditorScreen.useSingleDocumentEditor) {
+      if (index >= 0 && index < _contentController.styledChars.length) {
+        final sc = _contentController.styledChars[index];
+        if (sc.char == '\uFFFC' && sc.style.imageUrl != null) {
+          setState(() {
+            _contentController.styledChars[index] = StyledChar(
+              char: sc.char,
+              style: sc.style.copyWith(imageUrl: newPath),
+            );
+            _contentController.notifyListeners();
+            _hasChanges = true;
+          });
+        }
+      }
+      return;
+    }
+
     if (index >= 0 && index < _blocks.length) {
       final block = _blocks[index];
       if (stackImageIndex != null && block is ImageStackBlock) {
@@ -2242,7 +2293,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     setState(() {
       if (_noteType == 'text') {
         // Convert plain text to checklist
-        final textContent = _blocks.map((b) => b.toMarkdown()).join('\n');
+        final textContent = NoteEditorScreen.useSingleDocumentEditor
+            ? generateMarkdownFromStyledChars(_contentController.styledChars)
+            : _blocks.map((b) => b.toMarkdown()).join('\n');
         final lines = textContent.split('\n');
         _checklistItems = lines
             .where((line) => line.trim().isNotEmpty)
@@ -2282,7 +2335,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           return '$prefix${item['text'] ?? ""}';
         }).join('\n');
         
-        _blocks = parseMarkdownToBlocks(text);
+        if (NoteEditorScreen.useSingleDocumentEditor) {
+          _contentController.setMarkdown(text);
+        } else {
+          _blocks = parseMarkdownToBlocks(text);
+        }
         _noteType = 'text';
       }
       _hasChanges = true;
@@ -2375,7 +2432,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       final title = _titleController.text.trim();
       final content = _noteType == 'checklist' 
           ? jsonEncode(_checklistItems) 
-          : _blocks.map((b) => b.toMarkdown()).join('\n').trim();
+          : (NoteEditorScreen.useSingleDocumentEditor
+              ? generateMarkdownFromStyledChars(_contentController.styledChars).trim()
+              : _blocks.map((b) => b.toMarkdown()).join('\n').trim());
 
       if (title.isEmpty && content.isEmpty) return;
 
@@ -2658,39 +2717,71 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       final controller = _activeController;
       if (controller == null) return;
 
-      if (textToInsert == '> ') {
-        final block = _focusedBlock;
-        if (block != null) _toggleBlockType(block, QuoteBlock);
-      } else if (textToInsert == '# ') {
-        final block = _focusedBlock;
-        if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 1);
-      } else if (textToInsert == '## ') {
-        final block = _focusedBlock;
-        if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 2);
-      } else if (textToInsert == '### ') {
-        final block = _focusedBlock;
-        if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 3);
-      } else if (textToInsert == '- ') {
-        controller.toggleParagraphStyle('bullet');
-      } else if (textToInsert == '1. ') {
-        controller.toggleParagraphStyle('number');
-      } else if (textToInsert == '\u2610') {
-        final block = _focusedBlock;
-        if (block != null) _toggleBlockType(block, ChecklistBlock);
-      } else {
-        final text = controller.text;
-        final selection = controller.selection;
-        int start = selection.start;
-        int end = selection.end;
-        if (start == -1 || end == -1) {
-          start = text.length;
-          end = start;
+      if (NoteEditorScreen.useSingleDocumentEditor) {
+        if (textToInsert == '> ') {
+          controller.toggleParagraphStyle('quote');
+        } else if (textToInsert == '# ') {
+          controller.toggleParagraphStyle('h1');
+        } else if (textToInsert == '## ') {
+          controller.toggleParagraphStyle('h2');
+        } else if (textToInsert == '### ') {
+          controller.toggleParagraphStyle('h3');
+        } else if (textToInsert == '- ') {
+          controller.toggleParagraphStyle('bullet');
+        } else if (textToInsert == '1. ') {
+          controller.toggleParagraphStyle('number');
+        } else if (textToInsert == '\u2610') {
+          controller.toggleParagraphStyle('checkbox');
+        } else {
+          final text = controller.text;
+          final selection = controller.selection;
+          int start = selection.start;
+          int end = selection.end;
+          if (start == -1 || end == -1) {
+            start = text.length;
+            end = start;
+          }
+          final newText = text.replaceRange(start, end, textToInsert);
+          controller.value = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(offset: start + textToInsert.length),
+          );
         }
-        final newText = text.replaceRange(start, end, textToInsert);
-        controller.value = TextEditingValue(
-          text: newText,
-          selection: TextSelection.collapsed(offset: start + textToInsert.length),
-        );
+      } else {
+        if (textToInsert == '> ') {
+          final block = _focusedBlock;
+          if (block != null) _toggleBlockType(block, QuoteBlock);
+        } else if (textToInsert == '# ') {
+          final block = _focusedBlock;
+          if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 1);
+        } else if (textToInsert == '## ') {
+          final block = _focusedBlock;
+          if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 2);
+        } else if (textToInsert == '### ') {
+          final block = _focusedBlock;
+          if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 3);
+        } else if (textToInsert == '- ') {
+          controller.toggleParagraphStyle('bullet');
+        } else if (textToInsert == '1. ') {
+          controller.toggleParagraphStyle('number');
+        } else if (textToInsert == '\u2610') {
+          final block = _focusedBlock;
+          if (block != null) _toggleBlockType(block, ChecklistBlock);
+        } else {
+          final text = controller.text;
+          final selection = controller.selection;
+          int start = selection.start;
+          int end = selection.end;
+          if (start == -1 || end == -1) {
+            start = text.length;
+            end = start;
+          }
+          final newText = text.replaceRange(start, end, textToInsert);
+          controller.value = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(offset: start + textToInsert.length),
+          );
+        }
       }
       _calculateCounts();
       _startZenTimer();
@@ -3762,14 +3853,18 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         bottom: false,
         child: Stack(
           children: [
-            if (_paperGuideVisible && (_paperGuideType == 'grid' || _paperGuideType == 'dots'))
+            if (_paperGuideVisible && 
+                ((_paperGuideType == 'grid' || _paperGuideType == 'dots') || 
+                 (NoteEditorScreen.useSingleDocumentEditor && (_paperGuideType.startsWith('lines') || _paperGuideType == 'custom'))))
               Positioned.fill(
                 child: IgnorePointer(
                   child: CustomPaint(
                     key: ValueKey('${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
                     painter: GlobalPaperGuidePainter(
                       guideType: _paperGuideType,
-                      spacing: 20.0 * _paperGuideHeight,
+                      spacing: (NoteEditorScreen.useSingleDocumentEditor && (_paperGuideType.startsWith('lines') || _paperGuideType == 'custom'))
+                          ? (16.0 * 1.35 * _paperGuideHeight)
+                          : (20.0 * _paperGuideHeight),
                       color: _getPaperGuideColor(isDark),
                       opacity: _paperGuideOpacity,
                     ),
@@ -3922,6 +4017,34 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                     _buildChecklistEditor(textColor)
                                   else if (_isPreviewMarkdown)
                                     _buildMarkdownPreview(textColor)
+                                  else if (NoteEditorScreen.useSingleDocumentEditor)
+                                    TextField(
+                                      controller: _contentController,
+                                      focusNode: _contentFocusNode,
+                                      maxLines: null,
+                                      keyboardType: TextInputType.multiline,
+                                      contextMenuBuilder: _buildContextMenu,
+                                      scrollPadding: const EdgeInsets.only(bottom: 90.0),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 16.0,
+                                        color: textColor,
+                                        height: 1.35 * _paperGuideHeight,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: "Start writing...",
+                                        hintStyle: GoogleFonts.inter(
+                                          fontSize: 16.0,
+                                          color: textColor.withAlpha(80),
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.zero,
+                                        filled: false,
+                                        isDense: true,
+                                      ),
+                                      onChanged: (val) {
+                                        _onContentTextChanged();
+                                      },
+                                    )
                                   else
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -917,9 +917,11 @@ class RichTextEditingController extends TextEditingController {
                 newChars[lineStart].char == '\u2611');
         bool hasQuote =
             lineStart < newChars.length && newChars[lineStart].char == '›';
+        bool hasNumber =
+            lineStart < newChars.length && newChars[lineStart].char == '\u2008';
 
         // Remove existing prefix if any
-        if (hasBullet || hasCheckbox || hasQuote) {
+        if (hasBullet || hasCheckbox || hasQuote || hasNumber) {
           newChars.removeAt(lineStart);
           if (oldSel.start > lineStart) selectionStartShift--;
           if (oldSel.end > lineStart) selectionEndShift--;
@@ -938,6 +940,9 @@ class RichTextEditingController extends TextEditingController {
         } else if (styleName == 'quote' && existingStyle.listType != 'quote') {
           newListType = 'quote';
           prefixChar = '›';
+        } else if (styleName == 'number' && existingStyle.listType != 'number') {
+          newListType = 'number';
+          prefixChar = '\u2008';
         }
 
         if (prefixChar.isNotEmpty) {
@@ -1024,6 +1029,38 @@ class RichTextEditingController extends TextEditingController {
       text: newTextStr,
       selection:
           TextSelection(baseOffset: newSelStart, extentOffset: newSelEnd),
+    );
+    notifyListeners();
+  }
+
+  void insertImage(String path) {
+    final sel = selection;
+    final textStr = text;
+    final List<StyledChar> newChars = List.from(styledChars);
+
+    int cursor = sel.isValid ? sel.start : textStr.length;
+    cursor = cursor.clamp(0, textStr.length);
+
+    // Insert leading newline if not at start of line
+    if (cursor > 0 && newChars[cursor - 1].char != '\n') {
+      newChars.insert(cursor, StyledChar(char: '\n', style: const Style()));
+      cursor++;
+    }
+
+    final imgStyle = Style(imageUrl: path, imageWidth: 300.0);
+    newChars.insert(cursor, StyledChar(char: '\uFFFC', style: imgStyle));
+    cursor++;
+
+    // Always insert a trailing newline after the image to make it separate
+    newChars.insert(cursor, StyledChar(char: '\n', style: const Style()));
+    cursor++;
+
+    styledChars = newChars;
+    final newTextStr = _getTextOnly();
+
+    value = TextEditingValue(
+      text: newTextStr,
+      selection: TextSelection.collapsed(offset: cursor),
     );
     notifyListeners();
   }
@@ -1151,6 +1188,28 @@ class RichTextEditingController extends TextEditingController {
             selection: TextSelection.collapsed(
                 offset: newValue.selection.baseOffset + 1),
           );
+        } else if (baseStyle.listType == 'number') {
+          insertedStyledChars.add(StyledChar(char: '\u2008', style: baseStyle));
+          newText =
+              '${newText.substring(0, diffStart + 1)}\u2008${newText.substring(diffStart + 1)}';
+          diffEndNew++;
+
+          finalValue = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(
+                offset: newValue.selection.baseOffset + 1),
+          );
+        } else if (baseStyle.listType == 'quote') {
+          insertedStyledChars.add(StyledChar(char: '›', style: baseStyle));
+          newText =
+              '${newText.substring(0, diffStart + 1)}›${newText.substring(diffStart + 1)}';
+          diffEndNew++;
+
+          finalValue = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(
+                offset: newValue.selection.baseOffset + 1),
+          );
         } else {
           baseStyle = baseStyle.copyWith(heading: 'normal');
         }
@@ -1246,6 +1305,50 @@ class RichTextEditingController extends TextEditingController {
           ),
         ));
         i++;
+      } else if (sc.char == '\u2008') {
+        final int index = i;
+        int numberIndex = 1;
+        int scan = index - 1;
+        while (scan >= 0) {
+          if (styledChars[scan].char == '\n') {
+            if (scan + 1 < styledChars.length && styledChars[scan + 1].char == '\u2008') {
+              numberIndex++;
+            } else {
+              break;
+            }
+          }
+          scan--;
+        }
+        children.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Container(
+            margin: const EdgeInsets.only(right: 8.0),
+            constraints: const BoxConstraints(minWidth: 20),
+            alignment: Alignment.centerRight,
+            child: Text(
+              '$numberIndex.',
+              style: baseStyle.copyWith(
+                fontWeight: FontWeight.w500,
+                color: baseStyle.color,
+              ),
+            ),
+          ),
+        ));
+        i++;
+      } else if (sc.char == '›') {
+        children.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Container(
+            margin: const EdgeInsets.only(right: 8.0),
+            width: 3.5,
+            height: 16,
+            decoration: BoxDecoration(
+              color: baseStyle.color?.withOpacity(0.4) ?? const Color(0xFF6B7280),
+              borderRadius: BorderRadius.circular(1.5),
+            ),
+          ),
+        ));
+        i++;
       } else {
         final start = i;
         final currentStyle = sc.style;
@@ -1254,6 +1357,8 @@ class RichTextEditingController extends TextEditingController {
         while (i < styledChars.length &&
             styledChars[i].char != '\u2610' &&
             styledChars[i].char != '\u2611' &&
+            styledChars[i].char != '\u2008' &&
+            styledChars[i].char != '›' &&
             styledChars[i].style == currentStyle) {
           i++;
         }
@@ -1262,8 +1367,8 @@ class RichTextEditingController extends TextEditingController {
 
         TextStyle runStyle = baseStyle.copyWith(
           fontWeight: currentStyle.bold ? FontWeight.bold : FontWeight.normal,
-          fontStyle: currentStyle.italic ? FontStyle.italic : FontStyle.normal,
-          color: currentStyle.color ?? baseStyle.color,
+          fontStyle: currentStyle.listType == 'quote' ? FontStyle.italic : (currentStyle.italic ? FontStyle.italic : FontStyle.normal),
+          color: currentStyle.listType == 'quote' ? (currentStyle.color ?? baseStyle.color)?.withOpacity(0.7) : (currentStyle.color ?? baseStyle.color),
           backgroundColor: currentStyle.highlight,
         );
 
@@ -1354,6 +1459,7 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
     }
 
     // Parse lists and checklists
+    final numListRegex = RegExp(r'^(\d+)\.\s(.*)$');
     if (line.startsWith('- [ ] ')) {
       listType = 'checkbox';
       checked = false;
@@ -1371,6 +1477,11 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
     } else if (line.startsWith('> ')) {
       listType = 'quote';
       line = '›${line.substring(2)}';
+    } else if (numListRegex.hasMatch(line)) {
+      listType = 'number';
+      final match = numListRegex.firstMatch(line)!;
+      final rest = match.group(2) ?? '';
+      line = '\u2008$rest';
     }
 
     int idx = 0;
@@ -1639,7 +1750,8 @@ String generateMarkdownFromStyledChars(List<StyledChar> styledChars) {
         (contentChars.first.char == '•' ||
             contentChars.first.char == '›' ||
             contentChars.first.char == '\u2610' ||
-            contentChars.first.char == '\u2611')) {
+            contentChars.first.char == '\u2611' ||
+            contentChars.first.char == '\u2008')) {
       contentChars.removeAt(0);
     }
 
@@ -1651,6 +1763,8 @@ String generateMarkdownFromStyledChars(List<StyledChar> styledChars) {
       lineContent = '- $lineContent';
     } else if (style.listType == 'quote') {
       lineContent = '> $lineContent';
+    } else if (style.listType == 'number') {
+      lineContent = '1. $lineContent';
     }
 
     if (style.heading == 'h1') {

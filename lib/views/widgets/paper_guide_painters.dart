@@ -16,13 +16,18 @@ class GlobalPaperGuidePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (guideType == 'plain' || guideType.startsWith('lines') || guideType == 'custom') return;
+    if (guideType == 'plain') return;
 
     final paint = Paint()
       ..color = color.withOpacity(opacity)
       ..strokeWidth = 1.0;
 
-    if (guideType == 'dots') {
+    if (guideType.startsWith('lines') || guideType == 'custom') {
+      // Draw horizontal lines at spacing height
+      for (double y = spacing; y < size.height; y += spacing) {
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      }
+    } else if (guideType == 'dots') {
       final dotPaint = Paint()
         ..color = color.withOpacity(opacity)
         ..style = PaintingStyle.fill;

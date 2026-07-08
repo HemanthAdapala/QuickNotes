@@ -26,6 +26,7 @@ void main() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
     GoogleFonts.config.allowRuntimeFetching = false;
+    NoteEditorScreen.useSingleDocumentEditor = false;
 
     late final MessageHandler handler;
     handler = (ByteData? message) async {
