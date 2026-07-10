@@ -97,7 +97,13 @@ class _NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
   void _onParentFocusChanged() {
     if (widget.focusNode.hasFocus) {
-      if (_focusNodes.isNotEmpty) {
+      final alreadyFocused = _focusNodes.values.any((n) => n.hasFocus);
+      if (alreadyFocused) return;
+
+      _syncFocusWithParentSelection();
+
+      final stillNotFocused = !_focusNodes.values.any((n) => n.hasFocus);
+      if (stillNotFocused && _focusNodes.isNotEmpty) {
         final lastIndex = _focusNodes.keys.reduce((a, b) => a > b ? a : b);
         _focusNodes[lastIndex]?.requestFocus();
       }

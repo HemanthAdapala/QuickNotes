@@ -74,6 +74,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   ResizableImageWidgetState? _activeDragImage;
   int _dragDirection = 0;
   Offset? _pointerDownPos;
+  final GlobalKey _sdeKey = GlobalKey();
 
   String _generateId() {
     final random = Random();
@@ -4062,10 +4063,24 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                       ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
                                     }
                                   } else if (NoteEditorScreen.useSingleDocumentEditor) {
-                                    _contentFocusNode.requestFocus();
-                                    final len = _contentController.text.length;
-                                    _contentController.selection =
-                                        TextSelection.collapsed(offset: len);
+                                    bool isInsideSDE = false;
+                                    final BuildContext? sdeContext = _sdeKey.currentContext;
+                                    if (sdeContext != null) {
+                                      final RenderBox? box = sdeContext.findRenderObject() as RenderBox?;
+                                      if (box != null && box.hasSize) {
+                                        final position = box.localToGlobal(Offset.zero);
+                                        final rect = position & box.size;
+                                        if (rect.contains(event.position)) {
+                                          isInsideSDE = true;
+                                        }
+                                      }
+                                    }
+                                    if (!isInsideSDE) {
+                                      _contentFocusNode.requestFocus();
+                                      final len = _contentController.text.length;
+                                      _contentController.selection =
+                                          TextSelection.collapsed(offset: len);
+                                    }
                                   }
                                 }
                               }
@@ -4124,6 +4139,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                     _buildMarkdownPreview(textColor)
                                   else if (NoteEditorScreen.useSingleDocumentEditor)
                                     NewSingleDocumentEditor(
+                                      key: _sdeKey,
                                       controller: _contentController,
                                       focusNode: _contentFocusNode,
                                       textColor: textColor,
