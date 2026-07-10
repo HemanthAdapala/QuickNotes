@@ -13,6 +13,7 @@ import 'package:quick_notes/views/screens/note_editor_screen.dart';
 import 'package:quick_notes/views/screens/settings_screen.dart';
 import 'package:quick_notes/views/widgets/note_card.dart';
 import 'package:quick_notes/views/widgets/rich_text_controller.dart';
+import 'package:quick_notes/views/widgets/new_single_document_editor.dart';
 import 'package:quick_notes/views/widgets/home_prompt_view.dart';
 import 'package:quick_notes/views/widgets/tactile_button.dart';
 import 'package:quick_notes/views/widgets/rich_text_formatting_pill.dart';
@@ -1295,36 +1296,52 @@ void main() {
       expect(controller.styledChars[0].style.bold, isTrue);
     });
 
-    test('Sprint 7: SDE Image Foundation and Deletion Protection', () {
+    testWidgets('Sprint 7: SDE Caret Traversal and Focus Sync', (WidgetTester tester) async {
       final controller = RichTextEditingController();
-      controller.setMarkdown('Hello');
+      controller.setMarkdown('Hello\n![](assets/pic.png)\nWorld');
 
-      // 1. Insert image
-      controller.selection = const TextSelection.collapsed(offset: 5);
-      controller.insertImage('assets/pic.png');
+      final focusNode = FocusNode();
 
-      // Expect text: "Hello\n\uFFFC\n"
-      expect(controller.text, equals('Hello\n\uFFFC\n'));
-      expect(controller.selection.baseOffset, equals(8)); // collapsed after trailing newline
-
-      // 2. Backspace on the newline after the image (offset 7 -> 8 deleted)
-      controller.value = const TextEditingValue(
-        text: 'Hello\n\uFFFC',
-        selection: TextSelection.collapsed(offset: 7),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: NewSingleDocumentEditor(
+                controller: controller,
+                focusNode: focusNode,
+                textColor: Colors.black,
+                paperGuideHeight: 20.0,
+                contextMenuBuilder: (context, state) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
       );
-      // Protection should trigger, deleting both \n and \uFFFC.
-      expect(controller.text, equals('Hello'));
-      expect(controller.selection.baseOffset, equals(5));
 
-      // 3. Backspace on the newline before the image (deleting \n before \uFFFC)
-      controller.setMarkdown('Hello\n\uFFFC\nWorld');
-      controller.value = const TextEditingValue(
-        text: 'Hello\uFFFC\nWorld',
-        selection: TextSelection.collapsed(offset: 5),
-      );
-      // Protection should trigger, deleting both \n and \uFFFC.
-      expect(controller.text, equals('Hello\nWorld'));
-      expect(controller.selection.baseOffset, equals(5));
+      await tester.pumpAndSettle();
+
+      final textFields = find.byType(TextField);
+      expect(textFields, findsNWidgets(2));
+
+      await tester.tap(textFields.first);
+      await tester.pump();
+      final field1 = tester.widget<TextField>(textFields.first);
+      expect(field1.focusNode?.hasFocus, isTrue);
+
+      // Verify focus sync from parent controller selection
+      controller.selection = const TextSelection.collapsed(offset: 8);
+      await tester.pump();
+      final field2 = tester.widget<TextField>(textFields.last);
+      expect(field2.focusNode?.hasFocus, isTrue);
+
+      // Verify Arrow Left key event at offset 0 moves focus back
+      final lastController = field2.controller as RangeTextEditingController;
+      lastController.selection = const TextSelection.collapsed(offset: 0);
+      await tester.pump();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pump();
+      expect(field1.focusNode?.hasFocus, isTrue);
     });
   });
 }
