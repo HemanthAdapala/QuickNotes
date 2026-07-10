@@ -4387,10 +4387,19 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                         : Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              AnimatedContainer(
+                              TweenAnimationBuilder<double>(
                                 duration: const Duration(milliseconds: 1000),
                                 curve: Curves.elasticOut,
-                                height: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
+                                tween: Tween<double>(
+                                  begin: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
+                                  end: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
+                                ),
+                                builder: (context, animHeight, child) {
+                                  return SizedBox(
+                                    height: animHeight.clamp(0.0, double.infinity),
+                                    child: child,
+                                  );
+                                },
                                 child: _activeCategory != _ActiveCategory.none
                                     ? _buildSubsectionRow(activeStyle, _focusedBlock)
                                     : const SizedBox.shrink(),
