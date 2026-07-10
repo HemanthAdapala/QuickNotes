@@ -29,7 +29,6 @@ class RichTextSelectionToolbar extends StatelessWidget {
 
     if (canSelectAll) {
       items.add(_buildButton(
-        icon: Icons.select_all_rounded,
         label: "select all",
         onTap: () => editableTextState.selectAll(SelectionChangedCause.toolbar),
       ));
@@ -37,38 +36,65 @@ class RichTextSelectionToolbar extends StatelessWidget {
 
     if (canCopy) {
       items.add(_buildButton(
-        icon: Icons.content_copy_rounded,
         label: "copy",
-        onTap: () => editableTextState.copySelection(SelectionChangedCause.toolbar),
+        onTap: () {
+          if (isRichText) {
+            (controller as RichTextEditingController).copy();
+            editableTextState.hideToolbar();
+          } else {
+            editableTextState.copySelection(SelectionChangedCause.toolbar);
+          }
+        },
       ));
     }
 
     if (canCut) {
       items.add(_buildButton(
-        icon: Icons.content_cut_rounded,
         label: "cut",
-        onTap: () => editableTextState.cutSelection(SelectionChangedCause.toolbar),
+        onTap: () {
+          if (isRichText) {
+            (controller as RichTextEditingController).cut();
+            editableTextState.hideToolbar();
+          } else {
+            editableTextState.cutSelection(SelectionChangedCause.toolbar);
+          }
+        },
       ));
     }
 
     if (canPaste) {
       items.add(_buildButton(
-        icon: Icons.content_paste_rounded,
         label: "paste",
-        onTap: () => editableTextState.pasteText(SelectionChangedCause.toolbar),
+        onTap: () {
+          if (isRichText) {
+            (controller as RichTextEditingController).paste();
+            editableTextState.hideToolbar();
+          } else {
+            editableTextState.pasteText(SelectionChangedCause.toolbar);
+          }
+        },
       ));
     }
 
-    // Optional highlight option for rich-text note blocks
     if (isRichText && hasSelection) {
       items.add(_buildButton(
-        icon: Icons.border_color_rounded,
+        label: "duplicate",
+        onTap: () {
+          (controller as RichTextEditingController).duplicateSelection();
+          editableTextState.hideToolbar();
+        },
+      ));
+    }
+
+    if (isRichText && hasSelection) {
+      items.add(_buildButton(
         label: "highlight",
         onTap: () {
           (controller as RichTextEditingController).toggleStyleAttribute(
             'highlight',
             value: const Color(0xFFFFCC00).withValues(alpha: 0.35),
           );
+          editableTextState.hideToolbar();
         },
       ));
     }
@@ -77,12 +103,18 @@ class RichTextSelectionToolbar extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // Horizontal layout without dividers to align perfectly with SVG guidelines
+    // Horizontal layout with vertical dividers
     final List<Widget> rowChildren = [];
     for (int i = 0; i < items.length; i++) {
       rowChildren.add(items[i]);
       if (i < items.length - 1) {
-        rowChildren.add(const SizedBox(width: 8)); // Spacious horizontal gap
+        rowChildren.add(
+          Container(
+            width: 0.6,
+            height: 14,
+            color: Colors.white.withOpacity(0.15),
+          ),
+        );
       }
     }
 
@@ -95,96 +127,30 @@ class RichTextSelectionToolbar extends StatelessWidget {
         anchorBelow: anchors.secondaryAnchor ?? anchors.primaryAnchor,
       ),
       child: Container(
+        height: 36,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(19.5),
+          borderRadius: BorderRadius.circular(18),
+          color: const Color(0xFF333333),
           boxShadow: [
-            // Outer S0 high-visibility shadow stack
             BoxShadow(
-              offset: const Offset(1.25, 0),
-              blurRadius: 0,
-              spreadRadius: -0.75,
-              color: const Color(0xFFD0D0D0),
-            ),
-            BoxShadow(
-              offset: const Offset(-1.25, 0),
-              blurRadius: 0,
-              spreadRadius: -0.75,
-              color: const Color(0xFFD0D0D0),
-            ),
-            BoxShadow(
-              offset: const Offset(0, 0),
-              blurRadius: 0,
-              spreadRadius: 0.5,
-              color: const Color(0xFFCCCCCC),
-            ),
-            BoxShadow(
-              offset: const Offset(0, 8),
-              blurRadius: 15,
+              offset: const Offset(0, 4),
+              blurRadius: 10,
               spreadRadius: 0,
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Colors.black.withOpacity(0.15),
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(19.5),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-            child: Container(
-              height: 39,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(19.5),
-                color: const Color(0xFF333333).withValues(alpha: 0.92),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.30),
-                  width: 0.8,
-                ),
-                boxShadow: [
-                  // Inner Liquid Glass shadow stack
-                  BoxShadow(
-                    offset: const Offset(0, 1.25),
-                    blurRadius: 0.25,
-                    spreadRadius: 0,
-                    color: const Color(0xFF282828),
-                    inset: true,
-                  ),
-                  BoxShadow(
-                    offset: const Offset(0, -1.25),
-                    blurRadius: 0.25,
-                    spreadRadius: 0,
-                    color: const Color(0xFF282828),
-                    inset: true,
-                  ),
-                  BoxShadow(
-                    offset: const Offset(0, 40),
-                    blurRadius: 10,
-                    spreadRadius: -40,
-                    color: const Color(0xFF282828),
-                    inset: true,
-                  ),
-                  BoxShadow(
-                    offset: const Offset(0, -40),
-                    blurRadius: 10,
-                    spreadRadius: -40,
-                    color: const Color(0xFF282828),
-                    inset: true,
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: rowChildren,
-              ),
-            ),
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: rowChildren,
         ),
       ),
     );
   }
 
   Widget _buildButton({
-    required IconData icon,
     required String label,
     required VoidCallback onTap,
   }) {
@@ -193,30 +159,16 @@ class RichTextSelectionToolbar extends StatelessWidget {
       compressionScale: 0.7, // Apple tactile compression scale: 0.7
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 13,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 8.5,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withValues(alpha: 0.95),
-              ),
-            ),
-          ],
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 11.0,
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+            letterSpacing: -0.15,
+          ),
         ),
       ),
     );

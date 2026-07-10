@@ -1,0 +1,203 @@
+🚀 Sprint 5 — Rich Content
+Vision
+
+Transform Quick Notes from a plain text editor into a rich, expressive document editor where users can seamlessly combine text, images, checklists, quotes, headings, code blocks, links, and future content without disrupting their writing flow.
+
+Rich content should feel like a natural extension of writing, not a separate editing mode.
+
+🎯 Goal
+
+Implement robust, intuitive handling of all supported content types while maintaining the seamless document experience established in earlier sprints.
+
+The user should be able to mix different content types without ever thinking about the underlying implementation.
+
+Scope
+
+Sprint 5 focuses on rich content behavior.
+
+Do not implement:
+
+Undo/Redo improvements
+AI features
+Search improvements
+Collaboration
+Premium animations
+Selection overhaul
+Features
+1. Image Experience ⭐⭐⭐⭐⭐
+
+This is the biggest feature of this sprint.
+
+Insert
+
+Requirements:
+
+Insert from Gallery
+Insert from Camera (future-ready)
+Drag & Drop (future-ready)
+Paste image from clipboard
+Writing Flow
+
+Immediately after insertion:
+
+Paragraph
+
+🖼 Image
+
+|
+
+
+The user continues writing naturally.
+
+Image Position
+
+Support:
+
+Between paragraphs
+At beginning
+At end
+Multiple consecutive images
+Mixed with headings and checklists
+Image Selection
+
+Tap image
+
+↓
+
+Show subtle selection outline
+
+↓
+
+Display contextual actions
+
+Example:
+
+Replace
+Resize
+Crop (future)
+Delete
+Copy
+Image Loading
+
+Requirements:
+
+Smooth placeholder
+No layout jump
+Progressive loading
+Error handling
+Acceptance Criteria
+
+Images feel embedded in the document rather than floating independently.
+
+2. Checklists ⭐⭐⭐⭐⭐
+
+Professional checklist behavior.
+
+Requirements:
+
+Tap checkbox to complete.
+Enter creates next item.
+Empty item + Backspace exits checklist mode.
+Preserve indentation.
+Smooth reordering (future-ready).
+3. Headings
+
+Support consistent heading hierarchy.
+
+Examples:
+
+H1
+H2
+H3
+
+Requirements:
+
+Consistent spacing
+Proper typography
+Easy conversion back to paragraph
+4. Quotes
+
+Quote blocks should feel elegant.
+
+Requirements:
+
+Left accent line
+Comfortable padding
+Maintain document rhythm
+Easy editing
+5. Links
+
+Automatically detect URLs.
+
+Requirements:
+
+Clickable
+Styled appropriately
+Easy to edit
+Preserve pasted links
+6. Dividers
+
+Support simple section dividers.
+
+Requirements:
+
+Comfortable spacing
+Minimal styling
+Do not interrupt writing flow
+7. Future Content Placeholders
+
+Architect the document to easily support:
+
+Tables
+Audio
+Voice notes
+PDFs
+Drawings
+Files
+Code blocks
+Callouts
+Equations
+
+Don't implement them yet—just make sure the content model won't need redesign later.
+
+8. Stable Mixed Documents
+
+Support documents like:
+
+Title
+
+Paragraph
+
+Checklist
+
+Paragraph
+
+Image
+
+Paragraph
+
+Quote
+
+Paragraph
+
+Heading
+
+Paragraph
+
+Link
+
+Paragraph
+
+The document should remain stable and predictable.
+
+Rich Content Principles
+
+Every content type should follow these rules:
+
+Behaves as part of the document
+Has consistent spacing
+Supports insertion and deletion gracefully
+Never breaks writing flow
+Works with scrolling
+Works with cursor placement
+Feels native

@@ -1,8 +1,14 @@
 import 'dart:io';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'fullscreen_image_viewer.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'tactile_button.dart';
+
+const bool kImageDebug = true;
 
 class Style {
   final bool bold;
@@ -19,6 +25,8 @@ class Style {
   final double? imageWidth;
   final double? imageHeight;
   final String? imageCaption;
+  final bool isDivider;
+  final String? linkUrl;
 
   const Style({
     this.bold = false,
@@ -35,6 +43,8 @@ class Style {
     this.imageWidth,
     this.imageHeight,
     this.imageCaption,
+    this.isDivider = false,
+    this.linkUrl,
   });
 
   Style copyWith({
@@ -52,10 +62,13 @@ class Style {
     double? imageWidth,
     double? imageHeight,
     String? imageCaption,
+    bool? isDivider,
+    String? linkUrl,
     bool clearColor = false,
     bool clearHighlight = false,
     bool clearImage = false,
     bool clearCaption = false,
+    bool clearLink = false,
   }) {
     return Style(
       bold: bold ?? this.bold,
@@ -74,6 +87,8 @@ class Style {
       imageCaption: clearImage || clearCaption
           ? null
           : (imageCaption ?? this.imageCaption),
+      isDivider: isDivider ?? this.isDivider,
+      linkUrl: clearLink ? null : (linkUrl ?? this.linkUrl),
     );
   }
 
@@ -94,7 +109,9 @@ class Style {
         other.imageUrl == imageUrl &&
         other.imageWidth == imageWidth &&
         other.imageHeight == imageHeight &&
-        other.imageCaption == imageCaption;
+        other.imageCaption == imageCaption &&
+        other.isDivider == isDivider &&
+        other.linkUrl == linkUrl;
   }
 
   @override
@@ -113,6 +130,8 @@ class Style {
         imageWidth,
         imageHeight,
         imageCaption,
+        isDivider,
+        linkUrl,
       );
 }
 
@@ -142,21 +161,30 @@ class InteractiveCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TactileButton(
       onTap: onTap,
+      compressionScale: 0.7,
+      settleDuration: const Duration(milliseconds: 1000),
+      playSelectionHaptic: true,
       child: Container(
         margin: const EdgeInsets.only(top: 8.0, right: 8.0, left: 4.0),
-        width: 10,
-        height: 10,
+        width: 14,
+        height: 14,
         decoration: checked
-            ? const BoxDecoration(color: Color(0xFF222222))
-            : BoxDecoration(border: Border.all(color: Colors.black, width: 1.0)),
+            ? BoxDecoration(
+                color: const Color(0xFF222222),
+                borderRadius: BorderRadius.circular(4),
+              )
+            : BoxDecoration(
+                border: Border.all(color: Colors.black.withOpacity(0.5), width: 1.5),
+                borderRadius: BorderRadius.circular(4),
+              ),
         child: checked
             ? Center(
                 child: SvgPicture.asset(
                   'assets/icons/vector_check.svg',
-                  width: 6,
-                  height: 6,
+                  width: 8,
+                  height: 8,
                   colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                 ),
               )
@@ -174,6 +202,7 @@ class ResizableImageWidget extends StatefulWidget {
   final Function(double width, String? caption) onUpdate;
   final VoidCallback onDelete;
   final VoidCallback? onReplace;
+  final VoidCallback? onTap;
   final bool isStacked;
   final int? stackImageIndex;
 
@@ -186,15 +215,16 @@ class ResizableImageWidget extends StatefulWidget {
     required this.onUpdate,
     required this.onDelete,
     this.onReplace,
+    this.onTap,
     this.isStacked = false,
     this.stackImageIndex,
   });
 
   @override
-  State<ResizableImageWidget> createState() => _ResizableImageWidgetState();
+  State<ResizableImageWidget> createState() => ResizableImageWidgetState();
 }
 
-class _ResizableImageWidgetState extends State<ResizableImageWidget>
+class ResizableImageWidgetState extends State<ResizableImageWidget>
     with SingleTickerProviderStateMixin {
   double? _width;
   bool _showControls = false;
@@ -204,6 +234,7 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget>
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
   bool _isDeleting = false;
+  int _lastPointerDownTime = 0;
 
   @override
   void initState() {
@@ -213,13 +244,13 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget>
 
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 200),
     );
-    _scaleAnimation = Tween<double>(begin: 0.2, end: 1.0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOutBack),
+    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
     );
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeIn),
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
     );
     _animController.forward();
   }
@@ -245,7 +276,42 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget>
     super.dispose();
   }
 
+  bool get showControls => _showControls;
+
+  void toggleControls() {
+    setState(() {
+      _showControls = !_showControls;
+    });
+    if (widget.onTap != null) {
+      widget.onTap!();
+    }
+  }
+
+  void updateWidth(double deltaX, int direction) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double maxWidth = (screenWidth - 48.0).clamp(100.0, 720.0);
+    final double currentWidth = widget.isStacked
+        ? double.infinity
+        : (_width ?? maxWidth).clamp(150.0, maxWidth);
+        
+    setState(() {
+      if (direction == -1) {
+        _width = (currentWidth - deltaX).clamp(150.0, maxWidth);
+      } else if (direction == 1) {
+        _width = (currentWidth + deltaX).clamp(150.0, maxWidth);
+      }
+    });
+    
+    widget.onUpdate(
+      _width!,
+      _captionController.text.trim().isEmpty
+          ? null
+          : _captionController.text.trim(),
+    );
+  }
+
   Future<void> _triggerDelete() async {
+    HapticFeedback.mediumImpact();
     setState(() {
       _isDeleting = true;
     });
@@ -303,6 +369,10 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget>
 
   @override
   Widget build(BuildContext context) {
+    if (kImageDebug) {
+      debugPrint("[Stage 9] Started - ResizableImageWidget.build()");
+      debugPrint("Relevant state: image path=${widget.imagePath}, index=${widget.index}, stackImageIndex=${widget.stackImageIndex}");
+    }
     final theme = Theme.of(context);
     final isFile = !widget.imagePath.startsWith('http://') &&
         !widget.imagePath.startsWith('https://');
@@ -357,23 +427,33 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              _showControls = !_showControls;
-            });
-          },
-          onDoubleTap: () {
-            Navigator.of(context).push(
-              PageRouteBuilder(
-                opaque: false,
-                barrierDismissible: true,
-                pageBuilder: (context, _, __) => FullscreenImageViewer(
-                  imagePath: widget.imagePath,
-                  heroTag: heroTag,
+        Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown: (event) {
+            if (kImageDebug) {
+              debugPrint("[Stage 9 - PointerDown] Image Listener onPointerDown. Event position: ${event.position}");
+            }
+            final now = DateTime.now().millisecondsSinceEpoch;
+            if (now - _lastPointerDownTime < 300) {
+              Navigator.of(context).push(
+                PageRouteBuilder(
+                  opaque: false,
+                  barrierDismissible: true,
+                  pageBuilder: (context, _, __) => FullscreenImageViewer(
+                    imagePath: widget.imagePath,
+                    heroTag: heroTag,
+                  ),
                 ),
-              ),
-            );
+              );
+            } else {
+              setState(() {
+                _showControls = !_showControls;
+              });
+              if (widget.onTap != null) {
+                widget.onTap!();
+              }
+            }
+            _lastPointerDownTime = now;
           },
           child: Stack(
             clipBehavior: Clip.none,
@@ -412,6 +492,9 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget>
                       fit: widget.isStacked ? BoxFit.cover : BoxFit.contain,
                       frameBuilder:
                           (context, child, frame, wasSynchronouslyLoaded) {
+                        if (kImageDebug) {
+                          debugPrint("[Stage 10] Image frameBuilder. Frame: $frame, SyncLoaded: $wasSynchronouslyLoaded");
+                        }
                         if (wasSynchronouslyLoaded) {
                           return child;
                         }
@@ -439,6 +522,9 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget>
                         );
                       },
                       errorBuilder: (context, error, stackTrace) {
+                        if (kImageDebug) {
+                          debugPrint("[Stage 10 - ERROR] Image loading failed. Error: $error");
+                        }
                         return Container(
                           width: widget.isStacked ? double.infinity : 200,
                           height: 150,
@@ -469,11 +555,11 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget>
                   child: Center(
                     child: MouseRegion(
                       cursor: SystemMouseCursors.resizeLeftRight,
-                      child: GestureDetector(
+                      child: Listener(
                         behavior: HitTestBehavior.opaque,
-                        onPanUpdate: (details) {
+                        onPointerMove: (event) {
                           setState(() {
-                            _width = (currentWidth - details.delta.dx)
+                            _width = (currentWidth - event.delta.dx)
                                 .clamp(150.0, maxWidth);
                           });
                           widget.onUpdate(
@@ -495,11 +581,11 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget>
                   child: Center(
                     child: MouseRegion(
                       cursor: SystemMouseCursors.resizeLeftRight,
-                      child: GestureDetector(
+                      child: Listener(
                         behavior: HitTestBehavior.opaque,
-                        onPanUpdate: (details) {
+                        onPointerMove: (event) {
                           setState(() {
-                            _width = (currentWidth + details.delta.dx)
+                            _width = (currentWidth + event.delta.dx)
                                 .clamp(150.0, maxWidth);
                           });
                           widget.onUpdate(
@@ -595,6 +681,11 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget>
         ]
       ],
     );
+
+    if (kImageDebug) {
+      debugPrint("[Stage 9] Completed");
+      debugPrint("Relevant state: currentWidth=$currentWidth, currentHeight=$currentHeight");
+    }
 
     return AnimatedBuilder(
       animation: _animController,
@@ -703,11 +794,220 @@ class _DragFeedbackImageState extends State<DragFeedbackImage>
   }
 }
 
+class UndoState {
+  final List<StyledChar> styledChars;
+  final TextSelection selection;
+
+  UndoState(List<StyledChar> chars, this.selection)
+      : styledChars = List.from(chars);
+}
+
 class RichTextEditingController extends TextEditingController {
   List<StyledChar> styledChars = [];
+  final Map<String, GlobalKey> _imageKeyCache = {};
+  final Map<int, GlobalKey> imageKeys = {};
+
+  GlobalKey _getImageKey(String url, int index) {
+    final cacheKey = '$url-$index';
+    return _imageKeyCache.putIfAbsent(cacheKey, () => GlobalKey());
+  }
   Style currentActiveStyle = const Style();
   VoidCallback? onStyleChanged;
   void Function(int index)? onReplaceImage;
+  void Function(int index)? onTapImage;
+  final List<TapGestureRecognizer> _recognizers = [];
+  final List<UndoState> _undoStack = [];
+  final List<UndoState> _redoStack = [];
+  bool _isUndoOrRedoAction = false;
+  DateTime? _lastTypeTime;
+  String? _lastText;
+
+  @override
+  void dispose() {
+    for (final r in _recognizers) {
+      r.dispose();
+    }
+    _recognizers.clear();
+    super.dispose();
+  }
+
+  void saveUndoState() {
+    if (_isUndoOrRedoAction) return;
+
+    final currentState = UndoState(styledChars, selection);
+    if (_undoStack.isNotEmpty) {
+      final last = _undoStack.last;
+      if (_areStatesEqual(last, currentState)) {
+        return;
+      }
+    }
+
+    _undoStack.add(currentState);
+    if (_undoStack.length > 100) {
+      _undoStack.removeAt(0);
+    }
+    _redoStack.clear();
+  }
+
+  bool _areStatesEqual(UndoState a, UndoState b) {
+    if (a.styledChars.length != b.styledChars.length) return false;
+    for (int i = 0; i < a.styledChars.length; i++) {
+      if (a.styledChars[i].char != b.styledChars[i].char ||
+          a.styledChars[i].style != b.styledChars[i].style) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool get canUndo => _undoStack.isNotEmpty;
+  bool get canRedo => _redoStack.isNotEmpty;
+
+  void undo() {
+    if (!canUndo) return;
+    _isUndoOrRedoAction = true;
+
+    _redoStack.add(UndoState(styledChars, selection));
+
+    final previous = _undoStack.removeLast();
+    styledChars = List.from(previous.styledChars);
+    value = TextEditingValue(
+      text: _getTextOnly(),
+      selection: previous.selection,
+    );
+
+    _isUndoOrRedoAction = false;
+    notifyListeners();
+  }
+
+  void redo() {
+    if (!canRedo) return;
+    _isUndoOrRedoAction = true;
+
+    _undoStack.add(UndoState(styledChars, selection));
+
+    final next = _redoStack.removeLast();
+    styledChars = List.from(next.styledChars);
+    value = TextEditingValue(
+      text: _getTextOnly(),
+      selection: next.selection,
+    );
+
+    _isUndoOrRedoAction = false;
+    notifyListeners();
+  }
+
+  void handleTextEditingStateSaving(String newText) {
+    if (_isUndoOrRedoAction) return;
+
+    final now = DateTime.now();
+    final isWordBoundary = newText.endsWith(' ') || newText.endsWith('\n') || newText.endsWith('\t');
+    final timePassed = _lastTypeTime == null ? true : now.difference(_lastTypeTime!) > const Duration(milliseconds: 1500);
+
+    if (isWordBoundary || timePassed || _lastText == null || (_lastText!.length - newText.length).abs() > 5) {
+      saveUndoState();
+    }
+
+    _lastTypeTime = now;
+    _lastText = newText;
+  }
+
+  void copy() {
+    final sel = selection;
+    if (!sel.isValid || sel.isCollapsed) return;
+
+    final selectedChars = styledChars.sublist(sel.start, sel.end);
+    final markdown = generateInlineMarkdown(selectedChars);
+
+    Clipboard.setData(ClipboardData(text: markdown));
+  }
+
+  void cut() {
+    final sel = selection;
+    if (!sel.isValid || sel.isCollapsed) return;
+
+    copy();
+    saveUndoState();
+
+    final List<StyledChar> newChars = List.from(styledChars);
+    newChars.removeRange(sel.start, sel.end);
+
+    styledChars = newChars;
+    final newTextStr = _getTextOnly();
+
+    value = TextEditingValue(
+      text: newTextStr,
+      selection: TextSelection.collapsed(offset: sel.start),
+    );
+    notifyListeners();
+  }
+
+  Future<void> paste() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data == null || data.text == null || data.text!.isEmpty) return;
+
+    final sel = selection;
+    saveUndoState();
+
+    final List<StyledChar> newChars = List.from(styledChars);
+    int start = sel.isValid ? sel.start : styledChars.length;
+    int end = sel.isValid ? sel.end : styledChars.length;
+
+    final textVal = data.text!;
+    final hasMarkdown = textVal.contains('**') ||
+        textVal.contains('*') ||
+        textVal.contains('# ') ||
+        textVal.contains('- [') ||
+        textVal.contains('- ') ||
+        textVal.contains('---');
+
+    List<StyledChar> pastedChars;
+    if (hasMarkdown) {
+      pastedChars = parseMarkdownToStyledChars(textVal);
+    } else {
+      final normalized = textVal.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+      pastedChars = normalized.split('').map((c) => StyledChar(char: c, style: currentActiveStyle)).toList();
+    }
+
+    if (end > start) {
+      newChars.removeRange(start, end);
+    }
+
+    newChars.insertAll(start, pastedChars);
+
+    styledChars = newChars;
+    final newTextStr = _getTextOnly();
+
+    value = TextEditingValue(
+      text: newTextStr,
+      selection: TextSelection.collapsed(offset: start + pastedChars.length),
+    );
+    notifyListeners();
+  }
+
+  void duplicateSelection() {
+    final sel = selection;
+    if (!sel.isValid || sel.isCollapsed) return;
+
+    saveUndoState();
+
+    final selectedChars = styledChars.sublist(sel.start, sel.end);
+    final List<StyledChar> newChars = List.from(styledChars);
+
+    newChars.insertAll(sel.end, selectedChars);
+
+    styledChars = newChars;
+    final newTextStr = _getTextOnly();
+
+    value = TextEditingValue(
+      text: newTextStr,
+      selection: TextSelection(
+        baseOffset: sel.end,
+        extentOffset: sel.end + selectedChars.length,
+      ),
+    );
+    notifyListeners();
+  }
 
   RichTextEditingController({String? markdown}) {
     if (markdown != null && markdown.isNotEmpty) {
@@ -819,6 +1119,7 @@ class RichTextEditingController extends TextEditingController {
   }
 
   void toggleStyleAttribute(String attribute, {dynamic value}) {
+    saveUndoState();
     final sel = selection;
     if (!sel.isValid) return;
 
@@ -888,6 +1189,7 @@ class RichTextEditingController extends TextEditingController {
   }
 
   void toggleParagraphStyle(String styleName) {
+    saveUndoState();
     final oldSel = selection;
     if (!oldSel.isValid) return;
 
@@ -1034,6 +1336,11 @@ class RichTextEditingController extends TextEditingController {
   }
 
   void insertImage(String path) {
+    if (kImageDebug) {
+      debugPrint("[Stage 5] Started");
+      debugPrint("Relevant state: image path=$path, selection=$selection, styledChars length=${styledChars.length}");
+    }
+    saveUndoState();
     final sel = selection;
     final textStr = text;
     final List<StyledChar> newChars = List.from(styledChars);
@@ -1063,12 +1370,51 @@ class RichTextEditingController extends TextEditingController {
       selection: TextSelection.collapsed(offset: cursor),
     );
     notifyListeners();
+    if (kImageDebug) {
+      debugPrint("[Stage 5] Completed");
+      debugPrint("Relevant state: new text length=${text.length}, new selection=$selection, new styledChars length=${styledChars.length}");
+    }
+  }
+
+  void insertDivider() {
+    saveUndoState();
+    final sel = selection;
+    final textStr = text;
+    final List<StyledChar> newChars = List.from(styledChars);
+
+    int cursor = sel.isValid ? sel.start : textStr.length;
+    cursor = cursor.clamp(0, textStr.length);
+
+    // Insert leading newline if not at start of line
+    if (cursor > 0 && newChars[cursor - 1].char != '\n') {
+      newChars.insert(cursor, StyledChar(char: '\n', style: const Style()));
+      cursor++;
+    }
+
+    final divStyle = Style(isDivider: true);
+    newChars.insert(cursor, StyledChar(char: '\u2014', style: divStyle));
+    cursor++;
+
+    // Always insert a trailing newline after the divider to make it separate
+    newChars.insert(cursor, StyledChar(char: '\n', style: const Style()));
+    cursor++;
+
+    styledChars = newChars;
+    final newTextStr = _getTextOnly();
+
+    value = TextEditingValue(
+      text: newTextStr,
+      selection: TextSelection.collapsed(offset: cursor),
+    );
+    notifyListeners();
   }
 
   void toggleChecklistState(int index) {
+    saveUndoState();
     if (index >= 0 && index < styledChars.length) {
       final char = styledChars[index].char;
       if (char == '\u2610' || char == '\u2611') {
+        HapticFeedback.lightImpact();
         final newChar = char == '\u2610' ? '\u2611' : '\u2610';
         final newChecked = char == '\u2610';
 
@@ -1114,9 +1460,17 @@ class RichTextEditingController extends TextEditingController {
 
   @override
   set value(TextEditingValue newValue) {
+    if (kImageDebug) {
+      debugPrint("[Stage 6] Started");
+      debugPrint("Relevant state: newValue text length=${newValue.text.length}, newValue selection=${newValue.selection}, styledChars length=${styledChars.length}");
+    }
     var finalValue = newValue;
     final oldText = text;
     var newText = newValue.text;
+
+    if (!_isUndoOrRedoAction && oldText != newText) {
+      handleTextEditingStateSaving(newText);
+    }
 
     if (oldText != newText && _getTextOnly() != newText) {
       int prefixLen = 0;
@@ -1134,13 +1488,118 @@ class RichTextEditingController extends TextEditingController {
         suffixLen++;
       }
 
-      final int diffStart = prefixLen;
-      final int diffEndOld = oldText.length - suffixLen;
+      int diffStart = prefixLen;
+      int diffEndOld = oldText.length - suffixLen;
       var diffEndNew = newText.length - suffixLen;
 
       List<StyledChar> newChars = List.from(styledChars);
-      if (diffEndOld > diffStart) {
-        newChars.removeRange(diffStart, diffEndOld);
+      bool prefixDeleted = false;
+      bool isHeadingBackspace = false;
+      bool dividerDeleted = false;
+
+      // Newline-adjacent-to-image deletion protection:
+      // If a newline immediately before or after the image character (\uFFFC)
+      // is deleted, delete the image character as well. This prevents merging
+      // text onto the same line as the image.
+      int imageIndexToDelete = -1;
+      if (diffEndOld - diffStart == 1 && oldText[diffStart] == '\n') {
+        if (diffStart > 0 && oldText[diffStart - 1] == '\uFFFC') {
+          imageIndexToDelete = diffStart - 1;
+        } else if (diffStart + 1 < oldText.length && oldText[diffStart + 1] == '\uFFFC') {
+          imageIndexToDelete = diffStart + 1;
+        }
+      }
+
+      if (imageIndexToDelete != -1) {
+        if (imageIndexToDelete < diffStart) {
+          // Image is before newline (deleting trailing newline of image)
+          // Also check if there is a leading newline before the image to clean it up too
+          bool hasLeadingNewline = (imageIndexToDelete > 0 && oldText[imageIndexToDelete - 1] == '\n');
+          
+          newChars.removeAt(diffStart); // removes trailing newline
+          newChars.removeAt(imageIndexToDelete); // removes image
+          if (hasLeadingNewline) {
+            newChars.removeAt(imageIndexToDelete - 1); // removes leading newline
+            newText = '${newText.substring(0, imageIndexToDelete - 1)}${newText.substring(diffStart)}';
+            finalValue = TextEditingValue(
+              text: newText,
+              selection: TextSelection.collapsed(offset: (imageIndexToDelete - 1).clamp(0, newText.length)),
+            );
+            diffStart = imageIndexToDelete - 1;
+          } else {
+            newText = '${newText.substring(0, imageIndexToDelete)}${newText.substring(diffStart)}';
+            finalValue = TextEditingValue(
+              text: newText,
+              selection: TextSelection.collapsed(offset: imageIndexToDelete.clamp(0, newText.length)),
+            );
+            diffStart = imageIndexToDelete;
+          }
+        } else {
+          // Image is after newline
+          newChars.removeAt(imageIndexToDelete); // removes image
+          newChars.removeAt(diffStart); // removes newline
+          newText = '${newText.substring(0, diffStart)}${newText.substring(imageIndexToDelete)}';
+          finalValue = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(offset: diffStart.clamp(0, newText.length)),
+          );
+        }
+        diffEndNew = diffStart;
+        diffEndOld = diffStart;
+      }
+
+      if (diffEndOld - diffStart == 1 && oldText[diffStart] == '\n') {
+        int currentLineCharIdx = diffStart + 1;
+        if (currentLineCharIdx < styledChars.length) {
+          final style = styledChars[currentLineCharIdx].style;
+          if (style.heading != 'normal') {
+            isHeadingBackspace = true;
+          }
+        }
+      }
+
+      if (isHeadingBackspace) {
+        int scan = diffStart + 1;
+        while (scan < newChars.length && newChars[scan].char != '\n') {
+          newChars[scan] = StyledChar(
+            char: newChars[scan].char,
+            style: newChars[scan].style.copyWith(heading: 'normal'),
+          );
+          scan++;
+        }
+        currentActiveStyle = currentActiveStyle.copyWith(heading: 'normal');
+        
+        finalValue = TextEditingValue(
+          text: oldText,
+          selection: TextSelection.collapsed(offset: diffStart + 1),
+        );
+      } else {
+        if (diffEndOld > diffStart) {
+          for (int k = diffStart; k < diffEndOld; k++) {
+            if (k < styledChars.length) {
+              final char = styledChars[k].char;
+              if (char == '\u2610' || char == '\u2611' || char == '•' || char == '›' || char == '\u2008') {
+                prefixDeleted = true;
+              }
+              if (styledChars[k].style.isDivider) {
+                dividerDeleted = true;
+              }
+            }
+          }
+          newChars.removeRange(diffStart, diffEndOld);
+        }
+      }
+
+      if (dividerDeleted) {
+        if (diffStart > 0 && newChars[diffStart - 1].char == '\n') {
+          newChars.removeAt(diffStart - 1);
+          newText = '${newText.substring(0, diffStart - 1)}${newText.substring(diffStart)}';
+          finalValue = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(offset: (newValue.selection.baseOffset - 1).clamp(0, newText.length)),
+          );
+          diffStart--;
+        }
       }
 
       Style baseStyle = currentActiveStyle;
@@ -1154,7 +1613,25 @@ class RichTextEditingController extends TextEditingController {
               highlight: currentActiveStyle.highlight,
               clearColor: currentActiveStyle.color == null,
               clearHighlight: currentActiveStyle.highlight == null,
+              clearImage: true,
             );
+      }
+
+      if (prefixDeleted) {
+        int scan = diffStart;
+        while (scan < newChars.length) {
+          final char = newChars[scan].char;
+          newChars[scan] = StyledChar(
+            char: char,
+            style: newChars[scan].style.copyWith(listType: 'normal', checked: false),
+          );
+          if (char == '\n') {
+            break;
+          }
+          scan++;
+        }
+        baseStyle = baseStyle.copyWith(listType: 'normal', checked: false);
+        currentActiveStyle = baseStyle;
       }
 
       final bool isNewlineInsert =
@@ -1162,61 +1639,134 @@ class RichTextEditingController extends TextEditingController {
 
       final List<StyledChar> insertedStyledChars = [];
       if (isNewlineInsert) {
-        insertedStyledChars.add(StyledChar(char: '\n', style: baseStyle));
+        int lineStart = diffStart - 1;
+        while (lineStart >= 0 && newText[lineStart] != '\n') {
+          lineStart--;
+        }
+        lineStart++;
 
-        if (baseStyle.listType == 'bullet') {
-          insertedStyledChars.add(StyledChar(char: '•', style: baseStyle));
-          newText =
-              '${newText.substring(0, diffStart + 1)}•${newText.substring(diffStart + 1)}';
-          diffEndNew++;
+        bool isLineEmptyList = false;
+        if (diffStart > lineStart) {
+          final prefixText = newText.substring(lineStart, diffStart);
+          if (prefixText == '\u2610' || prefixText == '\u2611' || prefixText == '•' || prefixText == '›' || prefixText == '\u2008') {
+            isLineEmptyList = true;
+          }
+        }
 
+        if (isLineEmptyList) {
+          newChars.removeAt(lineStart);
+          final normalStyle = baseStyle.copyWith(listType: 'normal', checked: false);
+          insertedStyledChars.add(StyledChar(char: '\n', style: normalStyle));
+          newText = '${newText.substring(0, lineStart)}${newText.substring(diffStart)}';
           finalValue = TextEditingValue(
             text: newText,
-            selection: TextSelection.collapsed(
-                offset: newValue.selection.baseOffset + 1),
+            selection: TextSelection.collapsed(offset: lineStart + 1),
           );
-        } else if (baseStyle.listType == 'checkbox') {
-          final checkboxStyle = baseStyle.copyWith(checked: false);
-          insertedStyledChars
-              .add(StyledChar(char: '\u2610', style: checkboxStyle));
-          newText =
-              '${newText.substring(0, diffStart + 1)}\u2610${newText.substring(diffStart + 1)}';
-          diffEndNew++;
-
-          finalValue = TextEditingValue(
-            text: newText,
-            selection: TextSelection.collapsed(
-                offset: newValue.selection.baseOffset + 1),
-          );
-        } else if (baseStyle.listType == 'number') {
-          insertedStyledChars.add(StyledChar(char: '\u2008', style: baseStyle));
-          newText =
-              '${newText.substring(0, diffStart + 1)}\u2008${newText.substring(diffStart + 1)}';
-          diffEndNew++;
-
-          finalValue = TextEditingValue(
-            text: newText,
-            selection: TextSelection.collapsed(
-                offset: newValue.selection.baseOffset + 1),
-          );
-        } else if (baseStyle.listType == 'quote') {
-          insertedStyledChars.add(StyledChar(char: '›', style: baseStyle));
-          newText =
-              '${newText.substring(0, diffStart + 1)}›${newText.substring(diffStart + 1)}';
-          diffEndNew++;
-
-          finalValue = TextEditingValue(
-            text: newText,
-            selection: TextSelection.collapsed(
-                offset: newValue.selection.baseOffset + 1),
-          );
+          currentActiveStyle = normalStyle;
+          diffStart = lineStart;
         } else {
-          baseStyle = baseStyle.copyWith(heading: 'normal');
+          if (baseStyle.heading != 'normal') {
+            final normalStyle = baseStyle.copyWith(heading: 'normal');
+            insertedStyledChars.add(StyledChar(char: '\n', style: normalStyle));
+
+            int scan = diffStart;
+            while (scan < newChars.length && newChars[scan].char != '\n') {
+              newChars[scan] = StyledChar(
+                char: newChars[scan].char,
+                style: newChars[scan].style.copyWith(heading: 'normal'),
+              );
+              scan++;
+            }
+            currentActiveStyle = normalStyle;
+            baseStyle = normalStyle;
+          } else {
+            insertedStyledChars.add(StyledChar(char: '\n', style: baseStyle));
+          }
+
+          if (baseStyle.listType == 'bullet') {
+            insertedStyledChars.add(StyledChar(char: '•', style: baseStyle));
+            newText =
+                '${newText.substring(0, diffStart + 1)}•${newText.substring(diffStart + 1)}';
+            diffEndNew++;
+
+            finalValue = TextEditingValue(
+              text: newText,
+              selection: TextSelection.collapsed(
+                  offset: newValue.selection.baseOffset + 1),
+            );
+          } else if (baseStyle.listType == 'checkbox') {
+            final checkboxStyle = baseStyle.copyWith(checked: false);
+            insertedStyledChars
+                .add(StyledChar(char: '\u2610', style: checkboxStyle));
+            newText =
+                '${newText.substring(0, diffStart + 1)}\u2610${newText.substring(diffStart + 1)}';
+            diffEndNew++;
+
+            finalValue = TextEditingValue(
+              text: newText,
+              selection: TextSelection.collapsed(
+                  offset: newValue.selection.baseOffset + 1),
+            );
+          } else if (baseStyle.listType == 'number') {
+            insertedStyledChars.add(StyledChar(char: '\u2008', style: baseStyle));
+            newText =
+                '${newText.substring(0, diffStart + 1)}\u2008${newText.substring(diffStart + 1)}';
+            diffEndNew++;
+
+            finalValue = TextEditingValue(
+              text: newText,
+              selection: TextSelection.collapsed(
+                  offset: newValue.selection.baseOffset + 1),
+            );
+          } else if (baseStyle.listType == 'quote') {
+            insertedStyledChars.add(StyledChar(char: '›', style: baseStyle));
+            newText =
+                '${newText.substring(0, diffStart + 1)}›${newText.substring(diffStart + 1)}';
+            diffEndNew++;
+
+            finalValue = TextEditingValue(
+              text: newText,
+              selection: TextSelection.collapsed(
+                  offset: newValue.selection.baseOffset + 1),
+            );
+          } else {
+            baseStyle = baseStyle.copyWith(heading: 'normal');
+          }
         }
       } else {
-        for (int i = diffStart; i < diffEndNew; i++) {
-          insertedStyledChars
-              .add(StyledChar(char: newText[i], style: baseStyle));
+        final bool isPaste = (diffEndNew - diffStart > 1);
+        if (isPaste) {
+          final pastedText = newText.substring(diffStart, diffEndNew);
+          final hasMarkdown = pastedText.contains('**') ||
+              pastedText.contains('*') ||
+              pastedText.contains('# ') ||
+              pastedText.contains('- [') ||
+              pastedText.contains('- ') ||
+              pastedText.contains('---');
+
+          List<StyledChar> pastedChars;
+          if (hasMarkdown) {
+            pastedChars = parseMarkdownToStyledChars(pastedText);
+          } else {
+            final normalized = pastedText.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+            pastedChars = normalized.split('').map((c) => StyledChar(char: c, style: baseStyle)).toList();
+          }
+
+          insertedStyledChars.addAll(pastedChars);
+
+          final insertTextStr = pastedChars.map((sc) => sc.char).join();
+          newText = '${newText.substring(0, diffStart)}$insertTextStr${newText.substring(diffEndNew)}';
+          diffEndNew = diffStart + insertTextStr.length;
+
+          finalValue = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(offset: diffEndNew),
+          );
+        } else {
+          for (int i = diffStart; i < diffEndNew; i++) {
+            insertedStyledChars
+                .add(StyledChar(char: newText[i], style: baseStyle));
+          }
         }
       }
 
@@ -1228,12 +1778,20 @@ class RichTextEditingController extends TextEditingController {
     }
 
     super.value = finalValue;
+    if (kImageDebug) {
+      debugPrint("[Stage 6] Completed");
+      debugPrint("Relevant state: final text length=${text.length}, final selection=$selection, final styledChars length=${styledChars.length}");
+    }
 
-    // Update active toolbar style state to match character style at cursor when collapsed
-    if (selection.isCollapsed &&
-        selection.start >= 0 &&
-        selection.start < styledChars.length) {
-      currentActiveStyle = styledChars[selection.start].style;
+    if (selection.isCollapsed) {
+      int checkIdx = selection.start - 1;
+      if (checkIdx >= 0 && checkIdx < styledChars.length) {
+        currentActiveStyle = styledChars[checkIdx].style;
+      } else if (selection.start >= 0 && selection.start < styledChars.length) {
+        currentActiveStyle = styledChars[selection.start].style;
+      } else {
+        currentActiveStyle = const Style();
+      }
     }
   }
 
@@ -1243,6 +1801,12 @@ class RichTextEditingController extends TextEditingController {
     TextStyle? style,
     required bool withComposing,
   }) {
+    imageKeys.clear();
+    for (final r in _recognizers) {
+      r.dispose();
+    }
+    _recognizers.clear();
+
     if (styledChars.isEmpty) {
       return TextSpan(text: '', style: style);
     }
@@ -1254,15 +1818,37 @@ class RichTextEditingController extends TextEditingController {
     while (i < styledChars.length) {
       final sc = styledChars[i];
 
-      if (sc.style.imageUrl != null && sc.char == '\uFFFC') {
+      if (sc.style.isDivider) {
+        children.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 16.0),
+            height: 20.0,
+            alignment: Alignment.center,
+            child: Container(
+              height: 1.5,
+              color: baseStyle.color?.withOpacity(0.2) ?? Colors.grey.withOpacity(0.2),
+            ),
+          ),
+        ));
+        i++;
+      } else if (sc.style.imageUrl != null && sc.char == '\uFFFC') {
         final String url = sc.style.imageUrl!;
         final double? width = sc.style.imageWidth;
         final String? caption = sc.style.imageCaption;
         final int index = i;
+        final key = _getImageKey(url, index);
+        imageKeys[index] = key;
+
+        if (kImageDebug) {
+          debugPrint("[Stage 8] Started - Mapping styledChar $index to ResizableImageWidget");
+          debugPrint("Relevant state: image path=$url, imageWidth=$width, caption=$caption");
+        }
 
         children.add(WidgetSpan(
           alignment: PlaceholderAlignment.top,
           child: ResizableImageWidget(
+            key: key,
             imagePath: url,
             initialWidth: width,
             caption: caption,
@@ -1290,9 +1876,17 @@ class RichTextEditingController extends TextEditingController {
             },
             onReplace:
                 onReplaceImage != null ? () => onReplaceImage!(index) : null,
+            onTap: () {
+              if (onTapImage != null) {
+                onTapImage!(index);
+              }
+            },
           ),
         ));
         i++;
+        if (kImageDebug) {
+          debugPrint("[Stage 8] Completed");
+        }
       } else if (sc.char == '\u2610' || sc.char == '\u2611') {
         final bool checked = sc.char == '\u2611';
         final int index = i;
@@ -1319,33 +1913,20 @@ class RichTextEditingController extends TextEditingController {
           }
           scan--;
         }
-        children.add(WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Container(
-            margin: const EdgeInsets.only(right: 8.0),
-            constraints: const BoxConstraints(minWidth: 20),
-            alignment: Alignment.centerRight,
-            child: Text(
-              '$numberIndex.',
-              style: baseStyle.copyWith(
-                fontWeight: FontWeight.w500,
-                color: baseStyle.color,
-              ),
-            ),
+        children.add(TextSpan(
+          text: '$numberIndex. ',
+          style: baseStyle.copyWith(
+            fontWeight: FontWeight.w500,
+            color: baseStyle.color,
           ),
         ));
         i++;
       } else if (sc.char == '›') {
-        children.add(WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Container(
-            margin: const EdgeInsets.only(right: 8.0),
-            width: 3.5,
-            height: 16,
-            decoration: BoxDecoration(
-              color: baseStyle.color?.withOpacity(0.4) ?? const Color(0xFF6B7280),
-              borderRadius: BorderRadius.circular(1.5),
-            ),
+        children.add(TextSpan(
+          text: '│ ',
+          style: baseStyle.copyWith(
+            color: (baseStyle.color ?? const Color(0xFF6B7280)).withOpacity(0.5),
+            fontWeight: FontWeight.w300,
           ),
         ));
         i++;
@@ -1359,6 +1940,7 @@ class RichTextEditingController extends TextEditingController {
             styledChars[i].char != '\u2611' &&
             styledChars[i].char != '\u2008' &&
             styledChars[i].char != '›' &&
+            !styledChars[i].style.isDivider &&
             styledChars[i].style == currentStyle) {
           i++;
         }
@@ -1402,10 +1984,366 @@ class RichTextEditingController extends TextEditingController {
           );
         }
 
+        if (currentStyle.linkUrl != null) {
+          final linkStyle = runStyle.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+            decoration: TextDecoration.underline,
+          );
+          final recognizer = TapGestureRecognizer()
+            ..onTap = () {
+              handleUrlLaunch(currentStyle.linkUrl!);
+            };
+          _recognizers.add(recognizer);
+          children.add(TextSpan(
+            text: textRun,
+            style: linkStyle,
+            recognizer: recognizer,
+          ));
+        } else {
+          final urlMatches = findUrlMatches(textRun);
+          if (urlMatches.isEmpty) {
+            children.add(TextSpan(
+              text: textRun,
+              style: runStyle,
+            ));
+          } else {
+            int lastIndex = 0;
+            for (final match in urlMatches) {
+              if (match.start > lastIndex) {
+                children.add(TextSpan(
+                  text: textRun.substring(lastIndex, match.start),
+                  style: runStyle,
+                ));
+              }
+              final url = match.group(0)!;
+              final linkStyle = runStyle.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                decoration: TextDecoration.underline,
+              );
+              final recognizer = TapGestureRecognizer()
+                ..onTap = () {
+                  handleUrlLaunch(url);
+                };
+              _recognizers.add(recognizer);
+              children.add(TextSpan(
+                text: url,
+                style: linkStyle,
+                recognizer: recognizer,
+              ));
+              lastIndex = match.end;
+            }
+            if (lastIndex < textRun.length) {
+              children.add(TextSpan(
+                text: textRun.substring(lastIndex),
+                style: runStyle,
+              ));
+            }
+          }
+        }
+      }
+    }
+
+    return TextSpan(children: children, style: baseStyle);
+  }
+
+  List<RegExpMatch> findUrlMatches(String text) {
+    final urlRegExp = RegExp(
+      r'(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})',
+      caseSensitive: false,
+    );
+    return urlRegExp.allMatches(text).toList();
+  }
+
+  Future<void> handleUrlLaunch(String url) async {
+    try {
+      String cleanUrl = url;
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+        cleanUrl = 'https://$cleanUrl';
+      }
+      final uri = Uri.parse(cleanUrl);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
+}
+
+class RangeTextEditingController extends TextEditingController {
+  final RichTextEditingController parent;
+  final int segmentIndex;
+
+  RangeTextEditingController({required this.parent, required this.segmentIndex}) {
+    parent.addListener(_onParentChanged);
+  }
+
+  @override
+  void dispose() {
+    parent.removeListener(_onParentChanged);
+    super.dispose();
+  }
+
+  void _onParentChanged() {
+    notifyListeners();
+  }
+
+  TextRange getRange() {
+    int currentSegment = 0;
+    int start = 0;
+    final chars = parent.styledChars;
+
+    for (int i = 0; i < chars.length; i++) {
+      if (chars[i].char == '\uFFFC' && chars[i].style.imageUrl != null) {
+        if (currentSegment == segmentIndex) {
+          return TextRange(start: start, end: i);
+        }
+        currentSegment++;
+        start = i + 1;
+      }
+    }
+
+    if (currentSegment == segmentIndex) {
+      return TextRange(start: start, end: chars.length);
+    }
+
+    return const TextRange(start: -1, end: -1);
+  }
+
+  @override
+  String get text {
+    final range = getRange();
+    if (!range.isValid || range.isCollapsed || range.start < 0 || range.end > parent.styledChars.length) return "";
+    final chars = parent.styledChars.sublist(range.start, range.end);
+    return chars.map((sc) => sc.char).join();
+  }
+
+  @override
+  set text(String newText) {
+    value = value.copyWith(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
+    );
+  }
+
+  @override
+  TextEditingValue get value {
+    final currentText = text;
+    final parentSel = parent.selection;
+    final range = getRange();
+
+    TextSelection localSel = const TextSelection.collapsed(offset: -1);
+    if (parentSel.isValid && range.isValid && range.start >= 0) {
+      final start = range.start;
+      final end = range.end;
+
+      if (parentSel.start >= start && parentSel.end <= end) {
+        localSel = TextSelection(
+          baseOffset: parentSel.baseOffset - start,
+          extentOffset: parentSel.extentOffset - start,
+        );
+      }
+    }
+
+    return TextEditingValue(
+      text: currentText,
+      selection: localSel,
+    );
+  }
+
+  @override
+  set value(TextEditingValue newValue) {
+    final range = getRange();
+    if (!range.isValid || range.start < 0 || range.end > parent.styledChars.length) return;
+
+    final start = range.start;
+    final end = range.end;
+
+    final newText = newValue.text;
+    final oldText = text;
+
+    if (newText == oldText) {
+      TextSelection parentSel = const TextSelection.collapsed(offset: -1);
+      if (newValue.selection.isValid) {
+        parentSel = TextSelection(
+          baseOffset: start + newValue.selection.baseOffset,
+          extentOffset: start + newValue.selection.extentOffset,
+        );
+      }
+      parent.value = parent.value.copyWith(selection: parentSel);
+      return;
+    }
+
+    final oldSegmentChars = parent.styledChars.sublist(start, end);
+    final List<StyledChar> newSegmentChars = [];
+
+    int prefixLen = 0;
+    while (prefixLen < oldText.length &&
+        prefixLen < newText.length &&
+        oldText[prefixLen] == newText[prefixLen]) {
+      prefixLen++;
+    }
+
+    int suffixLen = 0;
+    while (suffixLen < oldText.length - prefixLen &&
+        suffixLen < newText.length - prefixLen &&
+        oldText[oldText.length - 1 - suffixLen] == newText[newText.length - 1 - suffixLen]) {
+      suffixLen++;
+    }
+
+    newSegmentChars.addAll(oldSegmentChars.take(prefixLen));
+
+    Style baseStyle = parent.currentActiveStyle;
+    if (prefixLen > 0 && prefixLen - 1 < oldSegmentChars.length) {
+      baseStyle = oldSegmentChars[prefixLen - 1].style;
+    } else if (oldSegmentChars.isNotEmpty) {
+      baseStyle = oldSegmentChars.first.style;
+    }
+
+    final insertStart = prefixLen;
+    final insertEnd = newText.length - suffixLen;
+    for (int i = insertStart; i < insertEnd; i++) {
+      newSegmentChars.add(StyledChar(char: newText[i], style: baseStyle));
+    }
+
+    newSegmentChars.addAll(oldSegmentChars.skip(oldSegmentChars.length - suffixLen));
+
+    final List<StyledChar> updatedParentChars = List.from(parent.styledChars);
+    updatedParentChars.removeRange(start, end);
+    updatedParentChars.insertAll(start, newSegmentChars);
+
+    TextSelection parentSel = const TextSelection.collapsed(offset: -1);
+    if (newValue.selection.isValid) {
+      parentSel = TextSelection(
+        baseOffset: start + newValue.selection.baseOffset,
+        extentOffset: start + newValue.selection.extentOffset,
+      );
+    }
+
+    parent.styledChars = updatedParentChars;
+    
+    parent.value = TextEditingValue(
+      text: updatedParentChars.map((sc) => sc.char).join(),
+      selection: parentSel,
+    );
+  }
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final range = getRange();
+    if (!range.isValid || range.isCollapsed || range.start < 0 || range.end > parent.styledChars.length) {
+      return TextSpan(text: '', style: style);
+    }
+
+    final segmentChars = parent.styledChars.sublist(range.start, range.end);
+    final segmentText = segmentChars.map((sc) => sc.char).join();
+
+    final baseStyle = style ?? const TextStyle();
+    final List<InlineSpan> children = [];
+
+    int i = 0;
+    while (i < segmentChars.length) {
+      final sc = segmentChars[i];
+      final start = i;
+      final currentStyle = sc.style;
+      i++;
+
+      while (i < segmentChars.length && segmentChars[i].style == currentStyle) {
+        i++;
+      }
+
+      final textRun = segmentText.substring(start, i);
+
+      TextStyle runStyle = baseStyle.copyWith(
+        fontWeight: currentStyle.bold ? FontWeight.bold : FontWeight.normal,
+        fontStyle: currentStyle.listType == 'quote' ? FontStyle.italic : (currentStyle.italic ? FontStyle.italic : FontStyle.normal),
+        color: currentStyle.listType == 'quote' ? (currentStyle.color ?? baseStyle.color)?.withOpacity(0.7) : (currentStyle.color ?? baseStyle.color),
+        backgroundColor: currentStyle.highlight,
+      );
+
+      if (currentStyle.underline && currentStyle.strikethrough) {
+        runStyle = runStyle.copyWith(
+          decoration: TextDecoration.combine(
+              [TextDecoration.underline, TextDecoration.lineThrough]),
+        );
+      } else if (currentStyle.underline) {
+        runStyle = runStyle.copyWith(decoration: TextDecoration.underline);
+      } else if (currentStyle.strikethrough) {
+        runStyle = runStyle.copyWith(decoration: TextDecoration.lineThrough);
+      } else {
+        runStyle = runStyle.copyWith(decoration: TextDecoration.none);
+      }
+
+      if (currentStyle.heading == 'h1') {
+        runStyle = runStyle.copyWith(
+          fontSize: 24.0,
+          fontWeight: FontWeight.bold,
+        );
+      } else if (currentStyle.heading == 'h2') {
+        runStyle = runStyle.copyWith(
+          fontSize: 20.0,
+          fontWeight: FontWeight.bold,
+        );
+      } else if (currentStyle.heading == 'h3') {
+        runStyle = runStyle.copyWith(
+          fontSize: 18.0,
+          fontWeight: FontWeight.bold,
+        );
+      }
+
+      if (currentStyle.linkUrl != null) {
+        final linkStyle = runStyle.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+          decoration: TextDecoration.underline,
+        );
+        final recognizer = TapGestureRecognizer()
+          ..onTap = () {
+            parent.handleUrlLaunch(currentStyle.linkUrl!);
+          };
         children.add(TextSpan(
           text: textRun,
-          style: runStyle,
+          style: linkStyle,
+          recognizer: recognizer,
         ));
+      } else {
+        final urlMatches = parent.findUrlMatches(textRun);
+        if (urlMatches.isEmpty) {
+          children.add(TextSpan(
+            text: textRun,
+            style: runStyle,
+          ));
+        } else {
+          int lastIndex = 0;
+          for (final match in urlMatches) {
+            if (match.start > lastIndex) {
+              children.add(TextSpan(
+                text: textRun.substring(lastIndex, match.start),
+                style: runStyle,
+              ));
+            }
+            final url = match.group(0)!;
+            final linkStyle = runStyle.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              decoration: TextDecoration.underline,
+            );
+            final recognizer = TapGestureRecognizer()
+              ..onTap = () {
+                parent.handleUrlLaunch(url);
+              };
+            children.add(TextSpan(
+              text: url,
+              style: linkStyle,
+              recognizer: recognizer,
+            ));
+            lastIndex = match.end;
+          }
+          if (lastIndex < textRun.length) {
+            children.add(TextSpan(
+              text: textRun.substring(lastIndex),
+              style: runStyle,
+            ));
+          }
+        }
       }
     }
 
@@ -1420,6 +2358,23 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
 
   for (int i = 0; i < lines.length; i++) {
     String line = lines[i];
+
+    // Parse dividers
+    if (line.trim() == '---') {
+      result.add(StyledChar(
+        char: '\u2014',
+        style: const Style(
+          isDivider: true,
+        ),
+      ));
+      if (i < lines.length - 1) {
+        result.add(StyledChar(
+          char: '\n',
+          style: const Style(),
+        ));
+      }
+      continue;
+    }
 
     TextAlign align = TextAlign.left;
     String heading = 'normal';
@@ -1571,6 +2526,40 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
         }
       }
 
+      if (line[idx] == '[' && idx + 1 < line.length) {
+        int closeBracket = line.indexOf(']', idx + 1);
+        if (closeBracket != -1 &&
+            closeBracket + 1 < line.length &&
+            line[closeBracket + 1] == '(') {
+          int closeParenthesis = line.indexOf(')', closeBracket + 2);
+          if (closeParenthesis != -1) {
+            final linkText = line.substring(idx + 1, closeBracket);
+            final url = line.substring(closeBracket + 2, closeParenthesis);
+
+            for (int k = 0; k < linkText.length; k++) {
+              result.add(StyledChar(
+                char: linkText[k],
+                style: Style(
+                  bold: bold,
+                  italic: italic,
+                  underline: underline,
+                  strikethrough: strikethrough,
+                  heading: heading,
+                  align: align,
+                  listType: listType,
+                  checked: checked,
+                  color: color,
+                  highlight: highlight,
+                  linkUrl: url,
+                ),
+              ));
+            }
+            idx = closeParenthesis + 1;
+            continue;
+          }
+        }
+      }
+
       if (idx + 1 < line.length &&
           (line.substring(idx, idx + 2) == '**' ||
               line.substring(idx, idx + 2) == '__')) {
@@ -1638,6 +2627,47 @@ String generateInlineMarkdown(List<StyledChar> lineChars) {
   for (int i = 0; i < lineChars.length; i++) {
     final style = lineChars[i].style;
     final char = lineChars[i].char;
+
+    final linkUrl = style.linkUrl;
+    if (linkUrl != null) {
+      if (bold) {
+        sb.write('**');
+        bold = false;
+      }
+      if (italic) {
+        sb.write('*');
+        italic = false;
+      }
+      if (underline) {
+        sb.write('</u>');
+        underline = false;
+      }
+      if (strikethrough) {
+        sb.write('~~');
+        strikethrough = false;
+      }
+      if (color != null || highlight != null) {
+        sb.write('</span>');
+        color = null;
+        highlight = null;
+      }
+
+      int runEnd = i;
+      while (runEnd < lineChars.length && lineChars[runEnd].style.linkUrl == linkUrl) {
+        runEnd++;
+      }
+      final linkChars = lineChars.sublist(i, runEnd);
+      i = runEnd - 1;
+
+      final clearedLinkChars = linkChars.map((sc) => StyledChar(
+        char: sc.char,
+        style: sc.style.copyWith(clearLink: true),
+      )).toList();
+
+      final linkText = generateInlineMarkdown(clearedLinkChars);
+      sb.write('[$linkText]($linkUrl)');
+      continue;
+    }
 
     if (style.imageUrl != null && char == '\uFFFC') {
       if (bold) {
@@ -1745,17 +2775,21 @@ String generateMarkdownFromStyledChars(List<StyledChar> styledChars) {
     final lineChars = lines[i];
     final style = lineChars.isNotEmpty ? lineChars.first.style : const Style();
 
-    List<StyledChar> contentChars = List.from(lineChars);
-    if (contentChars.isNotEmpty &&
-        (contentChars.first.char == '•' ||
-            contentChars.first.char == '›' ||
-            contentChars.first.char == '\u2610' ||
-            contentChars.first.char == '\u2611' ||
-            contentChars.first.char == '\u2008')) {
-      contentChars.removeAt(0);
+    String lineContent = "";
+    if (style.isDivider) {
+      lineContent = '---';
+    } else {
+      List<StyledChar> contentChars = List.from(lineChars);
+      if (contentChars.isNotEmpty &&
+          (contentChars.first.char == '•' ||
+              contentChars.first.char == '›' ||
+              contentChars.first.char == '\u2610' ||
+              contentChars.first.char == '\u2611' ||
+              contentChars.first.char == '\u2008')) {
+        contentChars.removeAt(0);
+      }
+      lineContent = generateInlineMarkdown(contentChars);
     }
-
-    String lineContent = generateInlineMarkdown(contentChars);
 
     if (style.listType == 'checkbox') {
       lineContent = style.checked ? '- [x] $lineContent' : '- [ ] $lineContent';

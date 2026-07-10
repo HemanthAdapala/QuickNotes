@@ -22,6 +22,7 @@ import '../widgets/rich_text_selection_toolbar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
+import '../widgets/new_single_document_editor.dart';
 import '../widgets/paper_guide_painters.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/rich_text_formatting_pill.dart';
@@ -36,6 +37,8 @@ import 'dart:ui';
 
 
 enum _ActiveCategory { none, aa, alignment, list, attachment, headings }
+
+const bool kImageDebug = true;
 
 class NoteEditorScreen extends StatefulWidget {
   final Note? note;
@@ -68,6 +71,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   int _nextIdCounter = 0;
   NoteBlock? _lastFocusedBlock;
   bool _showDeletePopup = false;
+  ResizableImageWidgetState? _activeDragImage;
+  int _dragDirection = 0;
+  Offset? _pointerDownPos;
 
   String _generateId() {
     final random = Random();
@@ -1506,50 +1512,37 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final route = ModalRoute.of(context);
-      if (route != null && route.animation != null) {
-        if (route.animation!.isCompleted) {
-          if (mounted) {
-            setState(() {
-              _isPageSettled = true;
-            });
-            if (widget.note == null && _noteType == 'text' && _blocks.isNotEmpty) {
-              final firstBlock = _blocks.first;
-              if (firstBlock is ParagraphBlock) {
-                firstBlock.focusNode.requestFocus();
-              }
-            }
-          }
-        } else {
-          void listener(AnimationStatus status) {
-            if (status == AnimationStatus.completed) {
-              route.animation!.removeStatusListener(listener);
-              if (mounted) {
-                setState(() {
-                  _isPageSettled = true;
-                });
-                if (widget.note == null && _noteType == 'text' && _blocks.isNotEmpty) {
-                  final firstBlock = _blocks.first;
-                  if (firstBlock is ParagraphBlock) {
-                    firstBlock.focusNode.requestFocus();
-                  }
-                }
-              }
-            }
-          }
-          route.animation!.addStatusListener(listener);
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _isPageSettled = true;
-          });
-          if (widget.note == null && _noteType == 'text' && _blocks.isNotEmpty) {
+
+      void _requestInitialFocus() {
+        if (!mounted) return;
+        setState(() { _isPageSettled = true; });
+        if (widget.note == null && _noteType == 'text') {
+          if (NoteEditorScreen.useSingleDocumentEditor) {
+            // SDE: focus the single content field directly.
+            _contentFocusNode.requestFocus();
+          } else if (_blocks.isNotEmpty) {
             final firstBlock = _blocks.first;
             if (firstBlock is ParagraphBlock) {
               firstBlock.focusNode.requestFocus();
             }
           }
         }
+      }
+
+      if (route != null && route.animation != null) {
+        if (route.animation!.isCompleted) {
+          _requestInitialFocus();
+        } else {
+          void listener(AnimationStatus status) {
+            if (status == AnimationStatus.completed) {
+              route.animation!.removeStatusListener(listener);
+              _requestInitialFocus();
+            }
+          }
+          route.animation!.addStatusListener(listener);
+        }
+      } else {
+        _requestInitialFocus();
       }
     });
   }
@@ -1858,6 +1851,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
     List<String> selectedPaths = [];
 
+    if (kImageDebug) {
+      debugPrint("[Stage 2] Started");
+      debugPrint("Relevant state: scrollOffset=${_scrollController.hasClients ? _scrollController.offset : 'null'}");
+    }
     await showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -1886,8 +1883,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                         if (selectedPaths.isNotEmpty)
                           TextButton(
                             onPressed: () {
+                              if (kImageDebug) {
+                                debugPrint("[Stage 3 - Preset] Started");
+                                debugPrint("Relevant state: image paths=$selectedPaths");
+                              }
                               Navigator.pop(context);
                               _insertSelectedImages(selectedPaths);
+                              if (kImageDebug) {
+                                debugPrint("[Stage 3 - Preset] Completed");
+                              }
                             },
                             child: Text(
                               "Insert (${selectedPaths.length})",
@@ -1910,12 +1914,21 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                           if (index == 0) {
                             return InkWell(
                               onTap: () async {
-                                Navigator.pop(context);
-                                final picked = await _imagePicker.pickImage(source: ImageSource.camera);
-                                if (picked != null) {
-                                  _insertSelectedImages(['file://${picked.path}']);
-                                }
-                              },
+                                  if (kImageDebug) {
+                                    debugPrint("[Stage 3 - Camera] Started");
+                                  }
+                                  Navigator.pop(context);
+                                  final picked = await _imagePicker.pickImage(source: ImageSource.camera);
+                                  if (picked != null) {
+                                    if (kImageDebug) {
+                                      debugPrint("Relevant state: image path=file://${picked.path}");
+                                    }
+                                    _insertSelectedImages(['file://${picked.path}']);
+                                  }
+                                  if (kImageDebug) {
+                                    debugPrint("[Stage 3 - Camera] Completed");
+                                  }
+                                },
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
                                 decoration: BoxDecoration(
@@ -1935,12 +1948,22 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                           } else if (index == 1) {
                             return InkWell(
                               onTap: () async {
-                                Navigator.pop(context);
-                                final pickedList = await _imagePicker.pickMultiImage();
-                                if (pickedList.isNotEmpty) {
-                                  _insertSelectedImages(pickedList.map((x) => 'file://${x.path}').toList());
-                                }
-                              },
+                                  if (kImageDebug) {
+                                    debugPrint("[Stage 3 - Gallery] Started");
+                                  }
+                                  Navigator.pop(context);
+                                  final pickedList = await _imagePicker.pickMultiImage();
+                                  if (pickedList.isNotEmpty) {
+                                    final paths = pickedList.map((x) => 'file://${x.path}').toList();
+                                    if (kImageDebug) {
+                                      debugPrint("Relevant state: image paths=$paths");
+                                    }
+                                    _insertSelectedImages(paths);
+                                  }
+                                  if (kImageDebug) {
+                                    debugPrint("[Stage 3 - Gallery] Completed");
+                                  }
+                                },
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
                                 decoration: BoxDecoration(
@@ -2028,6 +2051,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   Future<void> _insertSelectedImages(List<String> paths) async {
+    if (kImageDebug) {
+      debugPrint("[Stage 4] Started");
+      debugPrint("Relevant state: paths=$paths, selection=${_contentController.selection}, styledChars length=${_contentController.styledChars.length}");
+    }
     if (_noteType == 'text' && NoteEditorScreen.useSingleDocumentEditor) {
       for (final path in paths) {
         _contentController.insertImage(path);
@@ -2035,9 +2062,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       setState(() {
         _hasChanges = true;
       });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _contentFocusNode.requestFocus();
+      Future.delayed(const Duration(milliseconds: 350), () {
+        if (mounted) {
+          _contentFocusNode.requestFocus();
+          _scrollToCursor();
+        }
       });
+      if (kImageDebug) {
+        debugPrint("[Stage 4] Completed");
+      }
       return;
     }
 
@@ -2418,6 +2451,31 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       }
     } catch (e) {
       debugPrint("Playback error: $e");
+    }
+  }
+
+  /// Restores keyboard focus to the SDE content field after a toolbar action.
+  /// Uses a post-frame callback so it runs after the build cycle triggered
+  /// by `toggleParagraphStyle` / `insertDivider` has completed.
+  void _restoreContentFocus() {
+    if (!NoteEditorScreen.useSingleDocumentEditor) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _contentFocusNode.requestFocus();
+    });
+    setState(() { _hasChanges = true; });
+  }
+
+  void _scrollToCursor() {
+    if (_scrollController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
     }
   }
 
@@ -3335,22 +3393,25 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         padding: const EdgeInsets.symmetric(horizontal: 2.0),
         child: Tooltip(
           message: tooltip,
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: isActive ? theme.colorScheme.primary.withAlpha(40) : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: Icon(
-                icon,
-                color: isActive ? theme.colorScheme.primary : buttonColor.withAlpha(200),
-                size: 20,
+          child: TactileButton(
+            useAppleSpring: true,
+            compressionScale: 0.8,
+            settleDuration: const Duration(milliseconds: 1000),
+            onTap: onPressed,
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: isActive ? theme.colorScheme.primary.withAlpha(40) : Colors.transparent,
+                shape: BoxShape.circle,
               ),
-              onPressed: onPressed,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: isActive ? theme.colorScheme.primary : buttonColor.withAlpha(200),
+                  size: 20,
+                ),
+              ),
             ),
           ),
         ),
@@ -3941,30 +4002,74 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: GestureDetector(
+                          child: Listener(
                             behavior: HitTestBehavior.opaque,
-                            onTap: () {
-                              if (_noteType == 'checklist') {
-                                if (_checklistFocusNodes.isNotEmpty) {
-                                  final fn = _checklistFocusNodes.last;
-                                  final ctrl = _checklistControllers.last;
-                                  fn.requestFocus();
-                                  ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
-                                }
-                              } else {
-                                if (_blocks.isNotEmpty) {
-                                  final lastTextBlock = _blocks.lastWhere(
-                                    (b) => b is ParagraphBlock || b is HeadingBlock || b is QuoteBlock || b is ChecklistBlock,
-                                    orElse: () => _blocks.last,
-                                  );
-                                  final fn = _getFocusNodeOfBlock(lastTextBlock);
-                                  final ctrl = _getControllerOfBlock(lastTextBlock);
-                                  if (fn != null && ctrl != null) {
-                                    fn.requestFocus();
-                                    ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
+                            onPointerDown: (event) {
+                              _pointerDownPos = event.position;
+                              _activeDragImage = null;
+                              _dragDirection = 0;
+                              
+                              final controller = _contentController;
+                              for (final entry in controller.imageKeys.entries) {
+                                final key = entry.value;
+                                final context = key.currentContext;
+                                if (context != null) {
+                                  final RenderBox? box = context.findRenderObject() as RenderBox?;
+                                  if (box != null && box.hasSize) {
+                                    final position = box.localToGlobal(Offset.zero);
+                                    final size = box.size;
+                                    final rect = position & size;
+                                    if (rect.contains(event.position)) {
+                                      _activeDragImage = key.currentState as ResizableImageWidgetState?;
+                                      if (_activeDragImage != null) {
+                                        final isControlsShown = _activeDragImage!.showControls;
+                                        final localX = event.position.dx - position.dx;
+                                        if (isControlsShown && localX < 30.0) {
+                                          _dragDirection = -1; // Left handle
+                                        } else if (isControlsShown && localX > size.width - 30.0) {
+                                          _dragDirection = 1; // Right handle
+                                        } else {
+                                          _dragDirection = 0; // Tap/double-tap area
+                                        }
+                                      }
+                                      break;
+                                    }
                                   }
                                 }
                               }
+                            },
+                            onPointerMove: (event) {
+                              if (_activeDragImage != null && _dragDirection != 0) {
+                                _activeDragImage!.updateWidth(event.delta.dx, _dragDirection);
+                              }
+                            },
+                            onPointerUp: (event) {
+                              if (_activeDragImage != null) {
+                                final dist = _pointerDownPos != null ? (event.position - _pointerDownPos!).distance : 0.0;
+                                if (dist < 10.0 && _dragDirection == 0) {
+                                  _activeDragImage!.toggleControls();
+                                }
+                                _activeDragImage = null;
+                                _dragDirection = 0;
+                              } else {
+                                final dist = _pointerDownPos != null ? (event.position - _pointerDownPos!).distance : 0.0;
+                                if (dist < 10.0) {
+                                  if (_noteType == 'checklist') {
+                                    if (_checklistFocusNodes.isNotEmpty) {
+                                      final fn = _checklistFocusNodes.last;
+                                      final ctrl = _checklistControllers.last;
+                                      fn.requestFocus();
+                                      ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
+                                    }
+                                  } else if (NoteEditorScreen.useSingleDocumentEditor) {
+                                    _contentFocusNode.requestFocus();
+                                    final len = _contentController.text.length;
+                                    _contentController.selection =
+                                        TextSelection.collapsed(offset: len);
+                                  }
+                                }
+                              }
+                              _pointerDownPos = null;
                             },
                             child: RepaintBoundary(
                               child: SingleChildScrollView(
@@ -4018,32 +4123,12 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                   else if (_isPreviewMarkdown)
                                     _buildMarkdownPreview(textColor)
                                   else if (NoteEditorScreen.useSingleDocumentEditor)
-                                    TextField(
+                                    NewSingleDocumentEditor(
                                       controller: _contentController,
                                       focusNode: _contentFocusNode,
-                                      maxLines: null,
-                                      keyboardType: TextInputType.multiline,
+                                      textColor: textColor,
+                                      paperGuideHeight: _paperGuideHeight,
                                       contextMenuBuilder: _buildContextMenu,
-                                      scrollPadding: const EdgeInsets.only(bottom: 90.0),
-                                      style: GoogleFonts.inter(
-                                        fontSize: 16.0,
-                                        color: textColor,
-                                        height: 1.35 * _paperGuideHeight,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: "Start writing...",
-                                        hintStyle: GoogleFonts.inter(
-                                          fontSize: 16.0,
-                                          color: textColor.withAlpha(80),
-                                        ),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.zero,
-                                        filled: false,
-                                        isDense: true,
-                                      ),
-                                      onChanged: (val) {
-                                        _onContentTextChanged();
-                                      },
                                     )
                                   else
                                     Column(
@@ -4142,9 +4227,71 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                       height: 22,
                       colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
                     ),
-                rightWidth: 96.0,
+                rightWidth: 192.0,
                 rightChild: Row(
                   children: [
+                    // Undo Button
+                    Expanded(
+                      child: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _contentController,
+                        builder: (context, val, _) {
+                          final canUndo = _contentController.canUndo;
+                          return TactileButton(
+                            useAppleSpring: true,
+                            compressionScale: 0.7,
+                            settleDuration: const Duration(milliseconds: 1000),
+                            onTap: canUndo ? () {
+                              _contentController.undo();
+                              _restoreContentFocus();
+                              setState(() {
+                                _hasChanges = true;
+                              });
+                            } : () {},
+                            child: Center(
+                              child: Icon(
+                                Icons.undo_rounded,
+                                size: 22,
+                                color: canUndo ? const Color(0xFF1C1C1E) : const Color(0xFF1C1C1E).withOpacity(0.3),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    // Redo Button
+                    Expanded(
+                      child: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _contentController,
+                        builder: (context, val, _) {
+                          final canRedo = _contentController.canRedo;
+                          return TactileButton(
+                            useAppleSpring: true,
+                            compressionScale: 0.7,
+                            settleDuration: const Duration(milliseconds: 1000),
+                            onTap: canRedo ? () {
+                              _contentController.redo();
+                              _restoreContentFocus();
+                              setState(() {
+                                _hasChanges = true;
+                              });
+                            } : () {},
+                            child: Center(
+                              child: Icon(
+                                Icons.redo_rounded,
+                                size: 22,
+                                color: canRedo ? const Color(0xFF1C1C1E) : const Color(0xFF1C1C1E).withOpacity(0.3),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    // Separator line
+                    Container(
+                      width: 1.0,
+                      height: 18.0,
+                      color: const Color(0xFF1C1C1E).withOpacity(0.15),
+                    ),
                     // Folder Select Button
                     Expanded(
                       child: TactileButton(
@@ -4163,12 +4310,6 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                           ),
                         ),
                       ),
-                    ),
-                    // Separator line
-                    Container(
-                      width: 1.0,
-                      height: 18.0,
-                      color: const Color(0xFF1C1C1E).withOpacity(0.15),
                     ),
                     // Options Button
                     Expanded(
@@ -4516,10 +4657,23 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
   }
 
   Widget _buildListSubsection(NoteBlock? block) {
-    final isBullet = block is BulletedListBlock;
-    final isNumber = block is NumberedListBlock;
-    final isCheckbox = block is ChecklistBlock;
-    final isQuote = block is QuoteBlock;
+    // In SDE, read active style from the content controller; fall back to
+    // legacy block inspection when useSingleDocumentEditor is false.
+    final Style activeListStyle = NoteEditorScreen.useSingleDocumentEditor
+        ? _contentController.currentActiveStyle
+        : const Style();
+    final bool isBullet = NoteEditorScreen.useSingleDocumentEditor
+        ? activeListStyle.listType == 'bullet'
+        : block is BulletedListBlock;
+    final bool isNumber = NoteEditorScreen.useSingleDocumentEditor
+        ? activeListStyle.listType == 'number'
+        : block is NumberedListBlock;
+    final bool isCheckbox = NoteEditorScreen.useSingleDocumentEditor
+        ? activeListStyle.listType == 'checkbox'
+        : block is ChecklistBlock;
+    final bool isQuote = NoteEditorScreen.useSingleDocumentEditor
+        ? activeListStyle.listType == 'quote'
+        : block is QuoteBlock;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -4527,12 +4681,13 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         _buildSubsectionIconButton(
           icon: Icons.format_list_bulleted_rounded,
           onTap: () {
-            if (block != null) {
-              if (isBullet) {
-                _toggleBlockType(block, ParagraphBlock);
-              } else {
-                _toggleBlockType(block, BulletedListBlock);
-              }
+            if (NoteEditorScreen.useSingleDocumentEditor) {
+              _contentController.toggleParagraphStyle('bullet');
+              _restoreContentFocus();
+            } else if (block != null) {
+              isBullet
+                  ? _toggleBlockType(block, ParagraphBlock)
+                  : _toggleBlockType(block, BulletedListBlock);
             }
           },
           isActive: isBullet,
@@ -4541,12 +4696,13 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         _buildSubsectionIconButton(
           icon: Icons.format_list_numbered_rounded,
           onTap: () {
-            if (block != null) {
-              if (isNumber) {
-                _toggleBlockType(block, ParagraphBlock);
-              } else {
-                _toggleBlockType(block, NumberedListBlock);
-              }
+            if (NoteEditorScreen.useSingleDocumentEditor) {
+              _contentController.toggleParagraphStyle('number');
+              _restoreContentFocus();
+            } else if (block != null) {
+              isNumber
+                  ? _toggleBlockType(block, ParagraphBlock)
+                  : _toggleBlockType(block, NumberedListBlock);
             }
           },
           isActive: isNumber,
@@ -4555,12 +4711,13 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         _buildSubsectionIconButton(
           icon: Icons.add_task_rounded,
           onTap: () {
-            if (block != null) {
-              if (isCheckbox) {
-                _toggleBlockType(block, ParagraphBlock);
-              } else {
-                _toggleBlockType(block, ChecklistBlock);
-              }
+            if (NoteEditorScreen.useSingleDocumentEditor) {
+              _contentController.toggleParagraphStyle('checkbox');
+              _restoreContentFocus();
+            } else if (block != null) {
+              isCheckbox
+                  ? _toggleBlockType(block, ParagraphBlock)
+                  : _toggleBlockType(block, ChecklistBlock);
             }
           },
           isActive: isCheckbox,
@@ -4569,12 +4726,13 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         _buildSubsectionIconButton(
           icon: Icons.format_quote_rounded,
           onTap: () {
-            if (block != null) {
-              if (isQuote) {
-                _toggleBlockType(block, ParagraphBlock);
-              } else {
-                _toggleBlockType(block, QuoteBlock);
-              }
+            if (NoteEditorScreen.useSingleDocumentEditor) {
+              _contentController.toggleParagraphStyle('quote');
+              _restoreContentFocus();
+            } else if (block != null) {
+              isQuote
+                  ? _toggleBlockType(block, ParagraphBlock)
+                  : _toggleBlockType(block, QuoteBlock);
             }
           },
           isActive: isQuote,
@@ -4596,9 +4754,30 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         ),
         _buildSubsectionIconButton(
           icon: Icons.camera_alt_outlined,
-          onTap: () => _showGalleryBottomSheet(context),
+          onTap: () {
+            if (kImageDebug) {
+              debugPrint("[Stage 1] Started");
+              debugPrint("Relevant state: selection=${_contentController.selection}, styledChars length=${_contentController.styledChars.length}");
+            }
+            _showGalleryBottomSheet(context);
+            if (kImageDebug) {
+              debugPrint("[Stage 1] Completed");
+            }
+          },
           isActive: false,
           tooltip: 'Attach Image',
+        ),
+        _buildSubsectionIconButton(
+          icon: Icons.horizontal_rule_rounded,
+          onTap: () {
+            if (NoteEditorScreen.useSingleDocumentEditor) {
+              _contentController.insertDivider();
+              _restoreContentFocus();
+              setState(() { _hasChanges = true; });
+            }
+          },
+          isActive: false,
+          tooltip: 'Insert Divider',
         ),
         _buildSubsectionIconButton(
           icon: Icons.mic_none_rounded,
@@ -4611,9 +4790,19 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
   }
 
   Widget _buildHeadingsSubsection(NoteBlock? block) {
-    final isH1 = block is HeadingBlock && block.level == 1;
-    final isH2 = block is HeadingBlock && block.level == 2;
-    final isH3 = block is HeadingBlock && block.level == 3;
+    // In SDE, derive heading state from the content controller's active style.
+    final Style activeHeadStyle = NoteEditorScreen.useSingleDocumentEditor
+        ? _contentController.currentActiveStyle
+        : const Style();
+    final bool isH1 = NoteEditorScreen.useSingleDocumentEditor
+        ? activeHeadStyle.heading == 'h1'
+        : block is HeadingBlock && block.level == 1;
+    final bool isH2 = NoteEditorScreen.useSingleDocumentEditor
+        ? activeHeadStyle.heading == 'h2'
+        : block is HeadingBlock && block.level == 2;
+    final bool isH3 = NoteEditorScreen.useSingleDocumentEditor
+        ? activeHeadStyle.heading == 'h3'
+        : block is HeadingBlock && block.level == 3;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -4621,12 +4810,13 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         _buildSubsectionTextButton(
           text: "H1",
           onTap: () {
-            if (block != null) {
-              if (isH1) {
-                _toggleBlockType(block, ParagraphBlock);
-              } else {
-                _toggleBlockType(block, HeadingBlock, headingLevel: 1);
-              }
+            if (NoteEditorScreen.useSingleDocumentEditor) {
+              _contentController.toggleParagraphStyle('h1');
+              _restoreContentFocus();
+            } else if (block != null) {
+              isH1
+                  ? _toggleBlockType(block, ParagraphBlock)
+                  : _toggleBlockType(block, HeadingBlock, headingLevel: 1);
             }
           },
           isActive: isH1,
@@ -4636,12 +4826,13 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         _buildSubsectionTextButton(
           text: "H2",
           onTap: () {
-            if (block != null) {
-              if (isH2) {
-                _toggleBlockType(block, ParagraphBlock);
-              } else {
-                _toggleBlockType(block, HeadingBlock, headingLevel: 2);
-              }
+            if (NoteEditorScreen.useSingleDocumentEditor) {
+              _contentController.toggleParagraphStyle('h2');
+              _restoreContentFocus();
+            } else if (block != null) {
+              isH2
+                  ? _toggleBlockType(block, ParagraphBlock)
+                  : _toggleBlockType(block, HeadingBlock, headingLevel: 2);
             }
           },
           isActive: isH2,
@@ -4651,12 +4842,13 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         _buildSubsectionTextButton(
           text: "H3",
           onTap: () {
-            if (block != null) {
-              if (isH3) {
-                _toggleBlockType(block, ParagraphBlock);
-              } else {
-                _toggleBlockType(block, HeadingBlock, headingLevel: 3);
-              }
+            if (NoteEditorScreen.useSingleDocumentEditor) {
+              _contentController.toggleParagraphStyle('h3');
+              _restoreContentFocus();
+            } else if (block != null) {
+              isH3
+                  ? _toggleBlockType(block, ParagraphBlock)
+                  : _toggleBlockType(block, HeadingBlock, headingLevel: 3);
             }
           },
           isActive: isH3,
@@ -4961,6 +5153,10 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
 
   @override
   Widget build(BuildContext context) {
+    if (kImageDebug && NoteEditorScreen.useSingleDocumentEditor) {
+      debugPrint("[Stage 7] Started");
+      debugPrint("Relevant state: text length=${_contentController.text.length}, selection=${_contentController.selection}, scrollOffset=${_scrollController.hasClients ? _scrollController.offset : 'null'}");
+    }
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -5010,6 +5206,10 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
           ),
         ],
       );
+    }
+
+    if (kImageDebug && NoteEditorScreen.useSingleDocumentEditor) {
+      debugPrint("[Stage 7] Completed");
     }
 
     return PopScope(

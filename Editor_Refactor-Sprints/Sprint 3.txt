@@ -1,0 +1,222 @@
+🚀 Sprint 3 — Scrolling Engine
+Vision
+
+Build a scrolling system that always understands where the user is writing and keeps the editing experience comfortable, predictable, and uninterrupted.
+
+The user should never have to manually fight the screen just to see what they're typing.
+
+In one sentence:
+
+The document should follow the writer, not the other way around.
+
+🎯 Goal
+
+Transform scrolling from a passive gesture into an intelligent system that continuously supports writing.
+
+This sprint is not about adding features.
+
+It is about making every typing session feel effortless.
+
+Scope
+
+Sprint 3 focuses exclusively on scrolling behavior.
+
+Do not implement:
+
+Image insertion improvements
+Rich content
+Layout redesign
+Selection improvements
+Formatting changes
+Animations
+Features
+1. Smart Auto-Scroll ⭐⭐⭐⭐⭐
+
+The editor should automatically keep the active cursor comfortably visible.
+
+Current bad behavior:
+
+Cursor
+
+↓
+
+Keyboard opens
+
+↓
+
+Cursor disappears
+
+Desired:
+
+Keyboard opens
+
+↓
+
+Editor scrolls smoothly
+
+↓
+
+Cursor stays visible
+Requirements
+Never hide the cursor.
+Maintain comfortable spacing above the keyboard.
+Scroll only when necessary.
+Avoid sudden jumps.
+2. Comfortable Cursor Zone
+
+Don't place the cursor directly above the keyboard.
+
+Apple Notes usually leaves breathing room.
+
+Example
+
+Paragraph
+
+Paragraph
+
+Paragraph
+
+Cursor
+
+──────────────
+
+Keyboard
+
+Instead
+
+Paragraph
+
+Paragraph
+
+Cursor
+
+(comfortable spacing)
+
+──────────────
+
+Keyboard
+
+Target:
+
+Approximately 80–120 px of comfortable space between the cursor and keyboard.
+
+3. Predictive Scrolling
+
+While typing continuously:
+
+Hello...
+
+Hello...
+
+Hello...
+
+The document should smoothly follow the writing.
+
+No jumping.
+
+No sudden repositioning.
+
+The user should barely notice scrolling.
+
+4. Manual Scroll Respect
+
+If the user scrolls upward to read old notes:
+
+Paragraph
+
+Paragraph
+
+Paragraph
+
+Typing should not immediately yank the document back down unless the user explicitly resumes editing at a new location.
+
+Respect the reader's intent.
+
+5. Smooth Keyboard Transition
+
+When the keyboard appears:
+
+Editor
+
+↓
+
+Keyboard
+
+↓
+
+Scroll adjustment
+
+Everything should move together.
+
+No flickering.
+
+No layout flashes.
+
+No multiple scroll animations.
+
+6. Preserve Reading Position
+
+When:
+
+Opening formatting toolbar
+Closing keyboard
+Rotating device
+Switching apps
+
+The document should preserve the user's reading position whenever possible.
+
+7. Long Document Performance
+
+Support notes containing:
+
+Hundreds of paragraphs
+Thousands of words
+Large documents
+
+Requirements:
+
+Stable 60fps scrolling.
+No dropped frames.
+Efficient viewport rendering.
+Avoid rebuilding the entire document during scroll.
+8. Bottom Comfort Zone
+
+When reaching the end of a note:
+
+Current:
+
+Last Line
+
+Keyboard
+
+Desired:
+
+Last Line
+
+Comfortable empty space
+
+Keyboard
+
+Users should never feel trapped at the bottom.
+
+9. Natural Momentum
+
+Scrolling should feel native.
+
+Requirements:
+
+Respect Android scrolling physics.
+Smooth deceleration.
+No artificial snapping.
+No fighting the user's gestures.
+Acceptance Criteria
+
+Sprint 3 is complete when:
+
+Cursor never disappears while typing.
+Keyboard never hides active content.
+Long notes remain smooth.
+Auto-scroll feels invisible.
+Manual scrolling is respected.
+Bottom of document feels spacious.
+Reading and writing both feel natural.

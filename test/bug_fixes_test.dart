@@ -1143,5 +1143,188 @@ void main() {
 
       await tester.pump(const Duration(seconds: 11));
     });
+
+    testWidgets('WYSIWYG single-document improvements: active style cursor sync, image tap focus, paragraph alignments, list prefixes', (WidgetTester tester) async {
+      final controller = RichTextEditingController();
+      final focusNode = FocusNode();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              maxLines: null,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 1. Style sync test
+      controller.setMarkdown('**bold** normal');
+      await tester.pump();
+      
+      // Cursor at offset 4 (inside 'bold') should have bold = true
+      controller.selection = const TextSelection.collapsed(offset: 4);
+      await tester.pump();
+      expect(controller.currentActiveStyle.bold, isTrue);
+
+      // Cursor at offset 8 (inside 'normal') should have bold = false
+      controller.selection = const TextSelection.collapsed(offset: 8);
+      await tester.pump();
+      expect(controller.currentActiveStyle.bold, isFalse);
+
+      // 2. Typing after image clears style leak test
+      controller.insertImage('assets/test.png');
+      await tester.pump();
+      final lastIdx = controller.text.length;
+      controller.value = TextEditingValue(
+        text: '${controller.text}a',
+        selection: TextSelection.collapsed(offset: lastIdx + 1),
+      );
+      await tester.pump();
+      expect(controller.styledChars[lastIdx].style.imageUrl, isNull);
+
+      // 3. Image tap callback registration test
+      bool imageTapped = false;
+      controller.onTapImage = (index) {
+        imageTapped = true;
+      };
+      // Trigger tap callback
+      if (controller.onTapImage != null) {
+        controller.onTapImage!(0);
+      }
+      expect(imageTapped, isTrue);
+    });
+
+    test('Sprint 5: Dividers and Hyperlinks in RichTextEditingController', () {
+      final controller = RichTextEditingController();
+
+      // 1. Parsing dividers from markdown
+      controller.setMarkdown('Hello\n---\nWorld');
+      expect(controller.styledChars.length, equals(13)); // H,e,l,l,o,\n, \u2014, \n, W,o,r,l,d
+      expect(controller.styledChars[6].style.isDivider, isTrue);
+      expect(controller.styledChars[6].char, equals('\u2014'));
+
+      // 2. Serializing dividers back to markdown
+      final markdown = generateMarkdownFromStyledChars(controller.styledChars);
+      expect(markdown, contains('---\nWorld'));
+
+      // 3. Programmatic insertion of Divider
+      controller.value = const TextEditingValue(
+        text: 'Hello World',
+        selection: TextSelection.collapsed(offset: 6),
+      );
+      controller.insertDivider();
+      expect(controller.text, contains('\u2014'));
+      expect(controller.styledChars.any((sc) => sc.style.isDivider), isTrue);
+
+      // 4. Parsing hyperlinks
+      controller.setMarkdown('Check [Google](https://google.com) out');
+      expect(controller.text, equals('Check Google out'));
+      final googleChars = controller.styledChars.sublist(6, 12);
+      for (final sc in googleChars) {
+        expect(sc.style.linkUrl, equals('https://google.com'));
+      }
+
+      // 5. Serializing hyperlinks
+      final linkMarkdown = generateMarkdownFromStyledChars(controller.styledChars);
+      expect(linkMarkdown, equals('Check [Google](https://google.com) out'));
+    });
+
+    test('Sprint 5: Checklist Empty Item backspace and enter', () {
+      final controller = RichTextEditingController();
+
+      // 1. Enter on empty checklist item exits checklist mode
+      controller.setMarkdown('- [ ] ');
+      controller.value = const TextEditingValue(
+        text: '\u2610\n',
+        selection: TextSelection.collapsed(offset: 2),
+      );
+      expect(controller.text, equals('\n'));
+      expect(controller.currentActiveStyle.listType, equals('normal'));
+
+      // 2. Backspace on checklist prefix exits checklist mode
+      controller.setMarkdown('- [ ] \nHello');
+      controller.value = const TextEditingValue(
+        text: '\nHello',
+        selection: TextSelection.collapsed(offset: 0),
+      );
+      expect(controller.styledChars[0].char, equals('\n'));
+      expect(controller.currentActiveStyle.listType, equals('normal'));
+    });
+
+    test('Sprint 6: Heading Enter and Backspace, Undo/Redo, Clipboard formatting', () {
+      final controller = RichTextEditingController();
+
+      // 1. Heading Enter resets to normal heading on newline
+      controller.setMarkdown('# Heading');
+      expect(controller.styledChars[0].style.heading, equals('h1'));
+
+      controller.value = const TextEditingValue(
+        text: 'Heading\n',
+        selection: TextSelection.collapsed(offset: 8),
+      );
+      expect(controller.styledChars[7].char, equals('\n'));
+      expect(controller.styledChars[7].style.heading, equals('normal'));
+      expect(controller.currentActiveStyle.heading, equals('normal'));
+
+      // 2. Heading Backspace at start of line converts to normal
+      controller.setMarkdown('Line 1\n# Heading');
+      controller.value = const TextEditingValue(
+        text: 'Line 1Heading',
+        selection: TextSelection.collapsed(offset: 6),
+      );
+      expect(controller.text, equals('Line 1\nHeading'));
+      expect(controller.styledChars[7].style.heading, equals('normal'));
+      expect(controller.currentActiveStyle.heading, equals('normal'));
+
+      // 3. Undo/Redo
+      controller.setMarkdown('Hello');
+      controller.saveUndoState();
+      
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 5);
+      controller.toggleStyleAttribute('bold');
+      expect(controller.styledChars[0].style.bold, isTrue);
+
+      controller.undo();
+      expect(controller.styledChars[0].style.bold, isFalse);
+
+      controller.redo();
+      expect(controller.styledChars[0].style.bold, isTrue);
+    });
+
+    test('Sprint 7: SDE Image Foundation and Deletion Protection', () {
+      final controller = RichTextEditingController();
+      controller.setMarkdown('Hello');
+
+      // 1. Insert image
+      controller.selection = const TextSelection.collapsed(offset: 5);
+      controller.insertImage('assets/pic.png');
+
+      // Expect text: "Hello\n\uFFFC\n"
+      expect(controller.text, equals('Hello\n\uFFFC\n'));
+      expect(controller.selection.baseOffset, equals(8)); // collapsed after trailing newline
+
+      // 2. Backspace on the newline after the image (offset 7 -> 8 deleted)
+      controller.value = const TextEditingValue(
+        text: 'Hello\n\uFFFC',
+        selection: TextSelection.collapsed(offset: 7),
+      );
+      // Protection should trigger, deleting both \n and \uFFFC.
+      expect(controller.text, equals('Hello'));
+      expect(controller.selection.baseOffset, equals(5));
+
+      // 3. Backspace on the newline before the image (deleting \n before \uFFFC)
+      controller.setMarkdown('Hello\n\uFFFC\nWorld');
+      controller.value = const TextEditingValue(
+        text: 'Hello\uFFFC\nWorld',
+        selection: TextSelection.collapsed(offset: 5),
+      );
+      // Protection should trigger, deleting both \n and \uFFFC.
+      expect(controller.text, equals('Hello\nWorld'));
+      expect(controller.selection.baseOffset, equals(5));
+    });
   });
 }

@@ -1,0 +1,223 @@
+🚀 Sprint 4 — Layout Engine
+Vision
+
+Build a layout engine that treats every piece of content—text, images, checklists, quotes, headings, and future rich content—as part of one continuous, living document.
+
+The user should never feel like different content types are stitched together. Everything should feel naturally connected.
+
+Every element should know where it belongs and how it relates to the content around it.
+
+🎯 Goal
+
+Create a stable document layout that gracefully handles different content types without breaking the user's writing flow.
+
+This sprint is about document structure, not rich content features.
+
+Scope
+
+Sprint 4 focuses on how the document is laid out.
+
+Do not implement:
+
+Image editing
+Image resizing
+Rich text formatting improvements
+Undo/Redo
+Clipboard enhancements
+Selection improvements
+Animations
+Features
+1. Stable Document Structure ⭐⭐⭐⭐⭐
+
+The editor should behave as one continuous document, regardless of the content inside it.
+
+Example:
+
+Title
+
+Paragraph
+
+Heading
+
+Paragraph
+
+Image
+
+Paragraph
+
+Checklist
+
+Paragraph
+
+Quote
+
+Paragraph
+
+Requirements:
+
+Every content element belongs to the same document.
+No isolated editing areas.
+No visual disconnect between elements.
+Consistent spacing throughout.
+2. Dynamic Image Layout ⭐⭐⭐⭐⭐
+
+This directly addresses one of your biggest frustrations.
+
+Current (Bad)
+Paragraph
+
+🖼 Image
+
+???
+
+The user doesn't know where to continue writing.
+
+Desired
+Paragraph
+
+🖼 Image
+
+↓
+
+Writing Area
+
+|
+
+Requirements:
+
+Automatically create a writing position below every image.
+Maintain comfortable spacing above and below the image.
+The image should feel embedded within the document, not floating independently.
+Deleting an image should collapse the surrounding space naturally.
+Acceptance Criteria
+Users can immediately continue writing after inserting an image.
+No extra taps required.
+No confusing cursor placement.
+3. Consistent Vertical Rhythm
+
+Every content type should follow a predictable spacing system.
+
+Example:
+
+Paragraph
+      ↓ 24px
+Heading
+      ↓ 20px
+Paragraph
+      ↓ 24px
+Image
+      ↓ 24px
+Paragraph
+
+Requirements:
+
+Uniform spacing between similar elements.
+Intentional spacing differences for headings and media.
+Eliminate random gaps.
+4. Intelligent Content Boundaries
+
+Content should have clear but subtle boundaries.
+
+For example:
+
+Images should have breathing room.
+Quotes should feel visually grouped.
+Checklists should remain connected.
+Paragraphs should flow naturally.
+
+Avoid hard visual separators unless necessary.
+
+5. Stable Layout During Editing
+
+While editing:
+
+Inserting content
+Deleting content
+Pasting content
+Moving the cursor
+
+The document should remain stable.
+
+Requirements:
+
+No unexpected jumps.
+No collapsing sections.
+No layout flickering.
+6. Adaptive Content Expansion
+
+As content grows:
+
+Paragraphs expand naturally.
+Images reserve appropriate space.
+Lists continue smoothly.
+Quotes resize gracefully.
+
+The document should never feel constrained.
+
+7. Responsive Layout
+
+Ensure the document adapts to:
+
+Small phones
+Large phones
+Tablets (future-ready)
+Portrait
+Landscape
+
+Maintain consistent margins and readable line lengths.
+
+8. Future-Proof Content Model
+
+Even if these aren't implemented yet, the layout engine should be ready for:
+
+Tables
+Audio notes
+PDFs
+Drawings
+Code blocks
+Callouts
+Embedded links
+
+Adding future content types should not require redesigning the layout system.
+
+📏 Layout Rules
+
+Maintain a consistent document rhythm:
+
+Comfortable top margin (from Sprint 1)
+Consistent horizontal padding
+Balanced spacing between all content types
+Natural transitions between different elements
+Stable bottom spacing
+
+The document should resemble a beautifully typeset page.
+
+🧪 Manual Test Checklist
+- [ ] Insert an image.
+- [ ] Continue typing immediately below it.
+- [ ] Delete the image.
+- [ ] Layout collapses naturally.
+- [ ] Add multiple paragraphs.
+- [ ] Add headings.
+- [ ] Add checklists.
+- [ ] Add quotes.
+- [ ] Verify consistent spacing.
+- [ ] Paste large sections of content.
+- [ ] Layout remains stable.
+- [ ] Rotate the device.
+- [ ] Layout adapts correctly.
+- [ ] No flickering.
+- [ ] No overlapping content.
+🚫 Out of Scope
+
+Do not implement:
+
+Image editing
+Image resizing
+Selection improvements
+Clipboard improvements
+Rich text formatting enhancements
+Undo/Redo
+Premium animations
+
+These belong to later sprints.

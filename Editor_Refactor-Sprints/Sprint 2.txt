@@ -1,0 +1,196 @@
+🚀 Sprint 2 — Cursor Engine
+
+This sprint is about making the editor feel intelligent.
+
+The user should never have to fight the cursor.
+
+The cursor should always appear where the user expects it to be.
+
+Think of the cursor as an invisible assistant that understands intent.
+
+🎯 Goal
+
+Transform the cursor from a simple blinking line into an intelligent insertion system that behaves naturally throughout the entire document.
+
+The user should never think:
+
+"Why did the cursor go there?"
+
+Scope
+
+Sprint 2 focuses exclusively on cursor placement and insertion behavior.
+
+Do not implement:
+
+Auto scrolling
+Image layout improvements
+Rich text improvements
+Selection improvements
+Animations
+
+Those belong to later sprints.
+
+Features
+1. Intelligent Tap Placement
+
+The cursor should always appear as close as possible to where the user taps.
+
+Requirements:
+
+Tap inside text → Cursor moves to nearest character.
+Tap at end of line → Cursor moves to end of line.
+Tap inside empty paragraph → Cursor appears immediately.
+Rapid repeated taps should never confuse the editor.
+Acceptance Criteria
+Cursor placement feels predictable.
+No unexpected jumps.
+No snapping to incorrect positions.
+2. End-of-Document Cursor
+
+If the user taps below the last paragraph:
+
+Shopping List
+
+Milk
+
+Eggs
+
+Bread
+
+
+
+
+
+Tap Here
+
+The cursor should move to:
+
+Shopping List
+
+Milk
+
+Eggs
+
+Bread
+
+|
+
+Requirements:
+
+Never ignore taps below the document.
+Never require the user to tap the last line precisely.
+Acceptance Criteria
+
+The bottom of the document always feels writable.
+
+3. Smart Cursor After Images ⭐
+
+One of your biggest requests.
+
+Current behavior:
+
+Paragraph
+
+Image
+
+?
+
+Desired behavior:
+
+Paragraph
+
+Image
+
+|
+
+Requirements:
+
+After inserting an image, automatically create an insertion point below it.
+Automatically move focus there.
+Keyboard remains open.
+No extra taps required.
+Acceptance Criteria
+
+Users can continue writing naturally after inserting media.
+
+4. Cursor Persistence
+
+The cursor should remember its position.
+
+Examples:
+
+Rotate device.
+Close and reopen keyboard.
+Switch apps briefly.
+Open formatting toolbar.
+
+The cursor should remain exactly where the user left it.
+
+5. Focus Management
+
+Only one editing context should ever be active.
+
+Requirements:
+
+No duplicate cursors.
+No focus loss.
+No keyboard flicker.
+Stable editing state.
+6. Empty Note Experience
+
+When opening a brand-new note:
+
+Title
+
+────────────────────
+
+|
+
+
+Requirements:
+
+Cursor already active.
+User can immediately type.
+No extra tap required (unless this conflicts with your onboarding design).
+
+If you prefer the Apple Notes behavior where the editor opens and waits for a tap, that's fine too—but whichever behavior you choose should be consistent.
+
+7. Cursor Visibility
+
+The cursor should never disappear behind:
+
+Keyboard
+Images
+Toolbar
+Formatting bar
+Bottom safe area
+
+Whenever the cursor moves, ensure it remains visible.
+
+🧪 Manual Test Checklist
+- [ ] Tap inside words.
+- [ ] Tap at end of line.
+- [ ] Tap between paragraphs.
+- [ ] Tap below the last paragraph.
+- [ ] Tap rapidly multiple times.
+- [ ] Insert an image.
+- [ ] Continue typing immediately.
+- [ ] Delete the image.
+- [ ] Cursor remains valid.
+- [ ] Rotate device.
+- [ ] Cursor position is preserved.
+- [ ] Open and close keyboard.
+- [ ] Cursor remains active.
+- [ ] Long note cursor remains visible.
+🚫 Out of Scope
+
+Do not implement:
+
+Smart scrolling
+Selection improvements
+Rich formatting
+Clipboard improvements
+Undo/Redo
+Layout animations
+
+Those belong to future sprints.

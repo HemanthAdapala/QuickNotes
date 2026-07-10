@@ -89,11 +89,11 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
             child: Transform.translate(
               offset: _dragOffset,
               child: Center(
-                child: InteractiveViewer(
-                  minScale: 1.0,
-                  maxScale: 4.0,
-                  child: Hero(
-                    tag: widget.heroTag,
+                child: Hero(
+                  tag: widget.heroTag,
+                  child: InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 4.0,
                     child: Image(
                       image: imageProvider,
                       fit: BoxFit.contain,

@@ -1,0 +1,106 @@
+🏁 Sprint 1 — Writing Surface
+
+This sprint is deceptively simple, but it's the most important. We're not adding flashy features—we're making the editor feel like a sheet of paper instead of a text box.
+
+🎯 Goal
+
+Transform the Note Editor into a comfortable, continuous writing surface that always invites the user to write.
+
+When the user opens a note, the first impression should be:
+
+"There's plenty of room. I can just start writing."
+
+Scope
+
+Sprint 1 covers only the writing surface.
+
+Do not implement:
+
+Images
+Checklists
+Quotes
+Smart scrolling
+Cursor intelligence
+Rich formatting changes
+New gestures
+
+Those belong to later sprints.
+
+Features
+1. Comfortable Top Margin
+
+There should always be generous breathing room between the formatting toolbar and the first line of editable content.
+
+Requirements:
+
+Consistent spacing for empty and existing notes.
+Maintain spacing when keyboard opens or closes.
+Maintain spacing after scrolling.
+Never allow text to visually touch the toolbar.
+
+Acceptance Criteria:
+
+Empty notes feel open and inviting.
+Existing notes retain the same comfortable spacing.
+The first line never appears cramped.
+2. Infinite Writing Space
+
+The writing surface should extend naturally beyond the final paragraph.
+
+Requirements:
+
+Users can tap below the last line.
+Tapping empty space places the cursor at the end of the document.
+Empty space expands naturally as the document grows.
+No artificial bottom boundary.
+
+Acceptance Criteria:
+
+The document always feels like an endless sheet of paper.
+Users never feel trapped at the bottom of the note.
+3. Dynamic Writing Area
+
+The editor should intelligently adapt as content changes.
+
+Requirements:
+
+Preserve comfortable spacing above content.
+Maintain padding while typing.
+Maintain spacing after paste operations.
+Maintain spacing after deleting content.
+Handle keyboard appearance smoothly.
+
+Acceptance Criteria:
+
+Layout remains visually stable.
+No sudden jumps or collapsing gaps.
+Writing area always feels balanced.
+4. Keyboard Safe Area
+
+The writing surface should always respect the on-screen keyboard.
+
+Requirements:
+
+Keyboard never hides editable content.
+Bottom padding adjusts dynamically.
+Layout transitions are smooth.
+No abrupt jumps.
+
+Acceptance Criteria:
+
+The active writing area remains visible at all times.
+Keyboard transitions feel natural.
+5. Stable Layout
+
+The editor should never feel like it's rearranging itself.
+
+Requirements:
+
+No flickering.
+No layout shifts.
+No unexpected scrolling.
+Stable spacing throughout editing.
+
+Acceptance Criteria:
+
+The writing surface feels calm and predictable.

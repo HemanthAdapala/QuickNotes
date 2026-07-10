@@ -1,0 +1,198 @@
+1. Smart Enter Key ⭐⭐⭐⭐⭐
+
+The Enter key should behave based on context.
+
+Paragraph
+Hello|
+
+↓
+
+Hello
+
+|
+Checklist
+☑ Buy milk|
+
+↓
+
+☑ Buy milk
+☐ |
+Empty Checklist
+☐ |
+
+↓
+
+|
+
+Exit checklist mode naturally.
+
+Quote
+
+Continue quote style until the user exits.
+
+Heading
+
+Press Enter after a heading:
+
+Heading|
+
+↓
+
+Heading
+
+|
+
+Automatically switch back to a normal paragraph (similar to Apple Notes).
+
+2. Smart Backspace
+
+Requirements:
+
+Empty checklist → remove checkbox.
+Empty heading → convert to paragraph.
+Empty quote → exit quote.
+Empty divider → remove divider.
+Merge paragraphs naturally.
+3. Intelligent Paste
+
+When users paste content:
+
+Preserve paragraphs.
+Preserve lists where possible.
+Preserve headings.
+Remove unnecessary blank lines.
+Normalize spacing.
+Keep supported formatting.
+Prevent duplicate spacing.
+4. Undo / Redo ⭐⭐⭐⭐⭐
+
+This is essential.
+
+Requirements:
+
+Text edits
+Formatting changes
+Image insertion/removal
+Checklist changes
+Heading changes
+
+Support multi-level history.
+
+History should survive temporary UI events (keyboard open/close, orientation changes).
+
+5. Intelligent Selection
+
+Selection should feel natural.
+
+Requirements:
+
+Preserve selection after formatting.
+Keep selection visible.
+Support long-press.
+Improve handle accuracy.
+Respect document boundaries.
+6. Smart Formatting
+
+Formatting should apply intelligently.
+
+Examples:
+
+Bold only selected text.
+Preserve cursor position.
+Preserve active typing style when appropriate.
+Avoid unexpected formatting carry-over.
+7. Context-Aware Editing
+
+Examples:
+
+After inserting an image:
+
+Paragraph
+
+🖼 Image
+
+|
+
+The editor should already know the user probably wants to continue writing.
+
+After deleting a checklist:
+
+Automatically place the cursor where editing should continue.
+
+8. Intelligent Empty State
+
+Empty notes should feel inviting.
+
+Requirements:
+
+Stable cursor.
+Comfortable writing area.
+Smooth first keystroke.
+No layout shift.
+9. Clipboard Intelligence
+
+Support:
+
+Copy
+Cut
+Paste
+Duplicate selection
+
+Preserve supported formatting whenever possible.
+
+10. Stable Editing Sessions
+
+Users should be able to:
+
+Type for 30+ minutes.
+Edit long notes.
+Insert media.
+Undo actions.
+Continue writing.
+
+Without corruption, lag, or unexpected behavior.
+
+🧠 Editor Intelligence Principles
+
+Every smart behavior should follow these rules:
+
+Predictable
+Reversible
+Consistent
+Helpful
+Non-intrusive
+
+If the editor isn't confident, it should do the simplest thing rather than making a surprising choice.
+
+🧪 Manual Test Checklist
+- [ ] Press Enter in a paragraph.
+- [ ] Press Enter in a heading.
+- [ ] Press Enter in a checklist.
+- [ ] Exit checklist mode with an empty item.
+- [ ] Use Backspace in empty blocks.
+- [ ] Paste formatted text.
+- [ ] Paste plain text.
+- [ ] Undo multiple actions.
+- [ ] Redo multiple actions.
+- [ ] Format selected text.
+- [ ] Insert and remove images.
+- [ ] Continue writing.
+- [ ] Copy and paste between notes.
+- [ ] Edit a very long document.
+- [ ] Verify editor remains stable.
+
+
+🚫 Out of Scope
+
+Do not implement:
+
+AI summarization
+AI rewriting
+OCR
+Voice transcription
+Cloud collaboration
+Comments
+Live collaboration
+Premium animations
+
+These can become future milestones after Version 1.
