@@ -1225,6 +1225,51 @@ class RichTextEditingController extends TextEditingController {
     int selectionStartShift = 0;
     int selectionEndShift = 0;
 
+    // Pre-scan to determine if we should apply or revert the target style across the entire selection
+    bool applyTargetStyle = true;
+    if (styleName.startsWith('align-')) {
+      TextAlign targetAlign = TextAlign.left;
+      if (styleName == 'align-center') targetAlign = TextAlign.center;
+      else if (styleName == 'align-right') targetAlign = TextAlign.right;
+      else if (styleName == 'align-justify') targetAlign = TextAlign.justify;
+
+      bool allMatch = true;
+      for (final line in lines) {
+        final existingStyle = line.start < styledChars.length
+            ? styledChars[line.start].style
+            : const Style();
+        if (existingStyle.align != targetAlign) {
+          allMatch = false;
+          break;
+        }
+      }
+      applyTargetStyle = !allMatch;
+    } else if (styleName == 'h1' || styleName == 'h2' || styleName == 'h3') {
+      bool allMatch = true;
+      for (final line in lines) {
+        final existingStyle = line.start < styledChars.length
+            ? styledChars[line.start].style
+            : const Style();
+        if (existingStyle.heading != styleName) {
+          allMatch = false;
+          break;
+        }
+      }
+      applyTargetStyle = !allMatch;
+    } else {
+      bool allMatch = true;
+      for (final line in lines) {
+        final existingStyle = line.start < styledChars.length
+            ? styledChars[line.start].style
+            : const Style();
+        if (existingStyle.listType != styleName) {
+          allMatch = false;
+          break;
+        }
+      }
+      applyTargetStyle = !allMatch;
+    }
+
     for (int i = lines.length - 1; i >= 0; i--) {
       final line = lines[i];
       final lineStart = line.start;
@@ -1235,20 +1280,22 @@ class RichTextEditingController extends TextEditingController {
 
       final behavior = ParagraphBlockRegistry.getBehaviorForListType(styleName);
       if (behavior != null) {
-        final bool hasPrefix = lineStart < newChars.length &&
-            behavior.hasPrefix(newChars[lineStart].char);
-
-        // Remove existing prefix if any
-        if (hasPrefix) {
-          newChars.removeAt(lineStart);
-          if (oldSel.start > lineStart) selectionStartShift -= behavior.prefixLen;
-          if (oldSel.end > lineStart) selectionEndShift -= behavior.prefixLen;
+        // Query the behavior of the existing line listType to remove its prefix
+        final existingBehavior = ParagraphBlockRegistry.getBehaviorForListType(existingStyle.listType);
+        if (existingBehavior != null) {
+          final bool hasPrefix = lineStart < newChars.length &&
+              existingBehavior.hasPrefix(newChars[lineStart].char);
+          if (hasPrefix) {
+            newChars.removeAt(lineStart);
+            if (oldSel.start > lineStart) selectionStartShift -= existingBehavior.prefixLen;
+            if (oldSel.end > lineStart) selectionEndShift -= existingBehavior.prefixLen;
+          }
         }
 
         String newListType = 'normal';
         StyledChar? prefixChar;
 
-        if (existingStyle.listType != styleName) {
+        if (applyTargetStyle) {
           newListType = styleName;
           prefixChar = behavior.getPrefixChar(existingStyle);
         }
@@ -1276,8 +1323,7 @@ class RichTextEditingController extends TextEditingController {
           }
         }
       } else if (styleName == 'h1' || styleName == 'h2' || styleName == 'h3') {
-        final targetHeading =
-            existingStyle.heading == styleName ? 'normal' : styleName;
+        final targetHeading = applyTargetStyle ? styleName : 'normal';
 
         int currentLineEnd = lineStart;
         while (currentLineEnd < newChars.length &&
@@ -1295,14 +1341,14 @@ class RichTextEditingController extends TextEditingController {
         }
       } else if (styleName.startsWith('align-')) {
         TextAlign targetAlign = TextAlign.left;
-        if (styleName == 'align-center') {
-          targetAlign = TextAlign.center;
-        } else if (styleName == 'align-right')
-          targetAlign = TextAlign.right;
-        else if (styleName == 'align-justify') targetAlign = TextAlign.justify;
-
-        if (existingStyle.align == targetAlign) {
-          targetAlign = TextAlign.left;
+        if (applyTargetStyle) {
+          if (styleName == 'align-center') {
+            targetAlign = TextAlign.center;
+          } else if (styleName == 'align-right') {
+            targetAlign = TextAlign.right;
+          } else if (styleName == 'align-justify') {
+            targetAlign = TextAlign.justify;
+          }
         }
 
         int currentLineEnd = lineStart;
@@ -1794,6 +1840,7 @@ class RichTextEditingController extends TextEditingController {
     Color? highlight = common.highlight;
     String heading = common.heading;
     String listType = common.listType;
+    TextAlign align = common.align;
 
     for (int i = start + 1; i < end; i++) {
       final style = styledChars[i].style;
@@ -1804,6 +1851,7 @@ class RichTextEditingController extends TextEditingController {
       if (style.highlight != highlight) highlight = null;
       if (style.heading != heading) heading = 'normal';
       if (style.listType != listType) listType = 'normal';
+      if (style.align != align) align = TextAlign.left;
     }
 
     return Style(
@@ -1815,6 +1863,7 @@ class RichTextEditingController extends TextEditingController {
       heading: heading,
       listType: listType,
       indent: common.indent,
+      align: align,
     );
   }
 

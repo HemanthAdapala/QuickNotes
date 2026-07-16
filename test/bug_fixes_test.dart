@@ -2240,5 +2240,76 @@ void main() {
 
       await tester.binding.setSurfaceSize(null);
     });
+
+    testWidgets('Sprint 11B: Multi-line Block Alignment Unified Toggling', (WidgetTester tester) async {
+      final controller = RichTextEditingController();
+      controller.text = 'Line one\nLine two';
+
+      // 1. Center align the first line only
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 8);
+      controller.toggleParagraphStyle('align-center');
+
+      expect(controller.styledChars[0].style.align, TextAlign.center);
+      expect(controller.styledChars[9].style.align, TextAlign.left);
+
+      // 2. Select both lines (mixed alignment: line 1 center, line 2 left)
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 17);
+      
+      // Tapping Center Align should unify both lines to center
+      controller.toggleParagraphStyle('align-center');
+      expect(controller.styledChars[0].style.align, TextAlign.center);
+      expect(controller.styledChars[9].style.align, TextAlign.center);
+
+      // 3. Select both lines again (all centered) and tap Center Align
+      // Tapping should revert both to Left alignment
+      controller.toggleParagraphStyle('align-center');
+      expect(controller.styledChars[0].style.align, TextAlign.left);
+      expect(controller.styledChars[9].style.align, TextAlign.left);
+    });
+
+    testWidgets('Sprint 11B: Selection Alignment Style Highlight Sync', (WidgetTester tester) async {
+      final controller = RichTextEditingController();
+      controller.text = 'Line one\nLine two';
+
+      // Center align both lines
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 17);
+      controller.toggleParagraphStyle('align-center');
+
+      // Select center-aligned characters
+      controller.selection = const TextSelection(baseOffset: 2, extentOffset: 6);
+      expect(controller.currentActiveStyle.align, TextAlign.center);
+
+      // Select mixed-aligned characters (e.g. modify line 1 back to left)
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 8);
+      controller.toggleParagraphStyle('align-center'); // reverts line 1 to left
+
+      // Select across both lines (mixed alignments)
+      controller.selection = const TextSelection(baseOffset: 2, extentOffset: 12);
+      expect(controller.currentActiveStyle.align, TextAlign.left);
+    });
+
+    testWidgets('Sprint 11B: Multi-line List/Heading Unified Toggling', (WidgetTester tester) async {
+      final controller = RichTextEditingController();
+      controller.text = 'Line one\nLine two';
+
+      // 1. Make first line h1 only
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 8);
+      controller.toggleParagraphStyle('h1');
+
+      expect(controller.styledChars[0].style.heading, 'h1');
+      expect(controller.styledChars[9].style.heading, 'normal');
+
+      // 2. Select both lines (mixed headings: line 1 h1, line 2 normal)
+      // Toggling h1 should unify both to h1
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 17);
+      controller.toggleParagraphStyle('h1');
+      expect(controller.styledChars[0].style.heading, 'h1');
+      expect(controller.styledChars[9].style.heading, 'h1');
+
+      // 3. Toggling h1 again should revert both to normal
+      controller.toggleParagraphStyle('h1');
+      expect(controller.styledChars[0].style.heading, 'normal');
+      expect(controller.styledChars[9].style.heading, 'normal');
+    });
   });
 }
