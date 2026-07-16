@@ -1357,7 +1357,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
   // Paper Guide Layer state
   String _paperGuideType = 'lines_extra_tight';
-  bool _paperGuideVisible = true;
+  bool _paperGuideVisible = false;
   double _paperGuideHeight = 1.05;
   double _paperGuideOpacity = 0.15;
   int _paperGuideColor = 0;
@@ -1451,7 +1451,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       _habitStreak = 0;
       _habitLastCompleted = null;
       _paperGuideType = 'lines_extra_tight';
-      _paperGuideVisible = true;
+      _paperGuideVisible = false;
       _paperGuideHeight = 1.05;
       _paperGuideOpacity = 0.15;
       _paperGuideColor = 0;
@@ -3747,25 +3747,6 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         bottom: false,
         child: Stack(
           children: [
-            if (_paperGuideVisible && 
-                ((_paperGuideType == 'grid' || _paperGuideType == 'dots') || 
-                 (NoteEditorScreen.useSingleDocumentEditor && (_paperGuideType.startsWith('lines') || _paperGuideType == 'custom'))))
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(
-                    key: ValueKey('${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
-                    painter: GlobalPaperGuidePainter(
-                      guideType: _paperGuideType,
-                      spacing: (NoteEditorScreen.useSingleDocumentEditor && (_paperGuideType.startsWith('lines') || _paperGuideType == 'custom'))
-                          ? (16.0 * 1.35 * _paperGuideHeight)
-                          : (20.0 * _paperGuideHeight),
-                      color: _getPaperGuideColor(isDark),
-                      opacity: _paperGuideOpacity,
-                    ),
-                  ),
-                ),
-              ),
-
             // Note Card Hero Container
             Positioned(
               left: 0.0,
@@ -3797,7 +3778,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                 top: 0,
                                 left: 0,
                                 right: 0,
-                               height: 100.0,
+                                height: 100.0,
                                 child: Container(
                                   decoration: const BoxDecoration(
                                     color: Color(0xFFFFCC00),
@@ -3829,6 +3810,36 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                       ),
                     ),
                   ),
+
+                  // 1.5 Global Paper Guide Painter (if visible, drawn inside the rounded card over the white background)
+                  if (_paperGuideVisible && 
+                      ((_paperGuideType == 'grid' || _paperGuideType == 'dots') || 
+                       (NoteEditorScreen.useSingleDocumentEditor && (_paperGuideType.startsWith('lines') || _paperGuideType == 'custom'))))
+                    Positioned(
+                      top: 50.0, // starts below the card curve
+                      left: 0.0,
+                      right: 0.0,
+                      bottom: 0.0,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(30.0),
+                          topRight: Radius.circular(30.0),
+                        ),
+                        child: IgnorePointer(
+                          child: CustomPaint(
+                            key: ValueKey('${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
+                            painter: GlobalPaperGuidePainter(
+                              guideType: _paperGuideType,
+                              spacing: (NoteEditorScreen.useSingleDocumentEditor && (_paperGuideType.startsWith('lines') || _paperGuideType == 'custom'))
+                                  ? (16.0 * 1.35 * _paperGuideHeight)
+                                  : (20.0 * _paperGuideHeight),
+                              color: _getPaperGuideColor(isDark),
+                              opacity: _paperGuideOpacity,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
 
                   // 2. Scrollable Writing Content Area & Sticky Translucent Blur Header
                   Positioned.fill(
@@ -4223,31 +4234,27 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                               ),
                             ),
                           )
-                        : Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TweenAnimationBuilder<double>(
-                                duration: const Duration(milliseconds: 1000),
-                                curve: Curves.elasticOut,
-                                tween: Tween<double>(
-                                  begin: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
-                                  end: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
+                        : SingleChildScrollView(
+                            physics: const NeverScrollableScrollPhysics(),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 1000),
+                                  curve: Curves.elasticOut,
+                                  height: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
+                                  child: ClipRect(
+                                    child: _activeCategory != _ActiveCategory.none
+                                        ? _buildSubsectionRow(activeStyle, _focusedBlock)
+                                        : const SizedBox.shrink(),
+                                  ),
                                 ),
-                                builder: (context, animHeight, child) {
-                                  return SizedBox(
-                                    height: animHeight.clamp(0.0, double.infinity),
-                                    child: child,
-                                  );
-                                },
-                                child: _activeCategory != _ActiveCategory.none
-                                    ? _buildSubsectionRow(activeStyle, _focusedBlock)
-                                    : const SizedBox.shrink(),
-                              ),
-                              SizedBox(
-                                height: 50.0,
-                                child: _buildCategoriesRow(activeStyle),
-                              ),
-                            ],
+                                SizedBox(
+                                  height: 50.0,
+                                  child: _buildCategoriesRow(activeStyle),
+                                ),
+                              ],
+                            ),
                           ),
                   ),
                 ),

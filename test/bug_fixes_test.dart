@@ -16,7 +16,6 @@ import 'package:quick_notes/views/widgets/rich_text_controller.dart';
 import 'package:quick_notes/views/widgets/new_single_document_editor.dart';
 import 'package:quick_notes/views/widgets/home_prompt_view.dart';
 import 'package:quick_notes/views/widgets/tactile_button.dart';
-import 'package:quick_notes/views/widgets/rich_text_formatting_pill.dart';
 import 'package:quick_notes/views/widgets/new_image_widget.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -738,7 +737,7 @@ void main() {
 
       // Verify defaults
       expect(note.paperGuideType, equals('lines_extra_tight'));
-      expect(note.paperGuideVisible, isTrue);
+      expect(note.paperGuideVisible, isFalse);
       expect(note.paperGuideHeight, equals(1.05));
       expect(note.paperGuideOpacity, equals(0.15));
       expect(note.paperGuideColor, equals(0));
@@ -2166,6 +2165,78 @@ void main() {
 
       // Verify active style shows bold = false
       expect(controller.currentActiveStyle.bold, false);
+
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('Sprint 11B: Emoji Input and Newline Continuation Verification', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+
+      final controller = RichTextEditingController();
+      final focusNode = FocusNode();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: NewSingleDocumentEditor(
+                controller: controller,
+                focusNode: focusNode,
+                textColor: Colors.black,
+                paperGuideHeight: 1.0,
+                formattingToolbarHeight: 50.0,
+                contextMenuBuilder: (context, editableTextState) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      final textFields = find.byType(TextField);
+      expect(textFields, findsOneWidget);
+
+      final pField = tester.widget<TextField>(textFields);
+      final pController = pField.controller as RangeTextEditingController;
+      pField.focusNode?.requestFocus();
+      await tester.pump();
+
+      // 1. Type a surrogate-pair emoji '😃' (length 2)
+      pController.value = const TextEditingValue(
+        text: 'hello 😃',
+        selection: TextSelection.collapsed(offset: 8),
+      );
+      await tester.pump();
+
+      expect(pController.text, 'hello 😃');
+      expect(controller.styledChars.length, 8);
+
+      // 2. Press Enter to go to the next line (by sending newline in value)
+      pController.value = const TextEditingValue(
+        text: 'hello 😃\n',
+        selection: TextSelection.collapsed(offset: 9),
+      );
+      await tester.pump(); // Executes post-frame callback
+      await tester.pump(); // Renders the second TextField segment
+
+      // Verify that a new TextField/segment is created
+      expect(find.byType(TextField), findsNWidgets(2));
+
+      final nextController = tester.widget<TextField>(find.byType(TextField).at(1)).controller as RangeTextEditingController;
+      expect(nextController.text, '');
+
+      // 3. Delete the emoji in the first TextField
+      pField.focusNode?.requestFocus();
+      await tester.pump();
+
+      pController.value = const TextEditingValue(
+        text: 'hello ',
+        selection: TextSelection.collapsed(offset: 6),
+      );
+      await tester.pump();
+
+      expect(pController.text, 'hello ');
 
       await tester.binding.setSurfaceSize(null);
     });

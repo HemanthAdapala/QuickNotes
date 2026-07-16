@@ -521,7 +521,7 @@ class NotesProvider with ChangeNotifier {
     bool isHabit = false,
     String habitRecurrence = 'none',
     String paperGuideType = 'lines_extra_tight',
-    bool paperGuideVisible = true,
+    bool paperGuideVisible = false,
     double paperGuideHeight = 1.05,
     double paperGuideOpacity = 0.15,
     int paperGuideColor = 0,

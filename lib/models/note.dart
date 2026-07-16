@@ -57,7 +57,7 @@ class Note {
     this.habitLastCompleted,
     String? previewText,
     this.paperGuideType = 'lines_extra_tight',
-    this.paperGuideVisible = true,
+    this.paperGuideVisible = false,
     this.paperGuideHeight = 1.05,
     this.paperGuideOpacity = 0.15,
     this.paperGuideColor = 0,
@@ -192,7 +192,7 @@ class Note {
     }
 
     String paperGuideType = 'lines_extra_tight';
-    bool paperGuideVisible = true;
+    bool paperGuideVisible = false;
     double paperGuideHeight = 1.05;
     double paperGuideOpacity = 0.15;
     int paperGuideColor = 0;
@@ -201,7 +201,7 @@ class Note {
       try {
         final decoded = jsonDecode(map['paperSettings'] as String) as Map<String, dynamic>;
         paperGuideType = decoded['guideType'] ?? 'lines_extra_tight';
-        paperGuideVisible = decoded['guideVisible'] ?? true;
+        paperGuideVisible = decoded['guideVisible'] ?? false;
         paperGuideHeight = (decoded['lineHeight'] as num?)?.toDouble() ?? 1.05;
         paperGuideOpacity = (decoded['opacity'] as num?)?.toDouble() ?? 0.15;
         paperGuideColor = decoded['color'] ?? 0;
