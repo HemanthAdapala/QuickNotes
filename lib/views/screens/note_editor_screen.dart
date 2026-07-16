@@ -4239,15 +4239,25 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                AnimatedContainer(
+                                TweenAnimationBuilder<double>(
                                   duration: const Duration(milliseconds: 1000),
                                   curve: Curves.elasticOut,
-                                  height: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
-                                  child: ClipRect(
-                                    child: _activeCategory != _ActiveCategory.none
-                                        ? _buildSubsectionRow(activeStyle, _focusedBlock)
-                                        : const SizedBox.shrink(),
+                                  tween: Tween<double>(
+                                    begin: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
+                                    end: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
                                   ),
+                                  builder: (context, animHeight, child) {
+                                    final clampedHeight = animHeight.clamp(0.0, double.infinity);
+                                    return SizedBox(
+                                      height: clampedHeight,
+                                      child: ClipRect(
+                                        child: clampedHeight > 0.0 ? child : const SizedBox.shrink(),
+                                      ),
+                                    );
+                                  },
+                                  child: _activeCategory != _ActiveCategory.none
+                                      ? _buildSubsectionRow(activeStyle, _focusedBlock)
+                                      : const SizedBox.shrink(),
                                 ),
                                 SizedBox(
                                   height: 50.0,
