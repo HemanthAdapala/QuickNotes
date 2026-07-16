@@ -1753,25 +1753,69 @@ class RichTextEditingController extends TextEditingController {
       debugPrint("Relevant state: final text length=${text.length}, final selection=$selection, final styledChars length=${styledChars.length}");
     }
 
-    if (selection.isCollapsed) {
-      int checkIdx = selection.start - 1;
-      if (checkIdx >= 0 && checkIdx < styledChars.length) {
-        final style = styledChars[checkIdx].style;
-        if (styledChars[checkIdx].char == '\n') {
-          currentActiveStyle = style.copyWith(
-            listType: 'normal',
-            checked: false,
-            indent: 0,
-          );
+    if (selection.isValid && selection.start >= 0) {
+      if (selection.isCollapsed) {
+        int checkIdx = selection.start - 1;
+        if (checkIdx >= 0 && checkIdx < styledChars.length) {
+          final style = styledChars[checkIdx].style;
+          if (styledChars[checkIdx].char == '\n') {
+            currentActiveStyle = style.copyWith(
+              listType: 'normal',
+              checked: false,
+              indent: 0,
+            );
+          } else {
+            currentActiveStyle = style;
+          }
+        } else if (selection.start >= 0 && selection.start < styledChars.length) {
+          currentActiveStyle = styledChars[selection.start].style;
         } else {
-          currentActiveStyle = style;
+          currentActiveStyle = const Style();
         }
-      } else if (selection.start >= 0 && selection.start < styledChars.length) {
-        currentActiveStyle = styledChars[selection.start].style;
       } else {
-        currentActiveStyle = const Style();
+        currentActiveStyle = _getCommonStyleOfSelection(selection);
       }
     }
+  }
+
+  Style _getCommonStyleOfSelection(TextSelection sel) {
+    if (!sel.isValid || sel.isCollapsed || styledChars.isEmpty) {
+      return const Style();
+    }
+    int start = sel.start;
+    int end = sel.end.clamp(0, styledChars.length);
+    if (start >= end) return const Style();
+
+    Style common = styledChars[start].style;
+    bool bold = common.bold;
+    bool italic = common.italic;
+    bool underline = common.underline;
+    bool strikethrough = common.strikethrough;
+    Color? highlight = common.highlight;
+    String heading = common.heading;
+    String listType = common.listType;
+
+    for (int i = start + 1; i < end; i++) {
+      final style = styledChars[i].style;
+      if (style.bold != bold) bold = false;
+      if (style.italic != italic) italic = false;
+      if (style.underline != underline) underline = false;
+      if (style.strikethrough != strikethrough) strikethrough = false;
+      if (style.highlight != highlight) highlight = null;
+      if (style.heading != heading) heading = 'normal';
+      if (style.listType != listType) listType = 'normal';
+    }
+
+    return Style(
+      bold: bold,
+      italic: italic,
+      underline: underline,
+      strikethrough: strikethrough,
+      highlight: highlight,
+      heading: heading,
+      listType: listType,
+      indent: common.indent,
+    );
   }
 
   @override
@@ -2389,18 +2433,7 @@ class RangeTextEditingController extends TextEditingController {
         final List<StyledChar> newSegmentChars = [];
         newSegmentChars.addAll(oldSegmentChars.take(prefixLen));
 
-        Style baseStyle = parent.currentActiveStyle;
-        if (oldText.isEmpty) {
-          baseStyle = baseStyle.copyWith(
-            listType: 'normal',
-            checked: false,
-            indent: 0,
-          );
-        } else if (prefixLen > 0 && prefixLen - 1 < oldSegmentChars.length) {
-          baseStyle = oldSegmentChars[prefixLen - 1].style;
-        } else if (oldSegmentChars.isNotEmpty) {
-          baseStyle = oldSegmentChars.first.style;
-        }
+        final Style baseStyle = parent.currentActiveStyle;
 
         if (insertedText.length > 1) {
           final parsed = parseMarkdownToStyledChars(insertedText, baseStyle: baseStyle);

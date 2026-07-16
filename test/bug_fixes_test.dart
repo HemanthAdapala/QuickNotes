@@ -2021,5 +2021,153 @@ void main() {
 
       await tester.binding.setSurfaceSize(null);
     });
+
+    testWidgets('Sprint 11B: Aa Bold Toggle and Typing Inheritance', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+
+      final controller = RichTextEditingController();
+      final focusNode = FocusNode();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: NewSingleDocumentEditor(
+                controller: controller,
+                focusNode: focusNode,
+                textColor: Colors.black,
+                paperGuideHeight: 1.0,
+                formattingToolbarHeight: 50.0,
+                contextMenuBuilder: (context, editableTextState) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      final textFields = find.byType(TextField);
+      expect(textFields, findsOneWidget);
+
+      final pField = tester.widget<TextField>(textFields);
+      final pController = pField.controller as RangeTextEditingController;
+      pField.focusNode?.requestFocus();
+      await tester.pump();
+
+      // Set initial text "hello"
+      pController.value = const TextEditingValue(
+        text: 'hello',
+        selection: TextSelection.collapsed(offset: 5),
+      );
+      await tester.pump();
+
+      // Move cursor to middle of "hello" (index 3, after second 'l') -> wait, "hello" has:
+      // h (0), e (1), l (2), l (3), o (4)
+      // selection offset 3 is after first 'l' (index 2)
+      pController.value = const TextEditingValue(
+        text: 'hello',
+        selection: TextSelection.collapsed(offset: 3),
+      );
+      await tester.pump();
+
+      // Toggle Bold
+      controller.toggleStyleAttribute('bold');
+      await tester.pump();
+
+      // Verify typing state style has bold = true
+      expect(controller.currentActiveStyle.bold, true);
+
+      // Type character 'x' at cursor position 3
+      pController.value = const TextEditingValue(
+        text: 'helxlo',
+        selection: TextSelection.collapsed(offset: 4),
+      );
+      await tester.pump();
+
+      // The inserted character at index 3 ('x') must be bold
+      expect(controller.styledChars[3].char, 'x');
+      expect(controller.styledChars[3].style.bold, true);
+
+      // Other characters (e.g. 'e' at index 1) must remain normal
+      expect(controller.styledChars[1].char, 'e');
+      expect(controller.styledChars[1].style.bold, false);
+
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('Sprint 11B: Aa Active Selection Style Synchronization', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+
+      final controller = RichTextEditingController();
+      final focusNode = FocusNode();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: NewSingleDocumentEditor(
+                controller: controller,
+                focusNode: focusNode,
+                textColor: Colors.black,
+                paperGuideHeight: 1.0,
+                formattingToolbarHeight: 50.0,
+                contextMenuBuilder: (context, editableTextState) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      final textFields = find.byType(TextField);
+      expect(textFields, findsOneWidget);
+
+      final pField = tester.widget<TextField>(textFields);
+      final pController = pField.controller as RangeTextEditingController;
+      pField.focusNode?.requestFocus();
+      await tester.pump();
+
+      // Set initial text "hello"
+      pController.value = const TextEditingValue(
+        text: 'hello',
+        selection: TextSelection.collapsed(offset: 5),
+      );
+      await tester.pump();
+
+      // Bold 'e' and 'l' (index 1 and 2)
+      controller.selection = const TextSelection(baseOffset: 1, extentOffset: 3);
+      controller.toggleStyleAttribute('bold');
+      await tester.pump();
+
+      // Verify characters are bold
+      expect(controller.styledChars[1].char, 'e');
+      expect(controller.styledChars[1].style.bold, true);
+      expect(controller.styledChars[2].char, 'l');
+      expect(controller.styledChars[2].style.bold, true);
+
+      // Select bold characters only: range (1, 3)
+      pController.value = const TextEditingValue(
+        text: 'hello',
+        selection: TextSelection(baseOffset: 1, extentOffset: 3),
+      );
+      await tester.pump();
+
+      // Verify active style shows bold = true
+      expect(controller.currentActiveStyle.bold, true);
+
+      // Select mixed characters: range (0, 3) (which includes 'h' which is not bold)
+      pController.value = const TextEditingValue(
+        text: 'hello',
+        selection: TextSelection(baseOffset: 0, extentOffset: 3),
+      );
+      await tester.pump();
+
+      // Verify active style shows bold = false
+      expect(controller.currentActiveStyle.bold, false);
+
+      await tester.binding.setSurfaceSize(null);
+    });
   });
 }
