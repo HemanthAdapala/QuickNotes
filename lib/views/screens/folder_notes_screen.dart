@@ -93,7 +93,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
     with TickerProviderStateMixin {
 
   // ── State ─────────────────────────────────────────────────────────────────
-  String _activeFilter = 'All'; // 'All' | 'Pinned' | 'Checklists'
+  String _activeFilter = 'All'; // 'All' | 'Pinned'
   bool   _isFabVisible = true;
   final  GlobalKey _fabKey = GlobalKey();
   late   ScrollController _scrollController;
@@ -384,8 +384,6 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
               _chip(label: 'All',        fixedW: null, inactiveFill: _kChipAmber,      padTop: 4.5, padBot: 5.09),
               const SizedBox(width: 4),  // Figma gap between chips: 4 px
               _chip(label: 'Pinned',     fixedW: null, inactiveFill: _kChipPinnedFill, padTop: 4.0, padBot: 4.0),
-              const SizedBox(width: 4),
-              _chip(label: 'Checklists', fixedW: null, inactiveFill: _kChipCheckFill,  padTop: 4.0, padBot: 4.0),
             ],
           ),
         ),
@@ -567,7 +565,6 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
 
     final displayed = switch (_activeFilter) {
       'Pinned'     => allFolderNotes.where((n) => n.isPinned).toList(),
-      'Checklists' => allFolderNotes.where((n) => n.noteType == 'checklist').toList(),
       _            => allFolderNotes,
     };
 

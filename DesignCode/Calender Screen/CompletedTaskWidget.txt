@@ -1,0 +1,125 @@
+class Completedtaskwidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 338,
+          height: 67,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 8,
+                top: 0,
+                child: Container(
+                  width: 322,
+                  height: 67,
+                  decoration: ShapeDecoration(
+                    color: Colors.white /* Backgrounds-Primary */,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 16,
+                        offset: Offset(0, 0),
+                        spreadRadius: 0,
+                      )
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 8,
+                top: 0,
+                child: Container(
+                  width: 26,
+                  height: 67,
+                  decoration: ShapeDecoration(
+                    color: const Color(0x7F34C759),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        bottomLeft: Radius.circular(20),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 41,
+                top: 3,
+                child: Text(
+                  'Task: Finalize Client Call',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w500,
+                    height: 2.50,
+                    letterSpacing: -0.43,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 41,
+                top: 25,
+                child: Text(
+                  'Work Tasks Folder . Due 5 Pm',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w400,
+                    height: 3.33,
+                    letterSpacing: -0.43,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 41,
+                top: 24,
+                child: Container(
+                  width: 177,
+                  decoration: ShapeDecoration(
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        width: 1,
+                        strokeAlign: BorderSide.strokeAlignCenter,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 288,
+                top: 24,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: ShapeDecoration(
+                            color: const Color(0xFF0088FF) /* Accents-Blue */,
+                            shape: OvalBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -61,22 +61,9 @@ class Note {
     this.paperGuideHeight = 1.05,
     this.paperGuideOpacity = 0.15,
     this.paperGuideColor = 0,
-  }) : previewText = previewText ?? _generatePreviewText(content, noteType);
+  }) : previewText = previewText ?? _generatePreviewText(content);
 
-  static String _generatePreviewText(String content, String noteType) {
-    if (noteType == 'checklist') {
-      try {
-        final List<dynamic> items = jsonDecode(content) as List<dynamic>;
-        final lines = items
-            .map((item) => (item['text'] ?? item['title'] ?? "").toString().trim())
-            .where((text) => text.isNotEmpty)
-            .toList();
-        return lines.join('\n');
-      } catch (_) {
-        return content.trim();
-      }
-    }
-
+  static String _generatePreviewText(String content) {
     final lines = content.split('\n');
     final List<String> cleanLines = [];
     int sequentialNumber = 0;

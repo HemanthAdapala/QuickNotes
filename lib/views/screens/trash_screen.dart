@@ -144,7 +144,7 @@ class TrashScreen extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Text(
-            note.noteType == 'checklist' ? "Checklist items" : note.content,
+            note.previewText.isNotEmpty ? note.previewText : note.content,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyMedium?.copyWith(

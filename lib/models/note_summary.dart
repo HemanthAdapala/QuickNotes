@@ -49,36 +49,13 @@ class NoteSummary {
   });
 
   factory NoteSummary.fromMap(Map<String, dynamic> map, {String? folderName, int? categoryColor}) {
-    final noteType = map['noteType'] as String? ?? 'text';
-    final isChecklist = noteType == 'checklist';
+    final noteType = 'text';
     final content = map['content'] as String? ?? '';
     
     String progress = '';
-    if (isChecklist) {
-      try {
-        final List<dynamic> items = jsonDecode(content) as List<dynamic>;
-        final total = items.length;
-        final completed = items.where((e) => e['done'] == true || e['checked'] == true).length;
-        progress = "$completed/$total done";
-      } catch (_) {
-        progress = "0/0 done";
-      }
-    }
-
     String previewTextVal = map['previewText'] as String? ?? '';
     if (previewTextVal.isEmpty) {
-      if (isChecklist) {
-        try {
-          final List<dynamic> items = jsonDecode(content) as List<dynamic>;
-          final lines = items
-              .map((item) => (item['text'] ?? item['title'] ?? "").toString().trim())
-              .where((text) => text.isNotEmpty)
-              .toList();
-          previewTextVal = lines.join(', ');
-        } catch (_) {}
-      } else {
-        previewTextVal = content;
-      }
+      previewTextVal = content;
     }
 
     // truncate preview to first 120 characters
@@ -126,19 +103,7 @@ class NoteSummary {
   }
 
   factory NoteSummary.fromNote(Note note, {String? folderName, int? categoryColor}) {
-    final isChecklist = note.noteType == 'checklist';
     String progress = '';
-    if (isChecklist) {
-      try {
-        final List<dynamic> items = jsonDecode(note.content) as List<dynamic>;
-        final total = items.length;
-        final completed = items.where((e) => e['done'] == true || e['checked'] == true).length;
-        progress = "$completed/$total done";
-      } catch (_) {
-        progress = "0/0 done";
-      }
-    }
-
     final cleanPreview = note.previewText.trim().replaceAll('\n', ' ');
     final preview = cleanPreview.length > 120 ? '${cleanPreview.substring(0, 120)}...' : cleanPreview;
 
@@ -162,7 +127,7 @@ class NoteSummary {
       isHabit: note.isHabit,
       habitStreak: note.habitStreak,
       reminderTime: note.reminderTime,
-      noteType: note.noteType,
+      noteType: 'text',
       checklistProgress: progress,
     );
   }

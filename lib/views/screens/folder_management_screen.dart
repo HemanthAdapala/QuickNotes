@@ -736,7 +736,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                                 crossAxisCount: 2,
                                 crossAxisSpacing: 8.0,
                                 mainAxisSpacing: 8.0,
-                                childAspectRatio: 150.0 / 185.0,
+                                childAspectRatio: 150.0 / 192.0,
                               ),
                               itemCount: filteredFolders.length,
                               itemBuilder: (context, index) {
@@ -821,91 +821,97 @@ class FolderGridCard extends StatelessWidget {
       playSelectionHaptic: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 150.0,
-            height: 154.0,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  top: 20.916,
-                  left: 0,
-                  width: 150.0,
-                  height: 133.0,
-                  child: CustomPaint(
-                    painter: FolderBgPainter(color: bgColorDark),
-                  ),
-                ),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: SizedBox(
+                width: 150.0,
+                height: 154.0,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned(
+                      top: 20.916,
+                      left: 0,
+                      width: 150.0,
+                      height: 133.0,
+                      child: CustomPaint(
+                        painter: FolderBgPainter(color: bgColorDark),
+                      ),
+                    ),
 
-                Positioned(
-                  left: 13.9,
-                  top: 9.5,
-                  child: Transform.rotate(
-                    angle: -10.0 * pi / 180.0,
-                    alignment: Alignment.topLeft,
-                    child: const DecorativeNoteCard(),
-                  ),
-                ),
+                    Positioned(
+                      left: 13.9,
+                      top: 9.5,
+                      child: Transform.rotate(
+                        angle: -10.0 * pi / 180.0,
+                        alignment: Alignment.topLeft,
+                        child: const DecorativeNoteCard(),
+                      ),
+                    ),
 
-                Positioned(
-                  left: 73.5,
-                  top: -1.5,
-                  child: Transform.rotate(
-                    angle: 10.0 * pi / 180.0,
-                    alignment: Alignment.topLeft,
-                    child: const DecorativeNoteCard(),
-                  ),
-                ),
+                    Positioned(
+                      left: 73.5,
+                      top: -1.5,
+                      child: Transform.rotate(
+                        angle: 10.0 * pi / 180.0,
+                        alignment: Alignment.topLeft,
+                        child: const DecorativeNoteCard(),
+                      ),
+                    ),
 
-                Positioned(
-                  top: 20.916,
-                  left: 0,
-                  width: 150.0,
-                  height: 133.0,
-                  child: CustomPaint(
-                    painter: FolderFgPainter(color: bgColor),
-                  ),
-                ),
+                    Positioned(
+                      top: 20.916,
+                      left: 0,
+                      width: 150.0,
+                      height: 133.0,
+                      child: CustomPaint(
+                        painter: FolderFgPainter(color: bgColor),
+                      ),
+                    ),
 
-                Positioned(
-                  right: 8.0,
-                  bottom: 8.0,
-                  width: 36.0,
-                  height: 36.0,
-                  child: folder.sticker != null
-                      ? Image.asset(
-                          "assets/stickers/${folder.sticker}",
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const SizedBox.shrink();
-                          },
-                        )
-                      : TactileButton(
-                          onTap: onCustomizeTap,
-                          compressionScale: 0.8,
-                          useAppleSpring: true,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4.0,
-                                  offset: Offset(0, 2),
+                    Positioned(
+                      right: 8.0,
+                      bottom: 8.0,
+                      width: 36.0,
+                      height: 36.0,
+                      child: folder.sticker != null
+                          ? Image.asset(
+                              "assets/stickers/${folder.sticker}",
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const SizedBox.shrink();
+                              },
+                            )
+                          : TactileButton(
+                              onTap: onCustomizeTap,
+                              compressionScale: 0.8,
+                              useAppleSpring: true,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 4.0,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                                child: const Icon(
+                                  Icons.add_rounded,
+                                  color: Color(0xFF8E8E93),
+                                  size: 20,
+                                ),
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.add_rounded,
-                              color: Color(0xFF8E8E93),
-                              size: 20,
-                            ),
-                          ),
-                        ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 12.0),

@@ -944,9 +944,7 @@ class NotesProvider with ChangeNotifier {
       await _notificationsPlugin.zonedSchedule(
         id: id,
         title: "Reminder: ${note.title.isNotEmpty ? note.title : 'Untitled'}",
-        body: note.noteType == 'checklist' 
-            ? "Your task list is waiting" 
-            : (note.content.length > 50 ? "${note.content.substring(0, 50)}..." : note.content),
+        body: note.content.length > 50 ? "${note.content.substring(0, 50)}..." : note.content,
         scheduledDate: tzDateTime,
         notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

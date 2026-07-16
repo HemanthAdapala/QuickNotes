@@ -285,9 +285,9 @@ class _SearchScreenState extends State<SearchScreen>
       n.previewText.toLowerCase().contains(q)
     ).toList();
 
-    // Tasks (checklist notes)
+    // Tasks (notes containing checklists)
     final tasks = provider.allActiveNotes.where((n) =>
-      n.noteType == 'checklist' &&
+      (n.content.contains('- [ ]') || n.content.contains('- [x]') || n.content.contains('\u2610') || n.content.contains('\u2611')) &&
       (n.title.toLowerCase().contains(q) ||
        n.previewText.toLowerCase().contains(q))
     ).toList();

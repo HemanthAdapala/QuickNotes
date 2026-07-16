@@ -85,26 +85,7 @@ class ExportService {
     }
 
     String contentBodyHtml = "";
-    if (note.noteType == 'checklist') {
-      // Checklist rendering
-      try {
-        // Since content format is like: [{"title":"todo","checked":false}]
-        final decoded = note.content.startsWith('[') ? (jsonDecode(note.content) as List) : [];
-        contentBodyHtml += "<ul style='list-style: none; padding-left: 0;'>";
-        for (var item in decoded) {
-          final isChecked = item['checked'] == true || item['done'] == true;
-          final titleStr = item['text'] ?? item['title'] ?? '';
-          final textDecor = isChecked ? 'text-decoration: line-through; color: #a0aec0;' : '';
-          final checkIcon = isChecked ? '☑' : '☐';
-          contentBodyHtml += "<li style='margin-bottom: 8px; font-size: 16px; $textDecor'><span style='margin-right: 8px; font-weight: bold;'>$checkIcon</span>$titleStr</li>";
-        }
-        contentBodyHtml += "</ul>";
-      } catch (e) {
-        contentBodyHtml += "<p>${note.content.replaceAll('\n', '<br>')}</p>";
-      }
-    } else {
-      contentBodyHtml += "<p style='white-space: pre-wrap; font-size: 16px; line-height: 1.6;'>${note.content}</p>";
-    }
+    contentBodyHtml += "<p style='white-space: pre-wrap; font-size: 16px; line-height: 1.6;'>${note.content}</p>";
 
     // Embed Image/Voice attachment metadata references
     if (note.attachments.isNotEmpty) {
@@ -262,53 +243,10 @@ class ExportService {
             ],
 
             // Content body
-            if (note.noteType == 'checklist') ...[
-              // Draw checkboxes
-              ...(() {
-                final List<dynamic> decoded = note.content.startsWith('[') ? (jsonDecode(note.content) as List) : [];
-                return decoded.map((item) {
-                  final isChecked = item['checked'] == true || item['done'] == true;
-                  final titleStr = item['text'] ?? item['title'] ?? '';
-                  return pw.Padding(
-                    padding: const pw.EdgeInsets.symmetric(vertical: 4),
-                    child: pw.Row(
-                      crossAxisAlignment: pw.CrossAxisAlignment.center,
-                      children: [
-                        pw.Container(
-                          width: 14,
-                          height: 14,
-                          decoration: pw.BoxDecoration(
-                            border: pw.Border.all(color: primaryColor, width: 1.5),
-                            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
-                            color: isChecked ? primaryColor : PdfColors.white,
-                          ),
-                          alignment: pw.Alignment.center,
-                          child: isChecked
-                              ? pw.Text("x", style: pw.TextStyle(fontSize: 9, color: PdfColors.white, fontWeight: pw.FontWeight.bold))
-                              : null,
-                        ),
-                        pw.SizedBox(width: 10),
-                        pw.Expanded(
-                          child: pw.Text(
-                            titleStr,
-                            style: pw.TextStyle(
-                              fontSize: 13,
-                              color: isChecked ? PdfColors.grey500 : textColor,
-                              decoration: isChecked ? pw.TextDecoration.lineThrough : pw.TextDecoration.none,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList();
-              })()
-            ] else ...[
-              pw.Paragraph(
-                text: note.content,
-                style: pw.TextStyle(fontSize: 13, color: textColor, height: 1.5),
-              ),
-            ],
+            pw.Paragraph(
+              text: note.content,
+              style: pw.TextStyle(fontSize: 13, color: textColor, height: 1.5),
+            ),
 
             // Tags chips
             if (note.tags.isNotEmpty) ...[
@@ -389,21 +327,7 @@ class ExportService {
 
 """;
 
-    if (note.noteType == 'checklist') {
-      try {
-        final decoded = note.content.startsWith('[') ? (jsonDecode(note.content) as List) : [];
-        for (var item in decoded) {
-          final isChecked = item['checked'] == true || item['done'] == true;
-          final titleStr = item['text'] ?? item['title'] ?? '';
-          final checkMark = isChecked ? '[x]' : '[ ]';
-          md += "- $checkMark $titleStr\n";
-        }
-      } catch (e) {
-        md += note.content;
-      }
-    } else {
-      md += note.content;
-    }
+    md += note.content;
 
     if (note.attachments.isNotEmpty) {
       md += "\n\n---\n\n### Attachments\n";

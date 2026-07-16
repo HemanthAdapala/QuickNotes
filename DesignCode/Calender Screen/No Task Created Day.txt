@@ -1,0 +1,67 @@
+class CalenderDayNotCreatedTaskPreview extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 32,
+          height: 48,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                top: 0,
+                child: Container(
+                  width: 32,
+                  height: 48,
+                  decoration: ShapeDecoration(
+                    color: Colors.white /* Backgrounds-Primary */,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 10,
+                        offset: Offset(0, 0),
+                        spreadRadius: 0,
+                      )
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 6,
+                top: -5.20,
+                child: Text(
+                  '28',
+                  style: TextStyle(
+                    color: const Color(0xFF333333),
+                    fontSize: 16,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w500,
+                    height: 2.50,
+                    letterSpacing: -0.43,
+                    shadows: [Shadow(offset: Offset(0, 0), blurRadius: 16, color: Color(0xFF000000).withOpacity(0.25))],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 6,
+                top: 23.80,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: ShapeDecoration(
+                    color: const Color(0x33787878) /* Fills-Primary */,
+                    shape: OvalBorder(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

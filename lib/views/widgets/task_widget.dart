@@ -30,7 +30,6 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   // Slider Drag State
   double _dragX = 5.0; // Starts with a 5px margin
   final double _minDrag = 5.0;
-  final double _maxDrag = 211.0; // Slide all the way to the absolute edge
   int _lastHapticCheckpoint = 0;
 
   // Animation Controllers
@@ -113,7 +112,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  double get _dragProgress => ((_dragX - _minDrag) / (_maxDrag - _minDrag)).clamp(0.0, 1.0);
+  double _getDragProgress(double maxDrag) =>
+      ((_dragX - _minDrag) / (maxDrag - _minDrag)).clamp(0.0, 1.0);
 
   void _handleDragStart(DragStartDetails details) {
     if (_resetController.isAnimating || _successController.isAnimating) return;
@@ -125,12 +125,13 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   void _handleDragUpdate(DragUpdateDetails details) {
     if (_resetController.isAnimating || _successController.isAnimating) return;
 
+    final double maxDrag = widget.width - 111.0;
     setState(() {
-      _dragX = (_dragX + details.delta.dx).clamp(_minDrag, _maxDrag);
+      _dragX = (_dragX + details.delta.dx).clamp(_minDrag, maxDrag);
     });
 
     // Notched Haptic Acceleration tick calculation
-    final progress = _dragProgress;
+    final progress = _getDragProgress(maxDrag);
     final int checkpoint = (progress * 10).floor();
     if (checkpoint > _lastHapticCheckpoint) {
       _lastHapticCheckpoint = checkpoint;
@@ -147,18 +148,19 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   void _handleDragEnd(DragEndDetails details) {
     if (_resetController.isAnimating || _successController.isAnimating) return;
 
-    final progress = _dragProgress;
+    final double maxDrag = widget.width - 111.0;
+    final progress = _getDragProgress(maxDrag);
     if (progress >= 0.90) {
-      _triggerSuccess();
+      _triggerSuccess(maxDrag);
     } else {
       _triggerReset();
     }
   }
 
-  void _triggerSuccess() {
+  void _triggerSuccess(double maxDrag) {
     // Snap to end
     setState(() {
-      _dragX = _maxDrag;
+      _dragX = maxDrag;
     });
 
     HapticFeedback.vibrate();
@@ -228,16 +230,21 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    formattedDate,
-                    style: GoogleFonts.inter(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white,
-                      height: 22.0 / 16.0,
-                      letterSpacing: -0.43,
+                  Expanded(
+                    child: Text(
+                      formattedDate,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white,
+                        height: 22.0 / 16.0,
+                        letterSpacing: -0.43,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8.0),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -359,7 +366,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
       );
     }
 
-    final progress = _dragProgress;
+    final double trackWidth = widget.width - 71.0;
+    final double maxDrag = trackWidth - 40.0;
+    final progress = _getDragProgress(maxDrag);
     final double cardScale = 1.0 + (progress * 0.02); // Sensory drag scale lift
     final double cardShadowBlur = 16.0 + (progress * 8.0); // Shadow lift blur (16 to 24)
 
@@ -454,16 +463,21 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          formattedDate,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 16.0,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.white,
-                                            height: 22.0 / 16.0,
-                                            letterSpacing: -0.43,
+                                        Expanded(
+                                          child: Text(
+                                            formattedDate,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 16.0,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.white,
+                                              height: 22.0 / 16.0,
+                                              letterSpacing: -0.43,
+                                            ),
                                           ),
                                         ),
+                                        const SizedBox(width: 8.0),
                                         Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
@@ -574,7 +588,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                         onHorizontalDragUpdate: _handleDragUpdate,
                                         onHorizontalDragEnd: _handleDragEnd,
                                         child: Container(
-                                          width: 251.0,
+                                          width: trackWidth,
                                           height: 50.0,
                                           decoration: BoxDecoration(
                                             color: const Color(0xFFCCCCCC).withValues(alpha: 0.35),
@@ -611,14 +625,18 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                                   mainAxisAlignment: MainAxisAlignment.center,
                                                   children: [
                                                     const SizedBox(width: 32.0), // Spacer for checkmark
-                                                    Text(
-                                                      "Drag to mark done",
-                                                      style: GoogleFonts.inter(
-                                                        fontSize: 16.0,
-                                                        fontWeight: FontWeight.w600,
-                                                        color: progress > 0.5 ? Colors.white : const Color(0xFF777777),
-                                                        height: 22.0 / 16.0,
-                                                        letterSpacing: -0.43,
+                                                    Flexible(
+                                                      child: Text(
+                                                        "Drag to mark done",
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 16.0,
+                                                          fontWeight: FontWeight.w600,
+                                                          color: progress > 0.5 ? Colors.white : const Color(0xFF777777),
+                                                          height: 22.0 / 16.0,
+                                                          letterSpacing: -0.43,
+                                                        ),
                                                       ),
                                                     ),
                                                     const SizedBox(width: 4.0),

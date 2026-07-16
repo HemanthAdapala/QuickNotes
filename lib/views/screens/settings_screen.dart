@@ -7,6 +7,7 @@ import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'glassmorphism_sandbox_screen.dart';
+import 'calendar_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final bool isDarkMode;
@@ -257,6 +258,22 @@ class SettingsScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => const GlassmorphismSandboxScreen(),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // Calendar Screen (Testing)
+                    _buildSettingsTile(
+                      leadingIcon: const Icon(Icons.calendar_month_outlined, color: Color(0xFF1C1C1C), size: 22),
+                      title: "Calendar Screen (Testing)",
+                      isActive: false,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CalendarScreen(),
                           ),
                         );
                       },

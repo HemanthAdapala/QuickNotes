@@ -412,11 +412,9 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                   
                 const SizedBox(height: 10),
                 
-                // Body Content / Locked Mockup / Checklist preview
+                // Body Content / Locked Mockup
                 if (widget.note.isLocked)
                   _buildLockedContent(context, textColor)
-                else if (widget.note.noteType == 'checklist')
-                  _buildChecklistProgress(context, widget.note.checklistProgress, textColor)
                 else
                   Text(
                     widget.note.previewText.isNotEmpty ? widget.note.previewText : "No additional text",
@@ -592,25 +590,4 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
     );
   }
 
-  // Checklist completion overview widget
-  Widget _buildChecklistProgress(BuildContext context, String progress, Color textColor) {
-    return Row(
-      children: [
-        Icon(
-          Icons.fact_check_rounded,
-          size: 16,
-          color: textColor.withAlpha(150),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          progress.isNotEmpty ? progress : "0/0 done",
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: textColor,
-          ),
-        ),
-      ],
-    );
-  }
 }

@@ -176,88 +176,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     });
   }
 
-  void _toggleChecklistItem(Note note, int index, List<Map<String, dynamic>> items) async {
-    HapticFeedback.selectionClick();
-    items[index]['done'] = !(items[index]['done'] ?? false);
-    final updatedNote = note.copyWith(content: jsonEncode(items));
-    
-    // Update local list state instantly
-    setState(() {
-      final localIdx = _currentNotesList.indexWhere((n) => n.id == note.id);
-      if (localIdx != -1) {
-        _currentNotesList[localIdx] = updatedNote;
-      }
-    });
 
-    // Update in database provider
-    await Provider.of<NotesProvider>(context, listen: false).updateNote(updatedNote);
-  }
-
-  Widget _buildChecklist(Note note, List<Map<String, dynamic>> items) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(top: 4.0, bottom: 64.0), // Spacing for floating edit button
-      itemCount: items.length,
-      itemBuilder: (context, idx) {
-        final item = items[idx];
-        final bool done = item['done'] ?? false;
-        final String text = item['text'] ?? '';
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Interactive checkbox
-              GestureDetector(
-                onTap: () => _toggleChecklistItem(note, idx, items),
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 1.0, right: 10.0, bottom: 4.0),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    width: 18.0,
-                    height: 18.0,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: done ? const Color(0xFFFFCC00) : const Color(0xFF8E8E93),
-                        width: 1.5,
-                      ),
-                      borderRadius: BorderRadius.circular(4.0),
-                      color: done ? const Color(0xFFFFCC00) : Colors.transparent,
-                    ),
-                    alignment: Alignment.center,
-                    child: done
-                        ? const Icon(
-                            Icons.check,
-                            size: 13.0,
-                            color: Colors.white,
-                          )
-                        : null,
-                  ),
-                ),
-              ),
-              // Checklist item text
-              Expanded(
-                child: Text(
-                  text,
-                  style: GoogleFonts.inter(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.w400,
-                    height: 1.3,
-                    color: const Color(0xFF1C1C1E),
-                    decoration: done ? TextDecoration.lineThrough : null,
-                    decorationColor: const Color(0xFF8E8E93),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildBackgroundCard(int index, int totalCards) {
     final double offset = 37.0 * index;
@@ -296,16 +215,21 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    formattedDate,
-                    style: GoogleFonts.inter(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF1C1C1E),
-                      height: 22.0 / 16.0,
-                      letterSpacing: -0.43,
+                  Expanded(
+                    child: Text(
+                      formattedDate,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF1C1C1E),
+                        height: 22.0 / 16.0,
+                        letterSpacing: -0.43,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8.0),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -435,16 +359,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     final formattedDate = DateFormat('EEE, d MMMM yyyy').format(note.createdAt);
     final formattedTime = DateFormat('hh:mm a').format(note.createdAt);
 
-    // Parse checklist content if note is a checklist
-    List<Map<String, dynamic>> checklistItems = [];
-    if (note.noteType == 'checklist') {
-      try {
-        final decoded = jsonDecode(note.content) as List<dynamic>;
-        checklistItems = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      } catch (_) {
-        checklistItems = [];
-      }
-    }
+
 
     final double rotationAngle = (_swipeX / 400.0) * (pi / 24.0);
 
@@ -525,16 +440,21 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          formattedDate,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 16.0,
-                                            fontWeight: FontWeight.w400,
-                                            color: const Color(0xFF1C1C1E),
-                                            height: 22.0 / 16.0,
-                                            letterSpacing: -0.43,
+                                        Expanded(
+                                          child: Text(
+                                            formattedDate,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 16.0,
+                                              fontWeight: FontWeight.w400,
+                                              color: const Color(0xFF1C1C1E),
+                                              height: 22.0 / 16.0,
+                                              letterSpacing: -0.43,
+                                            ),
                                           ),
                                         ),
+                                        const SizedBox(width: 8.0),
                                         Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
@@ -600,11 +520,8 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
                                       ),
                                       const SizedBox(height: 12.0),
                                       
-                                      // Body section
                                       Expanded(
-                                        child: note.noteType == 'checklist'
-                                            ? _buildChecklist(note, checklistItems)
-                                            : SingleChildScrollView(
+                                        child: SingleChildScrollView(
                                                 physics: const BouncingScrollPhysics(),
                                                 padding: const EdgeInsets.only(bottom: 64.0),
                                                 child: Text(

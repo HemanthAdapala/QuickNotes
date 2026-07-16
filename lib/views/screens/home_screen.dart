@@ -67,8 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
       Note(
         id: 'mn1',
         title: 'Things to do today',
-        content: '[{"text": "Shopping", "done": false}, {"text": "Design for new brand", "done": false}, {"text": "Haircut", "done": false}, {"text": "Car Wash", "done": false}, {"text": "New Phone case", "done": false}, {"text": "Gym", "done": false}, {"text": "Chest", "done": false}]',
-        noteType: 'checklist',
+        content: '- [ ] Shopping\n- [ ] Design for new brand\n- [ ] Haircut\n- [ ] Car Wash\n- [ ] New Phone case\n- [ ] Gym\n- [ ] Chest',
+        noteType: 'text',
         createdAt: now.subtract(const Duration(hours: 1)),
         updatedAt: now.subtract(const Duration(hours: 1)),
         tags: [],
@@ -78,8 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
       Note(
         id: 'mn2',
         title: 'Weekly Groceries',
-        content: '[{"text": "Apples", "done": false}, {"text": "Milk", "done": true}, {"text": "Bread", "done": false}]',
-        noteType: 'checklist',
+        content: '- [ ] Apples\n- [x] Milk\n- [ ] Bread',
+        noteType: 'text',
         createdAt: now.add(const Duration(days: 2)),
         updatedAt: now.add(const Duration(days: 2)),
         tags: [],

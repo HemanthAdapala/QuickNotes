@@ -7,6 +7,7 @@ import 'fullscreen_image_viewer.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'tactile_button.dart';
+import '../../core/layout/paragraph_block_behavior.dart';
 
 const bool kImageDebug = true;
 
@@ -21,6 +22,7 @@ class Style {
   final TextAlign align;
   final String listType; // 'normal', 'bullet', 'number', 'checkbox'
   final bool checked;
+  final int indent; // 0 to 5 list indent level
   final String? imageUrl;
   final double? imageWidth;
   final double? imageHeight;
@@ -39,6 +41,7 @@ class Style {
     this.align = TextAlign.left,
     this.listType = 'normal',
     this.checked = false,
+    this.indent = 0,
     this.imageUrl,
     this.imageWidth,
     this.imageHeight,
@@ -58,6 +61,7 @@ class Style {
     TextAlign? align,
     String? listType,
     bool? checked,
+    int? indent,
     String? imageUrl,
     double? imageWidth,
     double? imageHeight,
@@ -81,6 +85,7 @@ class Style {
       align: align ?? this.align,
       listType: listType ?? this.listType,
       checked: checked ?? this.checked,
+      indent: indent ?? this.indent,
       imageUrl: clearImage ? null : (imageUrl ?? this.imageUrl),
       imageWidth: clearImage ? null : (imageWidth ?? this.imageWidth),
       imageHeight: clearImage ? null : (imageHeight ?? this.imageHeight),
@@ -106,6 +111,7 @@ class Style {
         other.align == align &&
         other.listType == listType &&
         other.checked == checked &&
+        other.indent == indent &&
         other.imageUrl == imageUrl &&
         other.imageWidth == imageWidth &&
         other.imageHeight == imageHeight &&
@@ -126,6 +132,7 @@ class Style {
         align,
         listType,
         checked,
+        indent,
         imageUrl,
         imageWidth,
         imageHeight,
@@ -152,40 +159,56 @@ class LineRange {
 class InteractiveCheckbox extends StatelessWidget {
   final bool checked;
   final VoidCallback onTap;
+  final EdgeInsetsGeometry? margin;
 
   const InteractiveCheckbox({
     super.key,
     required this.checked,
     required this.onTap,
+    this.margin,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    final uncheckedBorderColor = isDark 
+        ? Colors.white.withOpacity(0.4) 
+        : Colors.black.withOpacity(0.3);
+        
+    final checkedBgColor = theme.colorScheme.primary;
+    final checkIconColor = isDark ? Colors.black : Colors.white;
+
     return TactileButton(
       onTap: onTap,
       compressionScale: 0.7,
       settleDuration: const Duration(milliseconds: 1000),
       playSelectionHaptic: true,
-      child: Container(
-        margin: const EdgeInsets.only(top: 8.0, right: 8.0, left: 4.0),
-        width: 14,
-        height: 14,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        margin: margin ?? const EdgeInsets.only(top: 8.0, right: 8.0, left: 4.0),
+        width: 16,
+        height: 16,
         decoration: checked
             ? BoxDecoration(
-                color: const Color(0xFF222222),
-                borderRadius: BorderRadius.circular(4),
+                color: checkedBgColor,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: checkedBgColor, width: 1.5),
               )
             : BoxDecoration(
-                border: Border.all(color: Colors.black.withOpacity(0.5), width: 1.5),
-                borderRadius: BorderRadius.circular(4),
+                color: Colors.transparent,
+                border: Border.all(color: uncheckedBorderColor, width: 1.5),
+                borderRadius: BorderRadius.circular(5),
               ),
         child: checked
             ? Center(
                 child: SvgPicture.asset(
                   'assets/icons/vector_check.svg',
-                  width: 8,
-                  height: 8,
-                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                  width: 10,
+                  height: 10,
+                  colorFilter: ColorFilter.mode(checkIconColor, BlendMode.srcIn),
                 ),
               )
             : null,
@@ -956,14 +979,16 @@ class RichTextEditingController extends TextEditingController {
     final textVal = data.text!;
     final hasMarkdown = textVal.contains('**') ||
         textVal.contains('*') ||
-        textVal.contains('# ') ||
+        textVal.contains('#') ||
         textVal.contains('- [') ||
         textVal.contains('- ') ||
+        textVal.contains('>') ||
+        RegExp(r'(?:\n|^)\s*\d+\.\s').hasMatch(textVal) ||
         textVal.contains('---');
 
     List<StyledChar> pastedChars;
     if (hasMarkdown) {
-      pastedChars = parseMarkdownToStyledChars(textVal);
+      pastedChars = parseMarkdownToStyledChars(textVal, baseStyle: currentActiveStyle);
     } else {
       final normalized = textVal.replaceAll(RegExp(r'\n{3,}'), '\n\n');
       pastedChars = normalized.split('').map((c) => StyledChar(char: c, style: currentActiveStyle)).toList();
@@ -1208,52 +1233,30 @@ class RichTextEditingController extends TextEditingController {
           ? newChars[lineStart].style
           : const Style();
 
-      if (styleName == 'bullet' ||
-          styleName == 'checkbox' ||
-          styleName == 'number' ||
-          styleName == 'quote') {
-        bool hasBullet =
-            lineStart < newChars.length && newChars[lineStart].char == '•';
-        bool hasCheckbox = lineStart < newChars.length &&
-            (newChars[lineStart].char == '\u2610' ||
-                newChars[lineStart].char == '\u2611');
-        bool hasQuote =
-            lineStart < newChars.length && newChars[lineStart].char == '›';
-        bool hasNumber =
-            lineStart < newChars.length && newChars[lineStart].char == '\u2008';
+      final behavior = ParagraphBlockRegistry.getBehaviorForListType(styleName);
+      if (behavior != null) {
+        final bool hasPrefix = lineStart < newChars.length &&
+            behavior.hasPrefix(newChars[lineStart].char);
 
         // Remove existing prefix if any
-        if (hasBullet || hasCheckbox || hasQuote || hasNumber) {
+        if (hasPrefix) {
           newChars.removeAt(lineStart);
-          if (oldSel.start > lineStart) selectionStartShift--;
-          if (oldSel.end > lineStart) selectionEndShift--;
+          if (oldSel.start > lineStart) selectionStartShift -= behavior.prefixLen;
+          if (oldSel.end > lineStart) selectionEndShift -= behavior.prefixLen;
         }
 
         String newListType = 'normal';
-        String prefixChar = '';
+        StyledChar? prefixChar;
 
-        if (styleName == 'bullet' && existingStyle.listType != 'bullet') {
-          newListType = 'bullet';
-          prefixChar = '•';
-        } else if (styleName == 'checkbox' &&
-            existingStyle.listType != 'checkbox') {
-          newListType = 'checkbox';
-          prefixChar = '\u2610';
-        } else if (styleName == 'quote' && existingStyle.listType != 'quote') {
-          newListType = 'quote';
-          prefixChar = '›';
-        } else if (styleName == 'number' && existingStyle.listType != 'number') {
-          newListType = 'number';
-          prefixChar = '\u2008';
+        if (existingStyle.listType != styleName) {
+          newListType = styleName;
+          prefixChar = behavior.getPrefixChar(existingStyle);
         }
 
-        if (prefixChar.isNotEmpty) {
-          final newStyle =
-              existingStyle.copyWith(listType: newListType, checked: false);
-          newChars.insert(
-              lineStart, StyledChar(char: prefixChar, style: newStyle));
-          if (oldSel.start > lineStart) selectionStartShift++;
-          if (oldSel.end > lineStart) selectionEndShift++;
+        if (prefixChar != null) {
+          newChars.insert(lineStart, prefixChar);
+          if (oldSel.start >= lineStart) selectionStartShift += behavior.prefixLen;
+          if (oldSel.end >= lineStart) selectionEndShift += behavior.prefixLen;
         }
 
         // Apply updated list type styles to the rest of the line characters
@@ -1578,7 +1581,7 @@ class RichTextEditingController extends TextEditingController {
           for (int k = diffStart; k < diffEndOld; k++) {
             if (k < styledChars.length) {
               final char = styledChars[k].char;
-              if (char == '\u2610' || char == '\u2611' || char == '•' || char == '›' || char == '\u2008') {
+              if (ParagraphBlockRegistry.hasAnyPrefix(char)) {
                 prefixDeleted = true;
               }
               if (styledChars[k].style.isDivider) {
@@ -1648,7 +1651,7 @@ class RichTextEditingController extends TextEditingController {
         bool isLineEmptyList = false;
         if (diffStart > lineStart) {
           final prefixText = newText.substring(lineStart, diffStart);
-          if (prefixText == '\u2610' || prefixText == '\u2611' || prefixText == '•' || prefixText == '›' || prefixText == '\u2008') {
+          if (ParagraphBlockRegistry.hasAnyPrefix(prefixText)) {
             isLineEmptyList = true;
           }
         }
@@ -1683,51 +1686,18 @@ class RichTextEditingController extends TextEditingController {
             insertedStyledChars.add(StyledChar(char: '\n', style: baseStyle));
           }
 
-          if (baseStyle.listType == 'bullet') {
-            insertedStyledChars.add(StyledChar(char: '•', style: baseStyle));
+          final behavior = ParagraphBlockRegistry.getBehaviorForListType(baseStyle.listType);
+          if (behavior != null) {
+            final prefixChar = behavior.getPrefixChar(baseStyle);
+            insertedStyledChars.add(prefixChar);
             newText =
-                '${newText.substring(0, diffStart + 1)}•${newText.substring(diffStart + 1)}';
-            diffEndNew++;
+                '${newText.substring(0, diffStart + 1)}${prefixChar.char}${newText.substring(diffStart + 1)}';
+            diffEndNew += behavior.prefixLen;
 
             finalValue = TextEditingValue(
               text: newText,
               selection: TextSelection.collapsed(
-                  offset: newValue.selection.baseOffset + 1),
-            );
-          } else if (baseStyle.listType == 'checkbox') {
-            final checkboxStyle = baseStyle.copyWith(checked: false);
-            insertedStyledChars
-                .add(StyledChar(char: '\u2610', style: checkboxStyle));
-            newText =
-                '${newText.substring(0, diffStart + 1)}\u2610${newText.substring(diffStart + 1)}';
-            diffEndNew++;
-
-            finalValue = TextEditingValue(
-              text: newText,
-              selection: TextSelection.collapsed(
-                  offset: newValue.selection.baseOffset + 1),
-            );
-          } else if (baseStyle.listType == 'number') {
-            insertedStyledChars.add(StyledChar(char: '\u2008', style: baseStyle));
-            newText =
-                '${newText.substring(0, diffStart + 1)}\u2008${newText.substring(diffStart + 1)}';
-            diffEndNew++;
-
-            finalValue = TextEditingValue(
-              text: newText,
-              selection: TextSelection.collapsed(
-                  offset: newValue.selection.baseOffset + 1),
-            );
-          } else if (baseStyle.listType == 'quote') {
-            insertedStyledChars.add(StyledChar(char: '›', style: baseStyle));
-            newText =
-                '${newText.substring(0, diffStart + 1)}›${newText.substring(diffStart + 1)}';
-            diffEndNew++;
-
-            finalValue = TextEditingValue(
-              text: newText,
-              selection: TextSelection.collapsed(
-                  offset: newValue.selection.baseOffset + 1),
+                  offset: newValue.selection.baseOffset + behavior.prefixLen),
             );
           } else {
             baseStyle = baseStyle.copyWith(heading: 'normal');
@@ -1786,7 +1756,16 @@ class RichTextEditingController extends TextEditingController {
     if (selection.isCollapsed) {
       int checkIdx = selection.start - 1;
       if (checkIdx >= 0 && checkIdx < styledChars.length) {
-        currentActiveStyle = styledChars[checkIdx].style;
+        final style = styledChars[checkIdx].style;
+        if (styledChars[checkIdx].char == '\n') {
+          currentActiveStyle = style.copyWith(
+            listType: 'normal',
+            checked: false,
+            indent: 0,
+          );
+        } else {
+          currentActiveStyle = style;
+        }
       } else if (selection.start >= 0 && selection.start < styledChars.length) {
         currentActiveStyle = styledChars[selection.start].style;
       } else {
@@ -2069,9 +2048,28 @@ class RichTextEditingController extends TextEditingController {
 class RangeTextEditingController extends TextEditingController {
   final RichTextEditingController parent;
   final int segmentIndex;
+  final FocusNode? focusNode;
+  int startOffset;
+  int endOffset;
 
-  RangeTextEditingController({required this.parent, required this.segmentIndex}) {
+  TextSelection _localSelection = const TextSelection.collapsed(offset: 0);
+  bool _isSettingValue = false;
+  String _lastKnownText = "";
+  String _lastParentText = "";
+  bool _allowCapitalization = true;
+  String? _autoCapitalizedChar;
+
+  RangeTextEditingController({
+    required this.parent,
+    required this.segmentIndex,
+    this.focusNode,
+    required this.startOffset,
+    required this.endOffset,
+  }) {
+    _lastParentText = parent.text;
     parent.addListener(_onParentChanged);
+    _lastKnownText = text;
+    _updateLocalSelectionFromParent();
   }
 
   @override
@@ -2080,30 +2078,79 @@ class RangeTextEditingController extends TextEditingController {
     super.dispose();
   }
 
+  bool _hasCheckboxPrefix(String t) {
+    return ParagraphBlockRegistry.hasAnyPrefix(t);
+  }
+
   void _onParentChanged() {
-    notifyListeners();
+    if (_isSettingValue) return;
+    if (parent.text != _lastParentText) {
+      if (kImageDebug) {
+        debugPrint("RangeTextEditingController[_onParentChanged] segmentIndex=$segmentIndex IGNORED. parent text mismatch: parent='${parent.text.length}', last='${_lastParentText.length}'");
+      }
+      return;
+    }
+    final oldSelection = _localSelection;
+    final oldText = _lastKnownText;
+
+    _updateLocalSelectionFromParent();
+    _lastKnownText = text;
+
+    if (kImageDebug) {
+      debugPrint("RangeTextEditingController[_onParentChanged] segmentIndex=$segmentIndex, parentSel=${parent.selection}, oldSel=$oldSelection, newSel=$_localSelection");
+    }
+
+    if (_localSelection != oldSelection || _lastKnownText != oldText) {
+      if (kImageDebug) {
+        debugPrint("  Notifying listeners for segmentIndex=$segmentIndex due to selection/text change");
+      }
+      notifyListeners();
+    }
+  }
+
+  void updateOffsets(int start, int end) {
+    if (startOffset != start || endOffset != end || _lastParentText != parent.text) {
+      if (kImageDebug) {
+        debugPrint("RangeTextEditingController[updateOffsets] segmentIndex=$segmentIndex, start=$start, end=$end, parentTextLength=${parent.text.length}");
+      }
+      final oldSelection = _localSelection;
+      final oldText = _lastKnownText;
+
+      startOffset = start;
+      endOffset = end;
+      _lastParentText = parent.text;
+      _lastKnownText = text;
+      _updateLocalSelectionFromParent();
+
+      if (_lastKnownText != oldText || _localSelection != oldSelection) {
+        if (kImageDebug) {
+          debugPrint("  Notifying listeners for segmentIndex=$segmentIndex inside updateOffsets");
+        }
+        notifyListeners();
+      }
+    }
+  }
+
+  void _updateLocalSelectionFromParent() {
+    final parentSel = parent.selection;
+    final range = getRange();
+    if (parentSel.isValid && range.isValid && range.start >= 0) {
+      final start = range.start;
+      final end = range.end;
+      if (parentSel.start >= start && parentSel.end <= end) {
+        final localBase = parentSel.baseOffset - start;
+        final localExtent = parentSel.extentOffset - start;
+        final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
+        _localSelection = TextSelection(
+          baseOffset: localBase < prefixOffset ? prefixOffset : localBase,
+          extentOffset: localExtent < prefixOffset ? prefixOffset : localExtent,
+        );
+      }
+    }
   }
 
   TextRange getRange() {
-    int currentSegment = 0;
-    int start = 0;
-    final chars = parent.styledChars;
-
-    for (int i = 0; i < chars.length; i++) {
-      if (chars[i].char == '\uFFFC' && chars[i].style.imageUrl != null) {
-        if (currentSegment == segmentIndex) {
-          return TextRange(start: start, end: i);
-        }
-        currentSegment++;
-        start = i + 1;
-      }
-    }
-
-    if (currentSegment == segmentIndex) {
-      return TextRange(start: start, end: chars.length);
-    }
-
-    return const TextRange(start: -1, end: -1);
+    return TextRange(start: startOffset, end: endOffset);
   }
 
   @override
@@ -2125,103 +2172,263 @@ class RangeTextEditingController extends TextEditingController {
   @override
   TextEditingValue get value {
     final currentText = text;
-    final parentSel = parent.selection;
-    final range = getRange();
+    _updateLocalSelectionFromParent();
 
-    TextSelection localSel = const TextSelection.collapsed(offset: -1);
-    if (parentSel.isValid && range.isValid && range.start >= 0) {
-      final start = range.start;
-      final end = range.end;
+    // Clamp selection to current text length to prevent out-of-bounds errors
+    int base = _localSelection.baseOffset;
+    int extent = _localSelection.extentOffset;
+    final prefixOffset = _hasCheckboxPrefix(currentText) ? 1 : 0;
 
-      if (parentSel.start >= start && parentSel.end <= end) {
-        localSel = TextSelection(
-          baseOffset: parentSel.baseOffset - start,
-          extentOffset: parentSel.extentOffset - start,
-        );
-      }
+    if (base < prefixOffset || base > currentText.length) {
+      base = base.clamp(prefixOffset, currentText.length);
     }
+    if (extent < prefixOffset || extent > currentText.length) {
+      extent = extent.clamp(prefixOffset, currentText.length);
+    }
+
+    final clampedSel = _localSelection.copyWith(
+      baseOffset: base,
+      extentOffset: extent,
+    );
 
     return TextEditingValue(
       text: currentText,
-      selection: localSel,
+      selection: clampedSel,
     );
   }
 
   @override
   set value(TextEditingValue newValue) {
-    final range = getRange();
-    if (!range.isValid || range.start < 0 || range.end > parent.styledChars.length) return;
-
-    final start = range.start;
-    final end = range.end;
-
+    // Intercept and handle auto-capitalization override for checklists
     final newText = newValue.text;
     final oldText = text;
+    final bool hasPrefix = ParagraphBlockRegistry.hasAnyPrefix(newText);
 
-    if (newText == oldText) {
-      TextSelection parentSel = const TextSelection.collapsed(offset: -1);
+    if (hasPrefix) {
+      if (newText.length == 2 && oldText.length == 1) {
+        if (_allowCapitalization) {
+          final firstChar = newText[0];
+          final secondChar = newText[1];
+          final upperSecond = secondChar.toUpperCase();
+          if (secondChar != upperSecond) {
+            newValue = newValue.copyWith(
+              text: firstChar + upperSecond,
+            );
+            _allowCapitalization = false;
+            _autoCapitalizedChar = upperSecond;
+          }
+        }
+      } else if (newText.length == 1 && oldText.length == 2) {
+        // User backspaced the capitalized character!
+        final secondChar = oldText[1];
+        if (secondChar == _autoCapitalizedChar) {
+          final firstChar = oldText[0];
+          final lowerSecond = secondChar.toLowerCase();
+          newValue = newValue.copyWith(
+            text: firstChar + lowerSecond,
+            selection: const TextSelection.collapsed(offset: 2),
+          );
+          _allowCapitalization = false;
+          _autoCapitalizedChar = null;
+        } else {
+          _allowCapitalization = true;
+          _autoCapitalizedChar = null;
+        }
+      } else if (newText.length == 1) {
+        _allowCapitalization = true;
+        _autoCapitalizedChar = null;
+      }
+    } else {
+      _allowCapitalization = true;
+      _autoCapitalizedChar = null;
+    }
+
+    _isSettingValue = true;
+    try {
+      final prefixOffset = _hasCheckboxPrefix(newValue.text) ? 1 : 0;
+      int base = newValue.selection.baseOffset;
+      int extent = newValue.selection.extentOffset;
       if (newValue.selection.isValid) {
-        parentSel = TextSelection(
-          baseOffset: start + newValue.selection.baseOffset,
-          extentOffset: start + newValue.selection.extentOffset,
+        if (base < prefixOffset) base = prefixOffset;
+        if (extent < prefixOffset) extent = prefixOffset;
+      }
+      final clampedSel = newValue.selection.copyWith(
+        baseOffset: base,
+        extentOffset: extent,
+      );
+      _localSelection = clampedSel;
+
+      final range = getRange();
+      if (!range.isValid || range.start < 0 || range.end > parent.styledChars.length) return;
+
+      final start = range.start;
+      final end = range.end;
+
+      final newText = newValue.text;
+      final oldText = text;
+
+      if (newText == oldText) {
+        final bool hasFocus = focusNode?.hasFocus ?? true;
+        if (hasFocus) {
+          TextSelection parentSel = const TextSelection.collapsed(offset: -1);
+          if (clampedSel.isValid) {
+            parentSel = TextSelection(
+              baseOffset: start + clampedSel.baseOffset,
+              extentOffset: start + clampedSel.extentOffset,
+            );
+          }
+          parent.value = parent.value.copyWith(selection: parentSel);
+        }
+        return;
+      }
+
+      final oldSegmentChars = parent.styledChars.sublist(start, end);
+
+      int prefixLen = 0;
+      while (prefixLen < oldText.length &&
+          prefixLen < newText.length &&
+          oldText[prefixLen] == newText[prefixLen]) {
+        prefixLen++;
+      }
+
+      int suffixLen = 0;
+      while (suffixLen < oldText.length - prefixLen &&
+          suffixLen < newText.length - prefixLen &&
+          oldText[oldText.length - 1 - suffixLen] == newText[newText.length - 1 - suffixLen]) {
+        suffixLen++;
+      }
+
+      final insertStart = prefixLen;
+      final insertEnd = newText.length - suffixLen;
+      final insertedText = newText.substring(insertStart, insertEnd);
+      final bool isNewlineInsert = (insertedText == '\n');
+
+      if (isNewlineInsert) {
+        final cleanText = newValue.text.substring(0, insertStart) + newValue.text.substring(insertStart + 1);
+        final baseOffset = clampedSel.baseOffset;
+        final extentOffset = clampedSel.extentOffset;
+        final cleanSelection = TextSelection(
+          baseOffset: baseOffset > insertStart ? baseOffset - 1 : baseOffset,
+          extentOffset: extentOffset > insertStart ? extentOffset - 1 : extentOffset,
+        );
+
+        // Update local controller value first so a frame is scheduled and clean value is set.
+        super.value = newValue.copyWith(
+          text: cleanText,
+          selection: cleanSelection,
+        );
+
+        // Perform structural parent document layout shift in a post-frame callback
+        // to avoid EditableText state reconciliation conflicts.
+        debugPrint("[PostFrame] Scheduling layout shift callback for segmentIndex=$segmentIndex");
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          debugPrint("[PostFrame] Running layout shift callback for segmentIndex=$segmentIndex, parent.hasListeners=${parent.hasListeners}");
+          if (!parent.hasListeners) return;
+
+          final List<StyledChar> newSegmentChars = [];
+          newSegmentChars.addAll(oldSegmentChars.take(prefixLen));
+
+          Style baseStyle = parent.currentActiveStyle;
+          if (prefixLen > 0 && prefixLen - 1 < oldSegmentChars.length) {
+            baseStyle = oldSegmentChars[prefixLen - 1].style;
+          } else if (oldSegmentChars.isNotEmpty) {
+            baseStyle = oldSegmentChars.first.style;
+          }
+
+          bool isLineEmptyList = false;
+          final oldBehavior = ParagraphBlockRegistry.getBehaviorForText(oldText);
+          if (oldBehavior != null && oldText.length == oldBehavior.prefixLen) {
+            isLineEmptyList = true;
+          }
+
+          if (isLineEmptyList) {
+            newSegmentChars.clear();
+          } else {
+            newSegmentChars.add(StyledChar(char: '\n', style: baseStyle));
+            final behavior = ParagraphBlockRegistry.getBehaviorForListType(baseStyle.listType);
+            if (behavior != null) {
+              newSegmentChars.add(behavior.getPrefixChar(baseStyle));
+            }
+          }
+
+          newSegmentChars.addAll(oldSegmentChars.skip(oldSegmentChars.length - suffixLen));
+
+          final List<StyledChar> updatedParentChars = List.from(parent.styledChars);
+          updatedParentChars.removeRange(start, end);
+          updatedParentChars.insertAll(start, newSegmentChars);
+
+          int selectionShift = 0;
+          if (isLineEmptyList) {
+            final int oldPrefixLen = oldBehavior?.prefixLen ?? 1;
+            selectionShift = -(oldPrefixLen + 1);
+          } else {
+            final behavior = ParagraphBlockRegistry.getBehaviorForListType(baseStyle.listType);
+            if (behavior != null) {
+              selectionShift = behavior.prefixLen;
+            }
+          }
+
+          final TextSelection parentSel = TextSelection(
+            baseOffset: start + newValue.selection.baseOffset + selectionShift,
+            extentOffset: start + newValue.selection.extentOffset + selectionShift,
+          );
+
+          parent.styledChars = updatedParentChars;
+          parent.value = TextEditingValue(
+            text: updatedParentChars.map((sc) => sc.char).join(),
+            selection: parentSel,
+          );
+
+          // Force local segment controller to reflect the clean text and notify listeners
+          // to override the TextField's internal stale value (which contains '\n').
+          _localSelection = cleanSelection;
+          _lastKnownText = cleanText;
+          notifyListeners();
+        });
+      } else {
+        final List<StyledChar> newSegmentChars = [];
+        newSegmentChars.addAll(oldSegmentChars.take(prefixLen));
+
+        Style baseStyle = parent.currentActiveStyle;
+        if (oldText.isEmpty) {
+          baseStyle = baseStyle.copyWith(
+            listType: 'normal',
+            checked: false,
+            indent: 0,
+          );
+        } else if (prefixLen > 0 && prefixLen - 1 < oldSegmentChars.length) {
+          baseStyle = oldSegmentChars[prefixLen - 1].style;
+        } else if (oldSegmentChars.isNotEmpty) {
+          baseStyle = oldSegmentChars.first.style;
+        }
+
+        if (insertedText.length > 1) {
+          final parsed = parseMarkdownToStyledChars(insertedText, baseStyle: baseStyle);
+          newSegmentChars.addAll(parsed);
+        } else {
+          for (int i = insertStart; i < insertEnd; i++) {
+            newSegmentChars.add(StyledChar(char: newText[i], style: baseStyle));
+          }
+        }
+
+        newSegmentChars.addAll(oldSegmentChars.skip(oldSegmentChars.length - suffixLen));
+
+        final List<StyledChar> updatedParentChars = List.from(parent.styledChars);
+        updatedParentChars.removeRange(start, end);
+        updatedParentChars.insertAll(start, newSegmentChars);
+
+        parent.styledChars = updatedParentChars;
+        parent.value = TextEditingValue(
+          text: updatedParentChars.map((sc) => sc.char).join(),
+          selection: TextSelection(
+            baseOffset: start + newValue.selection.baseOffset,
+            extentOffset: start + newValue.selection.extentOffset,
+          ),
         );
       }
-      parent.value = parent.value.copyWith(selection: parentSel);
-      return;
+    } finally {
+      _isSettingValue = false;
     }
-
-    final oldSegmentChars = parent.styledChars.sublist(start, end);
-    final List<StyledChar> newSegmentChars = [];
-
-    int prefixLen = 0;
-    while (prefixLen < oldText.length &&
-        prefixLen < newText.length &&
-        oldText[prefixLen] == newText[prefixLen]) {
-      prefixLen++;
-    }
-
-    int suffixLen = 0;
-    while (suffixLen < oldText.length - prefixLen &&
-        suffixLen < newText.length - prefixLen &&
-        oldText[oldText.length - 1 - suffixLen] == newText[newText.length - 1 - suffixLen]) {
-      suffixLen++;
-    }
-
-    newSegmentChars.addAll(oldSegmentChars.take(prefixLen));
-
-    Style baseStyle = parent.currentActiveStyle;
-    if (prefixLen > 0 && prefixLen - 1 < oldSegmentChars.length) {
-      baseStyle = oldSegmentChars[prefixLen - 1].style;
-    } else if (oldSegmentChars.isNotEmpty) {
-      baseStyle = oldSegmentChars.first.style;
-    }
-
-    final insertStart = prefixLen;
-    final insertEnd = newText.length - suffixLen;
-    for (int i = insertStart; i < insertEnd; i++) {
-      newSegmentChars.add(StyledChar(char: newText[i], style: baseStyle));
-    }
-
-    newSegmentChars.addAll(oldSegmentChars.skip(oldSegmentChars.length - suffixLen));
-
-    final List<StyledChar> updatedParentChars = List.from(parent.styledChars);
-    updatedParentChars.removeRange(start, end);
-    updatedParentChars.insertAll(start, newSegmentChars);
-
-    TextSelection parentSel = const TextSelection.collapsed(offset: -1);
-    if (newValue.selection.isValid) {
-      parentSel = TextSelection(
-        baseOffset: start + newValue.selection.baseOffset,
-        extentOffset: start + newValue.selection.extentOffset,
-      );
-    }
-
-    parent.styledChars = updatedParentChars;
-    
-    parent.value = TextEditingValue(
-      text: updatedParentChars.map((sc) => sc.char).join(),
-      selection: parentSel,
-    );
   }
 
   @override
@@ -2241,6 +2448,8 @@ class RangeTextEditingController extends TextEditingController {
     final baseStyle = style ?? const TextStyle();
     final List<InlineSpan> children = [];
 
+    final isCheckedCheckbox = segmentChars.isNotEmpty && segmentChars.first.char == '\u2611';
+
     int i = 0;
     while (i < segmentChars.length) {
       final sc = segmentChars[i];
@@ -2252,23 +2461,43 @@ class RangeTextEditingController extends TextEditingController {
         i++;
       }
 
-      final textRun = segmentText.substring(start, i);
+      String textRun = segmentText.substring(start, i);
+
+      if (start == 0 && textRun.isNotEmpty) {
+        final firstChar = textRun[0];
+        if (firstChar == '•' ||
+            firstChar == '\u2610' ||
+            firstChar == '\u2611' ||
+            firstChar == '›' ||
+            firstChar == '\u2008') {
+          children.add(TextSpan(text: '', style: baseStyle));
+          textRun = textRun.substring(1);
+        }
+      }
+
+      Color? displayColor = currentStyle.color ?? baseStyle.color;
+      if (isCheckedCheckbox) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final defaultColor = isDark ? Colors.white : Colors.black;
+        displayColor = (displayColor ?? defaultColor).withOpacity(0.4);
+      }
 
       TextStyle runStyle = baseStyle.copyWith(
         fontWeight: currentStyle.bold ? FontWeight.bold : FontWeight.normal,
         fontStyle: currentStyle.listType == 'quote' ? FontStyle.italic : (currentStyle.italic ? FontStyle.italic : FontStyle.normal),
-        color: currentStyle.listType == 'quote' ? (currentStyle.color ?? baseStyle.color)?.withOpacity(0.7) : (currentStyle.color ?? baseStyle.color),
+        color: currentStyle.listType == 'quote' ? (currentStyle.color ?? baseStyle.color)?.withOpacity(0.7) : displayColor,
         backgroundColor: currentStyle.highlight,
       );
 
-      if (currentStyle.underline && currentStyle.strikethrough) {
+      final hasLineThrough = currentStyle.strikethrough || isCheckedCheckbox;
+      if (currentStyle.underline && hasLineThrough) {
         runStyle = runStyle.copyWith(
           decoration: TextDecoration.combine(
               [TextDecoration.underline, TextDecoration.lineThrough]),
         );
       } else if (currentStyle.underline) {
         runStyle = runStyle.copyWith(decoration: TextDecoration.underline);
-      } else if (currentStyle.strikethrough) {
+      } else if (hasLineThrough) {
         runStyle = runStyle.copyWith(decoration: TextDecoration.lineThrough);
       } else {
         runStyle = runStyle.copyWith(decoration: TextDecoration.none);
@@ -2350,14 +2579,28 @@ class RangeTextEditingController extends TextEditingController {
     return TextSpan(children: children, style: baseStyle);
   }
 }
-
-// Markdown Parser from Markdown String to StyledChar list
-List<StyledChar> parseMarkdownToStyledChars(String markdown) {
+List<StyledChar> parseMarkdownToStyledChars(String markdown, {Style? baseStyle}) {
   final List<StyledChar> result = [];
   final lines = markdown.split('\n');
+  final fallbackStyle = baseStyle ?? const Style();
 
   for (int i = 0; i < lines.length; i++) {
     String line = lines[i];
+
+    int indent = (i == 0) ? fallbackStyle.indent : 0;
+    int spaces = 0;
+    while (spaces < line.length && (line[spaces] == ' ' || line[spaces] == '\t')) {
+      if (line[spaces] == '\t') {
+        indent += 1;
+      } else {
+        spaces++;
+        if (spaces < line.length && line[spaces] == ' ') {
+          indent += 1;
+        }
+      }
+      spaces++;
+    }
+    line = line.substring(spaces);
 
     // Parse dividers
     if (line.trim() == '---') {
@@ -2376,10 +2619,11 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
       continue;
     }
 
-    TextAlign align = TextAlign.left;
-    String heading = 'normal';
-    String listType = 'normal';
-    bool checked = false;
+    final lineFallback = (i == 0) ? fallbackStyle : const Style();
+    TextAlign align = lineFallback.align;
+    String heading = lineFallback.heading;
+    String listType = lineFallback.listType;
+    bool checked = lineFallback.checked;
 
     // Parse alignment HTML wrappers
     final centerReg = RegExp(r'^<p align="center">(.*)</p>$');
@@ -2506,18 +2750,21 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
             result.add(StyledChar(
               char: '\uFFFC',
               style: Style(
-                bold: bold,
-                italic: italic,
-                underline: underline,
-                strikethrough: strikethrough,
+                bold: bold || fallbackStyle.bold,
+                italic: italic || fallbackStyle.italic,
+                underline: underline || fallbackStyle.underline,
+                strikethrough: strikethrough || fallbackStyle.strikethrough,
                 heading: heading,
                 align: align,
                 listType: listType,
                 checked: checked,
+                indent: indent,
                 imageUrl: cleanUrl,
                 imageWidth: width,
                 imageHeight: height,
                 imageCaption: (alt.isNotEmpty && alt != 'Image') ? alt : null,
+                color: color ?? fallbackStyle.color,
+                highlight: highlight ?? fallbackStyle.highlight,
               ),
             ));
             idx = closeParenthesis + 1;
@@ -2540,16 +2787,17 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
               result.add(StyledChar(
                 char: linkText[k],
                 style: Style(
-                  bold: bold,
-                  italic: italic,
-                  underline: underline,
-                  strikethrough: strikethrough,
+                  bold: bold || fallbackStyle.bold,
+                  italic: italic || fallbackStyle.italic,
+                  underline: underline || fallbackStyle.underline,
+                  strikethrough: strikethrough || fallbackStyle.strikethrough,
                   heading: heading,
                   align: align,
                   listType: listType,
                   checked: checked,
-                  color: color,
-                  highlight: highlight,
+                  indent: indent,
+                  color: color ?? fallbackStyle.color,
+                  highlight: highlight ?? fallbackStyle.highlight,
                   linkUrl: url,
                 ),
               ));
@@ -2584,16 +2832,17 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
         result.add(StyledChar(
           char: line[idx],
           style: Style(
-            bold: bold,
-            italic: italic,
-            underline: underline,
-            strikethrough: strikethrough,
+            bold: bold || fallbackStyle.bold,
+            italic: italic || fallbackStyle.italic,
+            underline: underline || fallbackStyle.underline,
+            strikethrough: strikethrough || fallbackStyle.strikethrough,
             heading: heading,
             align: align,
             listType: listType,
             checked: checked,
-            color: color,
-            highlight: highlight,
+            indent: indent,
+            color: color ?? fallbackStyle.color,
+            highlight: highlight ?? fallbackStyle.highlight,
           ),
         ));
         idx++;
@@ -2608,6 +2857,13 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown) {
           align: align,
           listType: listType,
           checked: checked,
+          indent: indent,
+          bold: fallbackStyle.bold,
+          italic: fallbackStyle.italic,
+          underline: fallbackStyle.underline,
+          strikethrough: fallbackStyle.strikethrough,
+          color: fallbackStyle.color,
+          highlight: fallbackStyle.highlight,
         ),
       ));
     }
@@ -2791,14 +3047,17 @@ String generateMarkdownFromStyledChars(List<StyledChar> styledChars) {
       lineContent = generateInlineMarkdown(contentChars);
     }
 
+    final String indentSpaces = '  ' * style.indent;
     if (style.listType == 'checkbox') {
-      lineContent = style.checked ? '- [x] $lineContent' : '- [ ] $lineContent';
+      lineContent = style.checked ? '${indentSpaces}- [x] $lineContent' : '${indentSpaces}- [ ] $lineContent';
     } else if (style.listType == 'bullet') {
-      lineContent = '- $lineContent';
+      lineContent = '${indentSpaces}- $lineContent';
     } else if (style.listType == 'quote') {
-      lineContent = '> $lineContent';
+      lineContent = '${indentSpaces}> $lineContent';
     } else if (style.listType == 'number') {
-      lineContent = '1. $lineContent';
+      lineContent = '${indentSpaces}1. $lineContent';
+    } else if (style.indent > 0) {
+      lineContent = '$indentSpaces$lineContent';
     }
 
     if (style.heading == 'h1') {

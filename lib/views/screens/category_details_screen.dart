@@ -946,7 +946,7 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                 Text(
                   widget.note.isPinned
                       ? 'Pinned'
-                      : (widget.note.noteType == 'checklist' ? 'Checklist' : 'Inter ${widget.note.colorValue > 0 ? '500' : '400'}'),
+                      : 'Inter ${widget.note.colorValue > 0 ? '500' : '400'}',
                   style: GoogleFonts.inter(        // project rule: Inter for labels
                     fontSize:   11,
                     fontWeight: FontWeight.w400,   // Regular

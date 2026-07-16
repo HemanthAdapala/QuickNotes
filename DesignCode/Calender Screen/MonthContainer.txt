@@ -1,0 +1,76 @@
+class MonthContainer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 193,
+          height: 46,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                top: 0,
+                child: Container(
+                  width: 193,
+                  height: 46,
+                  decoration: ShapeDecoration(
+                    color: Colors.white /* Backgrounds-Primary */,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 16,
+                        offset: Offset(0, 0),
+                        spreadRadius: 0,
+                      )
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 40,
+                top: 14,
+                child: Text(
+                  'January,2026',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: const Color(0xFF333333),
+                    fontSize: 17,
+                    fontFamily: 'SF Pro',
+                    fontWeight: FontWeight.w510,
+                    height: 1.06,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 10,
+                top: 15,
+                child: Container(
+                  width: 17,
+                  height: 17,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(),
+                  child: Stack(),
+                ),
+              ),
+              Positioned(
+                left: 166,
+                top: 15,
+                child: Container(
+                  width: 17,
+                  height: 17,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(),
+                  child: Stack(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

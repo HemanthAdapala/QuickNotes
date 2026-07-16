@@ -363,7 +363,7 @@ class DatabaseService {
     
     final List<Map<String, dynamic>> maps = await timedQuery('queryNotesSummaryPaged', () => db.rawQuery('''
       SELECT id, title, isPinned, isFavorite, isArchived, category, noteType, reminderTime, createdAt, updatedAt, colorValue, isDeleted, folderId, previewText, isLocked, isHabit, habitStreak,
-      CASE WHEN noteType = 'checklist' THEN content ELSE SUBSTR(content, 1, 120) END AS content
+      SUBSTR(content, 1, 120) AS content
       FROM notes
       $whereString
       ORDER BY isPinned DESC, updatedAt DESC

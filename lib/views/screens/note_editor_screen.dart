@@ -74,7 +74,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   ResizableImageWidgetState? _activeDragImage;
   int _dragDirection = 0;
   Offset? _pointerDownPos;
-  final GlobalKey _sdeKey = GlobalKey();
+  final GlobalKey<NewSingleDocumentEditorState> _sdeKey = GlobalKey<NewSingleDocumentEditorState>();
 
   String _generateId() {
     final random = Random();
@@ -822,7 +822,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           maxLines: null,
           keyboardType: TextInputType.multiline,
           contextMenuBuilder: _buildContextMenu,
-          scrollPadding: const EdgeInsets.only(bottom: 90.0),
+          scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
           textAlign: block.controller.styledChars.isNotEmpty
               ? block.controller.styledChars.first.style.align
               : TextAlign.left,
@@ -894,7 +894,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           maxLines: null,
           keyboardType: TextInputType.multiline,
           contextMenuBuilder: _buildContextMenu,
-          scrollPadding: const EdgeInsets.only(bottom: 90.0),
+          scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
           style: GoogleFonts.outfit(
             fontSize: fontSize,
             fontWeight: FontWeight.bold,
@@ -967,7 +967,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             maxLines: null,
             keyboardType: TextInputType.multiline,
             contextMenuBuilder: _buildContextMenu,
-            scrollPadding: const EdgeInsets.only(bottom: 90.0),
+            scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
             style: GoogleFonts.inter(
               fontSize: 16.0,
               color: textColor.withAlpha(220),
@@ -1338,15 +1338,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   bool _isFavorite = false;
   bool _isArchived = false;
   String _category = 'Uncategorized';
-  String _noteType = 'text'; // 'text' or 'checklist'
+  String _noteType = 'text'; // 'text' or 'checklist' (migration)
   bool _isLocked = false;
   DateTime? _reminderTime;
 
   List<String> _tags = [];
   List<Map<String, dynamic>> _attachments = [];
-  List<Map<String, dynamic>> _checklistItems = []; // [{'text': '...', 'done': false}]
-  List<TextEditingController> _checklistControllers = [];
-  List<FocusNode> _checklistFocusNodes = [];
+  final List<Map<String, dynamic>> _checklistItems = const []; // legacy removed
+  final List<TextEditingController> _checklistControllers = const []; // legacy removed
+  final List<FocusNode> _checklistFocusNodes = const []; // legacy removed
 
   // Folders & Habits state
   String? _folderId;
@@ -1375,7 +1375,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   bool _isFormattingBarExpanded = true;
   _ActiveCategory _activeCategory = _ActiveCategory.none;
 
-  Color get _tintColor => _noteType == 'checklist' ? const Color(0xFF0088FF) : const Color(0xFFFFCC00);
+  Color get _tintColor => const Color(0xFFFFCC00);
 
   // Media Pickers and Record helpers
   final _imagePicker = ImagePicker();
@@ -1417,26 +1417,30 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       _paperGuideOpacity = widget.note!.paperGuideOpacity;
       _paperGuideColor = widget.note!.paperGuideColor;
       
-      if (_noteType == 'checklist') {
-        try {
-          final decoded = jsonDecode(widget.note!.content) as List<dynamic>;
-          _checklistItems = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-        } catch (e) {
-          _checklistItems = [];
-        }
-        _checklistControllers = _checklistItems.map((item) => TextEditingController(text: item['text'] ?? "")).toList();
-        _contentController = RichTextEditingController();
-      } else {
-        _contentController = RichTextEditingController();
-        if (NoteEditorScreen.useSingleDocumentEditor) {
-          _contentController.onStyleChanged = () {
-            if (mounted) setState(() {});
-          };
-          _contentController.onReplaceImage = _showReplaceGalleryBottomSheet;
-          _contentController.setMarkdown(widget.note!.content);
+      _contentController = RichTextEditingController();
+      if (NoteEditorScreen.useSingleDocumentEditor) {
+        _contentController.onStyleChanged = () {
+          if (mounted) setState(() {});
+        };
+        _contentController.onReplaceImage = _showReplaceGalleryBottomSheet;
+        if (widget.note!.noteType == 'checklist') {
+          // Migration: Auto-convert legacy JSON checklist to markdown checklist
+          try {
+            final decoded = jsonDecode(widget.note!.content) as List<dynamic>;
+            final markdown = decoded.map((item) {
+              final done = item['done'] == true || item['checked'] == true;
+              final prefix = done ? '- [x] ' : '- [ ] ';
+              return '$prefix${item['text'] ?? item['title'] ?? ''}';
+            }).join('\n');
+            _contentController.setMarkdown(markdown);
+          } catch (_) {
+            _contentController.setMarkdown(widget.note!.content);
+          }
         } else {
-          _blocks = parseMarkdownToBlocks(widget.note!.content);
+          _contentController.setMarkdown(widget.note!.content);
         }
+      } else {
+        _blocks = parseMarkdownToBlocks(widget.note!.content);
       }
     } else {
       _category = widget.defaultCategory;
@@ -1457,6 +1461,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         if (mounted) setState(() {});
       };
       _contentController.onReplaceImage = _showReplaceGalleryBottomSheet;
+      if (widget.defaultNoteType == 'checklist') {
+        _contentController.setMarkdown('- [ ] ');
+      }
 
       if (!NoteEditorScreen.useSingleDocumentEditor && _noteType == 'text') {
         final firstBlock = ParagraphBlock(id: _generateId());
@@ -1693,9 +1700,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         if (fn != null && fn.hasFocus) return true;
       }
     }
-    for (final fn in _checklistFocusNodes) {
-      if (fn.hasFocus) return true;
-    }
     return false;
   }
 
@@ -1703,22 +1707,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
   void _calculateCounts() {
     String text = "";
-    if (_noteType == 'checklist') {
-      text = _checklistItems.map((e) => e['text'].toString()).join(" ");
+    if (NoteEditorScreen.useSingleDocumentEditor) {
+      text = _contentController.text;
     } else {
-      if (NoteEditorScreen.useSingleDocumentEditor) {
-        text = _contentController.text;
-      } else {
-        text = _blocks.map((b) {
-          if (b is ParagraphBlock) return b.controller.text;
-          if (b is HeadingBlock) return b.controller.text;
-          if (b is QuoteBlock) return b.controller.text;
-          if (b is ChecklistBlock) return b.controller.text;
-          if (b is BulletedListBlock) return b.controller.text;
-          if (b is NumberedListBlock) return b.controller.text;
-          return "";
-        }).join(" ").trim();
-      }
+      text = _blocks.map((b) {
+        if (b is ParagraphBlock) return b.controller.text;
+        if (b is HeadingBlock) return b.controller.text;
+        if (b is QuoteBlock) return b.controller.text;
+        if (b is ChecklistBlock) return b.controller.text;
+        if (b is BulletedListBlock) return b.controller.text;
+        if (b is NumberedListBlock) return b.controller.text;
+        return "";
+      }).join(" ").trim();
     }
     setState(() {
       _charCount = text.length;
@@ -1726,117 +1726,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     });
   }
 
-  // --- Checklist operations ---
-  void _syncControllers() {
-    // 1. Grow/shrink controllers if needed
-    while (_checklistControllers.length < _checklistItems.length) {
-      final index = _checklistControllers.length;
-      final text = _checklistItems[index]['text'] ?? '';
-      _checklistControllers.add(TextEditingController(text: text));
-    }
-    while (_checklistControllers.length > _checklistItems.length) {
-      _checklistControllers.removeLast().dispose();
-    }
 
-    // 2. Grow/shrink focus nodes if needed
-    while (_checklistFocusNodes.length < _checklistItems.length) {
-      final fn = FocusNode();
-      fn.addListener(() {
-        if (fn.hasFocus) {
-          if (!_isFormattingBarExpanded) {
-            setState(() {
-              _isFormattingBarExpanded = true;
-            });
-          }
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (fn.context != null) {
-              Scrollable.ensureVisible(
-                fn.context!,
-                alignment: 0.1,
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-              );
-            }
-          });
-        } else {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && !_anyBlockHasFocus && _isMetadataCollapsed) {
-              setState(() {
-                _isMetadataCollapsed = false;
-              });
-            }
-          });
-        }
-        if (mounted) setState(() {});
-      });
-      _checklistFocusNodes.add(fn);
-    }
-    while (_checklistFocusNodes.length > _checklistItems.length) {
-      _checklistFocusNodes.removeLast().dispose();
-    }
-
-    // 3. Update controller text if it changed
-    for (int i = 0; i < _checklistItems.length; i++) {
-      final text = _checklistItems[i]['text'] ?? '';
-      if (_checklistControllers[i].text != text) {
-        _checklistControllers[i].text = text;
-      }
-    }
-  }
-
-  void _addChecklistItem() {
-    _startZenTimer();
-    setState(() {
-      _checklistItems.add({'text': '', 'done': false});
-      _checklistControllers.add(TextEditingController());
-      final fn = FocusNode();
-      fn.addListener(() {
-        if (fn.hasFocus) {
-          if (!_isFormattingBarExpanded) {
-            setState(() {
-              _isFormattingBarExpanded = true;
-            });
-          }
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (fn.context != null) {
-              Scrollable.ensureVisible(
-                fn.context!,
-                alignment: 0.1,
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-              );
-            }
-          });
-        } else {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && !_anyBlockHasFocus && _isMetadataCollapsed) {
-              setState(() {
-                _isMetadataCollapsed = false;
-              });
-            }
-          });
-        }
-        if (mounted) setState(() {});
-      });
-      _checklistFocusNodes.add(fn);
-      _hasChanges = true;
-      _calculateCounts();
-    });
-  }
-
-  void _removeChecklistItem(int index) {
-    setState(() {
-      _checklistItems.removeAt(index);
-      if (index < _checklistControllers.length) {
-        _checklistControllers.removeAt(index).dispose();
-      }
-      if (index < _checklistFocusNodes.length) {
-        _checklistFocusNodes.removeAt(index).dispose();
-      }
-      _hasChanges = true;
-      _calculateCounts();
-    });
-  }
 
 
   Future<void> _showGalleryBottomSheet(BuildContext context) async {
@@ -2066,7 +1956,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       Future.delayed(const Duration(milliseconds: 350), () {
         if (mounted) {
           _contentFocusNode.requestFocus();
-          _scrollToCursor();
+          final sdeState = _sdeKey.currentState;
+          if (sdeState != null) {
+            sdeState.scrollToActiveSegment();
+          } else {
+            _scrollToCursor();
+          }
         }
       });
       if (kImageDebug) {
@@ -2323,62 +2218,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
   }
 
-  void _toggleNoteType() {
-    setState(() {
-      if (_noteType == 'text') {
-        // Convert plain text to checklist
-        final textContent = NoteEditorScreen.useSingleDocumentEditor
-            ? generateMarkdownFromStyledChars(_contentController.styledChars)
-            : _blocks.map((b) => b.toMarkdown()).join('\n');
-        final lines = textContent.split('\n');
-        _checklistItems = lines
-            .where((line) => line.trim().isNotEmpty)
-            .map((line) {
-              String cleanLine = line.trim();
-              bool isDone = false;
-              if (cleanLine.startsWith('- [ ]')) {
-                cleanLine = cleanLine.substring(5).trim();
-              } else if (cleanLine.startsWith('- [x]')) {
-                cleanLine = cleanLine.substring(5).trim();
-                isDone = true;
-              } else if (cleanLine.startsWith('-')) {
-                cleanLine = cleanLine.substring(1).trim();
-              } else if (cleanLine.startsWith('\u2610')) {
-                cleanLine = cleanLine.substring(1).trim();
-              } else if (cleanLine.startsWith('\u2611')) {
-                cleanLine = cleanLine.substring(1).trim();
-                isDone = true;
-              } else if (cleanLine.startsWith('•')) {
-                cleanLine = cleanLine.substring(1).trim();
-              }
-              return {'text': cleanLine, 'done': isDone};
-            })
-            .toList();
-        if (_checklistItems.isEmpty) {
-          _checklistItems.add({'text': '', 'done': false});
-        }
-        for (final c in _checklistControllers) {
-          c.dispose();
-        }
-        _checklistControllers = _checklistItems.map((item) => TextEditingController(text: item['text'] ?? "")).toList();
-        _noteType = 'checklist';
-      } else {
-        // Convert checklist to plain text
-        final text = _checklistItems.map((item) {
-          final String prefix = item['done'] == true ? '- [x] ' : '- [ ] ';
-          return '$prefix${item['text'] ?? ""}';
-        }).join('\n');
-        
-        if (NoteEditorScreen.useSingleDocumentEditor) {
-          _contentController.setMarkdown(text);
-        } else {
-          _blocks = parseMarkdownToBlocks(text);
-        }
-        _noteType = 'text';
-      }
-      _hasChanges = true;
-    });
-  }
+
 
   // --- Audio Recording operations ---
   Future<void> _startRecording() async {
@@ -2480,20 +2320,24 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
   }
 
+  double _getDynamicBottomScrollPadding() {
+    final double currentToolbarHeight = !_isFormattingBarExpanded 
+        ? 48.0 
+        : (_activeCategory != _ActiveCategory.none ? 100.0 : 50.0);
+    return MediaQuery.of(context).viewInsets.bottom + currentToolbarHeight + 30.0;
+  }
+
   // --- Save Operations ---
   Future<void> _saveNote() async {
     if (_isSaving) return;
     setState(() {
       _isSaving = true;
     });
-
     try {
       final title = _titleController.text.trim();
-      final content = _noteType == 'checklist' 
-          ? jsonEncode(_checklistItems) 
-          : (NoteEditorScreen.useSingleDocumentEditor
-              ? generateMarkdownFromStyledChars(_contentController.styledChars).trim()
-              : _blocks.map((b) => b.toMarkdown()).join('\n').trim());
+      final content = NoteEditorScreen.useSingleDocumentEditor
+          ? generateMarkdownFromStyledChars(_contentController.styledChars).trim()
+          : _blocks.map((b) => b.toMarkdown()).join('\n').trim();
 
       if (title.isEmpty && content.isEmpty) return;
 
@@ -2964,19 +2808,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   });
                 },
               ),
-              _buildCommandItem(
-                context,
-                icon: _noteType == 'text' ? Icons.playlist_add_check_rounded : Icons.text_snippet_rounded,
-                label: _noteType == 'text' ? "Convert to Checklist" : "Convert to Plain Text",
-                onTap: _toggleNoteType,
-              ),
-              if (_noteType == 'checklist')
-                _buildCommandItem(
-                  context,
-                  icon: Icons.local_fire_department_rounded,
-                  label: "Configure Habit",
-                  onTap: _showHabitSettingsDialog,
-                ),
+
               _buildCommandItem(
                 context,
                 icon: Icons.grid_on_rounded,
@@ -4055,14 +3887,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                               } else {
                                 final dist = _pointerDownPos != null ? (event.position - _pointerDownPos!).distance : 0.0;
                                 if (dist < 10.0) {
-                                  if (_noteType == 'checklist') {
-                                    if (_checklistFocusNodes.isNotEmpty) {
-                                      final fn = _checklistFocusNodes.last;
-                                      final ctrl = _checklistControllers.last;
-                                      fn.requestFocus();
-                                      ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
-                                    }
-                                  } else if (NoteEditorScreen.useSingleDocumentEditor) {
+                                  if (NoteEditorScreen.useSingleDocumentEditor) {
                                     bool isInsideSDE = false;
                                     final BuildContext? sdeContext = _sdeKey.currentContext;
                                     if (sdeContext != null) {
@@ -4105,7 +3930,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                     focusNode: _titleFocusNode,
                                     maxLines: 1,
                                     contextMenuBuilder: _buildContextMenu,
-                                    scrollPadding: const EdgeInsets.only(bottom: 90.0),
+                                    scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
                                     style: GoogleFonts.inter(
                                       fontSize: 24.0,
                                       fontWeight: FontWeight.bold,
@@ -4132,10 +3957,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                   ),
                                   const SizedBox(height: 4.0),
                                   
-                                  // Checklist / Markdown / Block Editor
-                                  if (_noteType == 'checklist')
-                                    _buildChecklistEditor(textColor)
-                                  else if (_isPreviewMarkdown)
+                                  if (_isPreviewMarkdown)
                                     _buildMarkdownPreview(textColor)
                                   else if (NoteEditorScreen.useSingleDocumentEditor)
                                     NewSingleDocumentEditor(
@@ -4145,6 +3967,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                       textColor: textColor,
                                       paperGuideHeight: _paperGuideHeight,
                                       contextMenuBuilder: _buildContextMenu,
+                                      formattingToolbarHeight: targetHeight,
                                     )
                                   else
                                     Column(
@@ -5321,75 +5144,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     );
   }
 
-  // Checklist editor view builder
-  Widget _buildChecklistEditor(Color textColor) {
-    if (_checklistControllers.length != _checklistItems.length ||
-        _checklistFocusNodes.length != _checklistItems.length) {
-      _syncControllers();
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ...List.generate(_checklistItems.length, (index) {
-          final item = _checklistItems[index];
-          final bool isDone = item['done'] ?? false;
-          final TextEditingController itemController = _checklistControllers[index];
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: Row(
-              children: [
-                InteractiveCheckbox(
-                  checked: isDone,
-                  onTap: () {
-                    setState(() {
-                      _checklistItems[index]['done'] = !isDone;
-                      _hasChanges = true;
-                      _calculateCounts();
-                    });
-                  },
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: itemController,
-                    focusNode: _checklistFocusNodes[index],
-                    contextMenuBuilder: _buildContextMenu,
-                    scrollPadding: const EdgeInsets.only(bottom: 90.0),
-                    onChanged: (val) {
-                      _checklistItems[index]['text'] = val;
-                      _hasChanges = true;
-                      _calculateCounts();
-                      _startZenTimer();
-                    },
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      color: isDone ? textColor.withAlpha(120) : textColor,
-                      decoration: isDone ? TextDecoration.lineThrough : null,
-                    ),
-                    decoration: const InputDecoration(
-                      hintText: "List item",
-                      border: InputBorder.none,
-                      filled: false,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 20),
-                  onPressed: () => _removeChecklistItem(index),
-                ),
-              ],
-            ),
-          );
-        }),
-        const SizedBox(height: 12),
-        TextButton.icon(
-          onPressed: _addChecklistItem,
-          icon: const Icon(Icons.add_rounded),
-          label: Text("Add Item", style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-        ),
-      ],
-    );
-  }
 
   // Markdown renderer viewer
   Widget _buildMarkdownPreview(Color textColor) {
@@ -5460,7 +5215,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     final tempNote = Note(
       id: widget.note?.id ?? 'temp',
       title: _titleController.text.trim(),
-      content: _noteType == 'checklist' ? jsonEncode(_checklistItems) : _blocks.map((b) => b.toMarkdown()).join('\n').trim(),
+      content: NoteEditorScreen.useSingleDocumentEditor
+          ? generateMarkdownFromStyledChars(_contentController.styledChars).trim()
+          : _blocks.map((b) => b.toMarkdown()).join('\n').trim(),
       tags: _tags,
       attachments: _attachments,
       category: _category,
