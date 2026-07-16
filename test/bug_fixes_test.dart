@@ -2329,5 +2329,94 @@ void main() {
       );
       expect(controller.styledChars[0].style.align, TextAlign.center);
     });
+
+    testWidgets('Sprint 11B: Samsung Notes Heading Enter Key Reversion', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+
+      final controller = RichTextEditingController();
+      final focusNode = FocusNode();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: NewSingleDocumentEditor(
+                controller: controller,
+                focusNode: focusNode,
+                textColor: Colors.black,
+                paperGuideHeight: 1.0,
+                formattingToolbarHeight: 50.0,
+                contextMenuBuilder: (context, editableTextState) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      final textFields = find.byType(TextField);
+      expect(textFields, findsOneWidget);
+
+      final pField = tester.widget<TextField>(textFields);
+      final pController = pField.controller as RangeTextEditingController;
+      pField.focusNode?.requestFocus();
+      await tester.pump();
+
+      // 1. Type 'Title'
+      pController.value = const TextEditingValue(
+        text: 'Title',
+        selection: TextSelection.collapsed(offset: 5),
+      );
+      await tester.pump();
+
+      // 2. Make it heading 1
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 5);
+      controller.toggleParagraphStyle('h1');
+      await tester.pump();
+      expect(controller.styledChars[0].style.heading, 'h1');
+
+      // 3. Press Enter to go to the next line
+      pController.value = const TextEditingValue(
+        text: 'Title\n',
+        selection: TextSelection.collapsed(offset: 6),
+      );
+      await tester.pump(); // Executes post-frame callback
+      await tester.pump(); // Renders the second TextField segment
+
+      // Verify that a new TextField/segment is created
+      expect(find.byType(TextField), findsNWidgets(2));
+
+      // Verify that the newline added in the parent styledChars has heading: 'normal'
+      expect(controller.text.contains('\n'), true);
+      final newlineIndex = controller.text.indexOf('\n');
+      expect(controller.styledChars[newlineIndex].style.heading, 'normal');
+
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('Sprint 11B: Heading and List Mutual Exclusivity', (WidgetTester tester) async {
+      final controller = RichTextEditingController();
+      controller.text = 'Hello';
+      controller.selection = const TextSelection(baseOffset: 0, extentOffset: 5);
+
+      // 1. Toggle Bullet List
+      controller.toggleParagraphStyle('bullet');
+      expect(controller.styledChars[0].char, '•');
+      expect(controller.styledChars[1].style.listType, 'bullet');
+      expect(controller.styledChars[1].style.heading, 'normal');
+
+      // 2. Toggle Heading 1 (should strip bullet prefix and apply h1)
+      controller.toggleParagraphStyle('h1');
+      expect(controller.styledChars[0].char, 'H'); // First char of 'Hello'
+      expect(controller.styledChars[0].style.listType, 'normal');
+      expect(controller.styledChars[0].style.heading, 'h1');
+
+      // 3. Toggle Bullet List again (should strip h1 heading and apply bullet)
+      controller.toggleParagraphStyle('bullet');
+      expect(controller.styledChars[0].char, '•');
+      expect(controller.styledChars[1].style.listType, 'bullet');
+      expect(controller.styledChars[1].style.heading, 'normal');
+    });
   });
 }

@@ -1294,10 +1294,13 @@ class RichTextEditingController extends TextEditingController {
 
         String newListType = 'normal';
         StyledChar? prefixChar;
+        String targetHeading = existingStyle.heading;
 
         if (applyTargetStyle) {
           newListType = styleName;
           prefixChar = behavior.getPrefixChar(existingStyle);
+          // Lists are mutually exclusive with headings: strip heading formatting
+          targetHeading = 'normal';
         }
 
         if (prefixChar != null) {
@@ -1318,12 +1321,32 @@ class RichTextEditingController extends TextEditingController {
             newChars[j] = StyledChar(
               char: newChars[j].char,
               style: newChars[j].style.copyWith(
-                  listType: newListType, checked: false, strikethrough: false),
+                  listType: newListType,
+                  checked: false,
+                  strikethrough: false,
+                  heading: targetHeading,
+              ),
             );
           }
         }
       } else if (styleName == 'h1' || styleName == 'h2' || styleName == 'h3') {
         final targetHeading = applyTargetStyle ? styleName : 'normal';
+
+        // Headings are mutually exclusive with lists. If applying heading, clear list formatting and strip list prefix.
+        String newListType = existingStyle.listType;
+        if (applyTargetStyle && existingStyle.listType != 'normal') {
+          final existingBehavior = ParagraphBlockRegistry.getBehaviorForListType(existingStyle.listType);
+          if (existingBehavior != null) {
+            final bool hasPrefix = lineStart < newChars.length &&
+                existingBehavior.hasPrefix(newChars[lineStart].char);
+            if (hasPrefix) {
+              newChars.removeAt(lineStart);
+              if (oldSel.start > lineStart) selectionStartShift -= existingBehavior.prefixLen;
+              if (oldSel.end > lineStart) selectionEndShift -= existingBehavior.prefixLen;
+            }
+          }
+          newListType = 'normal';
+        }
 
         int currentLineEnd = lineStart;
         while (currentLineEnd < newChars.length &&
@@ -1335,7 +1358,12 @@ class RichTextEditingController extends TextEditingController {
           if (j < newChars.length) {
             newChars[j] = StyledChar(
               char: newChars[j].char,
-              style: newChars[j].style.copyWith(heading: targetHeading),
+              style: newChars[j].style.copyWith(
+                heading: targetHeading,
+                listType: newListType,
+                checked: false,
+                strikethrough: false,
+              ),
             );
           }
         }
@@ -2466,6 +2494,10 @@ class RangeTextEditingController extends TextEditingController {
             baseStyle = oldSegmentChars[prefixLen - 1].style;
           } else if (oldSegmentChars.isNotEmpty) {
             baseStyle = oldSegmentChars.first.style;
+          }
+
+          if (baseStyle.heading != 'normal') {
+            baseStyle = baseStyle.copyWith(heading: 'normal');
           }
 
           bool isLineEmptyList = false;
