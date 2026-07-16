@@ -2311,5 +2311,23 @@ void main() {
       expect(controller.styledChars[0].style.heading, 'normal');
       expect(controller.styledChars[9].style.heading, 'normal');
     });
+
+    testWidgets('Sprint 11B: Empty Line Alignment and Cursor Positioning', (WidgetTester tester) async {
+      final controller = RichTextEditingController();
+      // Completely empty document
+      controller.text = '';
+      controller.selection = const TextSelection.collapsed(offset: 0);
+
+      // Toggling Center Align on an empty document should center-align the active style
+      controller.toggleParagraphStyle('align-center');
+      expect(controller.currentActiveStyle.align, TextAlign.center);
+
+      // Typing a character should inherit the center alignment
+      controller.value = const TextEditingValue(
+        text: 'a',
+        selection: TextSelection.collapsed(offset: 1),
+      );
+      expect(controller.styledChars[0].style.align, TextAlign.center);
+    });
   });
 }

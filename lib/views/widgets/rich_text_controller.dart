@@ -1381,6 +1381,34 @@ class RichTextEditingController extends TextEditingController {
       selection:
           TextSelection(baseOffset: newSelStart, extentOffset: newSelEnd),
     );
+
+    // Override currentActiveStyle to prevent it from being reset to default for empty lines/selections
+    if (styleName.startsWith('align-')) {
+      TextAlign targetAlign = TextAlign.left;
+      if (applyTargetStyle) {
+        if (styleName == 'align-center') {
+          targetAlign = TextAlign.center;
+        } else if (styleName == 'align-right') {
+          targetAlign = TextAlign.right;
+        } else if (styleName == 'align-justify') {
+          targetAlign = TextAlign.justify;
+        }
+      }
+      currentActiveStyle = currentActiveStyle.copyWith(align: targetAlign);
+    } else if (styleName == 'h1' || styleName == 'h2' || styleName == 'h3') {
+      currentActiveStyle = currentActiveStyle.copyWith(
+        heading: applyTargetStyle ? styleName : 'normal',
+      );
+    } else {
+      currentActiveStyle = currentActiveStyle.copyWith(
+        listType: applyTargetStyle ? styleName : 'normal',
+        checked: false,
+      );
+    }
+
+    if (onStyleChanged != null) {
+      onStyleChanged!();
+    }
     notifyListeners();
   }
 
@@ -1805,10 +1833,15 @@ class RichTextEditingController extends TextEditingController {
         if (checkIdx >= 0 && checkIdx < styledChars.length) {
           final style = styledChars[checkIdx].style;
           if (styledChars[checkIdx].char == '\n') {
+            final currentStyle = selection.start < styledChars.length
+                ? styledChars[selection.start].style
+                : const Style();
             currentActiveStyle = style.copyWith(
               listType: 'normal',
               checked: false,
               indent: 0,
+              align: currentStyle.align,
+              heading: currentStyle.heading,
             );
           } else {
             currentActiveStyle = style;
@@ -2244,6 +2277,13 @@ class RangeTextEditingController extends TextEditingController {
 
   TextRange getRange() {
     return TextRange(start: startOffset, end: endOffset);
+  }
+
+  TextAlign get lineAlignment {
+    if (startOffset >= 0 && startOffset < parent.styledChars.length) {
+      return parent.styledChars[startOffset].style.align;
+    }
+    return parent.currentActiveStyle.align;
   }
 
   @override

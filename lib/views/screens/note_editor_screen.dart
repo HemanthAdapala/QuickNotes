@@ -825,7 +825,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
           textAlign: block.controller.styledChars.isNotEmpty
               ? block.controller.styledChars.first.style.align
-              : TextAlign.left,
+              : block.controller.currentActiveStyle.align,
           style: GoogleFonts.inter(
             fontSize: 16.0,
             color: textColor,

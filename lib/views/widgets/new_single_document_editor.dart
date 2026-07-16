@@ -666,6 +666,7 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       scrollPadding: EdgeInsets.only(bottom: bottomPadding),
       contextMenuBuilder: widget.contextMenuBuilder,
       style: textStyle,
+      textAlign: controller.lineAlignment,
       decoration: InputDecoration(
         hintText: segment.segmentIndex == 0 && controller.text.isEmpty
             ? "Start writing..."
