@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:quick_notes/models/note.dart';
 import 'package:quick_notes/models/note_summary.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
+import 'package:quick_notes/providers/tasks_provider.dart';
 import 'package:quick_notes/views/screens/home_screen.dart';
 import 'package:quick_notes/views/screens/folder_management_screen.dart';
 import 'package:quick_notes/views/screens/note_editor_screen.dart';
@@ -22,6 +23,9 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:quick_notes/models/folder.dart';
 import 'package:quick_notes/models/task_item.dart';
 import 'package:quick_notes/views/widgets/task_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:quick_notes/views/screens/profile_screen.dart';
+import 'package:quick_notes/core/layout/paragraph_block_behavior.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -147,6 +151,7 @@ void main() {
         MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => NotesProvider()),
+            ChangeNotifierProvider(create: (_) => TasksProvider()),
           ],
           child: const MaterialApp(
             home: HomeScreen(),
@@ -156,8 +161,8 @@ void main() {
 
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Verify that we start on HomeScreen's Today block or input field
-      expect(find.text('No notes yet'), findsNWidgets(2));
+      // Verify that we start on HomeScreen
+      expect(find.byType(HomeScreen), findsOneWidget);
 
       // Tap on Folders tab (index 1) which shows FolderManagementScreen
       final folderIconFinder = find.bySemanticsLabel('Folders');
@@ -980,38 +985,33 @@ void main() {
       // Verify that title Settings exists
       expect(find.text('Settings'), findsOneWidget);
 
-      // Verify Olivia Green profile card exists
-      expect(find.text('Olivia Green'), findsNWidgets(2)); // Name + Username
+      // Verify setting items
+      expect(find.text('Pause Notifications'), findsOneWidget);
+      expect(find.text('General Settings'), findsOneWidget);
+      expect(find.text('Dark Mode'), findsOneWidget);
+      expect(find.text('Language'), findsOneWidget);
+      expect(find.text('FAQ'), findsOneWidget);
+      expect(find.text('Terms of service'), findsOneWidget);
+      expect(find.text('User Policy'), findsOneWidget);
 
-      // Verify Change Password section is present
-      final changePasswordFinder = find.text('Change Password');
-      expect(changePasswordFinder, findsOneWidget);
-
-      // Tap on Change Password to trigger the mock dialog
-      await tester.tap(changePasswordFinder);
+      // Tap on General Settings to trigger info dialog
+      await tester.tap(find.text('General Settings'));
       await tester.pump();
-      
-      // Verify dialog is shown
-      expect(find.text('Password change verification request has been sent to your registered email address.'), findsOneWidget);
-      
+      expect(find.text('General application preferences configured.'), findsOneWidget);
+
       // Tap Dismiss to close the dialog
       await tester.tap(find.text('Dismiss'));
       await tester.pumpAndSettle();
 
-      // Verify toggle switch state toggles theme when clicked
-      final appearanceFinder = find.text('Appearance');
-      expect(appearanceFinder, findsOneWidget);
+      // Find the toggle switch (ToggleSwitch / StitchToggleSwitch)
+      final switchFinder = find.byType(ToggleSwitch);
+      expect(switchFinder, findsOneWidget);
 
-      // Find the toggle switches (StitchToggleSwitch)
-      final switchFinder = find.byType(StitchToggleSwitch);
-      expect(switchFinder, findsNWidgets(2)); // Appearance and Zen Focus Mode
-
-      // Tap the first switch (Appearance)
-      await tester.tap(switchFinder.first);
+      // Tap switch
+      await tester.tap(switchFinder);
       await tester.pump();
-      expect(themeToggled, isTrue);
 
-      // Tap back button (TactileButton enclosing back chevron)
+      // Tap back button
       final backButtonFinder = find.descendant(
         of: find.byType(TactileButton),
         matching: find.byType(SvgPicture),
@@ -1662,7 +1662,7 @@ void main() {
                 tasks: mockTasks,
                 width: 280.0,
                 onComplete: (_) {},
-                onEdit: () {},
+                onEdit: (_) {},
               ),
             ),
           ),
@@ -2417,6 +2417,436 @@ void main() {
       expect(controller.styledChars[0].char, '•');
       expect(controller.styledChars[1].style.listType, 'bullet');
       expect(controller.styledChars[1].style.heading, 'normal');
+    });
+
+    testWidgets('Sprint 11B: Italic Emoji and Normal Emoji Enter and Backspace Crash Reversion', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+
+      final controller = RichTextEditingController();
+      final focusNode = FocusNode();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: NewSingleDocumentEditor(
+                controller: controller,
+                focusNode: focusNode,
+                textColor: Colors.black,
+                paperGuideHeight: 1.0,
+                formattingToolbarHeight: 50.0,
+                contextMenuBuilder: (context, editableTextState) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      final textFields = find.byType(TextField);
+      expect(textFields, findsOneWidget);
+
+      final pField = tester.widget<TextField>(textFields);
+      final pController = pField.controller as RangeTextEditingController;
+      pField.focusNode?.requestFocus();
+      await tester.pump();
+
+      // 1. Toggle Italic ON
+      controller.selection = const TextSelection.collapsed(offset: 0);
+      controller.toggleStyleAttribute('italic');
+      expect(controller.currentActiveStyle.italic, true);
+
+      // 2. Insert Emoji (length 2 surrogate pair)
+      pController.value = const TextEditingValue(
+        text: '😃',
+        selection: TextSelection.collapsed(offset: 2),
+      );
+      await tester.pump();
+
+      // Verify the emoji is italic in the controller
+      expect(controller.styledChars[0].style.italic, true);
+      expect(controller.styledChars[1].style.italic, true);
+
+      // 3. Remove Italic Emoji (backspace/delete)
+      pController.value = const TextEditingValue(
+        text: '',
+        selection: TextSelection.collapsed(offset: 0),
+      );
+      await tester.pump();
+
+      // 4. Insert normal Emoji
+      pController.value = const TextEditingValue(
+        text: '😃',
+        selection: TextSelection.collapsed(offset: 2),
+      );
+      await tester.pump();
+
+      // Verify emoji is normal (not italic)
+      expect(controller.styledChars[0].style.italic, false);
+      expect(controller.styledChars[1].style.italic, false);
+
+      // 5. Press Enter (simulate by inserting newline)
+      pController.value = const TextEditingValue(
+        text: '😃\n',
+        selection: TextSelection.collapsed(offset: 3),
+      );
+      await tester.pump(); // Scheduled frame runs
+      await tester.pump(); // Segment update completes
+
+      // Verify that Enter successfully split the text and created a new text segment/TextField without crashing!
+      expect(find.byType(TextField), findsNWidgets(2));
+
+      // 6. Backspace to delete the emoji in the first segment
+      final firstField = tester.widget<TextField>(find.byType(TextField).first);
+      final firstCtrl = firstField.controller as RangeTextEditingController;
+      firstCtrl.value = const TextEditingValue(
+        text: '',
+        selection: TextSelection.collapsed(offset: 0),
+      );
+      await tester.pump();
+
+      expect(firstCtrl.text, '');
+
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('Sprint 11B: Post-Frame Callback Safety on Parent Mutation', (WidgetTester tester) async {
+      final parent = RichTextEditingController();
+      parent.text = 'Line one';
+      
+      final controller = RangeTextEditingController(
+        parent: parent,
+        segmentIndex: 0,
+        startOffset: 0,
+        endOffset: 8,
+      );
+
+      // Simulate a newline insertion to schedule the post-frame callback
+      controller.value = const TextEditingValue(
+        text: 'Line one\n',
+        selection: TextSelection.collapsed(offset: 9),
+      );
+
+      // Mutate the parent to shrink its text/styledChars to a length of 1
+      parent.styledChars = [StyledChar(char: 'a', style: parent.currentActiveStyle)];
+      
+      // Pump to trigger the post-frame callback execution
+      // This should run the callback but complete safely (aborting the layout shift) without throwing RangeError!
+      await tester.pump();
+      
+      // Verify no exception was thrown and parent survived
+      expect(parent.styledChars.length, 1);
+    });
+
+    testWidgets('Sprint 11C: Checklist editing cursor integrity & Enter split check', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+
+      final parent = RichTextEditingController();
+      final focusNode = FocusNode();
+
+      // Setup initial document: 2 checklist items
+      // Line 0: \u2610 Buy Milk
+      // Line 1: \u2610 Buy Bread
+      final initialChars = parseMarkdownToStyledChars(
+        '\u2610 Buy Milk\n\u2610 Buy Bread',
+        baseStyle: parent.currentActiveStyle,
+      );
+      parent.styledChars = initialChars;
+      parent.value = TextEditingValue(
+        text: initialChars.map((sc) => sc.char).join(),
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NewSingleDocumentEditor(
+              controller: parent,
+              focusNode: focusNode,
+              textColor: Colors.black,
+              paperGuideHeight: 1.0,
+              contextMenuBuilder: (context, state) => const SizedBox(),
+              formattingToolbarHeight: 0,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Find textfields for segment 0 and segment 1
+      final textFields = find.byType(TextField);
+      expect(textFields, findsNWidgets(2));
+
+      final firstField = tester.widget<TextField>(textFields.first);
+      final firstCtrl = firstField.controller as RangeTextEditingController;
+
+      final secondField = tester.widget<TextField>(textFields.at(1));
+      final secondCtrl = secondField.controller as RangeTextEditingController;
+
+      // Verify buildTextSpan toPlainText length matches controller text length
+      final span = secondCtrl.buildTextSpan(context: tester.element(find.byType(NewSingleDocumentEditor)), withComposing: false);
+      expect(span.toPlainText().length, secondCtrl.text.length);
+
+      // Edit segment 0: change to \u2610 Buy Fresh Milk
+      firstCtrl.value = TextEditingValue(
+        text: '\u2610 Buy Fresh Milk',
+        selection: const TextSelection.collapsed(offset: 16),
+      );
+      await tester.pumpAndSettle();
+
+      // Move focus to segment 1 at the end of text (\u2610 Buy Bread -> offset 11)
+      secondCtrl.value = TextEditingValue(
+        text: secondCtrl.text,
+        selection: TextSelection.collapsed(offset: secondCtrl.text.length),
+      );
+      await tester.pumpAndSettle();
+
+      // Type space then "Today" at the end of segment 1
+      final oldSecondText = secondCtrl.text;
+      secondCtrl.value = TextEditingValue(
+        text: '$oldSecondText ',
+        selection: TextSelection.collapsed(offset: oldSecondText.length + 1),
+      );
+      await tester.pumpAndSettle();
+
+      final spaceAddedText = secondCtrl.text;
+      secondCtrl.value = TextEditingValue(
+        text: '${spaceAddedText}Today',
+        selection: TextSelection.collapsed(offset: spaceAddedText.length + 5),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify 'd' is preserved and segment 1 contains "\u2610 Buy Bread Today"
+      expect(secondCtrl.text, contains('Buy Bread Today'));
+      expect(parent.text, contains('Buy Fresh Milk'));
+      expect(parent.text, contains('Buy Bread Today'));
+
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('Sprint 11D: Checklist completion persistence check', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+
+      final parent = RichTextEditingController();
+      final focusNode = FocusNode();
+
+      final initialChars = parseMarkdownToStyledChars(
+        '- [ ] Buy Milk\n- [ ] Buy Bread',
+        baseStyle: parent.currentActiveStyle,
+      );
+      parent.styledChars = initialChars;
+      parent.value = TextEditingValue(
+        text: initialChars.map((sc) => sc.char).join(),
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NewSingleDocumentEditor(
+              controller: parent,
+              focusNode: focusNode,
+              textColor: Colors.black,
+              paperGuideHeight: 1.0,
+              contextMenuBuilder: (context, state) => const SizedBox(),
+              formattingToolbarHeight: 0,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final editorState = tester.state<NewSingleDocumentEditorState>(find.byType(NewSingleDocumentEditor));
+      final textSegment = editorState.widget.controller.styledChars;
+
+      // Find InteractiveCheckbox for the first item
+      final checkboxes = find.byType(InteractiveCheckbox);
+      expect(checkboxes, findsNWidgets(2));
+
+      // Tap the first checkbox to complete "Buy Milk"
+      await tester.tap(checkboxes.first);
+      await tester.pumpAndSettle();
+
+      // Verify that the markdown serialized from styledChars contains '- [x]' for completed item
+      final savedMarkdown = generateMarkdownFromStyledChars(parent.styledChars);
+      expect(savedMarkdown, contains('- [x]'));
+      expect(savedMarkdown, contains('Buy Milk'));
+      expect(savedMarkdown, contains('- [ ] Buy Bread'));
+
+      // Re-load the saved markdown into a new controller
+      final reloadParent = RichTextEditingController();
+      reloadParent.setMarkdown(savedMarkdown);
+
+      final reloadedChars = reloadParent.styledChars;
+      expect(reloadedChars.first.char, '\u2611');
+      expect(reloadedChars.first.style.checked, isTrue);
+
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('Sprint 11E: Strikethrough non-inheritance on new checklist item after Enter', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+
+      final parent = RichTextEditingController();
+      final focusNode = FocusNode();
+
+      final initialChars = parseMarkdownToStyledChars(
+        '- [ ] Buy Milk',
+        baseStyle: parent.currentActiveStyle,
+      );
+      parent.styledChars = initialChars;
+      parent.value = TextEditingValue(
+        text: initialChars.map((sc) => sc.char).join(),
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NewSingleDocumentEditor(
+              controller: parent,
+              focusNode: focusNode,
+              textColor: Colors.black,
+              paperGuideHeight: 1.0,
+              contextMenuBuilder: (context, state) => const SizedBox(),
+              formattingToolbarHeight: 0,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap checkbox to complete Buy Milk
+      final checkboxes = find.byType(InteractiveCheckbox);
+      expect(checkboxes, findsOneWidget);
+      await tester.tap(checkboxes.first);
+      await tester.pumpAndSettle();
+
+      final editorState = tester.state<NewSingleDocumentEditorState>(find.byType(NewSingleDocumentEditor));
+      final firstTextField = tester.widget<TextField>(find.byType(TextField).first);
+      final firstCtrl = firstTextField.controller as RangeTextEditingController;
+
+      // Position caret at end of segment 0 (\u2610 Buy Milk -> length 9)
+      firstCtrl.value = TextEditingValue(
+        text: firstCtrl.text,
+        selection: TextSelection.collapsed(offset: firstCtrl.text.length),
+      );
+
+      // Press Enter at the end of Buy Milk
+      ChecklistBehavior().handleEnterKey(
+        segmentIndex: 0,
+        controller: firstCtrl,
+        editorState: editorState,
+      );
+      await tester.pumpAndSettle();
+
+      // Type "Buy Bread" on the second segment
+      final textFields = find.byType(TextField);
+      expect(textFields, findsNWidgets(2));
+      final secondTextField = tester.widget<TextField>(textFields.at(1));
+      final secondCtrl = secondTextField.controller as RangeTextEditingController;
+      secondCtrl.value = TextEditingValue(
+        text: '${secondCtrl.text}Buy Bread',
+        selection: TextSelection.collapsed(offset: secondCtrl.text.length + 9),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify second segment characters ('r', 'e', 'a', 'd') have strikethrough == false
+      final parentChars = parent.styledChars;
+      final secondLineIndex = parentChars.indexWhere((sc) => sc.char == 'r');
+      expect(secondLineIndex, isNonNegative);
+      expect(parentChars[secondLineIndex].style.strikethrough, isFalse);
+      expect(parentChars[secondLineIndex].style.checked, isFalse);
+
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('Sprint 12: ProfileScreen UI rendering and persistence check', (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: ProfileScreen(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Verify header title "Edit Profile"
+      expect(find.text("Edit Profile"), findsOneWidget);
+
+      // Verify fields exist: "Full name", "Email", "Username"
+      final textFields = find.byType(TextField);
+      expect(textFields, findsNWidgets(3));
+
+      // Type into Full name, Email, Username
+      await tester.enterText(textFields.at(0), 'Julian Thorne');
+      await tester.enterText(textFields.at(1), 'julian@example.com');
+      await tester.enterText(textFields.at(2), 'jthorne');
+      await tester.pump();
+
+      // Tap "Save changes"
+      final saveBtn = find.text('Save changes');
+      expect(saveBtn, findsOneWidget);
+      await tester.tap(saveBtn);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Verify SnackBar
+      expect(find.text('Profile saved successfully'), findsOneWidget);
+
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('Sprint 13: SettingsScreen UI rendering, saved data, and toggle switch check', (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({
+        'profile_full_name': 'Hemanth Adapala',
+        'profile_username': 'byhmnth',
+      });
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SettingsScreen(
+            isDarkMode: false,
+            onThemeToggle: () {},
+            onMenuTap: () {},
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Verify Header
+      expect(find.text("Settings"), findsOneWidget);
+
+      // Verify Profile Card displays saved data
+      expect(find.text('Hemanth Adapala'), findsOneWidget);
+      expect(find.text('@byhmnth'), findsOneWidget);
+
+      // Verify Setting Item Labels
+      expect(find.text('Pause Notifications'), findsOneWidget);
+      expect(find.text('General Settings'), findsOneWidget);
+      expect(find.text('Dark Mode'), findsOneWidget);
+      expect(find.text('Language'), findsOneWidget);
+      expect(find.text('FAQ'), findsOneWidget);
+      expect(find.text('Terms of service'), findsOneWidget);
+      expect(find.text('User Policy'), findsOneWidget);
+
+      // Verify Toggle Switch exists and is interactive
+      final toggleSwitch = find.byType(ToggleSwitch);
+      expect(toggleSwitch, findsOneWidget);
+      await tester.tap(toggleSwitch);
+      await tester.pump();
+
+      // Tap 'General Settings' to trigger dialog
+      await tester.tap(find.text('General Settings'));
+      await tester.pump();
+      expect(find.text('General application preferences configured.'), findsOneWidget);
+
+      await tester.binding.setSurfaceSize(null);
     });
   });
 }

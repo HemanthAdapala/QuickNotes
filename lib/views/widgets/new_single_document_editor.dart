@@ -212,12 +212,26 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     if (segment.start < chars.length) {
       final oldChar = chars[segment.start];
       if (oldChar.char == '\u2610' || oldChar.char == '\u2611') {
-        final newChar = StyledChar(
-          char: oldChar.char == '\u2610' ? '\u2611' : '\u2610',
-          style: oldChar.style,
-        );
+        final bool newChecked = oldChar.char == '\u2610';
+        final String newSymbol = newChecked ? '\u2611' : '\u2610';
+
+        int lineEnd = segment.start;
+        while (lineEnd < chars.length && chars[lineEnd].char != '\n') {
+          lineEnd++;
+        }
+
         final List<StyledChar> updated = List.from(chars);
-        updated[segment.start] = newChar;
+        for (int i = segment.start; i < lineEnd; i++) {
+          if (i < updated.length) {
+            updated[i] = StyledChar(
+              char: i == segment.start ? newSymbol : updated[i].char,
+              style: updated[i].style.copyWith(
+                checked: newChecked,
+                strikethrough: newChecked,
+              ),
+            );
+          }
+        }
 
         widget.controller.saveUndoState();
         widget.controller.styledChars = updated;

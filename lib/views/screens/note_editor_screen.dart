@@ -3742,7 +3742,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     const titleColor = Color(0xFF1C1C1E);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2EE),
+      backgroundColor: Colors.white,
       body: SafeArea(
         bottom: false,
         child: Stack(

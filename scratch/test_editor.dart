@@ -9,8 +9,8 @@ void main() {
     parent.setMarkdown('Hello\n![](assets/pic.png)\nWorld');
 
     print("Creating child controllers...");
-    final c0 = RangeTextEditingController(parent: parent, segmentIndex: 0);
-    final c1 = RangeTextEditingController(parent: parent, segmentIndex: 1);
+    final c0 = RangeTextEditingController(parent: parent, segmentIndex: 0, startOffset: 0, endOffset: 5);
+    final c1 = RangeTextEditingController(parent: parent, segmentIndex: 1, startOffset: 7, endOffset: 12);
 
     print("Registering child listeners...");
     c0.addListener(() {

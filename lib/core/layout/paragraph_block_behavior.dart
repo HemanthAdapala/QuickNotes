@@ -63,13 +63,14 @@ abstract class ParagraphBlockBehavior {
       final int insertIdx = range.start + caretOffset;
       final List<StyledChar> updated = List.from(editorState.widget.controller.styledChars);
       final baseStyle = editorState.widget.controller.styledChars[range.start].style;
-      final listStyle = baseStyle.copyWith(checked: false);
+      final listStyle = baseStyle.copyWith(checked: false, strikethrough: false);
 
       updated.insert(insertIdx, StyledChar(char: '\n', style: listStyle));
       updated.insert(insertIdx + 1, getPrefixChar(listStyle));
 
       editorState.widget.controller.saveUndoState();
       editorState.widget.controller.styledChars = updated;
+      editorState.widget.controller.currentActiveStyle = listStyle;
 
       final newCursorOffset = insertIdx + 2;
 
@@ -107,7 +108,7 @@ abstract class ParagraphBlockBehavior {
         if (i < updated.length) {
           updated[i] = StyledChar(
             char: updated[i].char,
-            style: updated[i].style.copyWith(listType: 'normal', indent: 0),
+            style: updated[i].style.copyWith(listType: 'normal', indent: 0, checked: false, strikethrough: false),
           );
         }
       }
@@ -117,6 +118,7 @@ abstract class ParagraphBlockBehavior {
       editorState.widget.controller.currentActiveStyle = editorState.widget.controller.currentActiveStyle.copyWith(
         listType: 'normal',
         checked: false,
+        strikethrough: false,
         indent: 0,
       );
 
@@ -192,7 +194,10 @@ class ChecklistBehavior extends ParagraphBlockBehavior {
 
   @override
   StyledChar getPrefixChar(Style style) {
-    return StyledChar(char: '\u2610', style: style.copyWith(checked: false));
+    return StyledChar(
+      char: '\u2610',
+      style: style.copyWith(checked: false, strikethrough: false),
+    );
   }
 }
 
