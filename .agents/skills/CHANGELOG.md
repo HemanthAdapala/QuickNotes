@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1] - 2026-07-20
+
+### Fixed
+- **Checklist Editing Cursor Integrity**:
+  - Fixed a character index mismatch bug in `RangeTextEditingController.buildTextSpan` where list prefix characters (`\u2610`, `\u2611`, `•`, `›`, `\u2008`) were removed from the rendered `TextSpan` tree, causing `RenderEditable` to report offsets off by 1.
+  - Preserved exact 1:1 character index mapping between `RenderEditable` and `RangeTextEditingController.text` by including prefix characters in `buildTextSpan` with zero visual width (`fontSize: 0.001`, `color: Colors.transparent`).
+  - Resolved text corruption and unexpected character movement/deletion when editing existing checklist items or pressing Enter.
+
+- **Checklist Completion State Persistence**:
+  - Fixed a state loss bug in `NewSingleDocumentEditor._toggleCheckbox` where toggling a checklist item updated the symbol char (`\u2611`) without updating `checked: true` and `strikethrough: true` in character styles, causing `generateMarkdownFromStyledChars` to write `- [ ]` instead of `- [x]`.
+  - Updated `generateMarkdownFromStyledChars` to verify both `style.checked` and `\u2611` symbol when serializing checklist lines to markdown (`- [x]`).
+  - Ensured checklist completion state is fully persisted and restored across editor exit/reopen, note saves, database reloads, and app restarts.
+
 ## [1.5.0] - 2026-06-22
 
 ### Added
