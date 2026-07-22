@@ -11,20 +11,30 @@ import '../widgets/tactile_button.dart';
 import '../../themes/glassmorphism_presets.dart';
 
 import '../../providers/notes_provider.dart';
+import '../../providers/tasks_provider.dart';
+import '../../services/app_statistics_service.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/page_transitions.dart';
 import '../widgets/living_writing_experience.dart';
 import '../widgets/home_prompt_view.dart';
+import 'profile_screen.dart';
 import 'note_editor_screen.dart';
 import 'folder_management_screen.dart';
 import 'settings_screen.dart';
-import 'note_calendar_screen.dart';
+import 'calendar_screen.dart';
 import 'create_task_screen.dart';
+import '../widgets/create_task_bottom_sheet.dart';
+import '../widgets/celebration_overlay.dart';
+import '../widgets/app_header_bar.dart';
+import '../widgets/more_options_popup.dart';
 import '../widgets/notes_and_task_pill.dart';
 import '../widgets/task_widget.dart';
 import '../widgets/notes_stack_widget.dart';
+import '../widgets/more_options_popup.dart';
+import '../../core/animations/glass_popup_route.dart';
 import '../../models/task_item.dart';
 import '../../models/note.dart';
+import '../../models/folder.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Calendar tab content
@@ -51,257 +61,61 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _activeNavIndex = 0;
   bool _isNotesActive = true;
+  bool _isMoreOptionsOpen = false;
   String _activeFilter = 'All';
-  late final List<TaskItem> _mockTasks;
-  late final List<Note> _mockNotes;
   final GlobalKey<FolderManagementScreenState> _foldersKey = GlobalKey<FolderManagementScreenState>();
+  final List<OverlayEntry> _overlayEntries = [];
+
+  @override
+  void dispose() {
+    for (final entry in _overlayEntries) {
+      entry.remove();
+    }
+    super.dispose();
+  }
+
+  void _triggerCelebration(String message) {
+    HapticFeedback.heavyImpact();
+
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => CelebrationOverlay(
+        message: message,
+        onDone: () {
+          entry.remove();
+          _overlayEntries.remove(entry);
+        },
+      ),
+    );
+
+    _overlayEntries.add(entry);
+    Overlay.of(context).insert(entry);
+  }
 
   @override
   void initState() {
     super.initState();
     final initialIndex = Provider.of<NotesProvider>(context, listen: false).selectedBgIndex;
     _updatePresetsForBackground(initialIndex);
-
-    final now = DateTime.now();
-    _mockNotes = [
-      Note(
-        id: 'mn1',
-        title: 'Things to do today',
-        content: '- [ ] Shopping\n- [ ] Design for new brand\n- [ ] Haircut\n- [ ] Car Wash\n- [ ] New Phone case\n- [ ] Gym\n- [ ] Chest',
-        noteType: 'text',
-        createdAt: now.subtract(const Duration(hours: 1)),
-        updatedAt: now.subtract(const Duration(hours: 1)),
-        tags: [],
-        attachments: [],
-        colorValue: 0,
-      ),
-      Note(
-        id: 'mn2',
-        title: 'Weekly Groceries',
-        content: '- [ ] Apples\n- [x] Milk\n- [ ] Bread',
-        noteType: 'text',
-        createdAt: now.add(const Duration(days: 2)),
-        updatedAt: now.add(const Duration(days: 2)),
-        tags: [],
-        attachments: [],
-        colorValue: 0,
-      ),
-      Note(
-        id: 'mn3',
-        title: 'Ideas for App',
-        content: 'Draft a cool liquid glass shader effect for the card stack background.',
-        noteType: 'text',
-        createdAt: now.add(const Duration(days: 5)),
-        updatedAt: now.add(const Duration(days: 5)),
-        tags: [],
-        attachments: [],
-        colorValue: 0,
-      ),
-      Note(
-        id: 'mn4',
-        title: 'Monthly Goals',
-        content: 'Complete the HomeScreen redesign by next week. Launch beta build.',
-        noteType: 'text',
-        createdAt: now.add(const Duration(days: 15)),
-        updatedAt: now.add(const Duration(days: 15)),
-        tags: [],
-        attachments: [],
-        colorValue: 0,
-      ),
-    ];
-
-    _mockTasks = [
-      TaskItem(
-        id: '1',
-        title: 'Wiring Dashboard Analytics',
-        dueDate: now.subtract(const Duration(hours: 1)),
-        priority: 'High',
-      ),
-      TaskItem(
-        id: '2',
-        title: 'Review PR Comments',
-        dueDate: now.add(const Duration(hours: 2)),
-        priority: 'Medium',
-      ),
-      TaskItem(
-        id: '3',
-        title: 'Update API Spec',
-        dueDate: now.add(const Duration(hours: 4)),
-        priority: 'Low',
-      ),
-      TaskItem(
-        id: '4',
-        title: 'Sync with PM',
-        dueDate: now.add(const Duration(hours: 6)),
-        priority: 'None',
-      ),
-      TaskItem(
-        id: '5',
-        title: 'Draft Q3 Goals',
-        dueDate: now.add(const Duration(days: 3)),
-        priority: 'High',
-      ),
-      TaskItem(
-        id: '6',
-        title: 'Refactor Auth Flow',
-        dueDate: now.add(const Duration(days: 4)),
-        priority: 'High',
-      ),
-      TaskItem(
-        id: '7',
-        title: 'Fix Memory Leaks',
-        dueDate: now.add(const Duration(days: 5)),
-        priority: 'Medium',
-      ),
-      TaskItem(
-        id: '8',
-        title: 'Design App Icon',
-        dueDate: now.add(const Duration(days: 6)),
-        priority: 'Low',
-      ),
-      TaskItem(
-        id: '9',
-        title: 'Monthly Client Report',
-        dueDate: now.add(const Duration(days: 12)),
-        priority: 'Medium',
-      ),
-      TaskItem(
-        id: '10',
-        title: 'Database Migration',
-        dueDate: now.add(const Duration(days: 15)),
-        priority: 'High',
-      ),
-      TaskItem(
-        id: '11',
-        title: 'Performance Audit',
-        dueDate: now.add(const Duration(days: 20)),
-        priority: 'Low',
-      ),
-      TaskItem(
-        id: '12',
-        title: 'Update User Docs',
-        dueDate: now.add(const Duration(days: 25)),
-        priority: 'None',
-      ),
-    ];
   }
 
   List<TaskItem> get _filteredTasks {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final weekEnd = today.add(const Duration(days: 7));
-    final monthEnd = today.add(const Duration(days: 30));
-
-    final activeTasks = _mockTasks.where((t) => !t.completed).toList();
-
-    switch (_activeFilter) {
-      case 'Today':
-        return activeTasks.where((t) {
-          final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
-          return d.isAtSameMomentAs(today);
-        }).toList();
-      case 'Weekly':
-        return activeTasks.where((t) {
-          final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
-          return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(weekEnd.add(const Duration(days: 1)));
-        }).toList();
-      case 'Monthly':
-        return activeTasks.where((t) {
-          final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
-          return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(monthEnd.add(const Duration(days: 1)));
-        }).toList();
-      case 'All':
-      default:
-        return activeTasks;
-    }
+    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+    return AppStatisticsService.filterTasksByDateRange(tasksProvider.tasks, _activeFilter);
   }
 
   List<Note> get _filteredNotes {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final weekEnd = today.add(const Duration(days: 7));
-    final monthEnd = today.add(const Duration(days: 30));
-
     final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-    final allNotes = notesProvider.allActiveNotes;
-    final baseNotes = allNotes.isEmpty ? _mockNotes : allNotes;
-
-    switch (_activeFilter) {
-      case 'Today':
-        return baseNotes.where((n) {
-          final d = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
-          return d.isAtSameMomentAs(today);
-        }).toList();
-      case 'Weekly':
-        return baseNotes.where((n) {
-          final d = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
-          return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(weekEnd.add(const Duration(days: 1)));
-        }).toList();
-      case 'Monthly':
-        return baseNotes.where((n) {
-          final d = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
-          return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(monthEnd.add(const Duration(days: 1)));
-        }).toList();
-      case 'All':
-      default:
-        return baseNotes;
-    }
+    return AppStatisticsService.filterNotesByDateRange(notesProvider.notes, _activeFilter);
   }
 
   int _countForFilter(String filter) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final weekEnd = today.add(const Duration(days: 7));
-    final monthEnd = today.add(const Duration(days: 30));
-
     if (_isNotesActive) {
       final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-      final allNotes = notesProvider.allActiveNotes;
-      final baseNotes = allNotes.isEmpty ? _mockNotes : allNotes;
-
-      switch (filter) {
-        case 'Today':
-          return baseNotes.where((n) {
-            final d = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
-            return d.isAtSameMomentAs(today);
-          }).length;
-        case 'Weekly':
-          return baseNotes.where((n) {
-            final d = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
-            return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(weekEnd.add(const Duration(days: 1)));
-          }).length;
-        case 'Monthly':
-          return baseNotes.where((n) {
-            final d = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
-            return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(monthEnd.add(const Duration(days: 1)));
-          }).length;
-        case 'All':
-        default:
-          return baseNotes.length;
-      }
+      return AppStatisticsService.filterNotesByDateRange(notesProvider.notes, filter).length;
     } else {
-      final activeTasks = _mockTasks.where((t) => !t.completed).toList();
-
-      switch (filter) {
-        case 'Today':
-          return activeTasks.where((t) {
-            final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
-            return d.isAtSameMomentAs(today);
-          }).toList().length;
-        case 'Weekly':
-          return activeTasks.where((t) {
-            final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
-            return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(weekEnd.add(const Duration(days: 1)));
-          }).toList().length;
-        case 'Monthly':
-          return activeTasks.where((t) {
-            final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
-            return d.isAfter(today.subtract(const Duration(days: 1))) && d.isBefore(monthEnd.add(const Duration(days: 1)));
-          }).toList().length;
-        case 'All':
-        default:
-          return activeTasks.length;
-      }
+      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+      return AppStatisticsService.filterTasksByDateRange(tasksProvider.tasks, filter).length;
     }
   }
 
@@ -387,25 +201,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openNewTask() {
     HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.4),
+      builder: (_) => CreateTaskBottomSheet(
+        initialDate: DateTime.now(),
+      ),
+    );
+  }
 
-    final size = MediaQuery.of(context).size;
-    final double bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    // Compute dynamic width and scale of the bottom bar
-    final double barWidth = size.width < 402 ? (size.width - 48) : 354;
-    final double barScale = barWidth / 354;
-    final double barHeight = 83 * barScale;
-
-    // Compute FAB screen bounds so the morph starts at the exact visual center/size
-    final double fabSize = 50 * barScale;
-    final double fabLeft = size.width / 2 - fabSize / 2;
-    final double fabTop = size.height - 32 - bottomPadding - barHeight;
-
-    Navigator.push(
-      context,
-      FabMorphPageRoute(
-        fabBounds: Rect.fromLTWH(fabLeft, fabTop, fabSize, fabSize),
-        builder: (_) => CreateTaskScreen(initialDate: DateTime.now()),
+  void _openEditTask(TaskItem task) {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.4),
+      builder: (_) => CreateTaskBottomSheet(
+        initialDate: task.dueDate,
+        taskToEdit: task,
       ),
     );
   }
@@ -418,6 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: HomePromptView(
         date: DateTime.now(),
         isNotesActive: _isNotesActive,
+        isMoreOptionsOpen: _isMoreOptionsOpen,
         interactive: false,
         onTap: _openNewNote,
         onLastEditedNoteTap: _openNote,
@@ -425,16 +242,6 @@ class _HomeScreenState extends State<HomeScreen> {
         showPrompt: Platform.environment.containsKey('FLUTTER_TEST') ? _isNotesActive : false,
         showProfileHeader: Platform.environment.containsKey('FLUTTER_TEST') ? !_isNotesActive : true,
         greetingOverride: Platform.environment.containsKey('FLUTTER_TEST') ? null : (_isNotesActive ? "nice to see you" : null),
-        onProfileTap: () {
-          HapticFeedback.selectionClick();
-          setState(() {
-            _activeNavIndex = 3; // open Settings/Profile View
-          });
-        },
-        onMoreOptionsTap: () {
-          HapticFeedback.selectionClick();
-          // Leave empty for now, just clickable
-        },
       ),
     );
   }
@@ -450,8 +257,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCalendarBody() {
-    return NoteCalendarScreen(
-      onNavigateToTab: (i) => setState(() => _activeNavIndex = i),
+    return CalendarScreen(
+      onBack: () => setState(() => _activeNavIndex = 0),
     );
   }
 
@@ -574,8 +381,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return Container(color: const Color(0xFF000000));
       case 0:
       default:
-        // B0: Default Warm Stone
-        return Container(color: const Color(0xFFF2F2EE));
+        // B0: Default Pure White
+        return Container(color: Colors.white);
     }
   }
 
@@ -586,9 +393,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final notesProvider = Provider.of<NotesProvider>(context);
+    final tasksProvider = Provider.of<TasksProvider>(context);
     final double screenWidth = MediaQuery.of(context).size.width;
     final selectedBgIndex = notesProvider.selectedBgIndex;
     _updatePresetsForBackground(selectedBgIndex);
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final bool isShortScreen = screenHeight < 780.0;
+    
+    // Panel & Pill positions
+    final double panelTop = MediaQuery.paddingOf(context).top + (isShortScreen ? 136.0 : 172.0);
+    final double filterTop = panelTop + (isShortScreen ? 12.0 : 20.0);
+    final double switcherTop = filterTop + 48.0 + (isShortScreen ? 10.0 : 16.0);
+    
+    // Card stack bottom position
+    final double bottomGap = isShortScreen ? 4.0 : 24.0;
+    final double stackBottom = 58.0 + MediaQuery.paddingOf(context).bottom + bottomGap;
 
     final int numCards = (_isNotesActive ? _filteredNotes.length : _filteredTasks.length).clamp(1, 3);
     final double stackOffset = (3 - numCards) * 22.0;
@@ -611,124 +430,186 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
 
-
-
-          // Scrollable filter bar (only visible on Home tab)
-          if (_activeNavIndex == 0 && (Platform.environment.containsKey('FLUTTER_TEST') ? !_isNotesActive : true))
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 20.0 + 413.0 + 16.0,
-              height: 40.0,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                itemCount: 4,
-                itemBuilder: (context, index) {
-                  final filters = ['All', 'Today', 'Weekly', 'Monthly'];
-                  final filter = filters[index];
-                  final bool isSelected = _activeFilter == filter;
-                  
-                  final String text;
-                  if (filter == 'All') {
-                    text = 'All';
-                  } else {
-                    final typeLabel = _isNotesActive ? 'Tasks' : 'Tasks'; // Wait! Let's check: the mockup literally shows "Today's Tasks 6" in Notes Mode, but wait, the user said "you are 100% right about Filter capsule"! Meaning they want it to say "Notes" when in Notes mode!
-                    // Let's use:
-                    final labelText = _isNotesActive ? 'Notes' : 'Tasks';
-                    text = "${filter}'s $labelText ${_countForFilter(filter)}";
-                  }
-
-                  return Padding(
-                    padding: EdgeInsets.only(right: index == 3 ? 0.0 : 12.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        setState(() {
-                          _activeFilter = filter;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? (_isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF))
-                              : const Color(0x29787880),
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          text,
-                          style: GoogleFonts.inter(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected
-                                ? (_isNotesActive ? const Color(0xFF1C1C1E) : Colors.white)
-                                : const Color(0xFF1C1C1E),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-          // Task / Notes Stack Widget (only visible on Home tab)
-          if (_activeNavIndex == 0 && (Platform.environment.containsKey('FLUTTER_TEST') ? !_isNotesActive : true))
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0 + 32.0 + 20.0 + (Platform.environment.containsKey('FLUTTER_TEST') ? 0.0 : stackOffset),
-              child: TweenAnimationBuilder<double>(
-                key: ValueKey(_isNotesActive ? 'notes_widget_entry' : 'task_widget_entry'),
-                tween: Tween<double>(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.easeOutCubic,
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, 15 * (1 - value)),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Center(
-                  child: _isNotesActive
-                      ? NotesStackWidget(
-                          width: screenWidth - 48.0,
-                          notes: _filteredNotes,
-                          onEdit: (note) => _openNote(note.id),
-                        )
-                      : TaskWidget(
-                          width: screenWidth - 48.0,
-                          tasks: _filteredTasks,
-                          onEdit: _openNewTask,
-                          onComplete: (taskId) {
-                            setState(() {
-                              _mockTasks.firstWhere((t) => t.id == taskId).completed = true;
-                            });
-                          },
-                        ),
-                ),
-              ),
-            ),
-
-          // Segmented Control Pill (only visible on Home tab, placed 10px above bottom bar)
+          // White rounded background sheet covering the bottom part, containing all interactive widgets
           if (_activeNavIndex == 0)
             Positioned(
               left: 0,
               right: 0,
-              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + 10.0,
+              bottom: 0,
               child: Center(
-                child: NotesAndTaskPill(
-                  isNotesActive: _isNotesActive,
-                  onChanged: (val) {
-                    setState(() {
-                      _isNotesActive = val;
-                    });
-                  },
+                child: Container(
+                  width: screenWidth.clamp(0.0, 398.0),
+                  height: (screenHeight - panelTop).clamp(0.0, 658.0),
+                  clipBehavior: Clip.antiAlias,
+                  decoration: ShapeDecoration(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    shadows: const [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 16,
+                        offset: Offset(0, 0),
+                        spreadRadius: 0,
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      SizedBox(height: isShortScreen ? 12.0 : 20.0),
+                      
+                      // 1. Scrollable filter bar
+                      if (Platform.environment.containsKey('FLUTTER_TEST') ? !_isNotesActive : true)
+                        SizedBox(
+                          height: 52.0,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            itemCount: 4,
+                            itemBuilder: (context, index) {
+                              final filters = ['All', 'Today', 'Weekly', 'Monthly'];
+                              final filter = filters[index];
+                              final bool isSelected = _activeFilter == filter;
+                              
+                              final String text;
+                              if (filter == 'All') {
+                                text = 'All';
+                              } else {
+                                final labelText = _isNotesActive ? 'Notes' : 'Tasks';
+                                text = "${filter}'s $labelText ${_countForFilter(filter)}";
+                              }
+
+                              return Padding(
+                                padding: EdgeInsets.only(right: index == 3 ? 0.0 : 12.0),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    setState(() {
+                                      _activeFilter = filter;
+                                    });
+                                  },
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        height: 40.0,
+                                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0x33787878),
+                                          borderRadius: BorderRadius.circular(20.0),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          text,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 16.0,
+                                            fontWeight: FontWeight.w600,
+                                            color: isSelected
+                                                ? const Color(0xFF333333)
+                                                : const Color(0x80333333),
+                                            height: 1.38,
+                                            letterSpacing: -0.43,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4.0),
+                                      Opacity(
+                                        opacity: isSelected ? 1.0 : 0.0,
+                                        child: Container(
+                                          width: 5.0,
+                                          height: 5.0,
+                                          decoration: ShapeDecoration(
+                                            color: _isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
+                                            shape: const OvalBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      
+                      SizedBox(height: isShortScreen ? 10.0 : 16.0),
+                      
+                      // 2. Segmented Control Pill (Switcher Tab)
+                      NotesAndTaskPill(
+                        isNotesActive: _isNotesActive,
+                        onChanged: (val) {
+                          setState(() {
+                            _isNotesActive = val;
+                          });
+                        },
+                      ),
+                      
+                      // 3. Card Stack Area centered dynamically in remaining space
+                      Expanded(
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              // Add bottom spacing to prevent overlapping the floating nav bar
+                              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + (isShortScreen ? 4.0 : 12.0) - (isShortScreen ? 12.0 : 0.0),
+                            ),
+                            child: (Platform.environment.containsKey('FLUTTER_TEST') ? !_isNotesActive : true)
+                                ? TweenAnimationBuilder<double>(
+                                    key: ValueKey(_isNotesActive ? 'notes_widget_entry' : 'task_widget_entry'),
+                                    tween: Tween<double>(begin: 0.0, end: 1.0),
+                                    duration: const Duration(milliseconds: 600),
+                                    curve: Curves.easeOutCubic,
+                                    builder: (context, value, child) {
+                                      return Opacity(
+                                        opacity: value,
+                                        child: Transform.translate(
+                                          offset: Offset(0, 15 * (1 - value)),
+                                          child: child,
+                                        ),
+                                      );
+                                    },
+                                    child: _isNotesActive
+                                        ? NotesStackWidget(
+                                            width: screenWidth.clamp(0.0, 398.0) - 48.0,
+                                            notes: _filteredNotes,
+                                            onEdit: (note) => _openNote(note.id),
+                                          )
+                                        : TaskWidget(
+                                            width: screenWidth.clamp(0.0, 398.0) - 48.0,
+                                            tasks: _filteredTasks,
+                                            onEdit: _openEditTask,
+                                            onComplete: (taskId) async {
+                                              final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                                              await tasksProvider.toggleTaskCompletion(taskId);
+                                              
+                                              final bool allDone = tasksProvider.activeTasks.isEmpty;
+                                              final String msg;
+                                              if (allDone) {
+                                                msg = '🎉 All tasks are done!';
+                                                _triggerCelebration(msg);
+                                              } else if (_activeFilter == 'Today') {
+                                                msg = "🎉 Today's task is done!";
+                                                _triggerCelebration(msg);
+                                              } else if (_activeFilter == 'Weekly') {
+                                                msg = '🎉 Weekly task is done!';
+                                                _triggerCelebration(msg);
+                                              } else if (_activeFilter == 'Monthly') {
+                                                msg = '🎉 Monthly task is done!';
+                                                _triggerCelebration(msg);
+                                              } else {
+                                                msg = '🎉 Task is done!';
+                                                _triggerCelebration(msg);
+                                              }
+                                            },
+                                          ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -759,6 +640,176 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
           ),
+
+          // ── Backdrop Overlay (OverlayScreen.txt: black @ 0.20 opacity) ──────
+          IgnorePointer(
+            ignoring: !_isMoreOptionsOpen,
+            child: AnimatedOpacity(
+              duration: Duration(milliseconds: _isMoreOptionsOpen ? 500 : 415),
+              curve: Curves.easeOutCubic,
+              opacity: _isMoreOptionsOpen ? 1.0 : 0.0,
+              child: GestureDetector(
+                onTap: () => setState(() => _isMoreOptionsOpen = false),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.20),
+                ),
+              ),
+            ),
+          ),
+
+          // ── AppHeaderBar (Rendered as overlay so it sits on top of backdrop and is fully tap-interactive) ──
+          if (_activeNavIndex == 0)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
+                  child: AppHeaderBar(
+                    isExpanded: _isMoreOptionsOpen,
+                    expandedWidth: 192.0,
+                    expandedHeight: 100.0,
+                    expandedChild: MoreOptionsPopup(
+                      onDeleteData: () async {
+                        setState(() => _isMoreOptionsOpen = false);
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Delete Data'),
+                            content: const Text('Are you sure you want to delete all notes and tasks? This action cannot be undone.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(true),
+                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true && mounted) {
+                          final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+                          final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                          for (final note in List<Note>.from(notesProvider.notes)) {
+                            await notesProvider.deleteNote(note.id);
+                          }
+                          for (final task in List<TaskItem>.from(tasksProvider.tasks)) {
+                            await tasksProvider.deleteTask(task.id);
+                          }
+                          for (final folder in List<Folder>.from(notesProvider.folders)) {
+                            await notesProvider.deleteFolder(folder.id);
+                          }
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('All data deleted successfully.')),
+                            );
+                          }
+                        }
+                      },
+                      onRefresh: () async {
+                        setState(() => _isMoreOptionsOpen = false);
+                        final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+                        final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                        await notesProvider.loadFolders();
+                        await notesProvider.loadNotes();
+                        await tasksProvider.loadTasks();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Data refreshed.')),
+                          );
+                        }
+                      },
+                    ),
+                    leftWidth: 44.0,
+                    onLeftTap: () {
+                      HapticFeedback.selectionClick();
+                      Navigator.push(
+                        context,
+                        buildPageRoute(const ProfileScreen()),
+                      );
+                    },
+                    leftChild: Container(
+                      width: 34.0,
+                      height: 34.0,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE2E2DF),
+                        shape: BoxShape.circle,
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: SvgPicture.asset(
+                        "assets/Profile Icons/maxim_transparent.svg",
+                        width: 34.0,
+                        height: 34.0,
+                      ),
+                    ),
+                    titleWidget: Row(
+                      children: [
+                        const SizedBox(width: 54.0), // avatar (44) + gap (10)
+                        Text(
+                          "Hemanth Adapala",
+                          style: GoogleFonts.inter(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w500,
+                            color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white : const Color(0xFF1C1C1E),
+                          ),
+                        ),
+                      ],
+                    ),
+                    rightWidth: 44.0,
+                    rightChild: TactileButton(
+                      useAppleSpring: true,
+                      compressionScale: 0.7,
+                      settleDuration: const Duration(milliseconds: 1000),
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() {
+                          _isMoreOptionsOpen = !_isMoreOptionsOpen;
+                        });
+                      },
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 5.0,
+                              height: 5.0,
+                              decoration: BoxDecoration(
+                                color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4.0),
+                            Container(
+                              width: 5.0,
+                              height: 5.0,
+                              decoration: BoxDecoration(
+                                color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4.0),
+                            Container(
+                              width: 5.0,
+                              height: 5.0,
+                              decoration: BoxDecoration(
+                                color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

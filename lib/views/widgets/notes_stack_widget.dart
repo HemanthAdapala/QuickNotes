@@ -188,69 +188,83 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     final formattedTime = DateFormat('hh:mm a').format(note.createdAt);
 
     Widget cardContent = Container(
-      width: widget.width,
+      width: 322.0,
       height: 339.0,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFCC00), // Yellow Accent Header background color
-        borderRadius: BorderRadius.circular(30.0),
-        boxShadow: const [
+      decoration: const BoxDecoration(
+        boxShadow: [
           BoxShadow(
-            color: Color(0x28000000), // Subtle black opacity shadow
+            color: Color(0x3F000000),
             blurRadius: 16.0,
             offset: Offset(0, 0),
-          ),
+            spreadRadius: 0,
+          )
         ],
       ),
       child: Stack(
         children: [
-          // Header content
+          // Yellow Header
           Positioned(
-            top: 0,
             left: 0,
-            right: 0,
-            height: 37.0,
+            top: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      formattedDate,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF1C1C1E),
-                        height: 22.0 / 16.0,
-                        letterSpacing: -0.43,
-                      ),
-                    ),
+              width: 322.0,
+              height: 306.0,
+              decoration: const ShapeDecoration(
+                color: Color(0xFFFFCC00),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30.0),
+                    topRight: Radius.circular(30.0),
                   ),
-                  const SizedBox(width: 8.0),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SvgPicture.asset(
-                        "assets/New Icons/fi-rr-time-past.svg",
-                        width: 22.0,
-                        height: 22.0,
-                        colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                      ),
-                      const SizedBox(width: 6.0),
-                      Text(
-                        formattedTime,
+                ),
+              ),
+            ),
+          ),
+          // Date & Time Header (no icons)
+          Positioned(
+            left: 17.0,
+            top: 9.0,
+            child: Container(
+              width: 279.62,
+              height: 23.0,
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: 11.0,
+                    top: 0,
+                    child: SizedBox(
+                      width: 144.0,
+                      height: 23.0,
+                      child: Text(
+                        formattedDate,
                         style: GoogleFonts.inter(
+                          color: const Color(0xFF333333),
                           fontSize: 16.0,
                           fontWeight: FontWeight.w400,
-                          color: const Color(0xFF1C1C1E),
-                          height: 22.0 / 16.0,
+                          height: 1.2,
                           letterSpacing: -0.43,
                         ),
                       ),
-                    ],
+                    ),
+                  ),
+                  Positioned(
+                    left: 178.0,
+                    top: 2.0,
+                    child: SizedBox(
+                      width: 100.0,
+                      height: 18.0,
+                      child: Text(
+                        formattedTime,
+                        textAlign: TextAlign.right,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF333333),
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w400,
+                          height: 0.88,
+                          letterSpacing: -0.43,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -283,7 +297,13 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
             opacity: anim.value.clamp(0.0, 1.0),
             child: Transform.scale(
               scale: scale,
-              child: child,
+              child: Center(
+                child: SizedBox(
+                  width: 322.0,
+                  height: 339.0,
+                  child: child,
+                ),
+              ),
             ),
           ),
         );
@@ -401,180 +421,146 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
                     type: MaterialType.transparency,
                     child: Transform.rotate(
                       angle: rotationAngle,
-                child: Container(
-                  width: widget.width,
-                  height: 339.0,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30.0),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x40000000), // Black 25% opacity
-                        blurRadius: 16.0,
-                        offset: Offset(0, 0),
+                child: Center(
+                  child: SizedBox(
+                    width: 322.0,
+                    height: 339.0,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0x3F000000),
+                            blurRadius: 16.0,
+                            offset: Offset(0, 0),
+                            spreadRadius: 0,
+                          )
+                        ],
                       ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(30.0),
-                    child: Stack(
-                      children: [
-                        // 1. Yellow Background Header (matches Tasks style)
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: 302.0,
-                          child: Container(
-                            color: const Color(0xFFFFCC00),
-                            child: Stack(
-                              children: [
-                                // Perfectly aligned header date/time
-                                Positioned(
-                                  top: 0,
-                                  left: 0,
-                                  right: 0,
-                                  height: 37.0,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                    alignment: Alignment.center,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            formattedDate,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.inter(
-                                              fontSize: 16.0,
-                                              fontWeight: FontWeight.w400,
-                                              color: const Color(0xFF1C1C1E),
-                                              height: 22.0 / 16.0,
-                                              letterSpacing: -0.43,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8.0),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            SvgPicture.asset(
-                                              "assets/New Icons/fi-rr-time-past.svg",
-                                              width: 22.0,
-                                              height: 22.0,
-                                              colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                                            ),
-                                            const SizedBox(width: 6.0),
-                                            Text(
-                                              formattedTime,
-                                              style: GoogleFonts.inter(
-                                                fontSize: 16.0,
-                                                fontWeight: FontWeight.w400,
-                                                color: const Color(0xFF1C1C1E),
-                                                height: 22.0 / 16.0,
-                                                letterSpacing: -0.43,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                      child: Stack(
+                        children: [
+                          // Yellow Header Background
+                          Positioned(
+                            left: 0,
+                            top: 0,
+                            child: Container(
+                              width: 322.0,
+                              height: 306.0,
+                              decoration: const ShapeDecoration(
+                                color: Color(0xFFFFCC00),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(30.0),
+                                    topRight: Radius.circular(30.0),
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-
-                        // 2. White Card Content
-                        Positioned(
-                          top: 37.0,
-                          left: 0,
-                          width: widget.width,
-                          height: 302.0,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.all(Radius.circular(30.0)),
+                          // White Card Body
+                          Positioned(
+                            left: 0,
+                            top: 37.0,
+                            child: Container(
+                              width: 322.0,
+                              height: 302.0,
+                              decoration: const ShapeDecoration(
+                                color: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(30.0)),
+                                ),
+                              ),
                             ),
-                            child: Stack(
-                              children: [
-                                // Main Content area
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 20.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Note Title: size 32 or 40 depending on length
-                                      Text(
-                                        note.title.isNotEmpty ? note.title : "Untitled",
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
+                          ),
+                          // Date & Time
+                          Positioned(
+                            left: 17.0,
+                            top: 9.0,
+                            child: Container(
+                              width: 279.62,
+                              height: 23.0,
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    left: 11.0,
+                                    top: 0,
+                                    child: SizedBox(
+                                      width: 144.0,
+                                      height: 23.0,
+                                      child: Text(
+                                        formattedDate,
                                         style: GoogleFonts.inter(
-                                          fontSize: note.title.length > 15 ? 32.0 : 40.0,
-                                          fontWeight: FontWeight.bold,
-                                          height: 1.10,
+                                          color: const Color(0xFF333333),
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.w400,
+                                          height: 1.2,
                                           letterSpacing: -0.43,
-                                          color: const Color(0xFF1C1C1E),
                                         ),
                                       ),
-                                      const SizedBox(height: 12.0),
-                                      
-                                      Expanded(
-                                        child: SingleChildScrollView(
-                                                physics: const BouncingScrollPhysics(),
-                                                padding: const EdgeInsets.only(bottom: 64.0),
-                                                child: Text(
-                                                  note.previewText.isNotEmpty ? note.previewText : "No additional text",
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 16.0,
-                                                    color: const Color(0xFF333333),
-                                                    height: 1.4,
-                                                  ),
-                                                ),
-                                              ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    left: 178.0,
+                                    top: 2.0,
+                                    child: SizedBox(
+                                      width: 100.0,
+                                      height: 18.0,
+                                      child: Text(
+                                        formattedTime,
+                                        textAlign: TextAlign.right,
+                                        style: GoogleFonts.inter(
+                                          color: const Color(0xFF333333),
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.w400,
+                                          height: 0.88,
+                                          letterSpacing: -0.43,
+                                        ),
                                       ),
-                                    ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Unified Content Area (Adaptive Column)
+                          Positioned(
+                            left: 17.0,
+                            top: 67.0,
+                            width: 289.0,
+                            bottom: 22.0,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Title Box (Dynamic height up to 2 lines, constrained width to avoid edit button overlap)
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 224.0),
+                                  child: Text(
+                                    note.title.isNotEmpty ? note.title : 'Untitled',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      color: const Color(0xFF333333),
+                                      fontSize: 40.0,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.0,
+                                      letterSpacing: -0.43,
+                                    ),
                                   ),
                                 ),
-
-                                // Floating Edit Button in bottom right
-                                Positioned(
-                                  bottom: 16.0,
-                                  right: 16.0,
-                                  child: TactileButton(
-                                    onTap: () => widget.onEdit(note),
-                                    useAppleSpring: true,
-                                    compressionScale: 0.7,
-                                    settleDuration: const Duration(milliseconds: 1000),
-                                    playSelectionHaptic: true,
-                                    child: Container(
-                                      width: 50.0,
-                                      height: 50.0,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.white,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.12),
-                                            blurRadius: 10.0,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.04),
-                                            blurRadius: 2.0,
-                                            offset: const Offset(0, 1),
-                                          ),
-                                        ],
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: SvgPicture.asset(
-                                        "assets/icons/bottom_navigation/pencil.svg",
-                                        width: 22.0,
-                                        height: 22.0,
-                                        colorFilter: const ColorFilter.mode(
-                                          Color(0xFF1C1C1E),
-                                          BlendMode.srcIn,
+                                const SizedBox(height: 12.0),
+                                // Preview Container (Dynamic scroll view)
+                                Expanded(
+                                  child: Container(
+                                    clipBehavior: Clip.antiAlias,
+                                    decoration: const BoxDecoration(),
+                                    child: SingleChildScrollView(
+                                      physics: const BouncingScrollPhysics(),
+                                      padding: const EdgeInsets.only(bottom: 40.0),
+                                      child: Text(
+                                        note.previewText.isNotEmpty ? note.previewText : 'No additional text',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 16.0,
+                                          color: const Color(0xFF333333),
+                                          height: 1.4,
                                         ),
                                       ),
                                     ),
@@ -583,8 +569,48 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
                               ],
                             ),
                           ),
-                        ),
-                      ],
+                          // Floating Edit Button
+                          Positioned(
+                            left: 263.0,
+                            top: 282.0,
+                            child: TactileButton(
+                              onTap: () => widget.onEdit(note),
+                              useAppleSpring: true,
+                              compressionScale: 0.7,
+                              settleDuration: const Duration(milliseconds: 1000),
+                              playSelectionHaptic: true,
+                              child: Container(
+                                width: 47.52,
+                                height: 47.52,
+                                decoration: ShapeDecoration(
+                                  color: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(100.0),
+                                  ),
+                                  shadows: const [
+                                    BoxShadow(
+                                      color: Color(0x3F000000),
+                                      blurRadius: 16.0,
+                                      offset: Offset(0, 0),
+                                      spreadRadius: 0,
+                                    )
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                child: SvgPicture.asset(
+                                  "assets/icons/bottom_navigation/pencil.svg",
+                                  width: 20.0,
+                                  height: 20.0,
+                                  colorFilter: const ColorFilter.mode(
+                                    Color(0xFF1C1C1E),
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

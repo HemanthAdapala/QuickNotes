@@ -72,6 +72,8 @@ class HomePromptView extends StatefulWidget {
   final VoidCallback? onMoreOptionsTap;
   final String? greetingOverride;
   final bool isNotesActive;
+  final bool isMoreOptionsOpen;
+  final Widget? moreOptionsPopupWidget;
 
   const HomePromptView({
     super.key,
@@ -89,6 +91,8 @@ class HomePromptView extends StatefulWidget {
     this.onMoreOptionsTap,
     this.greetingOverride,
     this.isNotesActive = true,
+    this.isMoreOptionsOpen = false,
+    this.moreOptionsPopupWidget,
   });
 
   static final List<String> _prompts = [
@@ -263,84 +267,11 @@ class _HomePromptViewState extends State<HomePromptView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header Section ───────────────────────────────────────────────────
         if (widget.showProfileHeader) ...[
-          // Top Row: Avatar + Name (Left), Options (Right)
-          // Top Row: Avatar + Name (Left), Options (Right)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
-            child: AppHeaderBar(
-              leftWidth: 44.0,
-              onLeftTap: widget.onProfileTap ?? () {},
-              leftChild: Container(
-                width: 34.0,
-                height: 34.0,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE2E2DF),
-                  shape: BoxShape.circle,
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: SvgPicture.asset(
-                  "assets/Profile Icons/maxim_transparent.svg",
-                  width: 34.0,
-                  height: 34.0,
-                ),
-              ),
-              titleWidget: Row(
-                children: [
-                  const SizedBox(width: 54.0), // avatar (44) + gap (10)
-                  Text(
-                    "Hemanth Adapala",
-                    style: GoogleFonts.inter(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w500,
-                      color: widget.isDarkBackground ? Colors.white : const Color(0xFF1C1C1E),
-                    ),
-                  ),
-                ],
-              ),
-              rightWidth: 44.0,
-              rightChild: TactileButton(
-                useAppleSpring: true,
-                compressionScale: 0.7,
-                settleDuration: const Duration(milliseconds: 1000),
-                onTap: widget.onMoreOptionsTap ?? () {},
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 5.0,
-                        height: 5.0,
-                        decoration: BoxDecoration(
-                          color: widget.isDarkBackground ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4.0),
-                      Container(
-                        width: 5.0,
-                        height: 5.0,
-                        decoration: BoxDecoration(
-                          color: widget.isDarkBackground ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4.0),
-                      Container(
-                        width: 5.0,
-                        height: 5.0,
-                        decoration: BoxDecoration(
-                          color: widget.isDarkBackground ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          // Placeholder to preserve vertical layout spacing since AppHeaderBar is now rendered on top of overlay in home_screen.dart
+          const Padding(
+            padding: EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
+            child: SizedBox(height: 44.0),
           ),
           const SizedBox(height: 24.0),
           // Greeting Text

@@ -15,103 +15,93 @@ class NotesAndTaskPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 173.0,
-      height: 32.0,
-      decoration: BoxDecoration(
+      width: 177.0,
+      height: 40.0,
+      decoration: ShapeDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(30.0),
-        boxShadow: const [
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+        shadows: const [
           BoxShadow(
-            color: Color(0x40000000), // Black 25% opacity
+            color: Color(0x3F000000),
             blurRadius: 16.0,
             offset: Offset(0, 0),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: Stack(
         children: [
-          // Selected Background Indicator
+          // Inner Sliding Active Pod
           AnimatedPositioned(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOutCubic,
-            left: isNotesActive ? 0.0 : 86.5,
-            top: 0.0,
-            width: 86.5,
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            left: isNotesActive ? 5.0 : 89.0,
+            top: 4.0,
+            width: 83.0,
             height: 32.0,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOutCubic,
-              decoration: BoxDecoration(
-                color: isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
-                borderRadius: isNotesActive
-                    ? const BorderRadius.only(
-                        topLeft: Radius.circular(30.0),
-                        bottomLeft: Radius.circular(30.0),
-                        topRight: Radius.circular(0.0),
-                        bottomRight: Radius.circular(0.0),
-                      )
-                    : const BorderRadius.only(
-                        topLeft: Radius.circular(0.0),
-                        bottomLeft: Radius.circular(0.0),
-                        topRight: Radius.circular(30.0),
-                        bottomRight: Radius.circular(30.0),
-                      ),
-              ),
-            ),
-          ),
-
-          // Center Divider (line weight 0.2)
-          Align(
-            alignment: Alignment.center,
             child: Container(
-              width: 0.2,
-              height: 32.0,
-              color: Colors.black.withValues(alpha: 0.2),
+              decoration: ShapeDecoration(
+                color: isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+              ),
             ),
           ),
 
-          // Two half tap areas
-          Row(
-            children: [
-              Expanded(
-                child: TactileButton(
-                  onTap: () => onChanged(true),
-                  child: Container(
-                    height: 32.0,
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Notes',
-                      style: GoogleFonts.inter(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w500,
-                        height: 22.0 / 16.0,
-                        letterSpacing: -0.43,
-                        color: isNotesActive ? const Color(0xFF1C1C1E) : const Color(0xFF8E8E93),
-                      ),
-                    ),
+          // Tactile Tap Areas
+          Positioned(
+            left: 5.0,
+            top: 4.0,
+            width: 83.0,
+            height: 32.0,
+            child: TactileButton(
+              onTap: () => onChanged(true),
+              useAppleSpring: true,
+              compressionScale: 0.92,
+              child: Container(
+                alignment: Alignment.center,
+                color: Colors.transparent,
+                child: Text(
+                  'Notes',
+                  style: GoogleFonts.inter(
+                    color: isNotesActive ? Colors.white : Colors.black,
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w600,
+                    height: 1.38,
+                    letterSpacing: -0.43,
                   ),
                 ),
               ),
-              Expanded(
-                child: TactileButton(
-                  onTap: () => onChanged(false),
-                  child: Container(
-                    height: 32.0,
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Tasks',
-                      style: GoogleFonts.inter(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w500,
-                        height: 22.0 / 16.0,
-                        letterSpacing: -0.43,
-                        color: !isNotesActive ? Colors.white : const Color(0xFF8E8E93),
-                      ),
-                    ),
+            ),
+          ),
+
+          Positioned(
+            left: 89.0,
+            top: 4.0,
+            width: 83.0,
+            height: 32.0,
+            child: TactileButton(
+              onTap: () => onChanged(false),
+              useAppleSpring: true,
+              compressionScale: 0.92,
+              child: Container(
+                alignment: Alignment.center,
+                color: Colors.transparent,
+                child: Text(
+                  'Tasks',
+                  style: GoogleFonts.inter(
+                    color: !isNotesActive ? Colors.white : Colors.black,
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w600,
+                    height: 1.38,
+                    letterSpacing: -0.43,
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),

@@ -13,6 +13,8 @@ import '../models/folder.dart';
 import '../models/note_summary.dart';
 import '../services/database_service.dart';
 import '../services/vault_service.dart';
+import '../repositories/notes_repository.dart';
+import '../repositories/folders_repository.dart';
 
 enum SortOption { newest, oldest, alphabetical }
 enum NotesViewType { feed, archive, favorites, trash }
@@ -139,10 +141,16 @@ class NotesProvider with ChangeNotifier {
   }
 
   final _uuid = const Uuid();
-  final _dbService = DatabaseService.instance;
+  final DatabaseService _dbService = DatabaseService.instance;
+  final NotesRepository _notesRepository;
+  final FoldersRepository _foldersRepository;
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  NotesProvider() {
+  NotesProvider({
+    NotesRepository? notesRepository,
+    FoldersRepository? foldersRepository,
+  })  : _notesRepository = notesRepository ?? SqliteNotesRepository(),
+        _foldersRepository = foldersRepository ?? SqliteFoldersRepository() {
     _isDarkMode = false;
     _initNotifications();
     loadFolders();
@@ -562,7 +570,7 @@ class NotesProvider with ChangeNotifier {
     );
 
     try {
-      await _dbService.insert(newNote);
+      await _notesRepository.insertNote(newNote);
       if (reminderTime != null) {
         await _scheduleReminder(newNote);
       }
@@ -575,7 +583,7 @@ class NotesProvider with ChangeNotifier {
   // Import a note directly into the database
   Future<void> importNote(Note note) async {
     try {
-      await _dbService.insert(note);
+      await _notesRepository.insertNote(note);
       await loadNotes();
     } catch (e) {
       debugPrint("Error importing note: $e");
@@ -585,7 +593,7 @@ class NotesProvider with ChangeNotifier {
   // Restore a deleted note (Undo action)
   Future<void> restoreNote(Note note) async {
     try {
-      await _dbService.insert(note);
+      await _notesRepository.insertNote(note);
       if (note.reminderTime != null) {
         await _scheduleReminder(note);
       }
@@ -612,7 +620,7 @@ class NotesProvider with ChangeNotifier {
     );
 
     try {
-      await _dbService.update(noteToSave);
+      await _notesRepository.updateNote(noteToSave);
       
       // Update reminder notification
       await _cancelReminder(updatedNote.id);
@@ -629,10 +637,10 @@ class NotesProvider with ChangeNotifier {
   // Soft delete a note (Move to Trash)
   Future<void> trashNote(String id) async {
     try {
-      final rawNote = await _dbService.queryById(id);
+      final rawNote = await getNoteById(id);
       if (rawNote != null) {
         final updatedNote = rawNote.copyWith(isDeleted: true);
-        await _dbService.update(updatedNote);
+        await _notesRepository.updateNote(updatedNote);
         await _cancelReminder(id);
         await loadNotes();
       }
@@ -776,7 +784,7 @@ class NotesProvider with ChangeNotifier {
 
   Future<void> loadFolders() async {
     try {
-      _folders = await _dbService.queryAllFolders();
+      _folders = await _foldersRepository.getFolders();
       notifyListeners();
     } catch (e) {
       debugPrint("Error loading folders: $e");
@@ -791,7 +799,7 @@ class NotesProvider with ChangeNotifier {
       createdAt: DateTime.now(),
     );
     try {
-      await _dbService.insertFolder(folder);
+      await _foldersRepository.insertFolder(folder);
       await loadFolders();
     } catch (e) {
       debugPrint("Error creating folder: $e");
@@ -800,23 +808,25 @@ class NotesProvider with ChangeNotifier {
 
   Future<void> updateFolder(Folder folder) async {
     try {
-      await _dbService.updateFolder(folder);
+      await _foldersRepository.updateFolder(folder);
       await loadFolders();
     } catch (e) {
       debugPrint("Error updating folder: $e");
     }
   }
 
-  Future<void> deleteFolder(String id) async {
+  Future<bool> deleteFolder(String id) async {
     try {
-      await _dbService.deleteFolder(id);
+      await _foldersRepository.deleteFolder(id);
       if (_selectedFolderId == id) {
         _selectedFolderId = null;
       }
       await loadFolders();
       await loadNotes();
-    } catch (e) {
-      debugPrint("Error deleting folder: $e");
+      return true;
+    } catch (e, stackTrace) {
+      debugPrint("Error deleting folder: $e\n$stackTrace");
+      return false;
     }
   }
 

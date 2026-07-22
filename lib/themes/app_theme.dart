@@ -17,7 +17,7 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
 
   /// Screen background
-  static const Color background = Color(0xFFF2F2EE);
+  static const Color background = Color(0xFFFFFFFF);
 
   /// Glass Surface - Frosted cards, widgets, floating panels
   static const Color glassSurface = Color(0x8CFFFFFF);

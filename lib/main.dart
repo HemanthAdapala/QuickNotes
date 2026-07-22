@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'providers/notes_provider.dart';
+import 'providers/tasks_provider.dart';
 import 'views/screens/splash_screen.dart';
 
 void main() {
@@ -19,6 +20,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NotesProvider()),
+        ChangeNotifierProvider(create: (_) => TasksProvider()),
       ],
       child: const QuickNotesApp(),
     ),

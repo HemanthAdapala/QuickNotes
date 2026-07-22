@@ -15,8 +15,13 @@ import 'package:flutter/material.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class CelebrationOverlay extends StatefulWidget {
   final VoidCallback onDone;
+  final String message;
 
-  const CelebrationOverlay({super.key, required this.onDone});
+  const CelebrationOverlay({
+    super.key,
+    required this.onDone,
+    required this.message,
+  });
 
   @override
   State<CelebrationOverlay> createState() => _CelebrationOverlayState();
@@ -115,9 +120,9 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
                           ),
                         ],
                       ),
-                      child: const Text(
-                        '🎉  All tasks done!',
-                        style: TextStyle(
+                      child: Text(
+                        widget.message,
+                        style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
