@@ -570,7 +570,16 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
 
     final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : AppColors.background;
 
-    return Scaffold(
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          try {
+            Provider.of<NotesProvider>(context, listen: false).setSelectedFolder(null);
+          } catch (_) {}
+        }
+      },
+      child: Scaffold(
       backgroundColor: scaffoldBg,
 
       // ── FAB ───────────────────────────────────────────────────────────────
@@ -759,6 +768,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen>
             ),
           ],
         ),
+      ),
       ),
     );
   }
