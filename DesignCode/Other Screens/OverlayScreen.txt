@@ -1,0 +1,20 @@
+class Overlay extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 410,
+          height: 876,
+          clipBehavior: Clip.antiAlias,
+          decoration: ShapeDecoration(
+            color: Colors.black.withValues(alpha: 0.20) /* Overlays-Default */,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

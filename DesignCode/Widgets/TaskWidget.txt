@@ -1,0 +1,231 @@
+class TaskWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 322,
+          height: 339,
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x3F000000),
+                blurRadius: 20,
+                offset: Offset(0, 0),
+                spreadRadius: 0,
+              )
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                top: 0,
+                child: Container(
+                  width: 322,
+                  height: 282,
+                  decoration: ShapeDecoration(
+                    color: const Color(0xFF0088FF) /* Accents-Blue */,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                top: 37,
+                child: Container(
+                  width: 322,
+                  height: 302,
+                  decoration: ShapeDecoration(
+                    color: Colors.white /* Backgrounds-Primary */,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 18,
+                top: 113,
+                child: SizedBox(
+                  width: 223,
+                  height: 150,
+                  child: Text(
+                    'Wiring\nDashboard\nAnalytics',
+                    style: TextStyle(
+                      color: const Color(0xFF333333),
+                      fontSize: 40,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w600,
+                      height: 1,
+                      letterSpacing: -0.43,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 199,
+                top: 9,
+                child: Container(
+                  width: 95,
+                  height: 23,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 25.14,
+                        top: 4.75,
+                        child: SizedBox(
+                          width: 74.48,
+                          height: 13.30,
+                          child: Text(
+                            '02:00 AM',
+                            style: TextStyle(
+                              color: Colors.white /* Backgrounds-Primary */,
+                              fontSize: 16,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                              height: 0.88,
+                              letterSpacing: -0.43,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 18,
+                top: 80,
+                child: Container(
+                  width: 80,
+                  height: 38,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        child: Container(
+                          width: 80,
+                          height: 40,
+                          decoration: ShapeDecoration(
+                            color: const Color(0xFFF2F2F7) /* Backgrounds-Secondary */,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 31.65,
+                        top: 11.82,
+                        child: SizedBox(
+                          width: 43,
+                          height: 15,
+                          child: Text(
+                            'High',
+                            style: TextStyle(
+                              color: const Color(0xFFFF383C) /* Accents-Red */,
+                              fontSize: 15,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                              height: 2.67,
+                              letterSpacing: -0.43,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 8,
+                top: 282,
+                child: Container(
+                  width: 217.62,
+                  height: 47.52,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        child: Container(
+                          width: 251,
+                          height: 50,
+                          decoration: ShapeDecoration(
+                            color: const Color(0x33787878) /* Fills-Primary */,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 58,
+                        top: 10,
+                        child: SizedBox(
+                          width: 151,
+                          height: 30,
+                          child: Text(
+                            'Drag to mark done',
+                            style: TextStyle(
+                              color: const Color(0xFF333333),
+                              fontSize: 16,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                              height: 2.50,
+                              letterSpacing: -0.43,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 5,
+                        top: 5,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: ShapeDecoration(
+                            color: Colors.white /* Backgrounds-Primary */,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 28,
+                top: 8,
+                child: SizedBox(
+                  width: 144,
+                  height: 23,
+                  child: Text(
+                    'Tue, 1 June 2026',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w400,
+                      height: 2.50,
+                      letterSpacing: -0.43,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -1,0 +1,172 @@
+class NoteWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 322,
+          height: 339,
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x3F000000),
+                blurRadius: 16,
+                offset: Offset(0, 0),
+                spreadRadius: 0,
+              )
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                top: 0,
+                child: Container(
+                  width: 322,
+                  height: 306,
+                  decoration: ShapeDecoration(
+                    color: const Color(0xFFFFCC00),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                top: 37,
+                child: Container(
+                  width: 322,
+                  height: 302,
+                  decoration: ShapeDecoration(
+                    color: Colors.white /* Backgrounds-Primary */,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 17,
+                top: 160,
+                child: Container(
+                  width: 289,
+                  height: 157,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(),
+                ),
+              ),
+              Positioned(
+                left: 17,
+                top: 67,
+                child: Container(
+                  width: 224,
+                  height: 87,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        child: SizedBox(
+                          width: 224,
+                          height: 87,
+                          child: Text(
+                            'Things\nto do today',
+                            style: TextStyle(
+                              color: const Color(0xFF333333),
+                              fontSize: 40,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                              height: 1,
+                              letterSpacing: -0.43,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 17,
+                top: 9,
+                child: Container(
+                  width: 279.62,
+                  height: 23,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 178,
+                        top: 2,
+                        child: SizedBox(
+                          width: 100,
+                          height: 18,
+                          child: Text(
+                            '02:00 AM',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              color: const Color(0xFF333333),
+                              fontSize: 16,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                              height: 0.88,
+                              letterSpacing: -0.43,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 11,
+                        top: 0,
+                        child: SizedBox(
+                          width: 144,
+                          height: 23,
+                          child: Text(
+                            'Tue, 1 June 2026',
+                            style: TextStyle(
+                              color: const Color(0xFF333333),
+                              fontSize: 16,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                              height: 2.50,
+                              letterSpacing: -0.43,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 263,
+                top: 282,
+                child: Container(
+                  width: 47.52,
+                  height: 47.52,
+                  decoration: ShapeDecoration(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 16,
+                        offset: Offset(0, 0),
+                        spreadRadius: 0,
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

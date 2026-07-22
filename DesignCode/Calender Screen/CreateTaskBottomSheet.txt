@@ -1,0 +1,398 @@
+class CreateTaskBottomSheet extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 402,
+          height: 437,
+          clipBehavior: Clip.antiAlias,
+          decoration: ShapeDecoration(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            shadows: [
+              BoxShadow(
+                color: Color(0x3F000000),
+                blurRadius: 16,
+                offset: Offset(0, 0),
+                spreadRadius: 0,
+              )
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 20,
+                top: 85,
+                child: Container(
+                  width: 363,
+                  height: 85,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        top: 25,
+                        child: Container(
+                          width: 364,
+                          height: 45,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: ShapeDecoration(
+                            color: const Color(0x28787880) /* Fills-Secondary */,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                left: 20,
+                                top: 16,
+                                child: Text(
+                                  'Add a task title',
+                                  style: TextStyle(
+                                    color: const Color(0x993C3C43) /* Labels-Secondary */,
+                                    fontSize: 14,
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.w400,
+                                    height: 1,
+                                    letterSpacing: -0.43,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        child: Text(
+                          'Task Title',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 16,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                            height: 0.88,
+                            letterSpacing: -0.43,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 20,
+                top: 170,
+                child: Container(
+                  width: 363,
+                  height: 85,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        top: 26,
+                        child: Container(
+                          width: 153,
+                          height: 45,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: ShapeDecoration(
+                            color: const Color(0x28787880) /* Fills-Secondary */,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                left: 20,
+                                top: 16,
+                                child: Text(
+                                  'Jul 11th, 2026',
+                                  style: TextStyle(
+                                    color: const Color(0x993C3C43) /* Labels-Secondary */,
+                                    fontSize: 14,
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.w400,
+                                    height: 1,
+                                    letterSpacing: -0.43,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 158,
+                        top: 26,
+                        child: Container(
+                          width: 100,
+                          height: 45,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: ShapeDecoration(
+                            color: const Color(0x28787880) /* Fills-Secondary */,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                left: 9,
+                                top: 16,
+                                child: SizedBox(
+                                  width: 60,
+                                  height: 11,
+                                  child: Text(
+                                    '12:00 AM',
+                                    style: TextStyle(
+                                      color: const Color(0x993C3C43) /* Labels-Secondary */,
+                                      fontSize: 14,
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w400,
+                                      height: 1,
+                                      letterSpacing: -0.43,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 264,
+                        top: 26,
+                        child: Container(
+                          width: 100,
+                          height: 45,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: ShapeDecoration(
+                            color: const Color(0x28787880) /* Fills-Secondary */,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                left: 9,
+                                top: 16,
+                                child: SizedBox(
+                                  width: 60,
+                                  height: 11,
+                                  child: Text(
+                                    '12:00 AM',
+                                    style: TextStyle(
+                                      color: const Color(0x993C3C43) /* Labels-Secondary */,
+                                      fontSize: 14,
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w400,
+                                      height: 1,
+                                      letterSpacing: -0.43,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        child: Text(
+                          'Due Date & Time',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 16,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                            height: 0.88,
+                            letterSpacing: -0.43,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 158,
+                        top: 0,
+                        child: Text(
+                          'Start time',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 16,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                            height: 0.88,
+                            letterSpacing: -0.43,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 269,
+                        top: 0,
+                        child: Text(
+                          'End time',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 16,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                            height: 0.88,
+                            letterSpacing: -0.43,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 19,
+                top: 255,
+                child: Container(
+                  width: 363,
+                  height: 85,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        top: 25,
+                        child: Container(
+                          width: 364,
+                          height: 45,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: ShapeDecoration(
+                            color: const Color(0x28787880) /* Fills-Secondary */,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                left: 20,
+                                top: 16,
+                                child: Text(
+                                  'Add details',
+                                  style: TextStyle(
+                                    color: const Color(0x993C3C43) /* Labels-Secondary */,
+                                    fontSize: 14,
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.w400,
+                                    height: 1,
+                                    letterSpacing: -0.43,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        child: Text(
+                          'Task Description',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 16,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                            height: 0.88,
+                            letterSpacing: -0.43,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 20,
+                top: 340,
+                child: Container(
+                  width: 119,
+                  height: 45,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: ShapeDecoration(
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        width: 1,
+                        strokeAlign: BorderSide.strokeAlignCenter,
+                        color: const Color(0xFF333333),
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 47,
+                        top: 17,
+                        child: Text(
+                          'Priority',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 16,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                            height: 0.88,
+                            letterSpacing: -0.43,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 20,
+                top: 18,
+                child: Container(
+                  width: 363,
+                  height: 44,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 319,
+                        top: 0,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: ShapeDecoration(
+                            color: const Color(0xFF0088FF) /* Accents-Blue */,
+                            shape: OvalBorder(),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: ShapeDecoration(
+                            color: const Color(0x28787880) /* Fills-Secondary */,
+                            shape: OvalBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

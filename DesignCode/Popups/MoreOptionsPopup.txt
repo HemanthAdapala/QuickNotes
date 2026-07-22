@@ -1,0 +1,99 @@
+class MoreoptionsPopup extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 192,
+          clipBehavior: Clip.antiAlias,
+          decoration: ShapeDecoration(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                height: 50,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      child: Container(
+                        width: 192,
+                        height: 50,
+                        decoration: ShapeDecoration(
+                          color: Colors.white /* Backgrounds-Primary */,
+                          shape: RoundedRectangleBorder(side: BorderSide(width: 0.20)),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 39,
+                      top: 10,
+                      child: SizedBox(
+                        width: 122,
+                        height: 30,
+                        child: Text(
+                          'Delete Data',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 12,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                height: 50,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      child: Container(
+                        width: 192,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white /* Backgrounds-Primary */,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 39,
+                      top: 10,
+                      child: SizedBox(
+                        width: 122,
+                        height: 30,
+                        child: Text(
+                          'Refresh',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 12,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
