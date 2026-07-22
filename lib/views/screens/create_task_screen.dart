@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../models/note.dart';
 import '../../models/folder.dart';
 import '../../providers/notes_provider.dart';
+import '../../providers/tasks_provider.dart';
 import '../../themes/app_theme.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
@@ -135,7 +136,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   Future<void> _saveTask() async {
     if (_titleController.text.trim().isEmpty) return;
 
-    final provider = Provider.of<NotesProvider>(context, listen: false);
+    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
     final String title = _titleController.text.trim();
     final String description = _descriptionController.text.trim();
     
@@ -148,17 +149,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       _selectedTime.minute,
     );
 
-    // Save as checklist note in DB
-    await provider.addNote(
-      title: "Task: $title",
-      content: description.isNotEmpty ? description : "[]",
-      colorIndex: 0,
-      category: 'Uncategorized',
-      tags: [_selectedPriority],
-      attachments: [],
+    // Save standalone task in DB via TasksProvider
+    await tasksProvider.addTask(
+      title: title,
+      description: description,
+      dueDate: _selectedDate,
+      priority: _selectedPriority,
       reminderTime: reminderDateTime,
-      folderId: _selectedFolderId,
-      noteType: 'text',
     );
 
     HapticFeedback.mediumImpact();
@@ -238,7 +235,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2EE),
+      backgroundColor: Colors.white,
       body: SafeArea(
         bottom: false,
         child: Column(

@@ -31,6 +31,9 @@ class TaskWidgetsContainer extends StatelessWidget {
   /// Called when a task's toggle circle is tapped.
   final void Function(String taskId)? onToggleTask;
 
+  /// Called when a task card is swiped away (right-to-left).
+  final void Function(String taskId)? onDismissTask;
+
   /// Called when "+ Add Task" button is tapped.
   final VoidCallback? onAddTask;
 
@@ -39,6 +42,7 @@ class TaskWidgetsContainer extends StatelessWidget {
     required this.selectedDate,
     required this.tasks,
     this.onToggleTask,
+    this.onDismissTask,
     this.onAddTask,
   });
 
@@ -106,10 +110,22 @@ class TaskWidgetsContainer extends StatelessWidget {
                     physics: const BouncingScrollPhysics(),
                     itemCount: tasks.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) => CalendarTaskCard(
-                      task: tasks[i],
-                      onToggle: () => onToggleTask?.call(tasks[i].id),
-                    ),
+                    itemBuilder: (_, i) {
+                      final task = tasks[i];
+                      return Dismissible(
+                        key: ValueKey(task.id),
+                        direction: DismissDirection.endToStart,
+                        background: const _DismissBackground(),
+                        onDismissed: (_) {
+                          HapticFeedback.mediumImpact();
+                          onDismissTask?.call(task.id);
+                        },
+                        child: CalendarTaskCard(
+                          task: task,
+                          onToggle: () => onToggleTask?.call(task.id),
+                        ),
+                      );
+                    },
                   ),
           ),
         ],
@@ -184,6 +200,29 @@ class _EmptyState extends StatelessWidget {
           fontFamily: 'Inter',
           fontWeight: FontWeight.w400,
         ),
+      ),
+    );
+  }
+}
+
+// ── Dismiss background (revealed when swiping left) ───────────────────────────
+// Red pill matching the card height, trash icon right-aligned.
+class _DismissBackground extends StatelessWidget {
+  const _DismissBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF383C),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 24),
+      child: const Icon(
+        Icons.delete_rounded,
+        color: Colors.white,
+        size: 22,
       ),
     );
   }

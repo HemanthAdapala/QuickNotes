@@ -10,7 +10,7 @@ import 'tactile_button.dart';
 
 class TaskWidget extends StatefulWidget {
   final ValueChanged<String>? onComplete;
-  final VoidCallback? onEdit;
+  final ValueChanged<TaskItem>? onEdit;
   final List<TaskItem> tasks;
   final double width;
 
@@ -31,9 +31,17 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   double _dragX = 5.0; // Starts with a 5px margin
   final double _minDrag = 5.0;
   int _lastHapticCheckpoint = 0;
+  bool _isDraggingSlider = false;
+
+  // Swipe Dismiss State
+  double _swipeX = 0.0;
+  double _swipeY = 0.0;
+  bool _isAnimatingSwipe = false;
 
   // Animation Controllers
   late AnimationController _resetController;
+  late AnimationController _cardResetController;
+  late AnimationController _cycleController;
   late AnimationController _successController;
   late AnimationController _entranceController;
   late List<Animation<double>> _cardEntranceAnimations;
@@ -42,14 +50,26 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
   // Particle List
   final List<_Particle> _particles = [];
+  late List<TaskItem> _currentTasksList;
 
   @override
   void initState() {
     super.initState();
+    _currentTasksList = List.from(widget.tasks);
 
     _resetController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
+    );
+
+    _cardResetController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _cycleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
     );
 
     _successController = AnimationController(
@@ -105,8 +125,27 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   }
 
   @override
+  void didUpdateWidget(covariant TaskWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.tasks.length != oldWidget.tasks.length) {
+      setState(() {
+        _currentTasksList = List.from(widget.tasks);
+      });
+    } else {
+      for (int i = 0; i < _currentTasksList.length; i++) {
+        final updatedIndex = widget.tasks.indexWhere((t) => t.id == _currentTasksList[i].id);
+        if (updatedIndex != -1) {
+          _currentTasksList[i] = widget.tasks[updatedIndex];
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _resetController.dispose();
+    _cardResetController.dispose();
+    _cycleController.dispose();
     _successController.dispose();
     _entranceController.dispose();
     super.dispose();
@@ -125,7 +164,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   void _handleDragUpdate(DragUpdateDetails details) {
     if (_resetController.isAnimating || _successController.isAnimating) return;
 
-    final double maxDrag = widget.width - 111.0;
+    final double maxDrag = 206.0;
     setState(() {
       _dragX = (_dragX + details.delta.dx).clamp(_minDrag, maxDrag);
     });
@@ -148,13 +187,18 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   void _handleDragEnd(DragEndDetails details) {
     if (_resetController.isAnimating || _successController.isAnimating) return;
 
-    final double maxDrag = widget.width - 111.0;
+    final double maxDrag = 206.0;
     final progress = _getDragProgress(maxDrag);
     if (progress >= 0.90) {
       _triggerSuccess(maxDrag);
     } else {
       _triggerReset();
     }
+  }
+
+  void _handleDragCancel() {
+    if (_resetController.isAnimating || _successController.isAnimating) return;
+    _triggerReset();
   }
 
   void _triggerSuccess(double maxDrag) {
@@ -169,10 +213,16 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     // After success animation, reset back to start with a delay
     Future.delayed(const Duration(milliseconds: 1400), () {
       if (mounted) {
+        // Reset state first before calling parent callback to avoid showing the next card with a dragged slider!
+        setState(() {
+          _dragX = _minDrag;
+          _lastHapticCheckpoint = 0;
+        });
+        _successController.reset();
+
         if (widget.tasks.isNotEmpty) {
           widget.onComplete?.call(widget.tasks.first.id);
         }
-        _triggerReset();
       }
     });
   }
@@ -181,15 +231,93 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final startVal = _dragX;
     final tween = Tween<double>(begin: startVal, end: _minDrag);
 
-    _resetController.addListener(() {
+    void listener() {
       setState(() {
         _dragX = tween.evaluate(_resetController);
       });
-    });
+    }
+
+    _resetController.addListener(listener);
 
     _resetController.forward(from: 0.0).then((_) {
-      _resetController.removeListener(() {});
+      _resetController.removeListener(listener);
       _resetController.reset();
+    });
+  }
+
+  // ── Card Swiping Gestures ──────────────────────────────────────────────────
+  void _handleCardPanUpdate(DragUpdateDetails details) {
+    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider) return;
+    setState(() {
+      _swipeX += details.delta.dx;
+      _swipeY += details.delta.dy;
+    });
+  }
+
+  void _handleCardPanEnd(DragEndDetails details) {
+    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider) return;
+
+    final distance = sqrt(_swipeX * _swipeX + _swipeY * _swipeY);
+    if (distance > 120.0) {
+      _triggerSwipeAway();
+    } else {
+      _triggerCardReset();
+    }
+  }
+
+  void _triggerSwipeAway() {
+    _isAnimatingSwipe = true;
+    final double targetX = _swipeX.sign * 450.0;
+    final double targetY = _swipeY.sign * 250.0;
+
+    final tweenX = Tween<double>(begin: _swipeX, end: targetX);
+    final tweenY = Tween<double>(begin: _swipeY, end: targetY);
+
+    void listener() {
+      setState(() {
+        _swipeX = tweenX.evaluate(_cycleController);
+        _swipeY = tweenY.evaluate(_cycleController);
+      });
+    }
+
+    _cycleController.addListener(listener);
+
+    _cycleController.forward(from: 0.0).then((_) {
+      _cycleController.removeListener(listener);
+      _cycleController.reset();
+
+      if (mounted && _currentTasksList.isNotEmpty) {
+        setState(() {
+          // Cycle top task to the back of the deck
+          final topTask = _currentTasksList.removeAt(0);
+          _currentTasksList.add(topTask);
+          _swipeX = 0.0;
+          _swipeY = 0.0;
+          _isAnimatingSwipe = false;
+        });
+        HapticFeedback.lightImpact();
+      }
+    });
+  }
+
+  void _triggerCardReset() {
+    _isAnimatingSwipe = true;
+    final tweenX = Tween<double>(begin: _swipeX, end: 0.0);
+    final tweenY = Tween<double>(begin: _swipeY, end: 0.0);
+
+    void listener() {
+      setState(() {
+        _swipeX = tweenX.evaluate(_cardResetController);
+        _swipeY = tweenY.evaluate(_cardResetController);
+      });
+    }
+
+    _cardResetController.addListener(listener);
+
+    _cardResetController.forward(from: 0.0).then((_) {
+      _cardResetController.removeListener(listener);
+      _cardResetController.reset();
+      _isAnimatingSwipe = false;
     });
   }
 
@@ -199,75 +327,104 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final double blurSigma = 1.0 + (dist - 1) * 0.1;
 
     final task = widget.tasks[totalCards - 1 - index];
-    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(task.dueDate);
-    final formattedTime = DateFormat('hh:mm a').format(task.dueDate);
+    final formattedDate = DateFormat('EEE, d MMMM').format(task.dueDate);
+    final formattedTime = DateFormat('hh:mm a').format(task.reminderTime ?? task.dueDate);
 
     Widget cardContent = Container(
-      width: widget.width,
+      width: 322.0,
       height: 339.0,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0088FF),
-        borderRadius: BorderRadius.circular(30.0),
-        boxShadow: const [
+      decoration: const BoxDecoration(
+        boxShadow: [
           BoxShadow(
-            color: Color(0x40000000), // Black 25% opacity
-            blurRadius: 16.0,
+            color: Color(0x3F000000),
+            blurRadius: 20.0,
             offset: Offset(0, 0),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: Stack(
         children: [
-          // Perfectly vertically aligned header date/time
+          // Blue Background Header
           Positioned(
-            top: 0,
             left: 0,
-            right: 0,
-            height: 37.0, // center aligned in the visible peak
+            top: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      formattedDate,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                        height: 22.0 / 16.0,
-                        letterSpacing: -0.43,
-                      ),
-                    ),
+              width: 322.0,
+              height: 282.0,
+              decoration: const ShapeDecoration(
+                color: Color(0xFF0088FF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30.0),
+                    topRight: Radius.circular(30.0),
                   ),
-                  const SizedBox(width: 8.0),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SvgPicture.asset(
+                ),
+              ),
+            ),
+          ),
+          // White Card Background
+          Positioned(
+            left: 0,
+            top: 37.0,
+            child: Container(
+              width: 322.0,
+              height: 302.0,
+              decoration: const ShapeDecoration(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(30.0)),
+                ),
+              ),
+            ),
+          ),
+          // Header Date text
+          Positioned(
+            left: 28.0,
+            top: 9.0,
+            height: 23.0,
+            child: Container(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                formattedDate,
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+          ),
+          // Header Time text with history clock icon (positioned from right to avoid cut off)
+          Positioned(
+            right: 28.0,
+            top: 9.0,
+            height: 23.0,
+            child: Container(
+              alignment: Alignment.centerRight,
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: SvgPicture.asset(
                         "assets/New Icons/fi-rr-time-past.svg",
-                        width: 22.0,
-                        height: 22.0,
+                        width: 16.0,
+                        height: 16.0,
                         colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                       ),
-                      const SizedBox(width: 6.0),
-                      Text(
-                        formattedTime,
-                        style: GoogleFonts.inter(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
-                          height: 22.0 / 16.0,
-                          letterSpacing: -0.43,
-                        ),
+                    ),
+                    const WidgetSpan(child: SizedBox(width: 5.0)),
+                    TextSpan(
+                      text: formattedTime,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w400,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -298,7 +455,13 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
             opacity: anim.value.clamp(0.0, 1.0),
             child: Transform.scale(
               scale: scale,
-              child: child,
+              child: Center(
+                child: SizedBox(
+                  width: 322.0,
+                  height: 339.0,
+                  child: child,
+                ),
+              ),
             ),
           ),
         );
@@ -309,7 +472,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.tasks.isEmpty) {
+    if (_currentTasksList.isEmpty) {
       return SizedBox(
         width: widget.width,
         height: 339.0,
@@ -366,19 +529,18 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
       );
     }
 
-    final double trackWidth = widget.width - 71.0;
-    final double maxDrag = trackWidth - 40.0;
+    final double maxDrag = 206.0;
     final progress = _getDragProgress(maxDrag);
     final double cardScale = 1.0 + (progress * 0.02); // Sensory drag scale lift
     final double cardShadowBlur = 16.0 + (progress * 8.0); // Shadow lift blur (16 to 24)
 
-    final int numCards = widget.tasks.length.clamp(1, 3);
+    final int numCards = _currentTasksList.length.clamp(1, 3);
     const double cardOffset = 37.0;
     final double overallHeight = 339.0 + (numCards - 1) * cardOffset;
 
-    final task = widget.tasks.first;
-    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(task.dueDate);
-    final formattedTime = DateFormat('hh:mm a').format(task.dueDate);
+    final task = _currentTasksList.first;
+    final formattedDate = DateFormat('EEE, d MMMM').format(task.dueDate);
+    final formattedTime = DateFormat('hh:mm a').format(task.reminderTime ?? task.dueDate);
 
     final String priority = task.priority;
     final Color priorityColor;
@@ -392,6 +554,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
       priorityColor = const Color(0xFF8E8E93);
     }
 
+    final double titleTop = (priority.toLowerCase() == 'none') ? 113.0 : 126.0;
+
     return SizedBox(
       width: widget.width,
       height: overallHeight,
@@ -404,9 +568,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
           // Render interactive front card (shifted down by offset)
           Positioned(
-            top: (numCards - 1) * cardOffset,
-            left: 0,
-            right: 0,
+            top: (numCards - 1) * cardOffset + _swipeY,
+            left: _swipeX,
+            right: -_swipeX,
             height: 339.0,
             child: AnimatedBuilder(
               animation: _cardEntranceAnimations[0],
@@ -421,333 +585,362 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                   ),
                 );
               },
-              child: Center(
-              child: Transform.scale(
-                scale: cardScale,
-                child: Container(
-                  width: widget.width,
-                  height: 339.0,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0x40000000), // Black 25% opacity
-                        blurRadius: cardShadowBlur,
-                        offset: const Offset(0, 0),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(30.0),
-                    child: Stack(
-                      children: [
-                        // 1. Blue Background Header (fills H: 302, corner radius 30)
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: 302.0,
-                          child: Container(
-                            color: const Color(0xFF0088FF),
-                            child: Stack(
-                              children: [
-                                // Perfectly vertical aligned header date/time
-                                Positioned(
-                                  top: 0,
-                                  left: 0,
-                                  right: 0,
-                                  height: 37.0, // center aligned in the visible peak
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                    alignment: Alignment.center,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: GestureDetector(
+                onPanUpdate: _handleCardPanUpdate,
+                onPanEnd: _handleCardPanEnd,
+                child: Center(
+                  child: Transform.rotate(
+                    angle: (_swipeX / widget.width) * (pi / 12),
+                    child: Transform.scale(
+                      scale: cardScale,
+                      child: SizedBox(
+                        width: 322.0,
+                        height: 339.0,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x3F000000),
+                                blurRadius: 20.0,
+                                offset: Offset(0, 0),
+                                spreadRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              // Blue Background Header
+                              Positioned(
+                                left: 0,
+                                top: 0,
+                                child: Container(
+                                  width: 322.0,
+                                  height: 282.0,
+                                  decoration: const ShapeDecoration(
+                                    color: Color(0xFF0088FF),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(30.0),
+                                        topRight: Radius.circular(30.0),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // White Card Background
+                              Positioned(
+                                left: 0,
+                                top: 37.0,
+                                child: Container(
+                                  width: 322.0,
+                                  height: 302.0,
+                                  decoration: const ShapeDecoration(
+                                    color: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.all(Radius.circular(30.0)),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Header Date text
+                              Positioned(
+                                left: 28.0,
+                                top: 9.0,
+                                height: 23.0,
+                                child: Container(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    formattedDate,
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Header Time text with history clock icon (positioned from right to avoid cut off)
+                              Positioned(
+                                right: 28.0,
+                                top: 9.0,
+                                height: 23.0,
+                                child: Container(
+                                  alignment: Alignment.centerRight,
+                                  child: Text.rich(
+                                    TextSpan(
                                       children: [
-                                        Expanded(
-                                          child: Text(
-                                            formattedDate,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.inter(
-                                              fontSize: 16.0,
-                                              fontWeight: FontWeight.w400,
-                                              color: Colors.white,
-                                              height: 22.0 / 16.0,
-                                              letterSpacing: -0.43,
-                                            ),
+                                        WidgetSpan(
+                                          alignment: PlaceholderAlignment.middle,
+                                          child: SvgPicture.asset(
+                                            "assets/New Icons/fi-rr-time-past.svg",
+                                            width: 16.0,
+                                            height: 16.0,
+                                            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                                           ),
                                         ),
-                                        const SizedBox(width: 8.0),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            SvgPicture.asset(
-                                              "assets/New Icons/fi-rr-time-past.svg",
-                                              width: 22.0,
-                                              height: 22.0,
-                                              colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                            ),
-                                            const SizedBox(width: 6.0),
-                                            Text(
-                                              formattedTime,
-                                              style: GoogleFonts.inter(
-                                                fontSize: 16.0,
-                                                fontWeight: FontWeight.w400,
-                                                color: Colors.white,
-                                                height: 22.0 / 16.0,
-                                                letterSpacing: -0.43,
-                                              ),
-                                            ),
-                                          ],
+                                        const WidgetSpan(child: SizedBox(width: 5.0)),
+                                        TextSpan(
+                                          text: formattedTime,
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white,
+                                            fontSize: 16.0,
+                                            fontWeight: FontWeight.w400,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // 2. White Card (H: 302, corner radius 30, placed 37px below blue card top)
-                        Positioned(
-                          top: 37.0,
-                          left: 0,
-                          width: widget.width,
-                          height: 302.0,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(30.0),
-                                topRight: Radius.circular(30.0),
-                                bottomLeft: Radius.circular(30.0),
-                                bottomRight: Radius.circular(30.0),
                               ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(9.0, 20.0, 9.0, 20.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Priority flag pill
-                                  if (priority.toLowerCase() != 'none') ...[
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-                                      decoration: BoxDecoration(
-                                        color: priorityColor.withValues(alpha: 0.10),
-                                        borderRadius: BorderRadius.circular(30.0),
+                              // Priority Flag Pill
+                              if (priority.toLowerCase() != 'none')
+                                Positioned(
+                                  left: 18.0,
+                                  top: 80.0,
+                                  height: 38.0,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                    decoration: ShapeDecoration(
+                                      color: const Color(0xFFF2F2F7),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(19.0),
                                       ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text.rich(
+                                      TextSpan(
                                         children: [
-                                          SvgPicture.asset(
-                                            "assets/New Icons/flag-alt 1.svg",
-                                            width: 14.0,
-                                            height: 14.0,
-                                            colorFilter: ColorFilter.mode(priorityColor, BlendMode.srcIn),
+                                          WidgetSpan(
+                                            alignment: PlaceholderAlignment.middle,
+                                            child: SvgPicture.asset(
+                                              "assets/New Icons/flag-alt 1.svg",
+                                              width: 14.0,
+                                              height: 14.0,
+                                              colorFilter: ColorFilter.mode(priorityColor, BlendMode.srcIn),
+                                            ),
                                           ),
-                                          const SizedBox(width: 4.0),
-                                          Text(
-                                            priority,
+                                          const WidgetSpan(child: SizedBox(width: 6.0)),
+                                          TextSpan(
+                                            text: priority,
                                             style: GoogleFonts.inter(
-                                              fontSize: 16.0,
-                                              fontWeight: FontWeight.w400,
                                               color: priorityColor,
-                                              height: 22.0 / 16.0,
-                                              letterSpacing: -0.43,
+                                              fontSize: 15.0,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(height: 12.0),
-                                  ],
-
-                                  // Title Text: Inter, bold, 40-size, line height 22
-                                  Expanded(
-                                    child: Text(
-                                      task.title,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 40.0,
-                                        fontWeight: FontWeight.bold,
-                                        height: 1.10,
-                                        letterSpacing: -0.43,
-                                        color: const Color(0xFF1C1C1E),
-                                      ),
-                                    ),
                                   ),
-                                  const SizedBox(height: 16.0),
-
-                                  // Slider row (Drag to mark done & edit button)
-                                  Row(
-                                    children: [
-                                      // Slider background track: width 251, height 50
-                                      GestureDetector(
-                                        onHorizontalDragStart: _handleDragStart,
-                                        onHorizontalDragUpdate: _handleDragUpdate,
-                                        onHorizontalDragEnd: _handleDragEnd,
-                                        child: Container(
-                                          width: trackWidth,
-                                          height: 50.0,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFCCCCCC).withValues(alpha: 0.35),
-                                            borderRadius: BorderRadius.circular(25.0),
-                                          ),
-                                          child: Stack(
-                                            children: [
-                                              // Blue Slide Fill (Fades in during drag, aligns right edge to checkmark)
-                                              if (progress > 0)
-                                                Positioned(
-                                                  left: 0,
-                                                  top: 0,
-                                                  bottom: 0,
-                                                  width: _dragX + 40.0,
-                                                  child: Opacity(
-                                                    opacity: progress.clamp(0.0, 1.0),
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                        gradient: const LinearGradient(
-                                                          colors: [
-                                                            Color(0xFF0088FF),
-                                                            Color(0xFF66B2FF),
-                                                          ],
-                                                        ),
-                                                        borderRadius: BorderRadius.circular(25.0),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-
-                                              // Slider track text: "Drag to mark done"
-                                              Center(
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  children: [
-                                                    const SizedBox(width: 32.0), // Spacer for checkmark
-                                                    Flexible(
-                                                      child: Text(
-                                                        "Drag to mark done",
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        style: GoogleFonts.inter(
-                                                          fontSize: 16.0,
-                                                          fontWeight: FontWeight.w600,
-                                                          color: progress > 0.5 ? Colors.white : const Color(0xFF777777),
-                                                          height: 22.0 / 16.0,
-                                                          letterSpacing: -0.43,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 4.0),
-                                                    SvgPicture.asset(
-                                                      "assets/New Icons/fi-rr-angle-double-small-right.svg",
-                                                      width: 14.0,
-                                                      height: 14.0,
-                                                      colorFilter: ColorFilter.mode(
-                                                        progress > 0.5 ? Colors.white : const Color(0xFF777777),
-                                                        BlendMode.srcIn,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-
-                                              // Sliding checkmark button: size 40x40
-                                              Positioned(
-                                                left: _dragX,
-                                                top: 5.0,
-                                                width: 40.0,
-                                                height: 40.0,
-                                                child: ScaleTransition(
-                                                  scale: _successScaleAnimation,
-                                                  child: Stack(
-                                                    clipBehavior: Clip.none,
-                                                    children: [
-                                                      // Particle success layer
-                                                      Positioned.fill(
-                                                        child: CustomPaint(
-                                                          painter: _ParticlePainter(
-                                                            particles: _particles,
-                                                            animVal: _particleAnimation.value,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Actual checkmark circular button
-                                                      Container(
-                                                        decoration: const BoxDecoration(
-                                                          color: Colors.white,
-                                                          shape: BoxShape.circle,
-                                                          boxShadow: [
-                                                            BoxShadow(
-                                                              color: Color(0x20000000),
-                                                              blurRadius: 4.0,
-                                                              offset: Offset(0, 2),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        alignment: Alignment.center,
-                                                        child: SvgPicture.asset(
-                                                          "assets/New Icons/fi-rr-check.svg",
-                                                          width: 22.0,
-                                                          height: 22.0,
-                                                          colorFilter: const ColorFilter.mode(
-                                                            Color(0xFF0088FF),
-                                                            BlendMode.srcIn,
-                                                          ),
-                                                        ),
-                                                      ),
+                                ),
+                              // Title Text (constrained width and height)
+                              Positioned(
+                                left: 18.0,
+                                top: titleTop,
+                                width: 223.0,
+                                height: 150.0,
+                                child: Text(
+                                  task.title.isNotEmpty ? task.title : 'Untitled Task',
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF333333),
+                                    fontSize: 40.0,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.0,
+                                    letterSpacing: -0.43,
+                                  ),
+                                ),
+                              ),
+                              // Slider Track Container
+                              Positioned(
+                                left: 8.0,
+                                top: 282.0,
+                                width: 251.0,
+                                height: 50.0,
+                                child: GestureDetector(
+                                  onHorizontalDragDown: (_) {
+                                    setState(() {
+                                      _isDraggingSlider = true;
+                                    });
+                                  },
+                                  onHorizontalDragStart: _handleDragStart,
+                                  onHorizontalDragUpdate: _handleDragUpdate,
+                                  onHorizontalDragEnd: (details) {
+                                    _handleDragEnd(details);
+                                    setState(() {
+                                      _isDraggingSlider = false;
+                                    });
+                                  },
+                                  onHorizontalDragCancel: () {
+                                    _handleDragCancel();
+                                    setState(() {
+                                      _isDraggingSlider = false;
+                                    });
+                                  },
+                                  child: Container(
+                                    width: 251.0,
+                                    height: 50.0,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0x33787878),
+                                      borderRadius: BorderRadius.circular(25.0),
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        // Blue Slide Fill
+                                        if (progress > 0)
+                                          Positioned(
+                                            left: 0,
+                                            top: 0,
+                                            bottom: 0,
+                                            width: _dragX + 40.0,
+                                            child: Opacity(
+                                              opacity: progress.clamp(0.0, 1.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    colors: [
+                                                      Color(0xFF0088FF),
+                                                      Color(0xFF66B2FF),
                                                     ],
                                                   ),
+                                                  borderRadius: BorderRadius.circular(25.0),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        // Text
+                                        Center(
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              const SizedBox(width: 32.0),
+                                              Flexible(
+                                                child: Text(
+                                                  "Drag to mark done",
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 16.0,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: progress > 0.5 ? Colors.white : const Color(0xFF333333),
+                                                    height: 1.0,
+                                                    letterSpacing: -0.43,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4.0),
+                                              SvgPicture.asset(
+                                                "assets/New Icons/fi-rr-angle-double-small-right.svg",
+                                                width: 14.0,
+                                                height: 14.0,
+                                                colorFilter: ColorFilter.mode(
+                                                  progress > 0.5 ? Colors.white : const Color(0xFF333333),
+                                                  BlendMode.srcIn,
                                                 ),
                                               ),
                                             ],
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 3.0),
-                                      // Task Editing button: 50x50, pencil icon
-                                      TactileButton(
-                                        onTap: widget.onEdit ?? () {},
-                                        child: Container(
-                                          width: 50.0,
-                                          height: 50.0,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFF2F2EE),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: const Color(0xFFE2E2DF),
-                                              width: 1.0,
-                                            ),
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: SvgPicture.asset(
-                                            "assets/app_bottom_navigation_bar_Icons/pencil.svg",
-                                            width: 22.0,
-                                            height: 22.0,
-                                            colorFilter: const ColorFilter.mode(
-                                              Color(0xFF1C1C1E),
-                                              BlendMode.srcIn,
+                                        // Checkmark Circular Button
+                                        Positioned(
+                                          left: _dragX,
+                                          top: 5.0,
+                                          width: 40.0,
+                                          height: 40.0,
+                                          child: ScaleTransition(
+                                            scale: _successScaleAnimation,
+                                            child: Stack(
+                                              clipBehavior: Clip.none,
+                                              children: [
+                                                Positioned.fill(
+                                                  child: CustomPaint(
+                                                    painter: _ParticlePainter(
+                                                      particles: _particles,
+                                                      animVal: _particleAnimation.value,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Container(
+                                                  decoration: const BoxDecoration(
+                                                    color: Colors.white,
+                                                    shape: BoxShape.circle,
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Color(0x20000000),
+                                                        blurRadius: 4.0,
+                                                        offset: Offset(0, 2),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  alignment: Alignment.center,
+                                                  child: SvgPicture.asset(
+                                                    "assets/New Icons/fi-rr-check.svg",
+                                                    width: 22.0,
+                                                    height: 22.0,
+                                                    colorFilter: const ColorFilter.mode(
+                                                      Color(0xFF0088FF),
+                                                      BlendMode.srcIn,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
+                              // Floating Edit Button
+                              Positioned(
+                                left: 264.0,
+                                top: 282.0,
+                                child: TactileButton(
+                                  onTap: () => widget.onEdit?.call(task),
+                                  useAppleSpring: true,
+                                  compressionScale: 0.7,
+                                  settleDuration: const Duration(milliseconds: 1000),
+                                  child: Container(
+                                    width: 50.0,
+                                    height: 50.0,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x3F000000),
+                                          blurRadius: 16.0,
+                                          offset: Offset(0, 0),
+                                          spreadRadius: 0,
+                                        ),
+                                      ],
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: SvgPicture.asset(
+                                      "assets/app_bottom_navigation_bar_Icons/pencil.svg",
+                                      width: 22.0,
+                                      height: 22.0,
+                                      colorFilter: const ColorFilter.mode(
+                                        Color(0xFF1C1C1E),
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
       ),
     );
   }

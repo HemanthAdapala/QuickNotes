@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
+import 'package:provider/provider.dart';
 import '../models/calendar_task.dart';
+import '../../providers/tasks_provider.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/calendar_grid_widget.dart';
 import '../widgets/celebration_overlay.dart';
+import '../widgets/create_task_bottom_sheet.dart';
 import '../widgets/month_container.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/task_widgets_container.dart';
@@ -34,7 +37,14 @@ import 'search_screen.dart';
 //   3. Completing the last pending task triggers a particle burst celebration.
 // ─────────────────────────────────────────────────────────────────────────────
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({super.key});
+  /// Optional back handler.
+  /// • Provided by [HomeScreen] when CalendarScreen is embedded as a tab
+  ///   (calls onBack to switch back to the home tab).
+  /// • Omitted when CalendarScreen is pushed onto the Navigator stack
+  ///   (falls back to Navigator.pop).
+  final VoidCallback? onBack;
+
+  const CalendarScreen({super.key, this.onBack});
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -67,47 +77,32 @@ class _CalendarScreenState extends State<CalendarScreen> {
     super.dispose();
   }
 
-  // ── Month tasks — pre-generate for all days so the grid is fully populated ─
+  // ── Month tasks — populate from TasksProvider for the current month ───────
   void _initMonthTasks() {
     _monthTasks.clear();
-    final daysInMonth =
-        DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+    final daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+
     for (int day = 1; day <= daysInMonth; day++) {
-      _monthTasks[day] = _generateMockTasks(day);
+      final date = DateTime(_currentMonth.year, _currentMonth.month, day);
+      final dayTasks = tasksProvider.getTasksForDate(date);
+      
+      _monthTasks[day] = dayTasks.map((t) {
+        final priority = switch (t.priority.toLowerCase()) {
+          'high' => TaskPriority.red,
+          'medium' => TaskPriority.yellow,
+          'low' => TaskPriority.green,
+          _ => TaskPriority.green,
+        };
+        return CalendarTask(
+          id: t.id,
+          title: t.title,
+          subtitle: t.description.isNotEmpty ? t.description : 'Task',
+          priority: priority,
+          isCompleted: t.completed,
+        );
+      }).toList();
     }
-  }
-
-  /// Mock task generator — early days start fully completed so the grid looks
-  /// like the reference design on first open.
-  /// In production: replace with real data from a tasks provider.
-  List<CalendarTask> _generateMockTasks(int day) {
-    // Days 1–8 come pre-completed → they show a blue check cell immediately.
-    final allDone = day <= 8;
-
-    return [
-      CalendarTask(
-        id: 'task_${day}_green',
-        title: 'Task: Finalize Client Call',
-        subtitle: 'Work Tasks Folder . Due 5 Pm',
-        priority: TaskPriority.green,
-        isCompleted: allDone,
-      ),
-      CalendarTask(
-        id: 'task_${day}_yellow',
-        title: 'Task: Review Study Guide',
-        subtitle: 'Work Tasks Folder . Due 5 Pm',
-        priority: TaskPriority.yellow,
-        isCompleted: allDone,
-      ),
-      if (day % 3 == 0)
-        CalendarTask(
-          id: 'task_${day}_red',
-          title: 'Task: Finalize Client Call',
-          subtitle: 'Work Tasks Folder . Due 5 Pm',
-          priority: TaskPriority.red,
-          isCompleted: allDone,
-        ),
-    ];
   }
 
   // ── Computed: days where EVERY task is completed (drives blue check cells) ─
@@ -156,26 +151,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
   // ── Task toggle ────────────────────────────────────────────────────────────
   void _toggleTask(String taskId) {
     bool allComplete = false;
+    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+    tasksProvider.toggleTaskCompletion(taskId);
 
     setState(() {
+      _initMonthTasks();
       final tasks = _monthTasks[_selectedDay];
-      if (tasks == null) return;
-
-      final task = tasks.firstWhere(
-        (t) => t.id == taskId,
-        orElse: () => throw StateError('Task $taskId not found'),
-      );
-      task.isCompleted = !task.isCompleted;
-
-      // Check if this toggle completed the LAST pending task
-      allComplete =
-          tasks.isNotEmpty && tasks.every((t) => t.isCompleted);
+      allComplete = tasks != null && tasks.isNotEmpty && tasks.every((t) => t.isCompleted);
     });
 
-    // Only celebrate when the toggle made all tasks complete (not when un-doing)
     if (allComplete) {
-      // Small delay so the card animation settles first
       Future.delayed(const Duration(milliseconds: 250), () {
+        if (mounted) _triggerCelebration();
+      });
+    }
+  }
+
+  // ── Task dismiss (swipe-to-delete) ────────────────────────────────────────
+  void _removeTask(String taskId) {
+    bool allComplete = false;
+    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+    tasksProvider.deleteTask(taskId);
+
+    setState(() {
+      _initMonthTasks();
+      final tasks = _monthTasks[_selectedDay];
+      allComplete = tasks != null && tasks.isNotEmpty && tasks.every((t) => t.isCompleted);
+    });
+
+    if (allComplete) {
+      Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) _triggerCelebration();
       });
     }
@@ -188,6 +193,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => CelebrationOverlay(
+        message: '🎉 All tasks are done!',
         onDone: () {
           entry.remove();
           _overlayEntries.remove(entry);
@@ -199,7 +205,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     Overlay.of(context).insert(entry);
   }
 
-  // ── Add Task placeholder ───────────────────────────────────────────────────
+  // ── Add Task — CreateTaskBottomSheet ──────────────────────────────────────
   void _showAddTaskSheet() {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
@@ -207,66 +213,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.4),
-      builder: (ctx) => Container(
-        height: MediaQuery.of(ctx).size.height * 0.55,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (_) => CreateTaskBottomSheet(
+        initialDate: DateTime(
+          _currentMonth.year,
+          _currentMonth.month,
+          _selectedDay,
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            // Drag handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0x33787878),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 28),
-            const Text(
-              'Add Task',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            const Spacer(),
-            const Text(
-              'Task creation coming soon',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                color: Color(0x80000000),
-              ),
-            ),
-            const Spacer(),
-            SizedBox(height: MediaQuery.of(ctx).viewPadding.bottom + 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Header glass pill ──────────────────────────────────────────────────────
-  Widget _buildGlassPill({
-    required Widget child,
-    required VoidCallback onTap,
-  }) {
-    return BottomBarGlassSurface(
-      width: 44.0,
-      height: 44.0,
-      borderRadius: BorderRadius.circular(22.0),
-      child: TactileButton(
-        useAppleSpring: true,
-        compressionScale: 0.7,
-        settleDuration: const Duration(milliseconds: 1000),
-        onTap: onTap,
-        child: Center(child: child),
       ),
     );
   }
@@ -280,7 +232,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
         bottom: false,
         child: Column(
           children: [
-            // ── Header ────────────────────────────────────────────────────
+            // ── Header ─────────────────────────────────────────────────────
+            // Uses a plain Row instead of AppHeaderBar.
+            // AppHeaderBar wraps buttons in Hero > BottomBarGlassSurface >
+            // RepaintBoundary > BackdropFilter. In a Stack layout,
+            // BackdropFilter creates a hard-edged gray rectangle across the
+            // full header area behind MonthContainer. The Row approach is
+            // visually identical and avoids that compositing artifact.
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 24.0,
@@ -288,24 +246,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
               child: Row(
                 children: [
-                  // Back
-                  _buildGlassPill(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.of(context).pop();
-                    },
-                    child: SvgPicture.asset(
-                      'assets/icons/angle_left.svg',
-                      width: 22,
-                      height: 22,
-                      colorFilter: const ColorFilter.mode(
-                        Color(0xFF1C1C1E),
-                        BlendMode.srcIn,
+                  // ─ Back / home-tab button ─────────────────────────────────
+                  BottomBarGlassSurface(
+                    width: 44.0,
+                    height: 44.0,
+                    borderRadius: BorderRadius.circular(22.0),
+                    child: TactileButton(
+                      useAppleSpring: true,
+                      compressionScale: 0.7,
+                      settleDuration: const Duration(milliseconds: 1000),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        if (widget.onBack != null) {
+                          widget.onBack!();
+                        } else {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: Center(
+                        child: SvgPicture.asset(
+                          'assets/icons/angle_left.svg',
+                          width: 22,
+                          height: 22,
+                          colorFilter: const ColorFilter.mode(
+                            Color(0xFF1C1C1E),
+                            BlendMode.srcIn,
+                          ),
+                        ),
                       ),
                     ),
                   ),
 
-                  // Month pill
+                  // ─ MonthContainer pill (no overlap with button zones) ──────
                   Expanded(
                     child: Center(
                       child: MonthContainer(
@@ -316,25 +288,37 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                   ),
 
-                  // Search
-                  _buildGlassPill(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.of(context).push(SearchRoute(
-                        builder: (_) => const SearchScreen(
-                          initialScope: 'tasks',
+                  // ─ Search button ───────────────────────────────────────────
+                  BottomBarGlassSurface(
+                    width: 44.0,
+                    height: 44.0,
+                    borderRadius: BorderRadius.circular(22.0),
+                    child: TactileButton(
+                      useAppleSpring: true,
+                      compressionScale: 0.7,
+                      settleDuration: const Duration(milliseconds: 1000),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.of(context).push(SearchRoute(
+                          builder: (_) => const SearchScreen(
+                            initialScope: 'tasks',
+                          ),
+                        ));
+                      },
+                      child: const Center(
+                        child: Icon(
+                          Icons.search_rounded,
+                          color: Color(0xFF1C1C1E),
+                          size: 22,
                         ),
-                      ));
-                    },
-                    child: const Icon(
-                      Icons.search_rounded,
-                      color: Color(0xFF1C1C1E),
-                      size: 22,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
+
+
 
             // ── Calendar grid (fixed, no scroll) ──────────────────────────
             // Blue check cell = ALL tasks for that day completed.
@@ -362,6 +346,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
                 tasks: _selectedDayTasks,
                 onToggleTask: _toggleTask,
+                onDismissTask: _removeTask,
                 onAddTask: _showAddTaskSheet,
               ),
             ),
