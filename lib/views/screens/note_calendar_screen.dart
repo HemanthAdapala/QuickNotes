@@ -54,25 +54,6 @@ class GradientBorderPainter extends CustomPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mock Task Item Model for visual demo
-// ─────────────────────────────────────────────────────────────────────────────
-class MockTask {
-  final String id;
-  final String title;
-  final String subtitle;
-  final String type; // 'pink', 'yellow', 'blue'
-  bool isCompleted;
-
-  MockTask({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-    required this.type,
-    this.isCompleted = false,
-  });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // NoteCalendarScreen
 // ─────────────────────────────────────────────────────────────────────────────
 class NoteCalendarScreen extends StatefulWidget {
@@ -88,34 +69,8 @@ class NoteCalendarScreen extends StatefulWidget {
 }
 
 class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
-  // Initialize to June 15, 2026 to perfectly replicate the reference screenshot
-  DateTime _selectedDate = DateTime(2026, 6, 15);
-  DateTime _currentMonth = DateTime(2026, 6);
-
-  // Local state to keep mock tasks interactive
-  final List<MockTask> _mockTasks = [
-    MockTask(
-      id: 'mock_1',
-      title: 'Task: Finalize Client Proposal',
-      subtitle: 'Work Tasks folder • Due 5 PM',
-      type: 'pink',
-      isCompleted: true,
-    ),
-    MockTask(
-      id: 'mock_2',
-      title: 'Task: Review Study Guide',
-      subtitle: 'Study Guides folder • High Priority',
-      type: 'yellow',
-      isCompleted: false,
-    ),
-    MockTask(
-      id: 'mock_3',
-      title: 'Task: Refine Project Drafts',
-      subtitle: 'Project Drafts Cat • Next Step',
-      type: 'blue',
-      isCompleted: false,
-    ),
-  ];
+  DateTime _selectedDate = DateTime.now();
+  DateTime _currentMonth = DateTime.now();
 
   @override
   void initState() {
@@ -165,7 +120,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
     showAnimatedDialog<DateTime>(
       context: context,
       child: AlertDialog(
-        backgroundColor: const Color(0xFFF2F2EE),
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           "Select Month",
@@ -673,25 +628,8 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // If no real dayNotes exist AND we are on June 15, 2026, show mockTasks
-                      if (dayNotes.isEmpty && _isSameDay(_selectedDate, DateTime(2026, 6, 15))) ...[
-                        ..._mockTasks.map((mockTask) {
-                          return _buildTaskCard(
-                            id: mockTask.id,
-                            title: mockTask.title,
-                            subtitle: mockTask.subtitle,
-                            type: mockTask.type,
-                            isCompleted: mockTask.isCompleted,
-                            onToggle: () {
-                              HapticFeedback.lightImpact();
-                              setState(() {
-                                mockTask.isCompleted = !mockTask.isCompleted;
-                              });
-                            },
-                          );
-                        }),
-                      ] else if (dayNotes.isEmpty) ...[
-                        // Empty State for other days
+                      if (dayNotes.isEmpty) ...[
+                        // Empty State for days with no notes
                         Center(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 32.0),

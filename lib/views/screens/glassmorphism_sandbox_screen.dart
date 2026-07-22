@@ -5,6 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../widgets/glass_container.dart';
 import '../widgets/liquid_glass_dock.dart';
+import '../widgets/app_header_bar.dart';
+import '../widgets/more_options_popup.dart';
+import '../widgets/tactile_button.dart';
+import '../widgets/app_bottom_navigation_bar.dart';
 
 class GlassmorphismSandboxScreen extends StatefulWidget {
   const GlassmorphismSandboxScreen({super.key});
@@ -20,7 +24,14 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
   bool _initialized = false;
 
   // Active Tab
-  bool _showVisualsTab = true;
+  int _activeTabIndex = 0; // 0: Visuals, 1: Motion, 2: Popup Morphing
+
+  // 3. Popup Morphing State Values
+  bool _isPopupExpanded = false;
+  int _popupExpandMs = 500;
+  int _popupShrinkMs = 415;
+  String _popupExpandCurveName = 'Ease Out';
+  String _popupShrinkCurveName = 'Ease In Out';
 
   // Background and Shadow Style selection
   String _bgType = 'Image';
@@ -562,6 +573,52 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
             ),
           ),
 
+          // 4b. MoreOptions Live Morph Test Pill (Floating in top-right)
+          Positioned(
+            top: 50,
+            right: 20,
+            child: SafeArea(
+              child: SizedBox(
+                width: 200,
+                height: 120,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    AppHeaderBar(
+                      title: '',
+                      isExpanded: _isPopupExpanded,
+                      expandedWidth: 192.0,
+                      expandedHeight: 100.0,
+                      expandDuration: Duration(milliseconds: _popupExpandMs),
+                      shrinkDuration: Duration(milliseconds: _popupShrinkMs),
+                      expandCurve: _getCurveByName(_popupExpandCurveName),
+                      shrinkCurve: _getCurveByName(_popupShrinkCurveName),
+                      expandedChild: MoreOptionsPopup(
+                        onDeleteData: () => setState(() => _isPopupExpanded = false),
+                        onRefresh: () => setState(() => _isPopupExpanded = false),
+                      ),
+                      rightChild: TactileButton(
+                        useAppleSpring: true,
+                        onTap: () => setState(() => _isPopupExpanded = !_isPopupExpanded),
+                        child: const SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: Center(
+                            child: Icon(
+                              Icons.more_horiz_rounded,
+                              size: 22,
+                              color: Color(0xFF1C1C1E),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
           // 5. Dual Settings Panel (Bottom Docked)
           Positioned(
             left: 0,
@@ -626,32 +683,45 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                           children: [
                             // Tab Headers Selection
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
                               child: Row(
                                 children: [
                                   Expanded(
                                     child: TextButton(
                                       style: TextButton.styleFrom(
-                                        backgroundColor: _showVisualsTab ? const Color(0xFFFFA322) : Colors.black12,
-                                        foregroundColor: _showVisualsTab ? Colors.white : Colors.black87,
-                                        padding: const EdgeInsets.symmetric(vertical: 10),
+                                        backgroundColor: _activeTabIndex == 0 ? const Color(0xFFFFA322) : Colors.black12,
+                                        foregroundColor: _activeTabIndex == 0 ? Colors.white : Colors.black87,
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                       ),
-                                      onPressed: () => setState(() => _showVisualsTab = true),
-                                      child: Text('Visual Style', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
+                                      onPressed: () => setState(() => _activeTabIndex = 0),
+                                      child: Text('Visuals', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 6),
                                   Expanded(
                                     child: TextButton(
                                       style: TextButton.styleFrom(
-                                        backgroundColor: !_showVisualsTab ? const Color(0xFFFFA322) : Colors.black12,
-                                        foregroundColor: !_showVisualsTab ? Colors.white : Colors.black87,
-                                        padding: const EdgeInsets.symmetric(vertical: 10),
+                                        backgroundColor: _activeTabIndex == 1 ? const Color(0xFFFFA322) : Colors.black12,
+                                        foregroundColor: _activeTabIndex == 1 ? Colors.white : Colors.black87,
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                       ),
-                                      onPressed: () => setState(() => _showVisualsTab = false),
-                                      child: Text('Motion Physics', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
+                                      onPressed: () => setState(() => _activeTabIndex = 1),
+                                      child: Text('Motion', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: _activeTabIndex == 2 ? const Color(0xFFFFA322) : Colors.black12,
+                                        foregroundColor: _activeTabIndex == 2 ? Colors.white : Colors.black87,
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () => setState(() => _activeTabIndex = 2),
+                                      child: Text('Popup Morph', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                 ],
@@ -662,7 +732,9 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                             // Active Tab Contents
                             Padding(
                               padding: const EdgeInsets.only(left: 24, right: 24, bottom: 28),
-                              child: _showVisualsTab ? _buildVisualsTab() : _buildMotionTab(),
+                              child: _activeTabIndex == 0
+                                  ? _buildVisualsTab()
+                                  : (_activeTabIndex == 1 ? _buildMotionTab() : _buildPopupMorphingTab()),
                             ),
                           ],
                         ),
@@ -1017,6 +1089,172 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
         ),
       ],
     );
+  }
+
+  Widget _buildPopupMorphingTab() {
+    final List<String> availableCurves = [
+      'Ease Out',
+      'Ease In Out',
+      'Ease Out Back',
+      'Elastic Out',
+      'Bounce Out',
+      'Ease Out Expo',
+      'Ease Out Quint',
+      'Ease Out Circ',
+      'Fast Out Slow In',
+      'Ease In Back',
+      'Slow Middle',
+      'Linear',
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Live Trigger Button
+        SizedBox(
+          width: double.infinity,
+          height: 44,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFA322),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              setState(() {
+                _isPopupExpanded = !_isPopupExpanded;
+              });
+            },
+            icon: Icon(_isPopupExpanded ? Icons.close : Icons.open_in_full, size: 18),
+            label: Text(
+              _isPopupExpanded ? 'Close Popup' : 'Expand Popup (Top Right)',
+              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Expansion Duration Slider
+        _buildSliderRow(
+          label: 'Expand Duration',
+          value: _popupExpandMs.toDouble(),
+          min: 100.0,
+          max: 1500.0,
+          displayValue: '${_popupExpandMs}ms',
+          onChanged: (val) => setState(() => _popupExpandMs = val.toInt()),
+        ),
+        const SizedBox(height: 10),
+
+        // Shrink Duration Slider
+        _buildSliderRow(
+          label: 'Shrink Duration',
+          value: _popupShrinkMs.toDouble(),
+          min: 100.0,
+          max: 1500.0,
+          displayValue: '${_popupShrinkMs}ms',
+          onChanged: (val) => setState(() => _popupShrinkMs = val.toInt()),
+        ),
+        const SizedBox(height: 14),
+
+        // Expand Curve Selector
+        Text(
+          'Expand Curve:',
+          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 28,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: availableCurves.length,
+            itemBuilder: (context, index) {
+              final curve = availableCurves[index];
+              final isSelected = _popupExpandCurveName == curve;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(curve, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  selected: isSelected,
+                  selectedColor: const Color(0xFFFFA322),
+                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  showCheckmark: false,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _popupExpandCurveName = curve);
+                    }
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // Shrink Curve Selector
+        Text(
+          'Shrink Curve:',
+          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 28,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: availableCurves.length,
+            itemBuilder: (context, index) {
+              final curve = availableCurves[index];
+              final isSelected = _popupShrinkCurveName == curve;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(curve, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  selected: isSelected,
+                  selectedColor: const Color(0xFFFFA322),
+                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  showCheckmark: false,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _popupShrinkCurveName = curve);
+                    }
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Curve _getCurveByName(String name) {
+    switch (name) {
+      case 'Ease Out':
+        return Curves.easeOutCubic;
+      case 'Ease In Out':
+        return Curves.easeInOutCubic;
+      case 'Ease Out Back':
+        return Curves.easeOutBack;
+      case 'Elastic Out':
+        return Curves.elasticOut;
+      case 'Bounce Out':
+        return Curves.bounceOut;
+      case 'Ease Out Expo':
+        return Curves.easeOutExpo;
+      case 'Ease Out Quint':
+        return Curves.easeOutQuint;
+      case 'Ease Out Circ':
+        return Curves.easeOutCirc;
+      case 'Fast Out Slow In':
+        return Curves.fastOutSlowIn;
+      case 'Ease In Back':
+        return Curves.easeInBack;
+      case 'Slow Middle':
+        return Curves.slowMiddle;
+      case 'Linear':
+        return Curves.linear;
+      default:
+        return Curves.easeOutCubic;
+    }
   }
 
   Widget _buildSliderRow({

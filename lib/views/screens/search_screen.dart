@@ -35,6 +35,7 @@ import '../../core/animations/page_transitions.dart';
 import '../../models/folder.dart';
 import '../../models/note.dart';
 import '../../providers/notes_provider.dart';
+import '../../providers/tasks_provider.dart';
 import '../../services/recent_searches_service.dart';
 import '../widgets/living_writing_experience.dart';
 import 'note_editor_screen.dart';
@@ -55,7 +56,7 @@ enum _UiState { empty, typing, results, noResults }
 // Design constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const Color _kBg          = Color(0xFFF2F2EE);
+const Color _kBg          = Color(0xFFFFFFFF);
 const Color _kInk         = Color(0xFF333333);
 const Color _kAmber       = Color(0xFFFFCC00);
 const Color _kPlaceholder = Color(0x73333333);
@@ -275,31 +276,47 @@ class _SearchScreenState extends State<SearchScreen>
 
   void _runSearch(String query) {
     if (!mounted) return;
-    final provider = Provider.of<NotesProvider>(context, listen: false);
+    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
 
     final q = query.toLowerCase();
 
     // Notes (non-deleted, non-archived)
-    final notes = provider.allActiveNotes.where((n) =>
+    final notes = notesProvider.allActiveNotes.where((n) =>
       n.title.toLowerCase().contains(q) ||
       n.previewText.toLowerCase().contains(q)
     ).toList();
 
-    // Tasks (notes containing checklists)
-    final tasks = provider.allActiveNotes.where((n) =>
+    // Standalone Tasks & Notes with checklists
+    final checklistNotes = notesProvider.allActiveNotes.where((n) =>
       (n.content.contains('- [ ]') || n.content.contains('- [x]') || n.content.contains('\u2610') || n.content.contains('\u2611')) &&
-      (n.title.toLowerCase().contains(q) ||
-       n.previewText.toLowerCase().contains(q))
+      (n.title.toLowerCase().contains(q) || n.previewText.toLowerCase().contains(q))
     ).toList();
+    
+    final standaloneTasks = tasksProvider.tasks.where((t) =>
+      t.title.toLowerCase().contains(q) || t.description.toLowerCase().contains(q)
+    ).map((t) => Note(
+      id: t.id,
+      title: t.title,
+      content: t.description,
+      noteType: 'text',
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt,
+      tags: [t.priority],
+      attachments: [],
+      colorValue: 0,
+    )).toList();
+
+    final tasks = [...checklistNotes, ...standaloneTasks];
 
     // Folders
-    final folders = provider.folders.where((f) =>
+    final folders = notesProvider.folders.where((f) =>
       f.name.toLowerCase().contains(q)
     ).toList();
 
     // Categories
     final allCats = <String>{...NotesProvider.categories};
-    for (final n in provider.allActiveNotes) {
+    for (final n in notesProvider.allActiveNotes) {
       allCats.add(n.category);
     }
     final categories = allCats.where((c) =>
