@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, debugPrint;
 import '../models/note.dart';
 import '../models/folder.dart';
+import '../models/task_item.dart';
 
 class DatabaseService {
   // Singleton pattern
@@ -15,6 +16,7 @@ class DatabaseService {
   // In-memory web fallback store
   static final List<Note> _webNotes = [];
   static final List<Folder> _webFolders = [];
+  static final List<TaskItem> _webTasks = [];
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -27,16 +29,16 @@ class DatabaseService {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'quick_notes.db');
 
-    // Open/Create the database (version 9)
+    // Open/Create the database (version 10)
     return await openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
   }
 
-  // Schema creation for clean install (version 7)
+  // Schema creation for clean install
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE notes(
@@ -77,7 +79,21 @@ class DatabaseService {
       )
     ''');
 
-    // Create indexes for version 8
+    await db.execute('''
+      CREATE TABLE tasks(
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        description TEXT,
+        dueDate TEXT,
+        priority TEXT,
+        completed INTEGER DEFAULT 0,
+        createdAt TEXT,
+        updatedAt TEXT,
+        reminderTime TEXT
+      )
+    ''');
+
+    // Create indexes for performance
     await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_folderId ON notes(folderId)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_category ON notes(category)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_createdAt ON notes(createdAt)');
@@ -85,6 +101,8 @@ class DatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_isPinned ON notes(isPinned)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_notes_reminderTime ON notes(reminderTime)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_folders_createdAt ON folders(createdAt)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_dueDate ON tasks(dueDate)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed)');
   }
 
   // Migration handling
@@ -102,24 +120,16 @@ class DatabaseService {
       await db.execute('ALTER TABLE notes ADD COLUMN reminderTime TEXT');
     }
     if (oldVersion < 4) {
-      // Add folder referencing column
       try {
         await db.execute('ALTER TABLE notes ADD COLUMN folderId TEXT');
-      } catch (e) {
-        // Column may exist from failed migrate
-      }
-      
-      // Add habit columns
+      } catch (_) {}
       try {
         await db.execute('ALTER TABLE notes ADD COLUMN isHabit INTEGER DEFAULT 0');
         await db.execute('ALTER TABLE notes ADD COLUMN habitRecurrence TEXT');
         await db.execute('ALTER TABLE notes ADD COLUMN habitStreak INTEGER DEFAULT 0');
         await db.execute('ALTER TABLE notes ADD COLUMN habitLastCompleted TEXT');
-      } catch (e) {
-        // Columns may exist from previous run
-      }
+      } catch (_) {}
 
-      // Create folders table
       await db.execute('''
         CREATE TABLE IF NOT EXISTS folders(
           id TEXT PRIMARY KEY,
@@ -132,23 +142,17 @@ class DatabaseService {
     if (oldVersion < 5) {
       try {
         await db.execute('ALTER TABLE notes ADD COLUMN isDeleted INTEGER DEFAULT 0');
-      } catch (e) {
-        // Column may exist from previous run
-      }
+      } catch (_) {}
     }
     if (oldVersion < 6) {
       try {
         await db.execute('ALTER TABLE notes ADD COLUMN previewText TEXT');
-      } catch (e) {
-        // Column may exist from previous run
-      }
+      } catch (_) {}
     }
     if (oldVersion < 7) {
       try {
         await db.execute('ALTER TABLE notes ADD COLUMN paperSettings TEXT');
-      } catch (e) {
-        // Column may exist from previous run
-      }
+      } catch (_) {}
     }
     if (oldVersion < 8) {
       try {
@@ -165,6 +169,25 @@ class DatabaseService {
       try {
         await db.execute('ALTER TABLE folders ADD COLUMN colorHex TEXT');
         await db.execute('ALTER TABLE folders ADD COLUMN sticker TEXT');
+      } catch (_) {}
+    }
+    if (oldVersion < 10) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS tasks(
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            description TEXT,
+            dueDate TEXT,
+            priority TEXT,
+            completed INTEGER DEFAULT 0,
+            createdAt TEXT,
+            updatedAt TEXT,
+            reminderTime TEXT
+          )
+        ''');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_dueDate ON tasks(dueDate)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed)');
       } catch (_) {}
     }
   }
@@ -476,24 +499,26 @@ class DatabaseService {
       return 1;
     }
     final db = await instance.database;
-    return await db.transaction((txn) async {
-      await txn.update(
-        'notes',
-        {'folderId': null},
-        where: 'folderId = ?',
-        whereArgs: [id],
-      );
-      await txn.update(
-        'folders',
-        {'parentId': null},
-        where: 'parentId = ?',
-        whereArgs: [id],
-      );
-      return await txn.delete(
-        'folders',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+    return await timedQuery('deleteFolder', () async {
+      return await db.transaction((txn) async {
+        await txn.update(
+          'notes',
+          {'folderId': null},
+          where: 'folderId = ?',
+          whereArgs: [id],
+        );
+        await txn.update(
+          'folders',
+          {'parentId': null},
+          where: 'parentId = ?',
+          whereArgs: [id],
+        );
+        return await txn.delete(
+          'folders',
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      });
     });
   }
 
@@ -512,5 +537,72 @@ class DatabaseService {
       where: 'id = ?',
       whereArgs: [folder.id],
     ));
+  }
+
+  // ── Standalone Tasks Operations ─────────────────────────────────────────────
+  Future<int> insertTask(TaskItem task) async {
+    if (kIsWeb) {
+      _webTasks.add(task);
+      return 1;
+    }
+    final db = await instance.database;
+    return await timedQuery('insertTask', () => db.insert(
+      'tasks',
+      task.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    ));
+  }
+
+  Future<int> updateTask(TaskItem task) async {
+    if (kIsWeb) {
+      final index = _webTasks.indexWhere((t) => t.id == task.id);
+      if (index != -1) {
+        _webTasks[index] = task;
+      }
+      return 1;
+    }
+    final db = await instance.database;
+    return await timedQuery('updateTask', () => db.update(
+      'tasks',
+      task.toMap(),
+      where: 'id = ?',
+      whereArgs: [task.id],
+    ));
+  }
+
+  Future<int> deleteTask(String id) async {
+    if (kIsWeb) {
+      _webTasks.removeWhere((t) => t.id == id);
+      return 1;
+    }
+    final db = await instance.database;
+    return await timedQuery('deleteTask', () => db.delete(
+      'tasks',
+      where: 'id = ?',
+      whereArgs: [id],
+    ));
+  }
+
+  Future<List<TaskItem>> getAllTasks() async {
+    if (kIsWeb) {
+      final list = List<TaskItem>.from(_webTasks);
+      list.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+      return list;
+    }
+    final db = await instance.database;
+    final List<Map<String, dynamic>> maps = await timedQuery('queryAllTasks', () => db.query(
+      'tasks',
+      orderBy: 'dueDate DESC',
+    ));
+    return maps.map((map) => TaskItem.fromMap(map)).toList();
+  }
+
+  Future<List<TaskItem>> getTasksForDate(DateTime date) async {
+    final all = await getAllTasks();
+    final target = DateTime(date.year, date.month, date.day);
+    return all.where((t) {
+      final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
+      return d.isAtSameMomentAs(target);
+    }).toList();
   }
 }
