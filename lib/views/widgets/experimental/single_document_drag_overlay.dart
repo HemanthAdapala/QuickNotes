@@ -1,7 +1,43 @@
+import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../rich_text_controller.dart';
 import '../new_single_document_editor.dart';
+
+class _ShortPressDragGestureRecognizer extends PanGestureRecognizer {
+  Timer? _pressTimer;
+  bool _hasAccepted = false;
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    _hasAccepted = false;
+    _pressTimer?.cancel();
+    _pressTimer = Timer(const Duration(milliseconds: 150), () {
+      _hasAccepted = true;
+      resolve(GestureDisposition.accepted);
+    });
+  }
+
+  @override
+  void rejectGesture(int pointer) {
+    _pressTimer?.cancel();
+    super.rejectGesture(pointer);
+  }
+
+  @override
+  void acceptGesture(int pointer) {
+    _pressTimer?.cancel();
+    super.acceptGesture(pointer);
+  }
+
+  @override
+  void dispose() {
+    _pressTimer?.cancel();
+    super.dispose();
+  }
+}
 
 class SingleDocumentDragOverlay extends StatefulWidget {
   final RichTextEditingController controller;
@@ -113,6 +149,25 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     return currentOffset.clamp(0, text.length);
   }
 
+  void _handlePanStart(DragStartDetails details) {
+    _dragStartPos = details.globalPosition;
+    FocusManager.instance.primaryFocus?.unfocus();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+    widget.onDragStateChanged?.call(true);
+    _updateSelection(details.globalPosition, details.globalPosition);
+  }
+
+  void _handlePanUpdate(DragUpdateDetails details) {
+    if (_dragStartPos != null) {
+      _updateSelection(_dragStartPos!, details.globalPosition);
+    }
+  }
+
+  void _handlePanEnd(DragEndDetails details) {
+    _dragStartPos = null;
+    widget.onDragStateChanged?.call(false);
+  }
+
   void _updateSelection(Offset startPos, Offset currentPos) {
     final startOffset = _getGlobalOffsetFromPosition(startPos);
     final endOffset = _getGlobalOffsetFromPosition(currentPos);
@@ -129,23 +184,18 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return RawGestureDetector(
       key: _overlayKey,
-      onLongPressStart: (details) {
-        _dragStartPos = details.globalPosition;
-        FocusManager.instance.primaryFocus?.unfocus();
-        SystemChannels.textInput.invokeMethod('TextInput.hide');
-        widget.onDragStateChanged?.call(true);
-        _updateSelection(details.globalPosition, details.globalPosition);
-      },
-      onLongPressMoveUpdate: (details) {
-        if (_dragStartPos != null) {
-          _updateSelection(_dragStartPos!, details.globalPosition);
-        }
-      },
-      onLongPressEnd: (details) {
-        _dragStartPos = null;
-        widget.onDragStateChanged?.call(false);
+      gestures: {
+        _ShortPressDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<_ShortPressDragGestureRecognizer>(
+          () => _ShortPressDragGestureRecognizer(),
+          (_ShortPressDragGestureRecognizer instance) {
+            instance
+              ..onStart = _handlePanStart
+              ..onUpdate = _handlePanUpdate
+              ..onEnd = _handlePanEnd;
+          },
+        ),
       },
       behavior: HitTestBehavior.translucent,
       child: CustomPaint(
