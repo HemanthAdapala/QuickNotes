@@ -2241,27 +2241,25 @@ class RangeTextEditingController extends TextEditingController {
 
 
   void _syncBackingValue() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      int base = _localSelection.baseOffset;
-      int extent = _localSelection.extentOffset;
-      final prefixOffset = _hasCheckboxPrefix(_lastKnownText) ? 1 : 0;
-      if (base < prefixOffset || base > _lastKnownText.length) {
-        base = base.clamp(prefixOffset, _lastKnownText.length);
-      }
-      if (extent < prefixOffset || extent > _lastKnownText.length) {
-        extent = extent.clamp(prefixOffset, _lastKnownText.length);
-      }
-      final clamped = _localSelection.copyWith(
-        baseOffset: base,
-        extentOffset: extent,
-      );
+    int base = _localSelection.baseOffset;
+    int extent = _localSelection.extentOffset;
+    final prefixOffset = _hasCheckboxPrefix(_lastKnownText) ? 1 : 0;
+    if (base < prefixOffset || base > _lastKnownText.length) {
+      base = base.clamp(prefixOffset, _lastKnownText.length);
+    }
+    if (extent < prefixOffset || extent > _lastKnownText.length) {
+      extent = extent.clamp(prefixOffset, _lastKnownText.length);
+    }
+    final clamped = _localSelection.copyWith(
+      baseOffset: base,
+      extentOffset: extent,
+    );
 
-      super.value = TextEditingValue(
-        text: _lastKnownText,
-        selection: clamped,
-        composing: TextRange.empty,
-      );
-    });
+    super.value = TextEditingValue(
+      text: _lastKnownText,
+      selection: clamped,
+      composing: TextRange.empty,
+    );
   }
 
   void _onParentChanged() {
@@ -2325,14 +2323,33 @@ class RangeTextEditingController extends TextEditingController {
     if (parentSel.isValid && range.isValid && range.start >= 0) {
       final start = range.start;
       final end = range.end;
-      if (parentSel.start >= start && parentSel.end <= end) {
-        final localBase = parentSel.baseOffset - start;
-        final localExtent = parentSel.extentOffset - start;
-        final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
-        _localSelection = TextSelection(
-          baseOffset: localBase < prefixOffset ? prefixOffset : localBase,
-          extentOffset: localExtent < prefixOffset ? prefixOffset : localExtent,
-        );
+
+      if (parentSel.isCollapsed) {
+        if (parentSel.baseOffset >= start && parentSel.baseOffset <= end) {
+          final localOffset = parentSel.baseOffset - start;
+          final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
+          final clamped = localOffset < prefixOffset ? prefixOffset : localOffset;
+          _localSelection = TextSelection.collapsed(offset: clamped);
+        }
+      } else {
+        final selStart = parentSel.start;
+        final selEnd = parentSel.end;
+        if (selEnd >= start && selStart <= end) {
+          final clampedStart = selStart.clamp(start, end);
+          final clampedEnd = selEnd.clamp(start, end);
+          final isBackwards = parentSel.baseOffset > parentSel.extentOffset;
+
+          final localBase = (isBackwards ? clampedEnd : clampedStart) - start;
+          final localExtent = (isBackwards ? clampedStart : clampedEnd) - start;
+          final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
+
+          _localSelection = TextSelection(
+            baseOffset: localBase < prefixOffset ? prefixOffset : localBase,
+            extentOffset: localExtent < prefixOffset ? prefixOffset : localExtent,
+          );
+        } else {
+          _localSelection = const TextSelection.collapsed(offset: 0);
+        }
       }
     }
   }

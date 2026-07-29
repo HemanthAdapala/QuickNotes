@@ -90,7 +90,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     if (_dragStartPos == null) return;
 
     final distance = (event.position - _dragStartPos!).distance;
-    if (distance > 15.0) {
+    if (distance > 5.0) {
       final startOffset = _getGlobalOffsetFromPosition(_dragStartPos!);
       final endOffset = _getGlobalOffsetFromPosition(event.position);
 
@@ -101,6 +101,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
       if (widget.controller.selection != newSelection) {
         widget.controller.selection = newSelection;
+        widget.controller.notifyListeners();
       }
     }
   }
