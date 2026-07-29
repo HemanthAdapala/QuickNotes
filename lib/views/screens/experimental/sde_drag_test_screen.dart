@@ -16,6 +16,7 @@ class _SDEDragTestScreenState extends State<SDEDragTestScreen> {
   late final RichTextEditingController _controller;
   final FocusNode _contentFocusNode = FocusNode();
   final GlobalKey<NewSingleDocumentEditorState> _sdeKey = GlobalKey<NewSingleDocumentEditorState>();
+  final ScrollController _scrollController = ScrollController();
   bool _isDraggingSelection = false;
 
   static const String _sampleContent = '''# Multiline Drag Selection Test Page
@@ -69,6 +70,7 @@ Dragging your finger across these paragraphs will highlight text across multiple
   void dispose() {
     _controller.dispose();
     _contentFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -98,6 +100,7 @@ Dragging your finger across these paragraphs will highlight text across multiple
       ),
       body: SafeArea(
         child: SingleChildScrollView(
+          controller: _scrollController,
           physics: _isDraggingSelection
               ? const NeverScrollableScrollPhysics()
               : const BouncingScrollPhysics(),
@@ -137,6 +140,7 @@ Dragging your finger across these paragraphs will highlight text across multiple
               SingleDocumentDragOverlay(
                 controller: _controller,
                 sdeKey: _sdeKey,
+                scrollController: _scrollController,
                 onDragStateChanged: (isDragging) {
                   setState(() {
                     _isDraggingSelection = isDragging;

@@ -7,15 +7,12 @@ import '../new_single_document_editor.dart';
 
 class _ShortPressDragGestureRecognizer extends PanGestureRecognizer {
   Timer? _pressTimer;
-  bool _hasAccepted = false;
 
   @override
   void addAllowedPointer(PointerDownEvent event) {
     super.addAllowedPointer(event);
-    _hasAccepted = false;
     _pressTimer?.cancel();
     _pressTimer = Timer(const Duration(milliseconds: 150), () {
-      _hasAccepted = true;
       resolve(GestureDisposition.accepted);
     });
   }
@@ -44,6 +41,7 @@ class SingleDocumentDragOverlay extends StatefulWidget {
   final GlobalKey<NewSingleDocumentEditorState> sdeKey;
   final Widget child;
   final ValueChanged<bool>? onDragStateChanged;
+  final ScrollController? scrollController;
 
   const SingleDocumentDragOverlay({
     super.key,
@@ -51,6 +49,7 @@ class SingleDocumentDragOverlay extends StatefulWidget {
     required this.sdeKey,
     required this.child,
     this.onDragStateChanged,
+    this.scrollController,
   });
 
   @override
@@ -59,6 +58,8 @@ class SingleDocumentDragOverlay extends StatefulWidget {
 
 class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   Offset? _dragStartPos;
+  Offset? _lastCurrentPos;
+  Timer? _autoScrollTimer;
   final GlobalKey _overlayKey = GlobalKey();
 
   @override
@@ -69,6 +70,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
   @override
   void dispose() {
+    _stopAutoScroll();
     widget.controller.removeListener(_onControllerChanged);
     super.dispose();
   }
@@ -151,6 +153,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
   void _handlePanStart(DragStartDetails details) {
     _dragStartPos = details.globalPosition;
+    _lastCurrentPos = details.globalPosition;
     FocusManager.instance.primaryFocus?.unfocus();
     SystemChannels.textInput.invokeMethod('TextInput.hide');
     widget.onDragStateChanged?.call(true);
@@ -159,13 +162,61 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
   void _handlePanUpdate(DragUpdateDetails details) {
     if (_dragStartPos != null) {
+      _lastCurrentPos = details.globalPosition;
       _updateSelection(_dragStartPos!, details.globalPosition);
+      _startAutoScrollIfNeeded(details.globalPosition);
     }
   }
 
   void _handlePanEnd(DragEndDetails details) {
     _dragStartPos = null;
+    _lastCurrentPos = null;
+    _stopAutoScroll();
     widget.onDragStateChanged?.call(false);
+  }
+
+  void _startAutoScrollIfNeeded(Offset currentPos) {
+    final scrollController = widget.scrollController;
+    if (scrollController == null || !scrollController.hasClients) return;
+
+    final mediaQuery = MediaQuery.of(context);
+    final screenHeight = mediaQuery.size.height;
+    final dy = currentPos.dy;
+
+    const double scrollEdgeThreshold = 80.0;
+    double scrollDelta = 0;
+
+    if (dy > screenHeight - scrollEdgeThreshold) {
+      final ratio = ((dy - (screenHeight - scrollEdgeThreshold)) / scrollEdgeThreshold).clamp(0.1, 1.0);
+      scrollDelta = 12.0 * ratio;
+    } else if (dy < scrollEdgeThreshold) {
+      final ratio = ((scrollEdgeThreshold - dy) / scrollEdgeThreshold).clamp(0.1, 1.0);
+      scrollDelta = -12.0 * ratio;
+    }
+
+    if (scrollDelta != 0) {
+      if (_autoScrollTimer == null || !_autoScrollTimer!.isActive) {
+        _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+          if (_dragStartPos != null && _lastCurrentPos != null && scrollController.hasClients) {
+            final newOffset = (scrollController.offset + scrollDelta).clamp(
+              0.0,
+              scrollController.position.maxScrollExtent,
+            );
+            if (newOffset != scrollController.offset) {
+              scrollController.jumpTo(newOffset);
+              _updateSelection(_dragStartPos!, _lastCurrentPos!);
+            }
+          }
+        });
+      }
+    } else {
+      _stopAutoScroll();
+    }
+  }
+
+  void _stopAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = null;
   }
 
   void _updateSelection(Offset startPos, Offset currentPos) {
