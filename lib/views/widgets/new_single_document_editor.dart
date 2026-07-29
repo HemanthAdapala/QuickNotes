@@ -682,6 +682,7 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       readOnly: widget.readOnly,
       showCursor: !widget.readOnly,
       enableInteractiveSelection: true,
+      selectionControls: widget.readOnly ? EmptyTextSelectionControls() : null,
       maxLines: null,
       keyboardType: TextInputType.multiline,
       scrollPhysics: const NeverScrollableScrollPhysics(),

@@ -356,9 +356,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
   void _handleTapDown(TapDownDetails details) {
     if (widget.isSelectionMode) {
-      if (widget.controller.selection.isValid && !widget.controller.selection.isCollapsed) {
-        widget.controller.selection = const TextSelection.collapsed(offset: 0);
-      }
+      widget.controller.selection = const TextSelection.collapsed(offset: 0);
     }
   }
 
