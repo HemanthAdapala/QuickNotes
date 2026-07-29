@@ -7,6 +7,7 @@ abstract class TasksRepository {
   Future<int> insertTask(TaskItem task);
   Future<int> updateTask(TaskItem task);
   Future<int> deleteTask(String id);
+  Future<int> generateUniqueNotificationId();
 }
 
 class SqliteTasksRepository implements TasksRepository {
@@ -38,5 +39,10 @@ class SqliteTasksRepository implements TasksRepository {
   @override
   Future<int> deleteTask(String id) async {
     return await _dbService.deleteTask(id);
+  }
+
+  @override
+  Future<int> generateUniqueNotificationId() async {
+    return await _dbService.generateUniqueNotificationId();
   }
 }
