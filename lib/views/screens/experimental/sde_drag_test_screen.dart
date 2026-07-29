@@ -15,6 +15,7 @@ class _SDEDragTestScreenState extends State<SDEDragTestScreen> {
   late final RichTextEditingController _controller;
   final FocusNode _contentFocusNode = FocusNode();
   final GlobalKey<NewSingleDocumentEditorState> _sdeKey = GlobalKey<NewSingleDocumentEditorState>();
+  bool _isDraggingSelection = false;
 
   static const String _sampleContent = '''# Multiline Drag Selection Test Page
 
@@ -69,6 +70,9 @@ Here is paragraph 2 with multiple words and formatting to verify seamless select
       ),
       body: SafeArea(
         child: SingleChildScrollView(
+          physics: _isDraggingSelection
+              ? const NeverScrollableScrollPhysics()
+              : const BouncingScrollPhysics(),
           padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,6 +101,11 @@ Here is paragraph 2 with multiple words and formatting to verify seamless select
               SingleDocumentDragOverlay(
                 controller: _controller,
                 sdeKey: _sdeKey,
+                onDragStateChanged: (isDragging) {
+                  setState(() {
+                    _isDraggingSelection = isDragging;
+                  });
+                },
                 child: NewSingleDocumentEditor(
                   key: _sdeKey,
                   controller: _controller,

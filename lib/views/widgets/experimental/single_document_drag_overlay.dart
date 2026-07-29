@@ -1,17 +1,28 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../rich_text_controller.dart';
 import '../new_single_document_editor.dart';
+
+class _EagerPanGestureRecognizer extends PanGestureRecognizer {
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    resolve(GestureDisposition.accepted);
+  }
+}
 
 class SingleDocumentDragOverlay extends StatefulWidget {
   final RichTextEditingController controller;
   final GlobalKey<NewSingleDocumentEditorState> sdeKey;
   final Widget child;
+  final ValueChanged<bool>? onDragStateChanged;
 
   const SingleDocumentDragOverlay({
     super.key,
     required this.controller,
     required this.sdeKey,
     required this.child,
+    this.onDragStateChanged,
   });
 
   @override
@@ -101,17 +112,18 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     return currentOffset.clamp(0, text.length);
   }
 
-  void _handlePointerDown(PointerDownEvent event) {
-    _dragStartPos = event.position;
+  void _handlePanStart(DragStartDetails details) {
+    _dragStartPos = details.globalPosition;
+    widget.onDragStateChanged?.call(true);
   }
 
-  void _handlePointerMove(PointerMoveEvent event) {
+  void _handlePanUpdate(DragUpdateDetails details) {
     if (_dragStartPos == null) return;
 
-    final distance = (event.position - _dragStartPos!).distance;
+    final distance = (details.globalPosition - _dragStartPos!).distance;
     if (distance > 5.0) {
       final startOffset = _getGlobalOffsetFromPosition(_dragStartPos!);
-      final endOffset = _getGlobalOffsetFromPosition(event.position);
+      final endOffset = _getGlobalOffsetFromPosition(details.globalPosition);
 
       final newSelection = TextSelection(
         baseOffset: startOffset,
@@ -124,17 +136,26 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     }
   }
 
-  void _handlePointerUp(PointerUpEvent event) {
+  void _handlePanEnd(DragEndDetails details) {
     _dragStartPos = null;
+    widget.onDragStateChanged?.call(false);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
+    return RawGestureDetector(
       key: _overlayKey,
-      onPointerDown: _handlePointerDown,
-      onPointerMove: _handlePointerMove,
-      onPointerUp: _handlePointerUp,
+      gestures: {
+        _EagerPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<_EagerPanGestureRecognizer>(
+          () => _EagerPanGestureRecognizer(),
+          (_EagerPanGestureRecognizer instance) {
+            instance
+              ..onStart = _handlePanStart
+              ..onUpdate = _handlePanUpdate
+              ..onEnd = _handlePanEnd;
+          },
+        ),
+      },
       behavior: HitTestBehavior.translucent,
       child: CustomPaint(
         foregroundPainter: _SDESelectionHighlightPainter(
@@ -174,7 +195,7 @@ class _SDESelectionHighlightPainter extends CustomPainter {
     final selEnd = selection.end;
 
     final paint = Paint()
-      ..color = const Color(0x403B82F6) // Modern semi-transparent primary blue
+      ..color = const Color(0x503B82F6)
       ..style = PaintingStyle.fill;
 
     final text = controller.text;
@@ -185,7 +206,7 @@ class _SDESelectionHighlightPainter extends CustomPainter {
       final lineLength = lines[segmentIndex].length;
       final segStart = currentGlobalOffset;
       final segEnd = segStart + lineLength;
-      currentGlobalOffset = segEnd + 1; // +1 for newline
+      currentGlobalOffset = segEnd + 1;
 
       if (selEnd >= segStart && selStart <= segEnd) {
         final focusNode = sdeState.focusNodes[segmentIndex];
@@ -216,24 +237,27 @@ class _SDESelectionHighlightPainter extends CustomPainter {
             );
             final List<TextBox> boxes = renderEditable.getBoxesForSelection(localSel);
 
-            for (final box in boxes) {
-              final Rect rect = Rect.fromLTRB(
-                localTopLeft.dx + box.left,
-                localTopLeft.dy + box.top,
-                localTopLeft.dx + box.right,
-                localTopLeft.dy + box.bottom,
-              );
-              final RRect rrect = RRect.fromRectAndRadius(rect, const Radius.circular(4));
+            if (boxes.isNotEmpty) {
+              for (final box in boxes) {
+                final Rect rect = Rect.fromLTRB(
+                  localTopLeft.dx + box.left,
+                  localTopLeft.dy + box.top,
+                  localTopLeft.dx + box.right,
+                  localTopLeft.dy + box.bottom,
+                );
+                final RRect rrect = RRect.fromRectAndRadius(rect, const Radius.circular(3));
+                canvas.drawRRect(rrect, paint);
+              }
+            } else {
+              final RRect rrect = RRect.fromRectAndRadius(boxRect, const Radius.circular(3));
               canvas.drawRRect(rrect, paint);
             }
           } catch (_) {
-            // Fallback: draw full line highlight box if RenderEditable boxes fail
-            final RRect rrect = RRect.fromRectAndRadius(boxRect, const Radius.circular(4));
+            final RRect rrect = RRect.fromRectAndRadius(boxRect, const Radius.circular(3));
             canvas.drawRRect(rrect, paint);
           }
         } else {
-          // Fallback: draw line box
-          final RRect rrect = RRect.fromRectAndRadius(boxRect, const Radius.circular(4));
+          final RRect rrect = RRect.fromRectAndRadius(boxRect, const Radius.circular(3));
           canvas.drawRRect(rrect, paint);
         }
       }
