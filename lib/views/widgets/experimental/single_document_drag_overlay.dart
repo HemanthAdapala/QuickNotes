@@ -5,11 +5,52 @@ import 'package:flutter/services.dart';
 import '../rich_text_controller.dart';
 import '../new_single_document_editor.dart';
 
-class _EagerPanGestureRecognizer extends PanGestureRecognizer {
+class _LongPressDragGestureRecognizer extends PanGestureRecognizer {
+  Timer? _pressTimer;
+  bool _isLongPressAccepted = false;
+  Offset? _initialPosition;
+
   @override
   void addAllowedPointer(PointerDownEvent event) {
     super.addAllowedPointer(event);
-    resolve(GestureDisposition.accepted);
+    _isLongPressAccepted = false;
+    _initialPosition = event.position;
+    _pressTimer?.cancel();
+    _pressTimer = Timer(const Duration(milliseconds: 220), () {
+      _isLongPressAccepted = true;
+      HapticFeedback.selectionClick();
+      resolve(GestureDisposition.accepted);
+    });
+  }
+
+  @override
+  void handleEvent(PointerEvent event) {
+    if (event is PointerMoveEvent && !_isLongPressAccepted && _initialPosition != null) {
+      final delta = (event.position - _initialPosition!).distance;
+      if (delta > 10.0) {
+        _pressTimer?.cancel();
+        resolve(GestureDisposition.rejected);
+      }
+    }
+    super.handleEvent(event);
+  }
+
+  @override
+  void rejectGesture(int pointer) {
+    _pressTimer?.cancel();
+    super.rejectGesture(pointer);
+  }
+
+  @override
+  void acceptGesture(int pointer) {
+    _pressTimer?.cancel();
+    super.acceptGesture(pointer);
+  }
+
+  @override
+  void dispose() {
+    _pressTimer?.cancel();
+    super.dispose();
   }
 }
 
@@ -230,9 +271,9 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     return RawGestureDetector(
       key: _overlayKey,
       gestures: {
-        _EagerPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<_EagerPanGestureRecognizer>(
-          () => _EagerPanGestureRecognizer(),
-          (_EagerPanGestureRecognizer instance) {
+        _LongPressDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<_LongPressDragGestureRecognizer>(
+          () => _LongPressDragGestureRecognizer(),
+          (_LongPressDragGestureRecognizer instance) {
             instance
               ..onStart = _handlePanStart
               ..onUpdate = _handlePanUpdate
@@ -284,6 +325,10 @@ class _SDESelectionHighlightPainter extends CustomPainter {
 
     final handlePaint = Paint()
       ..color = const Color(0xFF2563EB) // Solid primary drag handle blue
+      ..style = PaintingStyle.fill;
+
+    final handleInnerPaint = Paint()
+      ..color = Colors.white
       ..style = PaintingStyle.fill;
 
     final text = controller.text;
@@ -361,9 +406,11 @@ class _SDESelectionHighlightPainter extends CustomPainter {
 
     if (startHandlePos != null) {
       canvas.drawCircle(startHandlePos, 6, handlePaint);
+      canvas.drawCircle(startHandlePos, 2.5, handleInnerPaint);
     }
     if (endHandlePos != null) {
       canvas.drawCircle(endHandlePos, 6, handlePaint);
+      canvas.drawCircle(endHandlePos, 2.5, handleInnerPaint);
     }
   }
 
