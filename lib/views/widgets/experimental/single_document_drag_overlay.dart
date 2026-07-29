@@ -83,6 +83,8 @@ class SingleDocumentDragOverlay extends StatefulWidget {
 class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   Offset? _dragStartPos;
   int? _dragStartOffset;
+  int? _initialWordStart;
+  int? _initialWordEnd;
   Offset? _lastCurrentPos;
   Timer? _autoScrollTimer;
   final GlobalKey _overlayKey = GlobalKey();
@@ -154,7 +156,12 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
           try {
             final dynamic editable = renderEditable;
             final editableLocalPos = renderEditable.globalToLocal(globalPosition);
-            final textPosition = editable.getPositionForPoint(editableLocalPos);
+            final Size editableSize = renderEditable.size;
+            final Offset clampedLocalPos = Offset(
+              editableLocalPos.dx.clamp(0.0, editableSize.width),
+              editableLocalPos.dy.clamp(0.0, editableSize.height),
+            );
+            final textPosition = editable.getPositionForPoint(clampedLocalPos);
             final localDisplayedOffset = textPosition.offset;
 
             final int rawOffsetInLine = (localDisplayedOffset + prefixLen).clamp(0, rawLineLen);
@@ -236,7 +243,10 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     final rawOffset = _getGlobalOffsetFromPosition(position);
     final wordRange = _getWordBoundaryAtOffset(rawOffset);
 
+    _initialWordStart = wordRange.start;
+    _initialWordEnd = wordRange.end;
     _dragStartOffset = wordRange.start;
+
     final initialSelection = TextSelection(
       baseOffset: wordRange.start,
       extentOffset: wordRange.end,
@@ -265,6 +275,8 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     if (!widget.isSelectionMode) return;
     _dragStartPos = null;
     _dragStartOffset = null;
+    _initialWordStart = null;
+    _initialWordEnd = null;
     _lastCurrentPos = null;
     _stopAutoScroll();
     widget.onDragStateChanged?.call(false);
@@ -315,11 +327,26 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   }
 
   void _updateSelectionWithStartOffset(int startOffset, Offset currentPos) {
-    final endOffset = _getGlobalOffsetFromPosition(currentPos);
+    if (_initialWordStart == null || _initialWordEnd == null) return;
+    final currentOffset = _getGlobalOffsetFromPosition(currentPos);
+
+    int base;
+    int extent;
+
+    if (currentOffset > _initialWordEnd!) {
+      base = _initialWordStart!;
+      extent = currentOffset;
+    } else if (currentOffset < _initialWordStart!) {
+      base = _initialWordEnd!;
+      extent = currentOffset;
+    } else {
+      base = _initialWordStart!;
+      extent = _initialWordEnd!;
+    }
 
     final newSelection = TextSelection(
-      baseOffset: startOffset,
-      extentOffset: endOffset,
+      baseOffset: base,
+      extentOffset: extent,
     );
 
     if (widget.controller.selection != newSelection) {
