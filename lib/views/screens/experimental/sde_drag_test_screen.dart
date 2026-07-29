@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/rich_text_controller.dart';
 import '../../widgets/new_single_document_editor.dart';
@@ -90,9 +91,17 @@ Here is paragraph 2 with multiple words and formatting to verify seamless select
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Isolated Experimental Screen. Production NoteEditorScreen is 100% untouched.',
+                        'Isolated Experimental Screen. Tap anywhere here to hide keyboard.',
                         style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
                       ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        SystemChannels.textInput.invokeMethod('TextInput.hide');
+                      },
+                      icon: const Icon(Icons.keyboard_hide_rounded, size: 18),
+                      label: const Text('Hide Keyboard'),
                     ),
                   ],
                 ),

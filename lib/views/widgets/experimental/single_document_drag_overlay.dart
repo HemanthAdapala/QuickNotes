@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../rich_text_controller.dart';
 import '../new_single_document_editor.dart';
 
@@ -123,6 +124,8 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
   void _handlePanStart(DragStartDetails details) {
     _dragStartPos = details.globalPosition;
+    FocusManager.instance.primaryFocus?.unfocus();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     widget.onDragStateChanged?.call(true);
   }
 
