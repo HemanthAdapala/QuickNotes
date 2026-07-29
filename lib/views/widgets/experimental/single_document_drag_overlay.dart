@@ -86,12 +86,10 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
             final double dist = (globalPosition.dy - boxRect.center.dy).abs();
             if (dist < minDistance) {
               minDistance = dist;
-              final int segStart = _getSegmentStartOffset(segmentIndex);
               if (globalPosition.dy < boxRect.top) {
-                closestOffset = segStart;
+                closestOffset = _getSegmentStartOffset(segmentIndex);
               } else {
-                final textLength = widget.controller.text.length;
-                closestOffset = (segStart + 50).clamp(0, textLength).toInt();
+                closestOffset = _getSegmentEndOffset(segmentIndex);
               }
             }
           }
@@ -112,6 +110,17 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     return currentOffset.clamp(0, text.length);
   }
 
+  int _getSegmentEndOffset(int segmentIndex) {
+    final text = widget.controller.text;
+    final lines = text.split('\n');
+    int currentOffset = 0;
+    for (int i = 0; i < lines.length && i <= segmentIndex; i++) {
+      currentOffset += lines[i].length;
+      if (i < segmentIndex) currentOffset += 1;
+    }
+    return currentOffset.clamp(0, text.length);
+  }
+
   void _handlePanStart(DragStartDetails details) {
     _dragStartPos = details.globalPosition;
     widget.onDragStateChanged?.call(true);
@@ -121,7 +130,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     if (_dragStartPos == null) return;
 
     final distance = (details.globalPosition - _dragStartPos!).distance;
-    if (distance > 5.0) {
+    if (distance > 3.0) {
       final startOffset = _getGlobalOffsetFromPosition(_dragStartPos!);
       final endOffset = _getGlobalOffsetFromPosition(details.globalPosition);
 
@@ -195,12 +204,19 @@ class _SDESelectionHighlightPainter extends CustomPainter {
     final selEnd = selection.end;
 
     final paint = Paint()
-      ..color = const Color(0x503B82F6)
+      ..color = const Color(0x503B82F6) // Semi-transparent selection blue
+      ..style = PaintingStyle.fill;
+
+    final handlePaint = Paint()
+      ..color = const Color(0xFF2563EB) // Solid primary drag handle blue
       ..style = PaintingStyle.fill;
 
     final text = controller.text;
     final lines = text.split('\n');
     int currentGlobalOffset = 0;
+
+    Offset? startHandlePos;
+    Offset? endHandlePos;
 
     for (int segmentIndex = 0; segmentIndex < lines.length; segmentIndex++) {
       final lineLength = lines[segmentIndex].length;
@@ -247,6 +263,11 @@ class _SDESelectionHighlightPainter extends CustomPainter {
                 );
                 final RRect rrect = RRect.fromRectAndRadius(rect, const Radius.circular(3));
                 canvas.drawRRect(rrect, paint);
+
+                if (startHandlePos == null && clampedStart == segStart + localStartOffset) {
+                  startHandlePos = Offset(rect.left, rect.bottom);
+                }
+                endHandlePos = Offset(rect.right, rect.bottom);
               }
             } else {
               final RRect rrect = RRect.fromRectAndRadius(boxRect, const Radius.circular(3));
@@ -261,6 +282,14 @@ class _SDESelectionHighlightPainter extends CustomPainter {
           canvas.drawRRect(rrect, paint);
         }
       }
+    }
+
+    // Draw handles at start & end of selection
+    if (startHandlePos != null) {
+      canvas.drawCircle(startHandlePos, 6, handlePaint);
+    }
+    if (endHandlePos != null) {
+      canvas.drawCircle(endHandlePos, 6, handlePaint);
     }
   }
 
