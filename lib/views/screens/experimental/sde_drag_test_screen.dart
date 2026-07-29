@@ -119,6 +119,7 @@ Here is paragraph 2 with multiple words and formatting to verify seamless select
                   key: _sdeKey,
                   controller: _controller,
                   focusNode: _contentFocusNode,
+                  readOnly: true,
                   textColor: textColor,
                   paperGuideHeight: 1.0,
                   formattingToolbarHeight: 50.0,

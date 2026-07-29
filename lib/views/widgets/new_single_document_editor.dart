@@ -48,6 +48,7 @@ class NewSingleDocumentEditor extends StatefulWidget {
   final double paperGuideHeight;
   final Widget Function(BuildContext, EditableTextState) contextMenuBuilder;
   final double formattingToolbarHeight;
+  final bool readOnly;
 
   const NewSingleDocumentEditor({
     super.key,
@@ -57,6 +58,7 @@ class NewSingleDocumentEditor extends StatefulWidget {
     required this.paperGuideHeight,
     required this.contextMenuBuilder,
     required this.formattingToolbarHeight,
+    this.readOnly = false,
   });
 
   @override
@@ -674,6 +676,9 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       key: key,
       controller: controller,
       focusNode: focusNode,
+      readOnly: widget.readOnly,
+      showCursor: !widget.readOnly,
+      enableInteractiveSelection: !widget.readOnly,
       maxLines: null,
       keyboardType: TextInputType.multiline,
       scrollPhysics: const NeverScrollableScrollPhysics(),
