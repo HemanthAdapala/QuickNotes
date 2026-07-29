@@ -124,31 +124,41 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     final sdeState = widget.sdeKey.currentState;
     if (sdeState == null) return widget.controller.text.length;
 
-    int closestOffset = widget.controller.text.length;
+    final text = widget.controller.text;
+    final lines = text.split('\n');
+
+    int closestOffset = text.length;
     double minDistance = double.infinity;
 
-    sdeState.focusNodes.forEach((segmentIndex, focusNode) {
+    for (int segmentIndex = 0; segmentIndex < lines.length; segmentIndex++) {
+      final focusNode = sdeState.focusNodes[segmentIndex];
+      if (focusNode == null) continue;
+
       final context = focusNode.context;
-      if (context != null) {
-        final renderBox = context.findRenderObject() as RenderBox?;
-        if (renderBox != null && renderBox.hasSize) {
-          final boxPosition = renderBox.localToGlobal(Offset.zero);
-          final boxRect = boxPosition & renderBox.size;
-          
+      if (context == null) continue;
+
+      final renderBox = context.findRenderObject() as RenderBox?;
+      if (renderBox == null || !renderBox.hasSize) continue;
+
+      final boxPosition = renderBox.localToGlobal(Offset.zero);
+      final boxRect = boxPosition & renderBox.size;
+
+      final renderEditable = _findRenderEditable(renderBox);
+      if (renderEditable != null && renderEditable is RenderBox) {
+        try {
+          final dynamic editable = renderEditable;
+          final String displayedText = editable.text?.toPlainText() ?? '';
+          final int rawLineLen = lines[segmentIndex].length;
+          final int prefixLen = (rawLineLen - displayedText.length).clamp(0, rawLineLen);
+
           if (globalPosition.dy >= boxRect.top && globalPosition.dy <= boxRect.bottom) {
-            final renderEditable = _findRenderEditable(renderBox);
-            if (renderEditable != null && renderEditable is RenderBox) {
-              try {
-                final dynamic editable = renderEditable;
-                final editableLocalPos = renderEditable.globalToLocal(globalPosition);
-                final textPosition = editable.getPositionForPoint(editableLocalPos);
-                final localOffset = textPosition.offset;
-                
-                final int segStart = _getSegmentStartOffset(segmentIndex);
-                closestOffset = (segStart + localOffset).clamp(0, widget.controller.text.length).toInt();
-                minDistance = 0;
-              } catch (_) {}
-            }
+            final editableLocalPos = renderEditable.globalToLocal(globalPosition);
+            final textPosition = editable.getPositionForPoint(editableLocalPos);
+            final localDisplayedOffset = textPosition.offset;
+
+            final int segStart = _getSegmentStartOffset(segmentIndex);
+            final int rawOffsetInLine = (localDisplayedOffset + prefixLen).clamp(0, rawLineLen);
+            return (segStart + rawOffsetInLine).clamp(0, text.length).toInt();
           } else {
             final double dist = (globalPosition.dy - boxRect.center.dy).abs();
             if (dist < minDistance) {
@@ -160,9 +170,9 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
               }
             }
           }
-        }
+        } catch (_) {}
       }
-    });
+    }
 
     return closestOffset;
   }
@@ -338,34 +348,44 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     }
   }
 
+  void _handleTap() {
+    if (widget.isSelectionMode) {
+      widget.controller.selection = const TextSelection.collapsed(offset: 0);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!widget.isSelectionMode) {
       return widget.child;
     }
 
-    return RawGestureDetector(
-      key: _overlayKey,
-      gestures: {
-        _LongPressDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<_LongPressDragGestureRecognizer>(
-          () => _LongPressDragGestureRecognizer(),
-          (_LongPressDragGestureRecognizer instance) {
-            instance
-              ..onLongPressDetected = _onLongPressDetected
-              ..onStart = _handlePanStart
-              ..onUpdate = _handlePanUpdate
-              ..onEnd = _handlePanEnd;
-          },
-        ),
-      },
+    return GestureDetector(
+      onTap: _handleTap,
       behavior: HitTestBehavior.translucent,
-      child: CustomPaint(
-        foregroundPainter: _SDESelectionHighlightPainter(
-          controller: widget.controller,
-          sdeKey: widget.sdeKey,
-          overlayKey: _overlayKey,
+      child: RawGestureDetector(
+        key: _overlayKey,
+        gestures: {
+          _LongPressDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<_LongPressDragGestureRecognizer>(
+            () => _LongPressDragGestureRecognizer(),
+            (_LongPressDragGestureRecognizer instance) {
+              instance
+                ..onLongPressDetected = _onLongPressDetected
+                ..onStart = _handlePanStart
+                ..onUpdate = _handlePanUpdate
+                ..onEnd = _handlePanEnd;
+            },
+          ),
+        },
+        behavior: HitTestBehavior.translucent,
+        child: CustomPaint(
+          foregroundPainter: _SDESelectionHighlightPainter(
+            controller: widget.controller,
+            sdeKey: widget.sdeKey,
+            overlayKey: _overlayKey,
+          ),
+          child: widget.child,
         ),
-        child: widget.child,
       ),
     );
   }
@@ -450,34 +470,39 @@ class _SDESelectionHighlightPainter extends CustomPainter {
         final clampedStart = selStart.clamp(segStart, segEnd);
         final clampedEnd = selEnd.clamp(segStart, segEnd);
 
-        final localStartOffset = clampedStart - segStart;
-        final localEndOffset = clampedEnd - segStart;
-
         final renderEditable = _findRenderEditable(renderBox);
         if (renderEditable != null && renderEditable is RenderBox) {
           try {
             final dynamic editable = renderEditable;
-            final TextSelection localSel = TextSelection(
-              baseOffset: localStartOffset,
-              extentOffset: localEndOffset,
-            );
-            final List<TextBox> boxes = editable.getBoxesForSelection(localSel);
+            final String displayedText = editable.text?.toPlainText() ?? '';
+            final int prefixLen = (lineLength - displayedText.length).clamp(0, lineLength);
 
-            if (boxes.isNotEmpty) {
-              for (final box in boxes) {
-                final Rect rect = Rect.fromLTRB(
-                  localTopLeft.dx + box.left,
-                  localTopLeft.dy + box.top,
-                  localTopLeft.dx + box.right,
-                  localTopLeft.dy + box.bottom,
-                );
-                final RRect rrect = RRect.fromRectAndRadius(rect, const Radius.circular(3));
-                canvas.drawRRect(rrect, paint);
+            final localStartOffset = (clampedStart - segStart - prefixLen).clamp(0, displayedText.length);
+            final localEndOffset = (clampedEnd - segStart - prefixLen).clamp(0, displayedText.length);
 
-                if (startHandlePos == null && clampedStart == segStart + localStartOffset) {
-                  startHandlePos = Offset(rect.left, rect.bottom);
+            if (localStartOffset <= localEndOffset) {
+              final TextSelection localSel = TextSelection(
+                baseOffset: localStartOffset,
+                extentOffset: localEndOffset,
+              );
+              final List<TextBox> boxes = editable.getBoxesForSelection(localSel);
+
+              if (boxes.isNotEmpty) {
+                for (final box in boxes) {
+                  final Rect rect = Rect.fromLTRB(
+                    localTopLeft.dx + box.left,
+                    localTopLeft.dy + box.top,
+                    localTopLeft.dx + box.right,
+                    localTopLeft.dy + box.bottom,
+                  );
+                  final RRect rrect = RRect.fromRectAndRadius(rect, const Radius.circular(3));
+                  canvas.drawRRect(rrect, paint);
+
+                  if (startHandlePos == null && localStartOffset == (clampedStart - segStart - prefixLen)) {
+                    startHandlePos = Offset(rect.left, rect.bottom);
+                  }
+                  endHandlePos = Offset(rect.right, rect.bottom);
                 }
-                endHandlePos = Offset(rect.right, rect.bottom);
               }
             }
           } catch (_) {}
