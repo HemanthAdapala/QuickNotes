@@ -18,6 +18,7 @@ class _SDEDragTestScreenState extends State<SDEDragTestScreen> {
   final GlobalKey<NewSingleDocumentEditorState> _sdeKey = GlobalKey<NewSingleDocumentEditorState>();
   final ScrollController _scrollController = ScrollController();
   bool _isDraggingSelection = false;
+  bool _isSelectionMode = true;
 
   static const String _sampleContent = '''# Multiline Drag Selection Test Page
 
@@ -64,14 +65,72 @@ Dragging your finger across these paragraphs will highlight text across multiple
     super.initState();
     _controller = RichTextEditingController();
     _controller.setMarkdown(_sampleContent);
+    _controller.addListener(_onSelectionChanged);
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_onSelectionChanged);
     _controller.dispose();
     _contentFocusNode.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onSelectionChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _copySelectedText() {
+    final selection = _controller.selection;
+    if (!selection.isValid || selection.isCollapsed) return;
+
+    final text = _controller.text;
+    final selStart = selection.start.clamp(0, text.length);
+    final selEnd = selection.end.clamp(0, text.length);
+    final selectedText = text.substring(selStart, selEnd);
+
+    Clipboard.setData(ClipboardData(text: selectedText));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('📋 Copied ${selectedText.length} characters to clipboard'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _cutSelectedText() {
+    final selection = _controller.selection;
+    if (!selection.isValid || selection.isCollapsed) return;
+
+    final text = _controller.text;
+    final selStart = selection.start.clamp(0, text.length);
+    final selEnd = selection.end.clamp(0, text.length);
+    final selectedText = text.substring(selStart, selEnd);
+
+    Clipboard.setData(ClipboardData(text: selectedText));
+
+    final chars = List<StyledChar>.from(_controller.styledChars);
+    chars.removeRange(selStart, selEnd);
+    _controller.saveUndoState();
+    _controller.styledChars = chars;
+    _controller.selection = TextSelection.collapsed(offset: selStart);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✂️ Cut ${selectedText.length} characters'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _clearSelection() {
+    _controller.selection = const TextSelection.collapsed(offset: 0);
   }
 
   @override
@@ -79,6 +138,9 @@ Dragging your finger across these paragraphs will highlight text across multiple
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? const Color(0xFFEEEEEE) : const Color(0xFF333333);
+    final hasSelection = _isSelectionMode &&
+        _controller.selection.isValid &&
+        !_controller.selection.isCollapsed;
 
     return Scaffold(
       appBar: AppBar(
@@ -98,71 +160,138 @@ Dragging your finger across these paragraphs will highlight text across multiple
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          physics: _isDraggingSelection
-              ? const NeverScrollableScrollPhysics()
-              : const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
+      bottomNavigationBar: hasSelection
+          ? SafeArea(
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber, width: 1),
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x3F000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(Icons.science_rounded, color: Colors.amber),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Isolated Experimental Screen. Tap anywhere here to hide keyboard.',
-                        style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+                    Text(
+                      '${(_controller.selection.end - _controller.selection.start).abs()} chars',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: textColor,
                       ),
                     ),
-                    TextButton.icon(
-                      onPressed: () {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                        SystemChannels.textInput.invokeMethod('TextInput.hide');
-                      },
-                      icon: const Icon(Icons.keyboard_hide_rounded, size: 18),
-                      label: const Text('Hide Keyboard'),
+                    Row(
+                      children: [
+                        TextButton.icon(
+                          onPressed: _copySelectedText,
+                          icon: const Icon(Icons.copy_rounded, size: 18),
+                          label: const Text('Copy'),
+                        ),
+                        const SizedBox(width: 4),
+                        TextButton.icon(
+                          onPressed: _cutSelectedText,
+                          icon: const Icon(Icons.content_cut_rounded, size: 18),
+                          label: const Text('Cut'),
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          onPressed: _clearSelection,
+                          icon: const Icon(Icons.close_rounded),
+                          tooltip: 'Clear Selection',
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              SingleDocumentDragOverlay(
-                controller: _controller,
-                sdeKey: _sdeKey,
-                scrollController: _scrollController,
-                onDragStateChanged: (isDragging) {
-                  setState(() {
-                    _isDraggingSelection = isDragging;
-                  });
-                },
-                child: NewSingleDocumentEditor(
-                  key: _sdeKey,
-                  controller: _controller,
-                  focusNode: _contentFocusNode,
-                  readOnly: true,
-                  textColor: textColor,
-                  paperGuideHeight: 1.0,
-                  formattingToolbarHeight: 50.0,
-                  contextMenuBuilder: (context, editableTextState) =>
-                      AdaptiveTextSelectionToolbar.buttonItems(
-                    anchors: editableTextState.contextMenuAnchors,
-                    buttonItems: editableTextState.contextMenuButtonItems,
+            )
+          : null,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SegmentedButton<bool>(
+                      segments: const [
+                        ButtonSegment<bool>(
+                          value: false,
+                          label: Text('✏️ Edit Mode'),
+                          icon: Icon(Icons.edit_note_rounded),
+                        ),
+                        ButtonSegment<bool>(
+                          value: true,
+                          label: Text('✨ Selection Mode'),
+                          icon: Icon(Icons.select_all_rounded),
+                        ),
+                      ],
+                      selected: {_isSelectionMode},
+                      onSelectionChanged: (Set<bool> newSelection) {
+                        setState(() {
+                          _isSelectionMode = newSelection.first;
+                          if (!_isSelectionMode) {
+                            _clearSelection();
+                          } else {
+                            FocusManager.instance.primaryFocus?.unfocus();
+                            SystemChannels.textInput.invokeMethod('TextInput.hide');
+                          }
+                        });
+                      },
+                    ),
                   ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: (_isSelectionMode && _isDraggingSelection)
+                    ? const NeverScrollableScrollPhysics()
+                    : const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SingleDocumentDragOverlay(
+                      controller: _controller,
+                      sdeKey: _sdeKey,
+                      scrollController: _scrollController,
+                      isSelectionMode: _isSelectionMode,
+                      onDragStateChanged: (isDragging) {
+                        setState(() {
+                          _isDraggingSelection = isDragging;
+                        });
+                      },
+                      child: NewSingleDocumentEditor(
+                        key: _sdeKey,
+                        controller: _controller,
+                        focusNode: _contentFocusNode,
+                        readOnly: _isSelectionMode,
+                        textColor: textColor,
+                        paperGuideHeight: 1.0,
+                        formattingToolbarHeight: 50.0,
+                        contextMenuBuilder: (context, editableTextState) =>
+                            AdaptiveTextSelectionToolbar.buttonItems(
+                          anchors: editableTextState.contextMenuAnchors,
+                          buttonItems: editableTextState.contextMenuButtonItems,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -5,34 +5,11 @@ import 'package:flutter/services.dart';
 import '../rich_text_controller.dart';
 import '../new_single_document_editor.dart';
 
-class _ShortPressDragGestureRecognizer extends PanGestureRecognizer {
-  Timer? _pressTimer;
-
+class _EagerPanGestureRecognizer extends PanGestureRecognizer {
   @override
   void addAllowedPointer(PointerDownEvent event) {
     super.addAllowedPointer(event);
-    _pressTimer?.cancel();
-    _pressTimer = Timer(const Duration(milliseconds: 150), () {
-      resolve(GestureDisposition.accepted);
-    });
-  }
-
-  @override
-  void rejectGesture(int pointer) {
-    _pressTimer?.cancel();
-    super.rejectGesture(pointer);
-  }
-
-  @override
-  void acceptGesture(int pointer) {
-    _pressTimer?.cancel();
-    super.acceptGesture(pointer);
-  }
-
-  @override
-  void dispose() {
-    _pressTimer?.cancel();
-    super.dispose();
+    resolve(GestureDisposition.accepted);
   }
 }
 
@@ -42,6 +19,7 @@ class SingleDocumentDragOverlay extends StatefulWidget {
   final Widget child;
   final ValueChanged<bool>? onDragStateChanged;
   final ScrollController? scrollController;
+  final bool isSelectionMode;
 
   const SingleDocumentDragOverlay({
     super.key,
@@ -50,6 +28,7 @@ class SingleDocumentDragOverlay extends StatefulWidget {
     required this.child,
     this.onDragStateChanged,
     this.scrollController,
+    this.isSelectionMode = true,
   });
 
   @override
@@ -153,6 +132,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   }
 
   void _handlePanStart(DragStartDetails details) {
+    if (!widget.isSelectionMode) return;
     _dragStartPos = details.globalPosition;
     _dragStartOffset = _getGlobalOffsetFromPosition(details.globalPosition);
     _lastCurrentPos = details.globalPosition;
@@ -167,6 +147,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   }
 
   void _handlePanUpdate(DragUpdateDetails details) {
+    if (!widget.isSelectionMode) return;
     if (_dragStartOffset != null) {
       _lastCurrentPos = details.globalPosition;
       _updateSelectionWithStartOffset(_dragStartOffset!, details.globalPosition);
@@ -175,6 +156,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   }
 
   void _handlePanEnd(DragEndDetails details) {
+    if (!widget.isSelectionMode) return;
     _dragStartPos = null;
     _dragStartOffset = null;
     _lastCurrentPos = null;
@@ -195,7 +177,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
     if (dy > screenHeight - scrollEdgeThreshold) {
       final ratio = ((dy - (screenHeight - scrollEdgeThreshold)) / scrollEdgeThreshold).clamp(0.1, 1.0);
-      scrollDelta = 35.0 * ratio; // Fast crisp auto-scroll (2100 px/sec max)
+      scrollDelta = 35.0 * ratio;
     } else if (dy < scrollEdgeThreshold) {
       final ratio = ((scrollEdgeThreshold - dy) / scrollEdgeThreshold).clamp(0.1, 1.0);
       scrollDelta = -35.0 * ratio;
@@ -241,12 +223,16 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.isSelectionMode) {
+      return widget.child;
+    }
+
     return RawGestureDetector(
       key: _overlayKey,
       gestures: {
-        _ShortPressDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<_ShortPressDragGestureRecognizer>(
-          () => _ShortPressDragGestureRecognizer(),
-          (_ShortPressDragGestureRecognizer instance) {
+        _EagerPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<_EagerPanGestureRecognizer>(
+          () => _EagerPanGestureRecognizer(),
+          (_EagerPanGestureRecognizer instance) {
             instance
               ..onStart = _handlePanStart
               ..onUpdate = _handlePanUpdate
