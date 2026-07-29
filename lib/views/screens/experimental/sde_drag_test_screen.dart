@@ -20,15 +20,42 @@ class _SDEDragTestScreenState extends State<SDEDragTestScreen> {
 
   static const String _sampleContent = '''# Multiline Drag Selection Test Page
 
-This is paragraph 1 of the experimental test harness. You can drag your finger down across these lines to test multiline selection.
+Welcome to the Single Document Editor multiline drag selection test environment. This document contains extended multiline content across various block types to allow thorough physical device testing.
 
-- [ ] Interactive checklist item 1
-- [x] Completed checklist item 2
-- [ ] Third checklist item for drag testing
+## Section 1: Executive Overview
 
-> This is a blockquote section to test dragging selection across styled quote blocks.
+QuickNotes provides a seamless note-taking experience powered by a unified 4-tier reactive architecture. Single Document Editing allows users to construct documents containing rich typography, interactive checklists, formatted headings, and embedded media.
 
-Here is paragraph 2 with multiple words and formatting to verify seamless selection behavior across line boundaries without affecting NoteEditorScreen.
+> "Simplicity is about subtracting the obvious and adding the meaningful." — John Maeda
+
+## Section 2: Action Items & Tasks
+
+Here is a list of project milestones for the upcoming sprint:
+
+- [ ] Complete continuous drag selection overlay validation on physical devices
+- [x] Integrate high-precision line boundary mapping for custom painters
+- [ ] Verify keyboard suppression and touch gesture arena isolation
+- [x] Ensure zero-disturbance guarantee for production NoteEditorScreen
+
+## Section 3: Detailed Notes & Discussion
+
+When writing long notes, maintaining smooth performance during continuous touch interactions is paramount. Touch gestures must be captured by dedicated eager gesture recognizers that resolve in favor of selection over scrolling.
+
+1. First key requirement: Smooth cross-line text highlighting
+2. Second key requirement: Zero keyboard interference during drag gestures
+3. Third key requirement: Clean handle rendering at selection boundaries
+
+### Section 3.1: Technical Architecture Highlights
+
+The editor uses sub-controllers to manage local line representations while maintaining a single backing data source. Every change in text or selection is synchronized across reactive providers without mutating underlying models unsafely.
+
+Paragraph blocks automatically format markdown prefixes into visual elements, enabling seamless bullet lists, numbered sequences, and checkable task items.
+
+> Innovation distinguishes between a leader and a follower. Keep pushing the boundaries of mobile UX performance!
+
+## Section 4: Concluding Summary
+
+Dragging your finger across these paragraphs will highlight text across multiple lines simultaneously without bringing up the soft keyboard or jumping during scroll events.
 ''';
 
   @override
