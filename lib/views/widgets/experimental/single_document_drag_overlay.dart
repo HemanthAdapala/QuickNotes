@@ -122,14 +122,14 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
           final boxRect = boxPosition & renderBox.size;
           
           if (globalPosition.dy >= boxRect.top && globalPosition.dy <= boxRect.bottom) {
-            final localPos = renderBox.globalToLocal(globalPosition);
             final textEditingContext = context as Element;
-            final editable = textEditingContext.findRenderObject();
+            final editable = textEditingContext.findRenderObject() as RenderBox?;
             
-            if (editable != null && editable.runtimeType.toString().contains('RenderEditable')) {
+            if (editable != null && editable.hasSize && editable.runtimeType.toString().contains('RenderEditable')) {
               try {
                 final dynamic renderEditable = editable;
-                final textPosition = renderEditable.getPositionForPoint(localPos);
+                final editableLocalPos = editable.globalToLocal(globalPosition);
+                final textPosition = renderEditable.getPositionForPoint(editableLocalPos);
                 final localOffset = textPosition.offset;
                 
                 final int segStart = _getSegmentStartOffset(segmentIndex);
@@ -399,7 +399,6 @@ class _SDESelectionHighlightPainter extends CustomPainter {
         if (renderBox == null || !renderBox.hasSize) continue;
 
         final localTopLeft = overlayRenderBox.globalToLocal(renderBox.localToGlobal(Offset.zero));
-        final boxRect = localTopLeft & renderBox.size;
 
         final clampedStart = selStart.clamp(segStart, segEnd);
         final clampedEnd = selEnd.clamp(segStart, segEnd);
@@ -433,17 +432,8 @@ class _SDESelectionHighlightPainter extends CustomPainter {
                 }
                 endHandlePos = Offset(rect.right, rect.bottom);
               }
-            } else {
-              final RRect rrect = RRect.fromRectAndRadius(boxRect, const Radius.circular(3));
-              canvas.drawRRect(rrect, paint);
             }
-          } catch (_) {
-            final RRect rrect = RRect.fromRectAndRadius(boxRect, const Radius.circular(3));
-            canvas.drawRRect(rrect, paint);
-          }
-        } else {
-          final RRect rrect = RRect.fromRectAndRadius(boxRect, const Radius.circular(3));
-          canvas.drawRRect(rrect, paint);
+          } catch (_) {}
         }
       }
     }
