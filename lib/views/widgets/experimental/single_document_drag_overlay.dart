@@ -106,6 +106,20 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     }
   }
 
+  RenderObject? _findRenderEditable(RenderObject? renderObject) {
+    if (renderObject == null) return null;
+    if (renderObject.runtimeType.toString().contains('RenderEditable')) {
+      return renderObject;
+    }
+    RenderObject? found;
+    renderObject.visitChildren((child) {
+      if (found == null) {
+        found = _findRenderEditable(child);
+      }
+    });
+    return found;
+  }
+
   int _getGlobalOffsetFromPosition(Offset globalPosition) {
     final sdeState = widget.sdeKey.currentState;
     if (sdeState == null) return widget.controller.text.length;
@@ -122,14 +136,12 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
           final boxRect = boxPosition & renderBox.size;
           
           if (globalPosition.dy >= boxRect.top && globalPosition.dy <= boxRect.bottom) {
-            final textEditingContext = context as Element;
-            final editable = textEditingContext.findRenderObject() as RenderBox?;
-            
-            if (editable != null && editable.hasSize && editable.runtimeType.toString().contains('RenderEditable')) {
+            final renderEditable = _findRenderEditable(renderBox);
+            if (renderEditable != null && renderEditable is RenderBox) {
               try {
-                final dynamic renderEditable = editable;
-                final editableLocalPos = editable.globalToLocal(globalPosition);
-                final textPosition = renderEditable.getPositionForPoint(editableLocalPos);
+                final dynamic editable = renderEditable;
+                final editableLocalPos = renderEditable.globalToLocal(globalPosition);
+                final textPosition = editable.getPositionForPoint(editableLocalPos);
                 final localOffset = textPosition.offset;
                 
                 final int segStart = _getSegmentStartOffset(segmentIndex);
@@ -349,6 +361,20 @@ class _SDESelectionHighlightPainter extends CustomPainter {
     required this.overlayKey,
   }) : super(repaint: controller);
 
+  RenderObject? _findRenderEditable(RenderObject? renderObject) {
+    if (renderObject == null) return null;
+    if (renderObject.runtimeType.toString().contains('RenderEditable')) {
+      return renderObject;
+    }
+    RenderObject? found;
+    renderObject.visitChildren((child) {
+      if (found == null) {
+        found = _findRenderEditable(child);
+      }
+    });
+    return found;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final selection = controller.selection;
@@ -406,15 +432,15 @@ class _SDESelectionHighlightPainter extends CustomPainter {
         final localStartOffset = clampedStart - segStart;
         final localEndOffset = clampedEnd - segStart;
 
-        final editable = (context as Element).findRenderObject();
-        if (editable != null && editable.runtimeType.toString().contains('RenderEditable')) {
+        final renderEditable = _findRenderEditable(renderBox);
+        if (renderEditable != null && renderEditable is RenderBox) {
           try {
-            final dynamic renderEditable = editable;
+            final dynamic editable = renderEditable;
             final TextSelection localSel = TextSelection(
               baseOffset: localStartOffset,
               extentOffset: localEndOffset,
             );
-            final List<TextBox> boxes = renderEditable.getBoxesForSelection(localSel);
+            final List<TextBox> boxes = editable.getBoxesForSelection(localSel);
 
             if (boxes.isNotEmpty) {
               for (final box in boxes) {
