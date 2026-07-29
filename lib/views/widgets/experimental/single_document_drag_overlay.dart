@@ -9,6 +9,7 @@ class _LongPressDragGestureRecognizer extends PanGestureRecognizer {
   Timer? _pressTimer;
   bool _isLongPressAccepted = false;
   Offset? _initialPosition;
+  void Function(Offset position)? onLongPressDetected;
 
   @override
   void addAllowedPointer(PointerDownEvent event) {
@@ -16,9 +17,12 @@ class _LongPressDragGestureRecognizer extends PanGestureRecognizer {
     _isLongPressAccepted = false;
     _initialPosition = event.position;
     _pressTimer?.cancel();
-    _pressTimer = Timer(const Duration(milliseconds: 220), () {
+    _pressTimer = Timer(const Duration(milliseconds: 200), () {
       _isLongPressAccepted = true;
-      HapticFeedback.selectionClick();
+      HapticFeedback.mediumImpact();
+      if (_initialPosition != null) {
+        onLongPressDetected?.call(_initialPosition!);
+      }
       resolve(GestureDisposition.accepted);
     });
   }
@@ -27,7 +31,7 @@ class _LongPressDragGestureRecognizer extends PanGestureRecognizer {
   void handleEvent(PointerEvent event) {
     if (event is PointerMoveEvent && !_isLongPressAccepted && _initialPosition != null) {
       final delta = (event.position - _initialPosition!).distance;
-      if (delta > 10.0) {
+      if (delta > 12.0) {
         _pressTimer?.cancel();
         resolve(GestureDisposition.rejected);
       }
@@ -172,18 +176,57 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     return currentOffset.clamp(0, text.length);
   }
 
-  void _handlePanStart(DragStartDetails details) {
+  TextRange _getWordBoundaryAtOffset(int offset) {
+    final text = widget.controller.text;
+    if (text.isEmpty) return const TextRange(start: 0, end: 0);
+    final clamped = offset.clamp(0, text.length);
+
+    int start = clamped;
+    int end = clamped;
+
+    while (start > 0 && _isWordChar(text[start - 1])) {
+      start--;
+    }
+    while (end < text.length && _isWordChar(text[end])) {
+      end++;
+    }
+
+    if (start == end) {
+      end = (start + 1).clamp(0, text.length);
+    }
+
+    return TextRange(start: start, end: end);
+  }
+
+  bool _isWordChar(String char) {
+    return RegExp(r'[a-zA-Z0-9_]').hasMatch(char);
+  }
+
+  void _onLongPressDetected(Offset position) {
     if (!widget.isSelectionMode) return;
-    _dragStartPos = details.globalPosition;
-    _dragStartOffset = _getGlobalOffsetFromPosition(details.globalPosition);
-    _lastCurrentPos = details.globalPosition;
+    _dragStartPos = position;
+    _lastCurrentPos = position;
 
     FocusManager.instance.primaryFocus?.unfocus();
     SystemChannels.textInput.invokeMethod('TextInput.hide');
     widget.onDragStateChanged?.call(true);
 
-    if (_dragStartOffset != null) {
-      _updateSelectionWithStartOffset(_dragStartOffset!, details.globalPosition);
+    final rawOffset = _getGlobalOffsetFromPosition(position);
+    final wordRange = _getWordBoundaryAtOffset(rawOffset);
+
+    _dragStartOffset = wordRange.start;
+    final initialSelection = TextSelection(
+      baseOffset: wordRange.start,
+      extentOffset: wordRange.end,
+    );
+
+    widget.controller.selection = initialSelection;
+  }
+
+  void _handlePanStart(DragStartDetails details) {
+    if (!widget.isSelectionMode) return;
+    if (_dragStartOffset == null) {
+      _onLongPressDetected(details.globalPosition);
     }
   }
 
@@ -275,6 +318,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
           () => _LongPressDragGestureRecognizer(),
           (_LongPressDragGestureRecognizer instance) {
             instance
+              ..onLongPressDetected = _onLongPressDetected
               ..onStart = _handlePanStart
               ..onUpdate = _handlePanUpdate
               ..onEnd = _handlePanEnd;
