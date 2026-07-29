@@ -73,6 +73,9 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
   final Map<int, GlobalKey> _imageKeys = {};
   int? _selectedImageGlobalIndex;
 
+  List<TextSegment> get textSegments => _segments.whereType<TextSegment>().toList();
+  RangeTextEditingController? getSegmentController(int segmentIndex) => _controllers[segmentIndex];
+
   @override
   void initState() {
     super.initState();
