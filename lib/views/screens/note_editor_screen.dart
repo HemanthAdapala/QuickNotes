@@ -562,6 +562,33 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
   }
 
+  void _focusContentArea() {
+    void requestFocusNow() {
+      if (!mounted) return;
+      if (NoteEditorScreen.useSingleDocumentEditor) {
+        _contentFocusNode.requestFocus();
+        if (_contentController.selection.start < 0) {
+          _contentController.selection = const TextSelection.collapsed(offset: 0);
+        }
+      } else if (_blocks.isNotEmpty) {
+        final firstBlock = _blocks.first;
+        final fn = _getFocusNodeOfBlock(firstBlock);
+        final ctrl = _getControllerOfBlock(firstBlock);
+        if (fn != null) {
+          fn.requestFocus();
+          if (ctrl != null && ctrl.selection.start < 0) {
+            ctrl.selection = const TextSelection.collapsed(offset: 0);
+          }
+        }
+      }
+    }
+
+    requestFocusNow();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      requestFocusNow();
+    });
+  }
+
   void _handleArrowDownAtEnd(NoteBlock block) {
     final index = _blocks.indexOf(block);
     if (index == -1 || index >= _blocks.length - 1) return;
@@ -1479,9 +1506,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     
     _titleFocusNode.addListener(() {
       if (_titleFocusNode.hasFocus) {
-        if (_isFormattingBarExpanded && !Platform.environment.containsKey('FLUTTER_TEST')) {
+        if (!_isFormattingBarExpanded) {
           setState(() {
-            _isFormattingBarExpanded = false;
+            _isFormattingBarExpanded = true;
           });
         }
       } else {
@@ -1524,16 +1551,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       void _requestInitialFocus() {
         if (!mounted) return;
         setState(() { _isPageSettled = true; });
-        if (widget.note == null && _noteType == 'text') {
-          if (NoteEditorScreen.useSingleDocumentEditor) {
-            // SDE: focus the single content field directly.
-            _contentFocusNode.requestFocus();
-          } else if (_blocks.isNotEmpty) {
-            final firstBlock = _blocks.first;
-            if (firstBlock is ParagraphBlock) {
-              firstBlock.focusNode.requestFocus();
-            }
-          }
+        if (widget.note == null) {
+          _titleFocusNode.requestFocus();
         }
       }
 
@@ -3912,10 +3931,24 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                       }
                                     }
                                     if (!isInsideSDE) {
-                                      _contentFocusNode.requestFocus();
-                                      final len = _contentController.text.length;
-                                      _contentController.selection =
-                                          TextSelection.collapsed(offset: len);
+                                      bool isInsideTitle = false;
+                                      final BuildContext? titleContext = _titleFocusNode.context;
+                                      if (titleContext != null) {
+                                        final RenderBox? box = titleContext.findRenderObject() as RenderBox?;
+                                        if (box != null && box.hasSize) {
+                                          final position = box.localToGlobal(Offset.zero);
+                                          final rect = position & box.size;
+                                          if (rect.contains(event.position)) {
+                                            isInsideTitle = true;
+                                          }
+                                        }
+                                      }
+                                      if (!isInsideTitle) {
+                                        _contentFocusNode.requestFocus();
+                                        final len = _contentController.text.length;
+                                        _contentController.selection =
+                                            TextSelection.collapsed(offset: len);
+                                      }
                                     }
                                   }
                                 }
@@ -3936,35 +3969,50 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   // Title
-                                  TextField(
-                                    controller: _titleController,
-                                    focusNode: _titleFocusNode,
-                                    maxLines: 1,
-                                    contextMenuBuilder: _buildContextMenu,
-                                    scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
-                                    style: GoogleFonts.inter(
-                                      fontSize: 24.0,
-                                      fontWeight: FontWeight.bold,
-                                      color: titleColor,
-                                      height: 1.15,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "Title",
-                                      hintStyle: GoogleFonts.inter(
+                                  Focus(
+                                    onKeyEvent: (node, event) {
+                                      if (event is KeyDownEvent &&
+                                          (event.logicalKey == LogicalKeyboardKey.enter ||
+                                           event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                                        _focusContentArea();
+                                        return KeyEventResult.handled;
+                                      }
+                                      return KeyEventResult.ignored;
+                                    },
+                                    child: TextField(
+                                      controller: _titleController,
+                                      focusNode: _titleFocusNode,
+                                      textCapitalization: TextCapitalization.sentences,
+                                      maxLines: 1,
+                                      textInputAction: TextInputAction.next,
+                                      onEditingComplete: _focusContentArea,
+                                      onSubmitted: (_) => _focusContentArea(),
+                                      contextMenuBuilder: _buildContextMenu,
+                                      scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
+                                      style: GoogleFonts.inter(
                                         fontSize: 24.0,
                                         fontWeight: FontWeight.bold,
-                                        color: titleColor.withOpacity(0.3),
+                                        color: titleColor,
                                         height: 1.15,
                                       ),
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.zero,
-                                      filled: false,
+                                      decoration: InputDecoration(
+                                        hintText: "Title",
+                                        hintStyle: GoogleFonts.inter(
+                                          fontSize: 24.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: titleColor.withOpacity(0.3),
+                                          height: 1.15,
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.zero,
+                                        filled: false,
+                                      ),
+                                      onChanged: (val) {
+                                        setState(() {
+                                          _hasChanges = true;
+                                        });
+                                      },
                                     ),
-                                    onChanged: (val) {
-                                      setState(() {
-                                        _hasChanges = true;
-                                      });
-                                    },
                                   ),
                                   const SizedBox(height: 4.0),
                                   

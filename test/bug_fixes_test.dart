@@ -2420,6 +2420,7 @@ void main() {
     });
 
     testWidgets('Sprint 11B: Italic Emoji and Normal Emoji Enter and Backspace Crash Reversion', (WidgetTester tester) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(1080, 1920));
 
       final controller = RichTextEditingController();
@@ -2537,6 +2538,8 @@ void main() {
       
       // Verify no exception was thrown and parent survived
       expect(parent.styledChars.length, 1);
+      controller.dispose();
+      parent.dispose();
     });
 
     testWidgets('Sprint 11C: Checklist editing cursor integrity & Enter split check', (WidgetTester tester) async {
