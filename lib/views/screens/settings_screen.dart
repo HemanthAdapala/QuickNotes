@@ -10,6 +10,8 @@ import '../../core/animations/page_transitions.dart';
 import 'profile_screen.dart';
 import 'glassmorphism_sandbox_screen.dart';
 
+import 'experimental/sde_drag_test_screen.dart';
+
 class SettingsScreen extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
@@ -277,6 +279,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 "General Settings",
                                 "General application preferences configured.",
                               ),
+                              showBorderBottom: true,
+                            ),
+                            _buildSettingRow(
+                              iconPath: 'assets/icons/settings-sliders.svg',
+                              title: '🧪 Test SDE Drag Selection',
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (context) => const SDEDragTestScreen()),
+                                );
+                              },
                               showBorderBottom: false,
                             ),
                           ],
