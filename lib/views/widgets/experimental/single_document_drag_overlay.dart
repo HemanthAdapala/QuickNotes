@@ -191,7 +191,27 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   TextRange _getWordBoundaryAtOffset(int offset) {
     final text = widget.controller.text;
     if (text.isEmpty) return const TextRange(start: 0, end: 0);
-    final clamped = offset.clamp(0, text.length);
+    int clamped = offset.clamp(0, text.length);
+
+    if (clamped < text.length && !_isWordChar(text[clamped])) {
+      if (clamped > 0 && _isWordChar(text[clamped - 1])) {
+        clamped--;
+      } else {
+        int right = clamped;
+        while (right < text.length && !_isWordChar(text[right])) {
+          right++;
+        }
+        if (right < text.length) {
+          clamped = right;
+        } else {
+          int left = clamped;
+          while (left > 0 && !_isWordChar(text[left - 1])) {
+            left--;
+          }
+          if (left > 0) clamped = left - 1;
+        }
+      }
+    }
 
     int start = clamped;
     int end = clamped;
@@ -203,7 +223,8 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
       end++;
     }
 
-    if (start == end) {
+    if (start == end && text.isNotEmpty) {
+      start = clamped.clamp(0, text.length - 1);
       end = (start + 1).clamp(0, text.length);
     }
 
@@ -211,7 +232,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   }
 
   bool _isWordChar(String char) {
-    return RegExp(r'[a-zA-Z0-9_]').hasMatch(char);
+    return RegExp(r'[a-zA-Z0-9_\-\u00C0-\u024F]').hasMatch(char);
   }
 
   void _onLongPressDetected(Offset position) {
@@ -465,12 +486,12 @@ class _SDESelectionHighlightPainter extends CustomPainter {
     }
 
     if (startHandlePos != null) {
-      canvas.drawCircle(startHandlePos, 6, handlePaint);
-      canvas.drawCircle(startHandlePos, 2.5, handleInnerPaint);
+      canvas.drawCircle(startHandlePos, 7, handlePaint);
+      canvas.drawCircle(startHandlePos, 3, handleInnerPaint);
     }
     if (endHandlePos != null) {
-      canvas.drawCircle(endHandlePos, 6, handlePaint);
-      canvas.drawCircle(endHandlePos, 2.5, handleInnerPaint);
+      canvas.drawCircle(endHandlePos, 7, handlePaint);
+      canvas.drawCircle(endHandlePos, 3, handleInnerPaint);
     }
   }
 
