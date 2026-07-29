@@ -58,6 +58,7 @@ class SingleDocumentDragOverlay extends StatefulWidget {
 
 class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   Offset? _dragStartPos;
+  int? _dragStartOffset;
   Offset? _lastCurrentPos;
   Timer? _autoScrollTimer;
   final GlobalKey _overlayKey = GlobalKey();
@@ -153,23 +154,29 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
   void _handlePanStart(DragStartDetails details) {
     _dragStartPos = details.globalPosition;
+    _dragStartOffset = _getGlobalOffsetFromPosition(details.globalPosition);
     _lastCurrentPos = details.globalPosition;
+
     FocusManager.instance.primaryFocus?.unfocus();
     SystemChannels.textInput.invokeMethod('TextInput.hide');
     widget.onDragStateChanged?.call(true);
-    _updateSelection(details.globalPosition, details.globalPosition);
+
+    if (_dragStartOffset != null) {
+      _updateSelectionWithStartOffset(_dragStartOffset!, details.globalPosition);
+    }
   }
 
   void _handlePanUpdate(DragUpdateDetails details) {
-    if (_dragStartPos != null) {
+    if (_dragStartOffset != null) {
       _lastCurrentPos = details.globalPosition;
-      _updateSelection(_dragStartPos!, details.globalPosition);
+      _updateSelectionWithStartOffset(_dragStartOffset!, details.globalPosition);
       _startAutoScrollIfNeeded(details.globalPosition);
     }
   }
 
   void _handlePanEnd(DragEndDetails details) {
     _dragStartPos = null;
+    _dragStartOffset = null;
     _lastCurrentPos = null;
     _stopAutoScroll();
     widget.onDragStateChanged?.call(false);
@@ -183,28 +190,28 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     final screenHeight = mediaQuery.size.height;
     final dy = currentPos.dy;
 
-    const double scrollEdgeThreshold = 80.0;
+    const double scrollEdgeThreshold = 100.0;
     double scrollDelta = 0;
 
     if (dy > screenHeight - scrollEdgeThreshold) {
       final ratio = ((dy - (screenHeight - scrollEdgeThreshold)) / scrollEdgeThreshold).clamp(0.1, 1.0);
-      scrollDelta = 12.0 * ratio;
+      scrollDelta = 35.0 * ratio; // Fast crisp auto-scroll (2100 px/sec max)
     } else if (dy < scrollEdgeThreshold) {
       final ratio = ((scrollEdgeThreshold - dy) / scrollEdgeThreshold).clamp(0.1, 1.0);
-      scrollDelta = -12.0 * ratio;
+      scrollDelta = -35.0 * ratio;
     }
 
     if (scrollDelta != 0) {
       if (_autoScrollTimer == null || !_autoScrollTimer!.isActive) {
         _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
-          if (_dragStartPos != null && _lastCurrentPos != null && scrollController.hasClients) {
+          if (_dragStartOffset != null && _lastCurrentPos != null && scrollController.hasClients) {
             final newOffset = (scrollController.offset + scrollDelta).clamp(
               0.0,
               scrollController.position.maxScrollExtent,
             );
             if (newOffset != scrollController.offset) {
               scrollController.jumpTo(newOffset);
-              _updateSelection(_dragStartPos!, _lastCurrentPos!);
+              _updateSelectionWithStartOffset(_dragStartOffset!, _lastCurrentPos!);
             }
           }
         });
@@ -219,8 +226,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     _autoScrollTimer = null;
   }
 
-  void _updateSelection(Offset startPos, Offset currentPos) {
-    final startOffset = _getGlobalOffsetFromPosition(startPos);
+  void _updateSelectionWithStartOffset(int startOffset, Offset currentPos) {
     final endOffset = _getGlobalOffsetFromPosition(currentPos);
 
     final newSelection = TextSelection(
