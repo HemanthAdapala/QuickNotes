@@ -1,16 +1,7 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../rich_text_controller.dart';
 import '../new_single_document_editor.dart';
-
-class _EagerPanGestureRecognizer extends PanGestureRecognizer {
-  @override
-  void addAllowedPointer(PointerDownEvent event) {
-    super.addAllowedPointer(event);
-    resolve(GestureDisposition.accepted);
-  }
-}
 
 class SingleDocumentDragOverlay extends StatefulWidget {
   final RichTextEditingController controller;
@@ -122,51 +113,39 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     return currentOffset.clamp(0, text.length);
   }
 
-  void _handlePanStart(DragStartDetails details) {
-    _dragStartPos = details.globalPosition;
-    FocusManager.instance.primaryFocus?.unfocus();
-    SystemChannels.textInput.invokeMethod('TextInput.hide');
-    widget.onDragStateChanged?.call(true);
-  }
+  void _updateSelection(Offset startPos, Offset currentPos) {
+    final startOffset = _getGlobalOffsetFromPosition(startPos);
+    final endOffset = _getGlobalOffsetFromPosition(currentPos);
 
-  void _handlePanUpdate(DragUpdateDetails details) {
-    if (_dragStartPos == null) return;
+    final newSelection = TextSelection(
+      baseOffset: startOffset,
+      extentOffset: endOffset,
+    );
 
-    final distance = (details.globalPosition - _dragStartPos!).distance;
-    if (distance > 3.0) {
-      final startOffset = _getGlobalOffsetFromPosition(_dragStartPos!);
-      final endOffset = _getGlobalOffsetFromPosition(details.globalPosition);
-
-      final newSelection = TextSelection(
-        baseOffset: startOffset,
-        extentOffset: endOffset,
-      );
-
-      if (widget.controller.selection != newSelection) {
-        widget.controller.selection = newSelection;
-      }
+    if (widget.controller.selection != newSelection) {
+      widget.controller.selection = newSelection;
     }
-  }
-
-  void _handlePanEnd(DragEndDetails details) {
-    _dragStartPos = null;
-    widget.onDragStateChanged?.call(false);
   }
 
   @override
   Widget build(BuildContext context) {
-    return RawGestureDetector(
+    return GestureDetector(
       key: _overlayKey,
-      gestures: {
-        _EagerPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<_EagerPanGestureRecognizer>(
-          () => _EagerPanGestureRecognizer(),
-          (_EagerPanGestureRecognizer instance) {
-            instance
-              ..onStart = _handlePanStart
-              ..onUpdate = _handlePanUpdate
-              ..onEnd = _handlePanEnd;
-          },
-        ),
+      onLongPressStart: (details) {
+        _dragStartPos = details.globalPosition;
+        FocusManager.instance.primaryFocus?.unfocus();
+        SystemChannels.textInput.invokeMethod('TextInput.hide');
+        widget.onDragStateChanged?.call(true);
+        _updateSelection(details.globalPosition, details.globalPosition);
+      },
+      onLongPressMoveUpdate: (details) {
+        if (_dragStartPos != null) {
+          _updateSelection(_dragStartPos!, details.globalPosition);
+        }
+      },
+      onLongPressEnd: (details) {
+        _dragStartPos = null;
+        widget.onDragStateChanged?.call(false);
       },
       behavior: HitTestBehavior.translucent,
       child: CustomPaint(
@@ -287,7 +266,6 @@ class _SDESelectionHighlightPainter extends CustomPainter {
       }
     }
 
-    // Draw handles at start & end of selection
     if (startHandlePos != null) {
       canvas.drawCircle(startHandlePos, 6, handlePaint);
     }
