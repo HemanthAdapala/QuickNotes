@@ -69,15 +69,15 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text(
             "New Category",
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.black),
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.black),
           ),
           content: TextField(
             controller: _categoryNameController,
             autofocus: true,
-            style: GoogleFonts.plusJakartaSans(color: Colors.black),
+            style: GoogleFonts.inter(color: Colors.black),
             decoration: InputDecoration(
               labelText: "Category Name",
-              labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF8C8987)),
+              labelStyle: GoogleFonts.inter(color: const Color(0xFF8C8987)),
               enabledBorder: const OutlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFFE6E3D2)),
               ),
@@ -209,7 +209,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                       children: [
                         Text(
                           "Category",
-                          style: GoogleFonts.playfairDisplay(
+                          style: GoogleFonts.inter(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,

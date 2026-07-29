@@ -90,7 +90,7 @@ class HabitDashboardScreen extends StatelessWidget {
                     child: Center(
                       child: Text(
                         "Habits",
-                        style: GoogleFonts.playfairDisplay(
+                        style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
                           color: theme.brightness == Brightness.dark

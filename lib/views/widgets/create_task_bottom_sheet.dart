@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../models/task_item.dart';
+import '../../models/recurrence_rule.dart';
 import '../models/calendar_task.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/tactile_button.dart';
@@ -55,9 +56,9 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
 
   late DateTime _selectedDate;
   late TimeOfDay _startTime;
-  late TimeOfDay _endTime;
 
   TaskPriority? _selectedPriority;
+  RecurrenceType? _selectedRecurrence; // null = Never
   bool _showPriorityPopup = false;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -68,24 +69,28 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       final task = widget.taskToEdit!;
       _titleController.text = task.title;
       _descController.text = task.description;
-      _selectedDate = task.dueDate;
+      _selectedDate = task.dueDate.toLocal();
       if (task.reminderTime != null) {
-        _startTime = TimeOfDay(hour: task.reminderTime!.hour, minute: task.reminderTime!.minute);
+        final localReminder = task.reminderTime!.toLocal();
+        _startTime = TimeOfDay(hour: localReminder.hour, minute: localReminder.minute);
       } else {
-        _startTime = TimeOfDay(hour: task.dueDate.hour, minute: task.dueDate.minute);
+        final localDue = task.dueDate.toLocal();
+        _startTime = TimeOfDay(hour: localDue.hour, minute: localDue.minute);
       }
-      _endTime = _startTime;
       _selectedPriority = switch (task.priority.toLowerCase()) {
         'high' => TaskPriority.red,
         'medium' => TaskPriority.yellow,
         'low' => TaskPriority.green,
         _ => TaskPriority.green,
       };
+      if (task.isRecurring) {
+        _selectedRecurrence = task.recurrence?.type;
+      }
     } else {
       _selectedDate = widget.initialDate;
-      _startTime = const TimeOfDay(hour: 0, minute: 0);
-      _endTime = const TimeOfDay(hour: 0, minute: 0);
+      _startTime = TimeOfDay.now();
       _selectedPriority = null;
+      _selectedRecurrence = null;
     }
   }
 
@@ -130,12 +135,6 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
     if (picked != null && mounted) setState(() => _startTime = picked);
   }
 
-  Future<void> _pickEndTime() async {
-    final picked =
-        await showTimePicker(context: context, initialTime: _endTime);
-    if (picked != null && mounted) setState(() => _endTime = picked);
-  }
-
   // ── Create action ──────────────────────────────────────────────────────────
   void _onCreateTapped() {
     if (_titleController.text.trim().isEmpty) return;
@@ -148,7 +147,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       _ => 'Low',
     };
 
-    final DateTime reminderDateTime = DateTime(
+    final DateTime fullDueDate = DateTime(
       _selectedDate.year,
       _selectedDate.month,
       _selectedDate.day,
@@ -158,14 +157,19 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
 
     final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
     final isEditing = widget.taskToEdit != null;
+    final recurrenceRule = _selectedRecurrence != null
+        ? RecurrenceRule(type: _selectedRecurrence!, interval: 1)
+        : null;
     
     if (isEditing) {
       final updated = widget.taskToEdit!.copyWith(
         title: _titleController.text.trim(),
         description: _descController.text.trim(),
-        dueDate: _selectedDate,
+        dueDate: fullDueDate,
         priority: priorityStr,
-        reminderTime: reminderDateTime,
+        reminderTime: fullDueDate,
+        isRecurring: _selectedRecurrence != null,
+        recurrence: recurrenceRule,
         updatedAt: DateTime.now(),
       );
       tasksProvider.updateTask(updated);
@@ -173,9 +177,11 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       tasksProvider.addTask(
         title: _titleController.text.trim(),
         description: _descController.text.trim(),
-        dueDate: _selectedDate,
+        dueDate: fullDueDate,
         priority: priorityStr,
-        reminderTime: reminderDateTime,
+        reminderTime: fullDueDate,
+        isRecurring: _selectedRecurrence != null,
+        recurrence: recurrenceRule,
       );
     }
 
@@ -222,159 +228,171 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
     final bottomPad = MediaQuery.of(context).viewPadding.bottom;
 
     return GestureDetector(
-      // Tap outside priority popup / text fields to dismiss them
       onTap: () {
         if (_showPriorityPopup) setState(() => _showPriorityPopup = false);
         FocusScope.of(context).unfocus();
       },
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          // Subtle top shadow matching the design's blur-16 spec
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x3F000000),
-              blurRadius: 16,
-              offset: Offset(0, 0),
-              spreadRadius: 0,
-            ),
-          ],
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
-        // Lift content up when keyboard is visible
-        padding: EdgeInsets.only(bottom: keyboardPad),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ── Header row ─────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-              child: Row(
-                children: [
-                  // Close — glass pill (matches other screen headers)
-                  _buildGlassPill(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.of(context).pop();
-                    },
-                    child: SvgPicture.asset(
-                      'assets/icons/calendar_cross.svg',
-                      width: 15,
-                      height: 15,
-                      colorFilter: const ColorFilter.mode(
-                        Color(0xFF1C1C1E),
-                        BlendMode.srcIn,
-                      ),
-                    ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x3F000000),
+                blurRadius: 16,
+                offset: Offset(0, 0),
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          padding: EdgeInsets.only(bottom: keyboardPad),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              const SizedBox(height: 8),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: ShapeDecoration(
+                  color: const Color(0x4C3C3C43),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2),
                   ),
+                ),
+              ),
+              const SizedBox(height: 12),
 
-                  const Spacer(),
-
-                  // Create — solid blue circle with check icon
-                  GestureDetector(
-                    onTap: _onCreateTapped,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const ShapeDecoration(
-                        color: Color(0xFF0088FF),
-                        shape: OvalBorder(),
-                      ),
-                      child: Center(
+              // Sheet Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    // Close pill button
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: ShapeDecoration(
+                          color: const Color(0x19000000),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                        ),
+                        alignment: Alignment.center,
                         child: SvgPicture.asset(
-                          'assets/icons/calendar_check.svg',
-                          width: 18,
-                          height: 18,
+                          'assets/icons/cross.svg',
+                          width: 16,
+                          height: 16,
                           colorFilter: const ColorFilter.mode(
-                            Colors.white,
+                            Color(0xFF1C1C1E),
                             BlendMode.srcIn,
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
 
-            // ── Scrollable form body ────────────────────────────────────────
-            SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPad + 24),
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Task Title ───────────────────────────────────────────
-                  _sectionLabel('Task Title'),
-                  const SizedBox(height: 8),
-                  _inputField(
-                    controller: _titleController,
-                    hint: 'Add a task title',
-                  ),
+                    const Spacer(),
 
-                  const SizedBox(height: 16),
-
-                  // ── Due Date & Time row ──────────────────────────────────
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Date column (expands to fill remaining space)
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _sectionLabel('Due Date & Time'),
-                            const SizedBox(height: 8),
-                            _dateField(),
-                          ],
+                    // Create — solid blue circle
+                    GestureDetector(
+                      onTap: _onCreateTapped,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const ShapeDecoration(
+                          color: Color(0xFF0088FF),
+                          shape: OvalBorder(),
+                        ),
+                        child: Center(
+                          child: SvgPicture.asset(
+                            'assets/icons/calendar_check.svg',
+                            width: 18,
+                            height: 18,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 5),
+                    ),
+                  ],
+                ),
+              ),
 
-                      // Start time column
-                      Column(
+              // Form body
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPad + 24),
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionLabel('Task Title'),
+                      const SizedBox(height: 8),
+                      _inputField(
+                        controller: _titleController,
+                        hint: 'Add a task title',
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _sectionLabel('Start time'),
-                          const SizedBox(height: 8),
-                          _timeField(_startTime, _pickStartTime),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _sectionLabel('Due Date'),
+                                const SizedBox(height: 8),
+                                _dateField(),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _sectionLabel('Time'),
+                              const SizedBox(height: 8),
+                              _timeField(_startTime, _pickStartTime),
+                            ],
+                          ),
                         ],
                       ),
-                      const SizedBox(width: 5),
 
-                      // End time column
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _sectionLabel('End time'),
-                          const SizedBox(height: 8),
-                          _timeField(_endTime, _pickEndTime),
-                        ],
+                      const SizedBox(height: 16),
+
+                      _sectionLabel('Task Description'),
+                      const SizedBox(height: 8),
+                      _inputField(
+                        controller: _descController,
+                        hint: 'Add details',
                       ),
+
+                      const SizedBox(height: 16),
+
+                      _prioritySection(),
+
+                      const SizedBox(height: 16),
+
+                      _recurrenceSection(),
                     ],
                   ),
-
-                  const SizedBox(height: 16),
-
-                  // ── Task Description ──────────────────────────────────────
-                  _sectionLabel('Task Description'),
-                  const SizedBox(height: 8),
-                  _inputField(
-                    controller: _descController,
-                    hint: 'Add details',
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ── Priority (popup + button) ─────────────────────────────
-                  _prioritySection(),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -707,6 +725,64 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _recurrenceSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Repeat / Recurrence'),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              _recurrenceChip(null, 'Never'),
+              const SizedBox(width: 8),
+              _recurrenceChip(RecurrenceType.daily, 'Every Day'),
+              const SizedBox(width: 8),
+              _recurrenceChip(RecurrenceType.weekly, 'Every Week'),
+              const SizedBox(width: 8),
+              _recurrenceChip(RecurrenceType.monthly, 'Every Month'),
+              const SizedBox(width: 8),
+              _recurrenceChip(RecurrenceType.yearly, 'Every Year'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _recurrenceChip(RecurrenceType? type, String label) {
+    final isSelected = _selectedRecurrence == type;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _selectedRecurrence = type;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0088FF) : const Color(0x28787880),
+          borderRadius: BorderRadius.circular(19),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF333333),
+            fontSize: 13,
+            fontFamily: 'Inter',
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
       ),
     );
   }

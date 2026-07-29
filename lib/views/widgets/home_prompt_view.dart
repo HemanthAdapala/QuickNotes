@@ -327,7 +327,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                     children: [
                       Text(
                         greeting,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           color: const Color(0xFF8E8E93),
@@ -336,7 +336,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                       const SizedBox(height: 3.0),
                       Text(
                         formattedDay,
-                        style: GoogleFonts.playfairDisplay(
+                        style: GoogleFonts.inter(
                           fontSize: 36,
                           fontWeight: FontWeight.w700,
                           color: widget.isDarkBackground ? Colors.white : const Color(0xFF222222),
@@ -348,7 +348,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                         children: [
                           Text(
                             formattedDate.toUpperCase(),
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF8E8E93),
@@ -366,7 +366,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                           const SizedBox(width: 8.0),
                           Text(
                             'TODAY',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: widget.isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
@@ -379,7 +379,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                       if (countText.isNotEmpty)
                         Text(
                           countText,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: const Color(0xFF8E8E93),
@@ -554,7 +554,7 @@ class _EmptyStateColumn extends StatelessWidget {
           const SizedBox(height: 24.0),
           Text(
             'No notes yet',
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: isDarkBackground ? Colors.white : const Color(0xFF222222),

@@ -35,24 +35,24 @@ class AppColors {
 class AppTextStyles {
   AppTextStyles._();
 
-  // "Apr 13" — Playfair Display Medium 20
-  static final TextStyle dateSmall = GoogleFonts.playfairDisplay(
+  // "Apr 13" — Inter Medium 20
+  static final TextStyle dateSmall = GoogleFonts.inter(
     fontWeight: FontWeight.w500, // Medium
     fontSize: 20,
     color: AppColors.ink,
     height: 1.2,
   );
 
-  // "Monday" — Playfair Display SemiBold 24
-  static final TextStyle dateLarge = GoogleFonts.playfairDisplay(
+  // "Monday" — Inter SemiBold 24
+  static final TextStyle dateLarge = GoogleFonts.inter(
     fontWeight: FontWeight.w600, // SemiBold
     fontSize: 24,
     color: AppColors.ink,
     height: 1.2,
   );
 
-  // "Today" — Playfair Display Regular 14
-  static final TextStyle dateLabel = GoogleFonts.playfairDisplay(
+  // "Today" — Inter Regular 14
+  static final TextStyle dateLabel = GoogleFonts.inter(
     fontWeight: FontWeight.w400,
     fontSize: 14,
     color: AppColors.amber,

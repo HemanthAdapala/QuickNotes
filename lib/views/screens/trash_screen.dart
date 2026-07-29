@@ -51,7 +51,7 @@ class TrashScreen extends StatelessWidget {
                     child: Center(
                       child: Text(
                         "Recycle Bin",
-                        style: GoogleFonts.playfairDisplay(
+                        style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,

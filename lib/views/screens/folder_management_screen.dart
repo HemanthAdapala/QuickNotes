@@ -250,7 +250,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: Text(
               "Delete Folder?",
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF1C1C1E),
               ),
@@ -628,7 +628,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
             const SizedBox(height: 24),
             Text(
               "Your Folders are Empty",
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.inter(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF1C1C1E),
@@ -682,7 +682,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
     final activeNotes = provider.allActiveNotes;
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
-    final double panelTop = MediaQuery.paddingOf(context).top + 76.0;
+    final double panelTop = MediaQuery.paddingOf(context).top + 69.0;
 
     final filteredFolders = orderedFolders.where((item) {
       if (_searchQuery.trim().isEmpty) return true;
@@ -714,11 +714,13 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
             child: Center(
               child: Container(
                 width: screenWidth.clamp(0.0, 402.0),
-                height: (screenHeight - panelTop).clamp(0.0, 754.0),
+                height: (screenHeight - panelTop).clamp(0.0, 761.0),
                 decoration: ShapeDecoration(
                   color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
                   ),
                   shadows: const [
                     BoxShadow(
@@ -728,6 +730,70 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                       spreadRadius: 0,
                     )
                   ],
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: folders.isEmpty
+                      ? _buildEmptyState()
+                      : filteredFolders.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 40.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.folder_open_rounded,
+                                      size: 48,
+                                      color: const Color(0xFF1C1C1E).withValues(alpha: 0.3),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      "No folders match search",
+                                      style: GoogleFonts.inter(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF1C1C1E).withValues(alpha: 0.5),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : GridView.builder(
+                              physics: const BouncingScrollPhysics(),
+                              padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 80.0 + MediaQuery.paddingOf(context).bottom),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 8.0,
+                                mainAxisSpacing: 0.0,
+                                childAspectRatio: 150.0 / 192.0,
+                              ),
+                              itemCount: filteredFolders.length,
+                              itemBuilder: (context, index) {
+                                final item = filteredFolders[index];
+                                final folder = item.folder;
+                                final noteCount = activeNotes.where((n) => n.folderId == folder.id).length;
+                                final key = _getKeyForFolder(folder.id);
+
+                                return AnimatedListEntrance(
+                                  key: key,
+                                  index: index,
+                                  child: FolderGridCard(
+                                    folder: folder,
+                                    index: index,
+                                    noteCount: noteCount,
+                                    onTap: () => _handleFolderTap(folder),
+                                    onLongPressStart: (details) {
+                                      _showFolderContextMenu(context, folder, details.globalPosition);
+                                    },
+                                    onCustomizeTap: () {
+                                      _showCustomizationBottomSheet(folder);
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
                 ),
               ),
             ),
@@ -744,79 +810,6 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
                       child: _buildHeaderBar(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                Expanded(
-                  child: Center(
-                    child: SizedBox(
-                      width: screenWidth.clamp(0.0, 402.0),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                        child: folders.isEmpty
-                            ? _buildEmptyState()
-                            : filteredFolders.isEmpty
-                                ? Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 40.0),
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.folder_open_rounded,
-                                            size: 48,
-                                            color: const Color(0xFF1C1C1E).withValues(alpha: 0.3),
-                                          ),
-                                          const SizedBox(height: 16),
-                                          Text(
-                                            "No folders match search",
-                                            style: GoogleFonts.inter(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: const Color(0xFF1C1C1E).withValues(alpha: 0.5),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                : GridView.builder(
-                                    physics: const BouncingScrollPhysics(),
-                                    padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 80.0 + MediaQuery.paddingOf(context).bottom),
-                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      crossAxisSpacing: 8.0,
-                                      mainAxisSpacing: 8.0,
-                                      childAspectRatio: 150.0 / 192.0,
-                                    ),
-                                    itemCount: filteredFolders.length,
-                                    itemBuilder: (context, index) {
-                                      final item = filteredFolders[index];
-                                      final folder = item.folder;
-                                      final noteCount = activeNotes.where((n) => n.folderId == folder.id).length;
-                                      final key = _getKeyForFolder(folder.id);
-
-                                      return AnimatedListEntrance(
-                                        key: key,
-                                        index: index,
-                                        child: FolderGridCard(
-                                          folder: folder,
-                                          index: index,
-                                          noteCount: noteCount,
-                                          onTap: () => _handleFolderTap(folder),
-                                          onLongPressStart: (details) {
-                                            _showFolderContextMenu(context, folder, details.globalPosition);
-                                          },
-                                          onCustomizeTap: () {
-                                            _showCustomizationBottomSheet(folder);
-                                          },
-                                        ),
-                                      );
-                                    },
-                                  ),
-                      ),
                     ),
                   ),
                 ),

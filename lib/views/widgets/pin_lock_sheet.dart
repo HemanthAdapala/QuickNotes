@@ -114,7 +114,7 @@ class _PinLockSheetState extends State<PinLockSheet> {
           // Title
           Text(
             widget.title,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
@@ -239,7 +239,7 @@ class _PinLockSheetState extends State<PinLockSheet> {
         ),
         child: Text(
           value,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.onSurface,

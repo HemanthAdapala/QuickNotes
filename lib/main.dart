@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'providers/notes_provider.dart';
 import 'providers/tasks_provider.dart';
+import 'services/task_engine.dart';
+import 'services/reminder_scheduler.dart';
+import 'services/android_reminder_scheduler.dart';
 import 'views/screens/splash_screen.dart';
 
 void main() {
@@ -16,11 +19,17 @@ void main() {
     DeviceOrientation.portraitDown,
   ]);
 
+  final ReminderScheduler scheduler = (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+      ? AndroidReminderScheduler()
+      : LoggingReminderScheduler();
+
+  final taskEngine = TaskEngine(scheduler: scheduler);
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NotesProvider()),
-        ChangeNotifierProvider(create: (_) => TasksProvider()),
+        ChangeNotifierProvider(create: (_) => TasksProvider(engine: taskEngine)),
       ],
       child: const QuickNotesApp(),
     ),
@@ -80,17 +89,17 @@ class QuickNotesApp extends StatelessWidget {
           foregroundColor: Color(0xFF1E1B4B),
           elevation: 0,
         ),
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(
+        textTheme: GoogleFonts.interTextTheme(
           lightBaseTextTheme.copyWith(
-            displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
-            displayMedium: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
-            displaySmall: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
-            headlineLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
-            headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
-            headlineSmall: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
-            titleLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
-            titleMedium: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
-            titleSmall: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            displayLarge: GoogleFonts.inter(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
+            displayMedium: GoogleFonts.inter(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
+            displaySmall: GoogleFonts.inter(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
+            headlineLarge: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            headlineMedium: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            headlineSmall: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            titleLarge: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            titleMedium: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            titleSmall: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
           ),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(

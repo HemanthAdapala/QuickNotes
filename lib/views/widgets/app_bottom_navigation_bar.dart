@@ -253,34 +253,16 @@ class _NavigationButtonState extends State<_NavigationButton>
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
 
-  late AnimationController _dotController;
-  late Animation<double> _dotAnimation;
-
-  static const List<Offset> _dotDirections = [
-    Offset(0.951, 0.309),   // 18 degrees
-    Offset(0.000, 1.000),   // 90 degrees
-    Offset(-0.951, 0.309),  // 162 degrees
-    Offset(-0.588, -0.809), // 234 degrees
-    Offset(0.588, -0.809),  // 306 degrees
-  ];
-
   @override
   void initState() {
     super.initState();
     _scaleController = AnimationController(vsync: this);
     _scaleAnimation = const AlwaysStoppedAnimation<double>(1.0);
-
-    _dotController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 350),
-    );
-    _dotAnimation = _dotController;
   }
 
   @override
   void dispose() {
     _scaleController.dispose();
-    _dotController.dispose();
     super.dispose();
   }
 
@@ -338,9 +320,6 @@ class _NavigationButtonState extends State<_NavigationButton>
     });
     _scaleController.forward(from: 0.0);
 
-    // Emit particle dots
-    _dotController.forward(from: 0.0);
-
     // Trigger tab navigation selection
     widget.onDestinationSelected(widget.index);
   }
@@ -366,58 +345,38 @@ class _NavigationButtonState extends State<_NavigationButton>
             minHeight: 48.0,
           ),
           child: AnimatedBuilder(
-            animation: Listenable.merge([_scaleController, _dotController]),
+            animation: _scaleController,
             builder: (context, child) {
               final currentScale = reduceMotion ? 1.0 : _scaleAnimation.value;
               return Center(
-              child: Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: [
-                  Transform.scale(
-                    scale: currentScale,
-                    child: AnimatedSwitcher(
-                      duration: kDurationNormal,
-                      transitionBuilder: (child, animation) {
-                        return ScaleTransition(
-                          scale: animation,
-                          child: FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: (widget.index == 4 && widget.selectedIndex == 1)
-                          ? Icon(
-                              Icons.add_rounded,
-                              key: const ValueKey('plus_icon'),
-                              size: widget.iconSize,
-                              color: color,
-                            )
-                          : SvgPicture.asset(
-                              widget.destination.iconAsset,
-                              key: ValueKey(isSelected),
-                              width: widget.iconSize,
-                              height: widget.iconSize,
-                              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-                            ),
-                    ),
-                  ),
-                  if (!reduceMotion)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: RepaintBoundary(
-                          child: CustomPaint(
-                            painter: _DotBurstPainter(
-                              progress: _dotAnimation.value,
-                              directions: _dotDirections,
-                              scale: widget.iconSize / 22.0,
-                            ),
-                          ),
-                        ),
+              child: Transform.scale(
+                scale: currentScale,
+                child: AnimatedSwitcher(
+                  duration: kDurationNormal,
+                  transitionBuilder: (child, animation) {
+                    return ScaleTransition(
+                      scale: animation,
+                      child: FadeTransition(
+                        opacity: animation,
+                        child: child,
                       ),
-                    ),
-                ],
+                    );
+                  },
+                  child: (widget.index == 4 && widget.selectedIndex == 1)
+                      ? Icon(
+                          Icons.add_rounded,
+                          key: const ValueKey('plus_icon'),
+                          size: widget.iconSize,
+                          color: color,
+                        )
+                      : SvgPicture.asset(
+                          widget.destination.iconAsset,
+                          key: ValueKey(isSelected),
+                          width: widget.iconSize,
+                          height: widget.iconSize,
+                          colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                        ),
+                ),
               ),
             );
           },
@@ -425,41 +384,6 @@ class _NavigationButtonState extends State<_NavigationButton>
       ),
       ),
     );
-  }
-}
-
-class _DotBurstPainter extends CustomPainter {
-  _DotBurstPainter({
-    required this.progress,
-    required this.directions,
-    required this.scale,
-  });
-
-  final double progress;
-  final List<Offset> directions;
-  final double scale;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (progress <= 0.0 || progress >= 1.0) return;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final paint = Paint()
-      ..color = const Color(0xFFF5A623).withValues(alpha: 1.0 - progress)
-      ..style = PaintingStyle.fill;
-
-    final currentRadius = 40.0 * scale * Curves.easeOut.transform(progress);
-    final dotRadius = 2.0 * scale; // 4px diameter, so 2px radius
-
-    for (final dir in directions) {
-      final dotOffset = center + dir * currentRadius;
-      canvas.drawCircle(dotOffset, dotRadius, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DotBurstPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.scale != scale;
   }
 }
 

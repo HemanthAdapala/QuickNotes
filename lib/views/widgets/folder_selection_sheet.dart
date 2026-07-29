@@ -38,7 +38,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: Text(
                 "New Folder",
-                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.black),
+                style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.black),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -47,10 +47,10 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                   TextField(
                     controller: _folderNameController,
                     autofocus: true,
-                    style: GoogleFonts.plusJakartaSans(color: Colors.black),
+                    style: GoogleFonts.inter(color: Colors.black),
                     decoration: InputDecoration(
                       labelText: "Folder Name",
-                      labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF8C8987)),
+                      labelStyle: GoogleFonts.inter(color: const Color(0xFF8C8987)),
                       enabledBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFFE6E3D2)),
                       ),
@@ -153,7 +153,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                       children: [
                         Text(
                           "Move to Folder",
-                          style: GoogleFonts.playfairDisplay(
+                          style: GoogleFonts.inter(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,

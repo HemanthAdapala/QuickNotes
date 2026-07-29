@@ -9,6 +9,8 @@ import 'package:quick_notes/views/screens/splash_screen.dart';
 import 'package:quick_notes/models/folder.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'package:quick_notes/providers/tasks_provider.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -90,6 +92,7 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => NotesProvider()),
+          ChangeNotifierProvider(create: (_) => TasksProvider()),
         ],
         child: const QuickNotesApp(),
       ),

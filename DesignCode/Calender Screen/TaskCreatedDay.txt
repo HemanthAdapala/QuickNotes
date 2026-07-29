@@ -1,0 +1,105 @@
+class RunningtaskWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 338,
+          height: 67,
+          child: Stack(
+            children: [
+              Positioned(
+                left: 8,
+                top: 0,
+                child: Container(
+                  width: 25,
+                  height: 67,
+                  decoration: ShapeDecoration(
+                    color: const Color(0x7FFFCC00),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        bottomLeft: Radius.circular(20),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 8,
+                top: 0,
+                child: Container(
+                  width: 322,
+                  height: 67,
+                  decoration: ShapeDecoration(
+                    color: const Color(0x7FFFCC00),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 41,
+                top: 3,
+                child: Text(
+                  'Task: Review Study Guide',
+                  style: TextStyle(
+                    color: const Color(0xFF333333),
+                    fontSize: 16,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w500,
+                    height: 2.50,
+                    letterSpacing: -0.43,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 41,
+                top: 25,
+                child: Text(
+                  'Work Tasks Folder . Due 5 Pm',
+                  style: TextStyle(
+                    color: const Color(0xFF333333),
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w400,
+                    height: 3.33,
+                    letterSpacing: -0.43,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 288,
+                top: 24,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: ShapeDecoration(
+                    shape: OvalBorder(
+                      side: BorderSide(
+                        width: 1,
+                        color: const Color(0x33787878) /* Fills-Primary */,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 286,
+                top: 28,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(),
+                  child: Stack(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

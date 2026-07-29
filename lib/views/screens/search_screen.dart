@@ -808,7 +808,7 @@ class _SearchScreenState extends State<SearchScreen>
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text('Filter by Folder',
-                    style: GoogleFonts.playfairDisplay(
+                    style: GoogleFonts.inter(
                       fontSize: 18, fontWeight: FontWeight.w700, color: _kInk)),
                 ),
               ),
@@ -873,7 +873,7 @@ class _SearchScreenState extends State<SearchScreen>
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text('Filter by Category',
-                    style: GoogleFonts.playfairDisplay(
+                    style: GoogleFonts.inter(
                       fontSize: 18, fontWeight: FontWeight.w700, color: _kInk)),
                 ),
               ),
@@ -941,7 +941,7 @@ class _SearchScreenState extends State<SearchScreen>
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text('Filter by Date',
-                    style: GoogleFonts.playfairDisplay(
+                    style: GoogleFonts.inter(
                       fontSize: 18, fontWeight: FontWeight.w700, color: _kInk)),
                 ),
               ),
@@ -1203,7 +1203,7 @@ class _SearchScreenState extends State<SearchScreen>
                 Text(
                   'No results for "$_query"',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.playfairDisplay(
+                  style: GoogleFonts.inter(
                     fontSize: 20, fontWeight: FontWeight.w700, color: _kInk),
                 ),
                 const SizedBox(height: 8),
@@ -1531,7 +1531,7 @@ class _NoteResultRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cardColor = _noteCardColor(note.colorValue);
     final dateStr = DateFormat('MMM d').format(note.updatedAt);
-    final baseTitle = GoogleFonts.playfairDisplay(
+    final baseTitle = GoogleFonts.inter(
         fontSize: 15, fontWeight: FontWeight.w600, color: _kInk);
     final hlTitle  = baseTitle.copyWith(color: _kAmber, fontWeight: FontWeight.w700);
     final baseBody = GoogleFonts.inter(fontSize: 13, color: const Color(0xFF524534));

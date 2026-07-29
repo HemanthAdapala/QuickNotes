@@ -19,11 +19,13 @@ import '../models/calendar_task.dart';
 class CalendarTaskCard extends StatelessWidget {
   final CalendarTask task;
   final VoidCallback? onToggle;
+  final VoidCallback? onTap;
 
   const CalendarTaskCard({
     super.key,
     required this.task,
     this.onToggle,
+    this.onTap,
   });
 
   @override
@@ -31,18 +33,10 @@ class CalendarTaskCard extends StatelessWidget {
     return Container(
       height: 67,
       decoration: ShapeDecoration(
-        color: Colors.white,
+        color: task.priorityColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        shadows: const [
-          BoxShadow(
-            color: Color(0x3F000000),
-            blurRadius: 16,
-            offset: Offset(0, 0),
-            spreadRadius: 0,
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -62,40 +56,44 @@ class CalendarTaskCard extends StatelessWidget {
 
           // ── Text content ─────────────────────────────────────────────────
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title — strikethrough when completed
-                Text(
-                  task.title,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.43,
-                    decoration: task.isCompleted
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none,
-                    decorationColor: Colors.black,
-                    decorationThickness: 1.5,
+            child: GestureDetector(
+              onTap: onTap,
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title — strikethrough when completed
+                  Text(
+                    task.title,
+                    style: TextStyle(
+                      color: const Color(0xFF333333),
+                      fontSize: 16,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.43,
+                      decoration: task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                      decorationColor: const Color(0xFF333333),
+                      decorationThickness: 1.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                // Subtitle
-                Text(
-                  task.subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF888888),
-                    fontSize: 12,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: -0.43,
+                  const SizedBox(height: 2),
+                  // Subtitle
+                  Text(
+                    task.subtitle,
+                    style: const TextStyle(
+                      color: Color(0xFF333333),
+                      fontSize: 12,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -0.43,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 

@@ -145,8 +145,8 @@ void main() {
 
       final List<Note> notes = [
         Note(id: '1', title: 'N1', content: '', createdAt: today, updatedAt: today, category: 'Work', folderId: 'f1', tags: [], attachments: [], colorValue: 0),
-        Note(id: '2', title: 'N2', content: '', createdAt: today.add(const Duration(days: 2)), updatedAt: today, category: 'Personal', folderId: 'f1', tags: [], attachments: [], colorValue: 0),
-        Note(id: '3', title: 'N3', content: '', createdAt: today.add(const Duration(days: 15)), updatedAt: today, category: 'Work', folderId: 'f2', tags: [], attachments: [], colorValue: 0),
+        Note(id: '2', title: 'N2', content: '', createdAt: today.add(const Duration(days: 2)), updatedAt: today.add(const Duration(days: 2)), category: 'Personal', folderId: 'f1', tags: [], attachments: [], colorValue: 0),
+        Note(id: '3', title: 'N3', content: '', createdAt: today.add(const Duration(days: 15)), updatedAt: today.add(const Duration(days: 15)), category: 'Work', folderId: 'f2', tags: [], attachments: [], colorValue: 0),
       ];
 
       final List<TaskItem> tasks = [

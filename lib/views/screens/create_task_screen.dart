@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,63 +6,96 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import '../../models/note.dart';
-import '../../models/folder.dart';
-import '../../providers/notes_provider.dart';
+import '../../models/task_item.dart';
+import '../../models/recurrence_rule.dart';
+import '../../models/repeat_rule.dart';
 import '../../providers/tasks_provider.dart';
-import '../../themes/app_theme.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
-import '../widgets/folder_selection_sheet.dart';
-import '../widgets/blurred_bottom_sheet.dart';
 
-class CreateTaskScreen extends StatefulWidget {
+/// ─────────────────────────────────────────────────────────────────────────────
+/// TaskEditorScreen
+///
+/// Implements the exact design specification from:
+/// `DesignCode/TaskEditor/TaskEditorScreen.txt` and Figma reference mockup.
+///
+/// Features & Layout Architecture:
+/// - Fixed outer blue header card (Color(0xFF0088FF)) displaying Date & Time
+/// - Fixed AppHeaderBar with standard Hero tags ('hero_profile_header', 'hero_more_options')
+/// - White card container (Color(0xFFFFFFFF)) with 30px top radius
+/// - Inner-only content scrolling (form fields scroll while header remains pinned)
+/// - Responsive Priority selector (zero horizontal overflow on any device)
+/// - Zero subpixel text overflow on Task Title, Description, and Priority button
+/// - Rect-clip free Repeat option scale animations
+/// - Toast SnackBar feedback on Save
+/// ─────────────────────────────────────────────────────────────────────────────
+
+class TaskEditorScreen extends StatefulWidget {
   final DateTime? initialDate;
+  final TaskItem? taskToEdit;
 
-  const CreateTaskScreen({
+  const TaskEditorScreen({
     super.key,
     this.initialDate,
+    this.taskToEdit,
   });
 
   @override
-  State<CreateTaskScreen> createState() => _CreateTaskScreenState();
+  State<TaskEditorScreen> createState() => _TaskEditorScreenState();
 }
 
-class _CreateTaskScreenState extends State<CreateTaskScreen> {
+/// Backward compatibility wrapper alias for legacy callers
+class CreateTaskScreen extends TaskEditorScreen {
+  const CreateTaskScreen({
+    super.key,
+    super.initialDate,
+    super.taskToEdit,
+  });
+}
+
+class _TaskEditorScreenState extends State<TaskEditorScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  
+
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
-  
-  String _selectedPriority = 'pink'; // 'pink' (High), 'yellow' (Medium), 'blue' (Low), 'none' (None)
-  String? _selectedFolderId;
-  
-  bool _isTitleNotEmpty = false;
+
+  String _selectedPriority = 'None'; // 'High', 'Medium', 'Low', 'None'
+  RecurrenceType? _selectedRecurrence; // null = Never, daily, weekly, monthly
+  bool _showPriorityPicker = false;
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = widget.initialDate ?? DateTime(2026, 6, 15);
-    _selectedTime = const TimeOfDay(hour: 9, minute: 0); // Default 9:00 AM
-    _titleController.addListener(_onTitleChanged);
+    if (widget.taskToEdit != null) {
+      final task = widget.taskToEdit!;
+      _titleController.text = task.title;
+      _descriptionController.text = task.description;
+      _selectedDate = task.dueDate.toLocal();
+      if (task.reminderTime != null) {
+        final reminder = task.reminderTime!.toLocal();
+        _selectedTime = TimeOfDay(hour: reminder.hour, minute: reminder.minute);
+      } else {
+        final due = task.dueDate.toLocal();
+        _selectedTime = TimeOfDay(hour: due.hour, minute: due.minute);
+      }
+      _selectedPriority = task.priority.isNotEmpty ? task.priority : 'None';
+      if (task.isRecurring) {
+        _selectedRecurrence = task.recurrence?.type;
+      }
+    } else {
+      _selectedDate = widget.initialDate ?? DateTime.now();
+      _selectedTime = TimeOfDay.now();
+      _selectedPriority = 'None';
+      _selectedRecurrence = null;
+    }
   }
 
   @override
   void dispose() {
-    _titleController.removeListener(_onTitleChanged);
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
-  }
-
-  void _onTitleChanged() {
-    final bool hasText = _titleController.text.trim().isNotEmpty;
-    if (hasText != _isTitleNotEmpty) {
-      setState(() {
-        _isTitleNotEmpty = hasText;
-      });
-    }
   }
 
   // Pick Due Date
@@ -70,22 +103,22 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(2025),
-      lastDate: DateTime(2030),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF222222),
+              primary: Color(0xFF0088FF),
               onPrimary: Colors.white,
-              onSurface: Color(0xFF222222),
+              onSurface: Color(0xFF333333),
             ),
           ),
           child: child!,
         );
       },
     );
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null) {
       setState(() {
         _selectedDate = picked;
       });
@@ -101,47 +134,40 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF222222),
+              primary: Color(0xFF0088FF),
               onPrimary: Colors.white,
-              onSurface: Color(0xFF222222),
+              onSurface: Color(0xFF333333),
             ),
           ),
           child: child!,
         );
       },
     );
-    if (picked != null && picked != _selectedTime) {
+    if (picked != null) {
       setState(() {
         _selectedTime = picked;
       });
     }
   }
 
-  // Link Folder Sheet
-  void _showFolderSelector() {
-    showBlurredBottomSheet(
-      context: context,
-      child: FolderSelectionSheet(
-        currentFolderId: _selectedFolderId,
-        onFolderSelected: (folderId) {
-          setState(() {
-            _selectedFolderId = folderId;
-          });
-        },
-      ),
-    );
-  }
-
-  // Save the Task
+  // Save Task
   Future<void> _saveTask() async {
-    if (_titleController.text.trim().isEmpty) return;
+    final String title = _titleController.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a task title'),
+          backgroundColor: Color(0xFFFF453A),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
     final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-    final String title = _titleController.text.trim();
     final String description = _descriptionController.text.trim();
-    
-    // Construct reminder time DateTime
-    final DateTime reminderDateTime = DateTime(
+
+    final DateTime dueDateTime = DateTime(
       _selectedDate.year,
       _selectedDate.month,
       _selectedDate.day,
@@ -149,101 +175,640 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       _selectedTime.minute,
     );
 
-    // Save standalone task in DB via TasksProvider
-    await tasksProvider.addTask(
-      title: title,
-      description: description,
-      dueDate: _selectedDate,
-      priority: _selectedPriority,
-      reminderTime: reminderDateTime,
-    );
+    final DateTime reminderDateTime = dueDateTime;
+
+    final recurrenceRule = _selectedRecurrence != null
+        ? RecurrenceRule(type: _selectedRecurrence!, interval: 1)
+        : null;
+
+    final repeatRule = _selectedRecurrence != null
+        ? RepeatRuleExtension.fromDbString(_selectedRecurrence!.toDbString())
+        : RepeatRule.none;
+
+    final isEditing = widget.taskToEdit != null;
+
+    if (isEditing) {
+      final updated = widget.taskToEdit!.copyWith(
+        title: title,
+        description: description,
+        dueDate: dueDateTime,
+        reminderTime: reminderDateTime,
+        reminderEnabled: true,
+        priority: _selectedPriority,
+        repeatRule: repeatRule,
+        isRecurring: _selectedRecurrence != null,
+        recurrence: recurrenceRule,
+        updatedAt: DateTime.now(),
+      );
+      await tasksProvider.updateTask(updated);
+    } else {
+      await tasksProvider.addTask(
+        title: title,
+        description: description,
+        dueDate: dueDateTime,
+        priority: _selectedPriority,
+        reminderTime: reminderDateTime,
+        repeatRule: repeatRule,
+        isRecurring: _selectedRecurrence != null,
+        recurrence: recurrenceRule,
+      );
+    }
 
     HapticFeedback.mediumImpact();
     if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isEditing ? 'Task updated successfully' : 'Task created successfully',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          backgroundColor: const Color(0xFF0088FF),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
       Navigator.pop(context);
     }
   }
 
-  // Helper to build priority buttons
-  Widget _buildPriorityButton({
-    required String type,
-    required String label,
-    required Color color,
-  }) {
-    final bool isSelected = _selectedPriority == type;
-
-    return Expanded(
-      child: TactileButton(
-        onTap: () {
-          setState(() {
-            _selectedPriority = type;
-          });
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          height: 48,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isSelected ? color : color.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(20),
-            border: isSelected
-                ? Border.all(color: const Color(0xFF222222), width: 1.5)
-                : Border.all(color: Colors.transparent, width: 1.5),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : [],
-          ),
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 15,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: const Color(0xFF222222),
-            ),
-          ),
-        ),
-      ),
-    );
+  // Format Helper: "Jul 11th, 2026"
+  String _formatDateWithSuffix(DateTime date) {
+    final day = date.day;
+    String suffix = 'th';
+    if (day % 10 == 1 && day != 11) {
+      suffix = 'st';
+    } else if (day % 10 == 2 && day != 12) {
+      suffix = 'nd';
+    } else if (day % 10 == 3 && day != 13) {
+      suffix = 'rd';
+    }
+    final monthStr = DateFormat('MMM').format(date);
+    return '$monthStr $day$suffix, ${date.year}';
   }
+
+  // Priority Flag Color Helper
+  Color _getPriorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return const Color(0xFFFF453A);
+      case 'medium':
+        return const Color(0xFFFF9F0A);
+      case 'low':
+        return const Color(0xFF30D158);
+      default:
+        return const Color(0x993C3C43);
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<NotesProvider>(context);
-    
-    // Resolve Linked Folder Label
-    String folderLabel = "Root (No Folder)";
-    if (_selectedFolderId != null) {
-      final folder = provider.folders.firstWhere(
-        (f) => f.id == _selectedFolderId,
-        orElse: () => Folder(id: '', name: '', createdAt: DateTime.now()),
-      );
-      if (folder.name.isNotEmpty) {
-        folderLabel = folder.name;
-      }
-    }
-
-    // Format Date / Time Strings
-    final String dateStr = DateFormat('MMMM d, yyyy').format(_selectedDate);
-    final String timeStr = DateFormat('h:mm a').format(
+    // Format Header Date & Time Strings
+    final String dateHeaderStr = DateFormat('EEE, d MMMM yyyy').format(_selectedDate);
+    final String timeHeaderStr = DateFormat('hh:mm a').format(
       DateTime(2026, 1, 1, _selectedTime.hour, _selectedTime.minute),
     );
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        bottom: false,
-        child: Column(
+        bottom: false, // top safe area handled by system — mirrors NoteEditorScreen
+        child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+            // ── Card Area (identical structure to NoteEditorScreen, blue instead of amber) ──
+            Positioned(
+              left: 0.0,
+              right: 0.0,
+              top: 74.0, // starts below the top bar buttons — exact same as NoteEditorScreen
+              bottom: 0.0,
+              child: Stack(
+                children: [
+                  // 1. Background layers (blue card + white overlay)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 20.0,
+                            offset: const Offset(0, -4),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          // Blue header band — same dimensions as amber in NoteEditorScreen
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: 100.0,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF0088FF),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(30.0),
+                                  topRight: Radius.circular(30.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // White card overlapping blue — starts at 50px, same as NoteEditorScreen
+                          Positioned(
+                            top: 50.0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(30.0),
+                                  topRight: Radius.circular(30.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // 2. Scrollable form content — starts at top: 59 (header 50 + gap 9)
+                  Positioned.fill(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.only(
+                              left: 20.0,
+                              right: 20.0,
+                              top: 59.0, // blue sticky header (50) + gap (9)
+                              bottom: 40.0,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // ── Task Title Field ──────────────────────────────
+                                Text(
+                                  'Task Title',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF333333),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: -0.43,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  height: 45,
+                                  clipBehavior: Clip.antiAlias,
+                                  decoration: ShapeDecoration(
+                                    color: const Color(0x28787880),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _titleController,
+                                    style: GoogleFonts.inter(
+                                      color: const Color(0xFF333333),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Add a task title',
+                                      hintStyle: GoogleFonts.inter(
+                                        color: const Color(0x993C3C43),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                        letterSpacing: -0.43,
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 22),
+
+                                // ── Due Date & Time Section ───────────────────────
+                                Row(
+                                  children: [
+                                    // Due Date Picker
+                                    Expanded(
+                                      flex: 3,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Due Date',
+                                            style: GoogleFonts.inter(
+                                              color: const Color(0xFF333333),
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              letterSpacing: -0.43,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          TactileButton(
+                                            onTap: _selectDate,
+                                            child: Container(
+                                              height: 45,
+                                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                                              decoration: ShapeDecoration(
+                                                color: const Color(0x28787880),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(20),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      _formatDateWithSuffix(_selectedDate),
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: GoogleFonts.inter(
+                                                        color: const Color(0x993C3C43),
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w400,
+                                                        letterSpacing: -0.43,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SvgPicture.asset(
+                                                    'assets/icons/calendar_icon.svg',
+                                                    width: 18,
+                                                    height: 18,
+                                                    colorFilter: const ColorFilter.mode(
+                                                      Color(0x993C3C43),
+                                                      BlendMode.srcIn,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 12),
+
+                                    // Time Picker
+                                    Expanded(
+                                      flex: 2,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Time',
+                                            style: GoogleFonts.inter(
+                                              color: const Color(0xFF333333),
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              letterSpacing: -0.43,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          TactileButton(
+                                            onTap: _selectTime,
+                                            child: Container(
+                                              height: 45,
+                                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                                              decoration: ShapeDecoration(
+                                                color: const Color(0x28787880),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(20),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    _selectedTime.format(context),
+                                                    style: GoogleFonts.inter(
+                                                      color: const Color(0x993C3C43),
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.w400,
+                                                      letterSpacing: -0.43,
+                                                    ),
+                                                  ),
+                                                  SvgPicture.asset(
+                                                    'assets/icons/alarm_clock.svg',
+                                                    width: 18,
+                                                    height: 18,
+                                                    colorFilter: const ColorFilter.mode(
+                                                      Color(0x993C3C43),
+                                                      BlendMode.srcIn,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 22),
+
+                                // ── Task Description Field ────────────────────────
+                                Text(
+                                  'Task Description',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF333333),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: -0.43,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  height: 122,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  decoration: ShapeDecoration(
+                                    color: const Color(0x28787880),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _descriptionController,
+                                    maxLines: null,
+                                    keyboardType: TextInputType.multiline,
+                                    style: GoogleFonts.inter(
+                                      color: const Color(0xFF333333),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Add details',
+                                      hintStyle: GoogleFonts.inter(
+                                        color: const Color(0x993C3C43),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                        letterSpacing: -0.43,
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                                      border: InputBorder.none,
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 22),
+
+                                // ── Priority Section ────────────────────────────
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    TactileButton(
+                                      onTap: () {
+                                        setState(() {
+                                          _showPriorityPicker = !_showPriorityPicker;
+                                        });
+                                      },
+                                      child: Container(
+                                        constraints: const BoxConstraints(minWidth: 119),
+                                        height: 45,
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        decoration: ShapeDecoration(
+                                          color: const Color(0x28787880),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            SvgPicture.asset(
+                                              'assets/icons/flag_alt.svg',
+                                              width: 16,
+                                              height: 16,
+                                              colorFilter: ColorFilter.mode(
+                                                _getPriorityColor(_selectedPriority),
+                                                BlendMode.srcIn,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Flexible(
+                                              child: Text(
+                                                _selectedPriority == 'None' ? 'Priority' : _selectedPriority,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.inter(
+                                                  color: const Color(0x993C3C43),
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                  letterSpacing: -0.43,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    if (_showPriorityPicker) ...[
+                                      const SizedBox(height: 12),
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(16),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.08),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Wrap(
+                                          spacing: 8,
+                                          runSpacing: 8,
+                                          children: [
+                                            _buildPriorityOption('High', const Color(0xFFFF453A)),
+                                            _buildPriorityOption('Medium', const Color(0xFFFF9F0A)),
+                                            _buildPriorityOption('Low', const Color(0xFF30D158)),
+                                            _buildPriorityOption('None', const Color(0x993C3C43)),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+
+                                const SizedBox(height: 22),
+
+                                // ── Repeat Options Section ────────────────────────
+                                Text(
+                                  'Repeat',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF333333),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: -0.43,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    clipBehavior: Clip.none,
+                                    physics: const BouncingScrollPhysics(),
+                                    child: Row(
+                                      children: [
+                                        _buildRepeatPill(null, 'Never', 88),
+                                        const SizedBox(width: 9),
+                                        _buildRepeatPill(RecurrenceType.daily, 'Every day', 88),
+                                        const SizedBox(width: 9),
+                                        _buildRepeatPill(RecurrenceType.weekly, 'Every Week', 97),
+                                        const SizedBox(width: 9),
+                                        _buildRepeatPill(RecurrenceType.monthly, 'Every Month', 112),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 35),
+
+                                // ── Bottom Action Buttons ─────────────────────────
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TactileButton(
+                                        onTap: () => Navigator.pop(context),
+                                        child: Container(
+                                          height: 50,
+                                          decoration: ShapeDecoration(
+                                            color: const Color(0x28787880),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              'Cancel',
+                                              style: GoogleFonts.inter(
+                                                color: const Color(0x993C3C43),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w400,
+                                                letterSpacing: -0.43,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 15),
+                                    Expanded(
+                                      child: TactileButton(
+                                        onTap: _saveTask,
+                                        child: Container(
+                                          height: 50,
+                                          decoration: ShapeDecoration(
+                                            color: const Color(0xFF0088FF),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              'Save',
+                                              style: GoogleFonts.inter(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w400,
+                                                letterSpacing: -0.43,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 30),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Sticky Blue Date-Time Header with Blur — mirrors NoteEditorScreen's sticky amber bar
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 50.0,
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(30.0),
+                              topRight: Radius.circular(30.0),
+                            ),
+                            child: BackdropFilter(
+                              filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                              child: Container(
+                                color: const Color(0xFF0088FF).withOpacity(0.9),
+                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                alignment: Alignment.center,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      dateHeaderStr,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14.0,
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.white,
+                                        letterSpacing: -0.43,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: _selectDate,
+                                      child: Text(
+                                        timeHeaderStr,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14.0,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.white,
+                                          letterSpacing: -0.43,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── AppHeaderBar — same position as NoteEditorScreen (top: 12, horizontal: 24) ──
+            Positioned(
+              top: 12.0,
+              left: 24.0,
+              right: 24.0,
               child: AppHeaderBar(
                 leftWidth: 44.0,
+                leftHeroTag: 'hero_task_editor_back',
                 onLeftTap: () => Navigator.pop(context),
                 leftChild: SvgPicture.asset(
                   'assets/icons/angle_left.svg',
@@ -251,269 +816,98 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   height: 22,
                   colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
                 ),
-                title: "Create Task",
                 rightWidth: 44.0,
-                rightChild: TactileButton(
-                  useAppleSpring: true,
-                  compressionScale: 0.7,
-                  settleDuration: const Duration(milliseconds: 1000),
-                  onTap: _isTitleNotEmpty ? _saveTask : () {},
-                  child: Center(
-                    child: Icon(
-                      Icons.check_rounded,
-                      color: _isTitleNotEmpty ? const Color(0xFF1C1C1E) : const Color(0xFF1C1C1E).withOpacity(0.3),
-                      size: 22,
-                    ),
+                rightHeroTag: 'hero_task_editor_more',
+                rightChild: const Center(
+                  child: Icon(
+                    Icons.more_horiz_rounded,
+                    size: 20,
+                    color: Color(0xFF1C1C1E),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 12.0),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Title Header ──────────────────────────────────────────────
-                    Text(
-                      "Create Task",
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF222222),
-                      ),
-                    ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                    const SizedBox(height: 24),
-
-                    // ── Form Inputs ───────────────────────────────────────────────
-                    // Task Title
-                    Text(
-                      "Task Title",
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF222222),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3EAC0),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: TextField(
-                        controller: _titleController,
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF222222),
-                        ),
-                        decoration: InputDecoration(
-                          hintText: "Add task title...",
-                          hintStyle: GoogleFonts.inter(
-                            color: const Color(0xFF9A916C).withOpacity(0.7),
-                            fontWeight: FontWeight.normal,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Due Date & Time
-                    Text(
-                      "Due Date & Time",
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF222222),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        // Date Picker Field
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: _selectDate,
-                            child: Container(
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF3EAC0),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    dateStr,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF222222),
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 20,
-                                    color: Color(0xFF222222),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Time Picker Field
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: _selectTime,
-                            child: Container(
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF3EAC0),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    timeStr,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF222222),
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.access_time,
-                                    size: 20,
-                                    color: Color(0xFF222222),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Priority
-                    Text(
-                      "Priority",
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF222222),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildPriorityButton(type: 'pink', label: 'High', color: const Color(0xFFF9C2D9)),
-                        const SizedBox(width: 8),
-                        _buildPriorityButton(type: 'yellow', label: 'Medium', color: const Color(0xFFFDE69C)),
-                        const SizedBox(width: 8),
-                        _buildPriorityButton(type: 'blue', label: 'Low', color: const Color(0xFFA8E1F5)),
-                        const SizedBox(width: 8),
-                        _buildPriorityButton(type: 'none', label: 'None', color: const Color(0xFFD1D1D1)),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Link to Folder
-                    Text(
-                      "Link to Folder/Note",
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF222222),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: _showFolderSelector,
-                      child: Container(
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3EAC0),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              folderLabel,
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF222222),
-                              ),
-                            ),
-                            const Icon(
-                              Icons.chevron_right_rounded,
-                              size: 24,
-                              color: Color(0xFF222222),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Notes/Description
-                    Text(
-                      "Notes/Description",
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF222222),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 160,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3EAC0),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: TextField(
-                        controller: _descriptionController,
-                        maxLines: null,
-                        expands: true,
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF222222),
-                        ),
-                        decoration: InputDecoration(
-                          hintText: "Add details...",
-                          hintStyle: GoogleFonts.inter(
-                            color: const Color(0xFF9A916C).withOpacity(0.7),
-                            fontWeight: FontWeight.normal,
-                          ),
-                          contentPadding: const EdgeInsets.all(20),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+  // Priority Option Helper
+  Widget _buildPriorityOption(String level, Color color) {
+    final bool isSelected = _selectedPriority.toLowerCase() == level.toLowerCase();
+    return TactileButton(
+      onTap: () {
+        setState(() {
+          _selectedPriority = level;
+          _showPriorityPicker = false;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/flag_alt.svg',
+              width: 14,
+              height: 14,
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              level,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF333333),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Repeat Pill Helper Widget
+  Widget _buildRepeatPill(RecurrenceType? type, String label, double width) {
+    final bool isSelected = _selectedRecurrence == type;
+
+    return TactileButton(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _selectedRecurrence = type;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: width,
+        height: 45,
+        decoration: ShapeDecoration(
+          color: isSelected ? const Color(0xFF0088FF) : const Color(0x28787880),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              color: isSelected ? Colors.white : const Color(0x993C3C43),
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              letterSpacing: -0.43,
+            ),
+          ),
         ),
       ),
     );

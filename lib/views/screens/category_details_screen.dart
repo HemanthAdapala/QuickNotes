@@ -377,7 +377,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
               Expanded(
                 child: Text(
                   widget.category,
-                  style: GoogleFonts.playfairDisplay(    // project rule: Playfair for titles
+                  style: GoogleFonts.inter(    // project rule: Playfair for titles
                     fontSize:      34,
                     fontWeight:    FontWeight.w700,       // Bold
                     color:         isDark ? Colors.white : const Color(0xFF333333),
@@ -600,7 +600,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             Text(
               'No notes tagged\n${widget.category} yet',
               textAlign: TextAlign.center,
-              style: GoogleFonts.playfairDisplay(    // project rule: Playfair for headings
+              style: GoogleFonts.inter(    // project rule: Playfair for headings
                 fontSize:   20,
                 fontWeight: FontWeight.w700,          // Bold
                 color: isDark ? Colors.white : const Color(0xFF211A12),
@@ -997,7 +997,7 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
               widget.note.isLocked
                   ? 'Locked Note'
                   : (widget.note.title.isNotEmpty ? widget.note.title : 'Untitled'),
-              style: GoogleFonts.playfairDisplay(   // project rule: Playfair for titles
+              style: GoogleFonts.inter(   // project rule: Playfair for titles
                 fontSize:   20,
                 fontWeight: FontWeight.w600,         // SemiBold
                 color:      isDark ? Colors.white : const Color(0xFF211A12),

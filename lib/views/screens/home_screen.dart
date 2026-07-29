@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
@@ -13,6 +14,8 @@ import '../../themes/glassmorphism_presets.dart';
 import '../../providers/notes_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../services/app_statistics_service.dart';
+import '../../services/notification_action_handler.dart';
+import '../../models/notification_payload.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/page_transitions.dart';
 import '../widgets/living_writing_experience.dart';
@@ -62,12 +65,56 @@ class _HomeScreenState extends State<HomeScreen> {
   int _activeNavIndex = 0;
   bool _isNotesActive = true;
   bool _isMoreOptionsOpen = false;
-  String _activeFilter = 'All';
+  String _activeFilter = 'Today';
+  bool _isSortAscending = false;
   final GlobalKey<FolderManagementScreenState> _foldersKey = GlobalKey<FolderManagementScreenState>();
   final List<OverlayEntry> _overlayEntries = [];
+  StreamSubscription<NotificationPayload>? _notificationSub;
+
+  // Stable cached tab widgets — constructed once in initState() so that
+  // every setState() on HomeScreen does not remount them and re-run their
+  // initState() (e.g. CalendarScreen._initMonthTasks, SettingsScreen._loadUserData).
+  late final Widget _calendarBody;
+  late final Widget _settingsBody;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialIndex = Provider.of<NotesProvider>(context, listen: false).selectedBgIndex;
+    _updatePresetsForBackground(initialIndex);
+
+    final initialPayload = NotificationActionHandler.consumeLastLaunchedPayload();
+    if (initialPayload != null) {
+      _activeNavIndex = 0;
+      _isNotesActive = false;
+    }
+
+    _notificationSub = NotificationActionHandler.foregroundStream.listen((payload) {
+      if (mounted) {
+        setState(() {
+          _activeNavIndex = 0;
+          _isNotesActive = false; // Switch tab toggle to Tasks!
+        });
+      }
+    });
+
+    // Build Calendar and Settings once so switching to those tabs is instant.
+    _calendarBody = CalendarScreen(
+      onBack: () => setState(() => _activeNavIndex = 0),
+    );
+    _settingsBody = SettingsScreen(
+      isDarkMode: Provider.of<NotesProvider>(context, listen: false).isDarkMode,
+      onThemeToggle: Provider.of<NotesProvider>(context, listen: false).toggleTheme,
+      onMenuTap: () {
+        HapticFeedback.lightImpact();
+        setState(() => _activeNavIndex = 0);
+      },
+    );
+  }
 
   @override
   void dispose() {
+    _notificationSub?.cancel();
     for (final entry in _overlayEntries) {
       entry.remove();
     }
@@ -92,16 +139,10 @@ class _HomeScreenState extends State<HomeScreen> {
     Overlay.of(context).insert(entry);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    final initialIndex = Provider.of<NotesProvider>(context, listen: false).selectedBgIndex;
-    _updatePresetsForBackground(initialIndex);
-  }
-
   List<TaskItem> get _filteredTasks {
-    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-    return AppStatisticsService.filterTasksByDateRange(tasksProvider.tasks, _activeFilter);
+    final tasksProvider = Provider.of<TasksProvider>(context);
+    final uncompleted = tasksProvider.getUncompletedTasksForFilter(_activeFilter);
+    return AppStatisticsService.sortTasks(uncompleted, filter: _activeFilter, ascending: _isSortAscending);
   }
 
   List<Note> get _filteredNotes {
@@ -115,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return AppStatisticsService.filterNotesByDateRange(notesProvider.notes, filter).length;
     } else {
       final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-      return AppStatisticsService.filterTasksByDateRange(tasksProvider.tasks, filter).length;
+      return tasksProvider.getUncompletedTasksForFilter(filter).length;
     }
   }
 
@@ -199,31 +240,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openNewTask() {
+  void _openNewTask() async {
     HapticFeedback.lightImpact();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.4),
-      builder: (_) => CreateTaskBottomSheet(
-        initialDate: DateTime.now(),
+    await Navigator.push(
+      context,
+      buildPageRoute(
+        TaskEditorScreen(
+          initialDate: DateTime.now(),
+        ),
       ),
     );
+    if (mounted) {
+      setState(() {});
+    }
   }
 
-  void _openEditTask(TaskItem task) {
+  void _openEditTask(TaskItem task) async {
     HapticFeedback.lightImpact();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.4),
-      builder: (_) => CreateTaskBottomSheet(
-        initialDate: task.dueDate,
-        taskToEdit: task,
+    await Navigator.push(
+      context,
+      buildPageRoute(
+        TaskEditorScreen(
+          initialDate: task.dueDate,
+          taskToEdit: task,
+        ),
       ),
     );
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   // ── Home tab body — exact reference layout ───────────────────────────────
@@ -256,23 +301,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCalendarBody() {
-    return CalendarScreen(
-      onBack: () => setState(() => _activeNavIndex = 0),
-    );
-  }
-
-  Widget _buildSettingsBody() {
-    final provider = Provider.of<NotesProvider>(context, listen: false);
-    return SettingsScreen(
-      isDarkMode: provider.isDarkMode,
-      onThemeToggle: provider.toggleTheme,
-      onMenuTap: () {
-        HapticFeedback.lightImpact();
-        setState(() => _activeNavIndex = 0);
-      },
-    );
-  }
+  // _calendarBody and _settingsBody are now cached late final fields
+  // initialized in initState(). No builder methods needed.
 
   Widget _buildBackground(int selectedBgIndex) {
     switch (selectedBgIndex) {
@@ -419,14 +449,18 @@ class _HomeScreenState extends State<HomeScreen> {
           // Dynamic Background (only active/visible behind Home tab)
           if (_activeNavIndex == 0) _buildBackground(selectedBgIndex),
 
-          // Tab content — IndexedStack keeps all tabs alive
+          // Tab content — IndexedStack keeps all tabs alive.
+          // Home and Folders use builder methods (Home depends on selectedBgIndex
+          // which can change; Folders has a GlobalKey for identity).
+          // Calendar and Settings are pre-built stable widgets so switching
+          // to them is instant — their State is never torn down.
           IndexedStack(
             index: _activeNavIndex,
             children: [
               _buildHomeBody(selectedBgIndex),
               _buildFoldersBody(),
-              _buildCalendarBody(),
-              _buildSettingsBody(),
+              _calendarBody,
+              _settingsBody,
             ],
           ),
 
@@ -482,13 +516,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
                               return Padding(
                                 padding: EdgeInsets.only(right: index == 3 ? 0.0 : 12.0),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    HapticFeedback.selectionClick();
-                                    setState(() {
-                                      _activeFilter = filter;
-                                    });
-                                  },
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      HapticFeedback.selectionClick();
+                                      if (_activeFilter == filter && !_isNotesActive) {
+                                        // Toggle sort direction on active task filter tap
+                                        _isSortAscending = !_isSortAscending;
+                                        final sortLabel = _isSortAscending ? 'Oldest to Newest' : 'Newest to Oldest';
+                                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Sorted: $sortLabel',
+                                              style: GoogleFonts.inter(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            backgroundColor: const Color(0xFF0088FF),
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(16),
+                                            ),
+                                            duration: const Duration(seconds: 2),
+                                          ),
+                                        );
+                                      } else {
+                                        _activeFilter = filter;
+                                        _isSortAscending = false; // Default to Newest to Oldest on filter switch
+                                      }
+                                      setState(() {});
+                                    },
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -556,9 +614,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             child: (Platform.environment.containsKey('FLUTTER_TEST') ? !_isNotesActive : true)
                                 ? TweenAnimationBuilder<double>(
-                                    key: ValueKey(_isNotesActive ? 'notes_widget_entry' : 'task_widget_entry'),
+                                    key: ValueKey('${_isNotesActive ? "notes" : "tasks"}_${_activeFilter}_${_isSortAscending}_${_filteredTasks.length}_${_filteredTasks.isNotEmpty ? _filteredTasks.first.id : ""}'),
                                     tween: Tween<double>(begin: 0.0, end: 1.0),
-                                    duration: const Duration(milliseconds: 600),
+                                    duration: const Duration(milliseconds: 500),
                                     curve: Curves.easeOutCubic,
                                     builder: (context, value, child) {
                                       return Opacity(
@@ -581,7 +639,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                             onEdit: _openEditTask,
                                             onComplete: (taskId) async {
                                               final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-                                              await tasksProvider.toggleTaskCompletion(taskId);
+                                              final currentTask = _filteredTasks.firstWhere(
+                                                (t) => t.id == taskId,
+                                                orElse: () => _filteredTasks.firstWhere((t) => t.id.startsWith(taskId)),
+                                              );
+                                              await tasksProvider.toggleTaskCompletionOnDate(taskId, currentTask.dueDate);
                                               
                                               final bool allDone = tasksProvider.activeTasks.isEmpty;
                                               final String msg;

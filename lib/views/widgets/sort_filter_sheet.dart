@@ -37,7 +37,7 @@ class SortFilterSheet extends StatelessWidget {
           // Sheet Title
           Text(
             "Sort Notes By",
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,

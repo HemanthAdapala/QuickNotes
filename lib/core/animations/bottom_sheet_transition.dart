@@ -6,15 +6,17 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
   final Widget child;
   final Color? backgroundColor;
   final ShapeBorder? shape;
+  final Color? customBarrierColor;
 
   AnimatedBottomSheetRoute({
     required this.child,
     this.backgroundColor,
     this.shape,
+    this.customBarrierColor,
   });
 
   @override
-  Color? get barrierColor => Colors.black.withValues(alpha: 0.6);
+  Color? get barrierColor => customBarrierColor ?? Colors.black.withValues(alpha: 0.20);
 
   @override
   bool get barrierDismissible => true;
@@ -81,6 +83,7 @@ Future<T?> showAnimatedBottomSheet<T>({
   required Widget child,
   Color? backgroundColor,
   ShapeBorder? shape,
+  Color? barrierColor,
 }) {
   return Navigator.push<T>(
     context,
@@ -88,6 +91,7 @@ Future<T?> showAnimatedBottomSheet<T>({
       child: child,
       backgroundColor: backgroundColor,
       shape: shape,
+      customBarrierColor: barrierColor,
     ),
   );
 }

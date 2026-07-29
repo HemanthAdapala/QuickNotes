@@ -259,7 +259,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                             widget.note.isLocked
                                 ? "Locked Note"
                                 : (widget.note.title.isNotEmpty ? widget.note.title : "Untitled"),
-                            style: GoogleFonts.playfairDisplay(
+                            style: GoogleFonts.inter(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                               color: titleColor,
@@ -489,7 +489,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                           showAnimatedDialog(
                             context: context,
                             child: AlertDialog(
-                              title: Text("Delete Note Permanently?", style: GoogleFonts.playfairDisplay(fontWeight: FontWeight.bold)),
+                              title: Text("Delete Note Permanently?", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
                               content: const Text("This action cannot be undone. Are you sure you want to permanently delete this note?"),
                               actions: [
                                 TextButton(
@@ -528,7 +528,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                           showAnimatedDialog(
                             context: context,
                             child: AlertDialog(
-                              title: Text("Delete Note?", style: GoogleFonts.playfairDisplay(fontWeight: FontWeight.bold)),
+                              title: Text("Delete Note?", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
                               content: const Text("This note will be moved to the Trash. You can restore it later."),
                               actions: [
                                 TextButton(

@@ -51,7 +51,7 @@ class AppHeaderBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 44.0,
+      height: isExpanded ? expandedHeight : 44.0,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -100,7 +100,7 @@ class AppHeaderBar extends StatelessWidget {
                   type: MaterialType.transparency,
                   child: Text(
                     title!,
-                    style: GoogleFonts.playfairDisplay(
+                    style: GoogleFonts.inter(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
                       color: titleColor ?? const Color(0xFF1C1C1E),

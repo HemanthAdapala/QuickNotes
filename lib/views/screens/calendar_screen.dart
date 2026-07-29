@@ -4,17 +4,24 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/calendar_task.dart';
+import '../../models/task_item.dart';
+import '../../models/repeat_rule.dart';
 import '../../providers/tasks_provider.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/calendar_grid_widget.dart';
 import '../widgets/celebration_overlay.dart';
+import 'create_task_screen.dart';
 import '../widgets/create_task_bottom_sheet.dart';
 import '../widgets/month_container.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/task_widgets_container.dart';
 import '../../core/animations/search_route.dart';
+import '../../core/animations/page_transitions.dart';
+import '../../core/animations/dialog_transition.dart';
 import 'search_screen.dart';
+import '../../themes/app_theme.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CalendarScreen
@@ -125,8 +132,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _currentMonth.month == now.month;
   }
 
-  List<CalendarTask> get _selectedDayTasks =>
-      _monthTasks[_selectedDay] ?? const [];
+  List<CalendarTask> get _selectedDayTasks {
+    _initMonthTasks();
+    return _monthTasks[_selectedDay] ?? const [];
+  }
 
   // ── Month navigation ───────────────────────────────────────────────────────
   void _previousMonth() {
@@ -152,7 +161,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _toggleTask(String taskId) {
     bool allComplete = false;
     final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-    tasksProvider.toggleTaskCompletion(taskId);
+    final selectedDate = DateTime(_currentMonth.year, _currentMonth.month, _selectedDay);
+    tasksProvider.toggleTaskCompletionOnDate(taskId, selectedDate);
 
     setState(() {
       _initMonthTasks();
@@ -168,20 +178,88 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   // ── Task dismiss (swipe-to-delete) ────────────────────────────────────────
-  void _removeTask(String taskId) {
-    bool allComplete = false;
+  Future<void> _removeTask(String taskId) async {
     final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-    tasksProvider.deleteTask(taskId);
+    final taskItem = tasksProvider.tasks.firstWhere(
+      (t) => t.id == taskId,
+      orElse: () => tasksProvider.tasks.firstWhere(
+        (t) => t.id.startsWith(taskId),
+        orElse: () => TaskItem(
+          id: taskId,
+          title: '',
+          dueDate: DateTime.now(),
+          priority: 'low',
+        ),
+      ),
+    );
 
-    setState(() {
-      _initMonthTasks();
-      final tasks = _monthTasks[_selectedDay];
-      allComplete = tasks != null && tasks.isNotEmpty && tasks.every((t) => t.isCompleted);
-    });
+    final bool isRecurring = taskItem.isRecurring || taskItem.recurrence != null || taskItem.repeatRule != RepeatRule.none;
 
-    if (allComplete) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) _triggerCelebration();
+    if (!isRecurring) {
+      await tasksProvider.deleteTask(taskId);
+      if (mounted) {
+        setState(() {
+          _initMonthTasks();
+        });
+      }
+      return;
+    }
+
+    final DateTime selectedDate = DateTime(_currentMonth.year, _currentMonth.month, _selectedDay);
+    final option = await showAnimatedDialog<String>(
+      context: context,
+      child: AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          "Delete Recurring Task",
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: const Color(0xFF1C1C1E),
+          ),
+        ),
+        content: Text(
+          "Do you want to delete only today's occurrence or delete the entire recurring series forever?",
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            color: const Color(0xFF333333),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'today'),
+            child: Text(
+              "Delete Today",
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF0088FF),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'forever'),
+            child: Text(
+              "Delete Forever",
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFF383C),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (option == 'today') {
+      await tasksProvider.deleteTaskOccurrence(taskId, selectedDate);
+    } else if (option == 'forever') {
+      await tasksProvider.deleteTask(taskId);
+    }
+
+    if (mounted) {
+      setState(() {
+        _initMonthTasks();
       });
     }
   }
@@ -205,149 +283,215 @@ class _CalendarScreenState extends State<CalendarScreen> {
     Overlay.of(context).insert(entry);
   }
 
-  // ── Add Task — CreateTaskBottomSheet ──────────────────────────────────────
-  void _showAddTaskSheet() {
+  // ── Add Task — TaskEditorScreen ──────────────────────────────────────────
+  void _showAddTaskSheet() async {
     HapticFeedback.lightImpact();
+    await Navigator.push(
+      context,
+      buildPageRoute(
+        TaskEditorScreen(
+          initialDate: DateTime(
+            _currentMonth.year,
+            _currentMonth.month,
+            _selectedDay,
+          ),
+        ),
+      ),
+    );
+    if (mounted) {
+      setState(() {
+        _initMonthTasks();
+      });
+    }
+  }
+
+  void _editTask(String taskId) {
+    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+    final taskItem = tasksProvider.tasks.firstWhere(
+      (t) => t.id == taskId,
+      orElse: () => tasksProvider.tasks.firstWhere(
+        (t) => t.id.startsWith(taskId),
+        orElse: () => TaskItem(
+          id: taskId,
+          title: '',
+          dueDate: DateTime.now(),
+          priority: 'low',
+        ),
+      ),
+    );
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.4),
-      builder: (_) => CreateTaskBottomSheet(
-        initialDate: DateTime(
-          _currentMonth.year,
-          _currentMonth.month,
-          _selectedDay,
-        ),
+      builder: (context) => CreateTaskBottomSheet(
+        initialDate: taskItem.dueDate,
+        taskToEdit: taskItem,
       ),
-    );
+    ).then((_) {
+      if (mounted) {
+        setState(() {
+          _initMonthTasks();
+        });
+      }
+    });
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    Provider.of<TasksProvider>(context);
+    final double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            // ── Header ─────────────────────────────────────────────────────
-            // Uses a plain Row instead of AppHeaderBar.
-            // AppHeaderBar wraps buttons in Hero > BottomBarGlassSurface >
-            // RepaintBoundary > BackdropFilter. In a Stack layout,
-            // BackdropFilter creates a hard-edged gray rectangle across the
-            // full header area behind MonthContainer. The Row approach is
-            // visually identical and avoids that compositing artifact.
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 12.0,
-              ),
-              child: Row(
-                children: [
-                  // ─ Back / home-tab button ─────────────────────────────────
-                  BottomBarGlassSurface(
-                    width: 44.0,
-                    height: 44.0,
-                    borderRadius: BorderRadius.circular(22.0),
-                    child: TactileButton(
-                      useAppleSpring: true,
-                      compressionScale: 0.7,
-                      settleDuration: const Duration(milliseconds: 1000),
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        if (widget.onBack != null) {
-                          widget.onBack!();
-                        } else {
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/icons/angle_left.svg',
-                          width: 22,
-                          height: 22,
-                          colorFilter: const ColorFilter.mode(
-                            Color(0xFF1C1C1E),
-                            BlendMode.srcIn,
+            // ── 1. Header Row (floating on stone background) ──────────────────
+            Center(
+              child: SizedBox(
+                width: screenWidth.clamp(0.0, 402.0),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 12.0,
+                  ),
+                  child: Row(
+                    children: [
+                      // ─ Back / home-tab button ─────────────────────────────────
+                      BottomBarGlassSurface(
+                        width: 44.0,
+                        height: 44.0,
+                        borderRadius: BorderRadius.circular(22.0),
+                        child: TactileButton(
+                          useAppleSpring: true,
+                          compressionScale: 0.7,
+                          settleDuration: const Duration(milliseconds: 1000),
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            if (widget.onBack != null) {
+                              widget.onBack!();
+                            } else {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'assets/icons/angle_left.svg',
+                              width: 22,
+                              height: 22,
+                              colorFilter: const ColorFilter.mode(
+                                Color(0xFF1C1C1E),
+                                BlendMode.srcIn,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
 
-                  // ─ MonthContainer pill (no overlap with button zones) ──────
-                  Expanded(
-                    child: Center(
-                      child: MonthContainer(
-                        label: _monthLabel,
-                        onPrevious: _previousMonth,
-                        onNext: _nextMonth,
-                      ),
-                    ),
-                  ),
-
-                  // ─ Search button ───────────────────────────────────────────
-                  BottomBarGlassSurface(
-                    width: 44.0,
-                    height: 44.0,
-                    borderRadius: BorderRadius.circular(22.0),
-                    child: TactileButton(
-                      useAppleSpring: true,
-                      compressionScale: 0.7,
-                      settleDuration: const Duration(milliseconds: 1000),
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.of(context).push(SearchRoute(
-                          builder: (_) => const SearchScreen(
-                            initialScope: 'tasks',
+                      // ─ MonthContainer pill ──────────────────────────────────
+                      Expanded(
+                        child: Center(
+                          child: MonthContainer(
+                            label: _monthLabel,
+                            onPrevious: _previousMonth,
+                            onNext: _nextMonth,
                           ),
-                        ));
-                      },
-                      child: const Center(
-                        child: Icon(
-                          Icons.search_rounded,
-                          color: Color(0xFF1C1C1E),
-                          size: 22,
                         ),
                       ),
-                    ),
+
+                      // ─ Search button ───────────────────────────────────────────
+                      BottomBarGlassSurface(
+                        width: 44.0,
+                        height: 44.0,
+                        borderRadius: BorderRadius.circular(22.0),
+                        child: TactileButton(
+                          useAppleSpring: true,
+                          compressionScale: 0.7,
+                          settleDuration: const Duration(milliseconds: 1000),
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.of(context).push(SearchRoute(
+                              builder: (_) => const SearchScreen(
+                                initialScope: 'tasks',
+                              ),
+                            ));
+                          },
+                          child: const Center(
+                            child: Icon(
+                              Icons.search_rounded,
+                              color: Color(0xFF1C1C1E),
+                              size: 22,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-
-
-
-            // ── Calendar grid (fixed, no scroll) ──────────────────────────
-            // Blue check cell = ALL tasks for that day completed.
-            // Gray cross cell = pending tasks or no tasks.
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 16.0,
-              ),
-              child: CalendarGridWidget(
-                currentMonth: _currentMonth,
-                daysWithTasks: _daysAllComplete, // ← only fully-done days
-                selectedDay: _selectedDay,
-                onDayTap: (day) => setState(() => _selectedDay = day),
-              ),
-            ),
-
-            // ── Task panel (Expanded, scrolls internally) ──────────────────
-            Expanded(
-              child: TaskWidgetsContainer(
-                selectedDate: DateTime(
-                  _currentMonth.year,
-                  _currentMonth.month,
-                  _selectedDay,
                 ),
-                tasks: _selectedDayTasks,
-                onToggleTask: _toggleTask,
-                onDismissTask: _removeTask,
-                onAddTask: _showAddTaskSheet,
+              ),
+            ),
+
+            // ── 2. Calendar Grid (sitting on background) ──────────────────────
+            Center(
+              child: SizedBox(
+                width: screenWidth.clamp(0.0, 402.0),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 8.0,
+                  ),
+                  child: CalendarGridWidget(
+                    currentMonth: _currentMonth,
+                    daysWithTasks: _daysAllComplete,
+                    selectedDay: _selectedDay,
+                    onDayTap: (day) => setState(() => _selectedDay = day),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12.0),
+
+            // ── 3. White Bottom Sheet Panel (ONLY wrapping Tasks Preview!) ────
+            Expanded(
+              child: Center(
+                child: Container(
+                  width: screenWidth.clamp(0.0, 402.0),
+                  decoration: const ShapeDecoration(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x1F000000),
+                        blurRadius: 20,
+                        offset: Offset(0, -4),
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    child: TaskWidgetsContainer(
+                      selectedDate: DateTime(
+                        _currentMonth.year,
+                        _currentMonth.month,
+                        _selectedDay,
+                      ),
+                      tasks: _selectedDayTasks,
+                      onToggleTask: _toggleTask,
+                      onDismissTask: _removeTask,
+                      onTapTask: _editTask,
+                      onAddTask: _showAddTaskSheet,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

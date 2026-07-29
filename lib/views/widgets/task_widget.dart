@@ -585,30 +585,40 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                   ),
                 );
               },
-              child: GestureDetector(
-                onPanUpdate: _handleCardPanUpdate,
-                onPanEnd: _handleCardPanEnd,
-                child: Center(
-                  child: Transform.rotate(
-                    angle: (_swipeX / widget.width) * (pi / 12),
-                    child: Transform.scale(
-                      scale: cardScale,
-                      child: SizedBox(
-                        width: 322.0,
-                        height: 339.0,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(0x3F000000),
-                                blurRadius: 20.0,
-                                offset: Offset(0, 0),
-                                spreadRadius: 0,
+              child: Center(
+                child: Transform.rotate(
+                  angle: (_swipeX / widget.width) * (pi / 12),
+                  child: Transform.scale(
+                    scale: cardScale,
+                    child: SizedBox(
+                      width: 322.0,
+                      height: 339.0,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x3F000000),
+                              blurRadius: 20.0,
+                              offset: Offset(0, 0),
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            // ── Upper Card Swipe GestureDetector (top 0..278px) ──
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              width: 322.0,
+                              height: 278.0,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.translucent,
+                                onPanUpdate: _handleCardPanUpdate,
+                                onPanEnd: _handleCardPanEnd,
+                                child: const SizedBox.expand(),
                               ),
-                            ],
-                          ),
-                          child: Stack(
-                            children: [
+                            ),
                               // Blue Background Header
                               Positioned(
                                 left: 0,
@@ -939,10 +949,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
   }
 }
 

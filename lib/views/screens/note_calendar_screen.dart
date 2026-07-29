@@ -124,7 +124,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           "Select Month",
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             color: const Color(0xFF1C1C1E),
           ),
@@ -394,7 +394,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                                     onTap: () => _showMonthPicker(context),
                                     child: Text(
                                       DateFormat('MMMM yyyy').format(_currentMonth),
-                                      style: GoogleFonts.playfairDisplay(
+                                      style: GoogleFonts.inter(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.ink,
@@ -589,7 +589,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                         children: [
                           Text(
                             "Tasks for ${DateFormat('MMMM d').format(_selectedDate)}",
-                            style: GoogleFonts.playfairDisplay(
+                            style: GoogleFonts.inter(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: AppColors.ink,

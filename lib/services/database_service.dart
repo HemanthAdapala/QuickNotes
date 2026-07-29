@@ -29,10 +29,10 @@ class DatabaseService {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'quick_notes.db');
 
-    // Open/Create the database (version 10)
+    // Open/Create the database (version 13)
     return await openDatabase(
       path,
-      version: 10,
+      version: 13,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -84,12 +84,26 @@ class DatabaseService {
         id TEXT PRIMARY KEY,
         title TEXT,
         description TEXT,
+        folderId TEXT,
+        categoryId TEXT,
         dueDate TEXT,
+        startTime TEXT,
+        endTime TEXT,
         priority TEXT,
+        status TEXT DEFAULT "waiting",
         completed INTEGER DEFAULT 0,
         createdAt TEXT,
         updatedAt TEXT,
-        reminderTime TEXT
+        completedAt TEXT,
+        reminderEnabled INTEGER DEFAULT 0,
+        reminderTime TEXT,
+        notificationId INTEGER DEFAULT 0,
+        repeatRule TEXT DEFAULT "none",
+        isRecurring INTEGER DEFAULT 0,
+        recurrenceRule TEXT,
+        recurringSeriesId TEXT,
+        timezone TEXT,
+        completedDates TEXT
       )
     ''');
 
@@ -103,6 +117,8 @@ class DatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_folders_createdAt ON folders(createdAt)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_dueDate ON tasks(dueDate)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_notificationId ON tasks(notificationId)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_recurringSeriesId ON tasks(recurringSeriesId)');
   }
 
   // Migration handling
@@ -188,6 +204,60 @@ class DatabaseService {
         ''');
         await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_dueDate ON tasks(dueDate)');
         await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed)');
+      } catch (_) {}
+    }
+    if (oldVersion < 11) {
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN folderId TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN categoryId TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN startTime TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN endTime TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN status TEXT DEFAULT "waiting"');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN completedAt TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN reminderEnabled INTEGER DEFAULT 0');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN notificationId INTEGER DEFAULT 0');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN repeatRule TEXT DEFAULT "none"');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN timezone TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_notificationId ON tasks(notificationId)');
+      } catch (_) {}
+    }
+    if (oldVersion < 12) {
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN isRecurring INTEGER DEFAULT 0');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN recurrenceRule TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN recurringSeriesId TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_recurringSeriesId ON tasks(recurringSeriesId)');
+      } catch (_) {}
+    }
+    if (oldVersion < 13) {
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN completedDates TEXT');
       } catch (_) {}
     }
   }
@@ -604,5 +674,37 @@ class DatabaseService {
       final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
       return d.isAtSameMomentAs(target);
     }).toList();
+  }
+
+  /// Generates a collision-free 32-bit positive integer notification ID.
+  Future<int> generateUniqueNotificationId() async {
+    final rng = DateTime.now().microsecondsSinceEpoch;
+    int candidate = (rng.abs() % 1073741823) + 1;
+
+    if (kIsWeb) {
+      final existingIds = _webTasks.map((t) => t.notificationId).toSet();
+      while (existingIds.contains(candidate)) {
+        candidate = (candidate + 1) % 1073741823 + 1;
+      }
+      return candidate;
+    }
+
+    final db = await instance.database;
+    bool exists = true;
+    while (exists) {
+      final result = await db.query(
+        'tasks',
+        columns: ['notificationId'],
+        where: 'notificationId = ?',
+        whereArgs: [candidate],
+        limit: 1,
+      );
+      if (result.isEmpty) {
+        exists = false;
+      } else {
+        candidate = (candidate + 1) % 1073741823 + 1;
+      }
+    }
+    return candidate;
   }
 }

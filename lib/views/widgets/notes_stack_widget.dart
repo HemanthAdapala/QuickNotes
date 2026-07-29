@@ -77,13 +77,18 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
   @override
   void didUpdateWidget(NotesStackWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Sync list if items count changes or is updated from parent
-    if (widget.notes.length != oldWidget.notes.length) {
+    // Compare note IDs to detect filter pill changes or list updates
+    final oldIds = oldWidget.notes.map((n) => n.id).toList();
+    final newIds = widget.notes.map((n) => n.id).toList();
+    final bool idsChanged = oldIds.length != newIds.length ||
+        !newIds.every((id) => oldIds.contains(id));
+
+    if (idsChanged) {
       setState(() {
         _currentNotesList = List.from(widget.notes);
       });
     } else {
-      // Sync contents while keeping order if same length
+      // Sync contents while keeping order if same length & same set
       for (int i = 0; i < _currentNotesList.length; i++) {
         final updatedIndex = widget.notes.indexWhere((n) => n.id == _currentNotesList[i].id);
         if (updatedIndex != -1) {
