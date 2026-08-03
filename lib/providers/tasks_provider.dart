@@ -159,10 +159,21 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     }
   }
 
+  String _getBaseId(String id) {
+    final parts = id.split('_');
+    if (parts.length >= 3 && parts[0] == 'task') {
+      return '${parts[0]}_${parts[1]}';
+    }
+    if (parts.length >= 2 && parts[0] != 'task') {
+      return parts[0];
+    }
+    return id;
+  }
+
   Future<void> deleteTask(String id) async {
     await _ensureEngineReady();
     try {
-      final String realId = (id.contains('_') && !id.startsWith('task_')) ? id.split('_')[0] : id;
+      final String realId = _getBaseId(id);
       await _engine.deleteTask(realId);
       notifyListeners();
     } catch (e) {
@@ -185,15 +196,15 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
   Future<void> deleteTaskOccurrence(String id, DateTime date) async {
     await _ensureEngineReady();
     try {
-      final String realId = (id.contains('_') && !id.startsWith('task_')) ? id.split('_')[0] : id;
+      final String realId = _getBaseId(id);
       final task = _engine.tasks.firstWhere(
         (t) => t.id == realId || t.id == id || id.startsWith(t.id),
         orElse: () => _engine.tasks.first,
       );
       if (!task.isRecurring && task.recurrence == null && task.repeatRule == RepeatRule.none) {
-        await _engine.deleteTask(task.id);
+        await _engine.deleteTask(realId);
       } else {
-        await _engine.toggleCompletion(task.id);
+        await _engine.toggleCompletionOnDate(realId, date);
       }
       notifyListeners();
     } catch (e) {
