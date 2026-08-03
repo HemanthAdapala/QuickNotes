@@ -131,11 +131,10 @@ class NoteEditorOptionsPopup extends StatelessWidget {
 
           // 3. Export and Share
           _buildMenuItem(
-            icon: SvgPicture.asset(
-              'assets/icons/share.svg',
-              width: 16,
-              height: 16,
-              colorFilter: const ColorFilter.mode(textColor, BlendMode.srcIn),
+            icon: const Icon(
+              Icons.share_rounded,
+              size: 16,
+              color: textColor,
             ),
             label: 'Export & Share',
             onTap: onExportAndShare,
