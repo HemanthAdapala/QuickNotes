@@ -47,6 +47,8 @@ When writing long notes, maintaining smooth performance during continuous touch 
 2. Second key requirement: Zero keyboard interference during drag gestures
 3. Third key requirement: Clean handle rendering at selection boundaries
 
+![Architecture Blueprint](https://picsum.photos/600/300)
+
 ### Section 3.1: Technical Architecture Highlights
 
 The editor uses sub-controllers to manage local line representations while maintaining a single backing data source. Every change in text or selection is synchronized across reactive providers without mutating underlying models unsafely.
@@ -83,27 +85,11 @@ Dragging your finger across these paragraphs will highlight text across multiple
     }
   }
 
-  void _copySelectedText() {
-    final selection = _controller.selection;
-    if (!selection.isValid || selection.isCollapsed) return;
-
-    final text = _controller.text;
-    final selStart = selection.start.clamp(0, text.length);
-    final selEnd = selection.end.clamp(0, text.length);
-    final selectedText = text.substring(selStart, selEnd);
-
-    Clipboard.setData(ClipboardData(text: selectedText));
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('📋 Copied ${selectedText.length} characters to clipboard'),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  void _clearSelection() {
+    _controller.selection = const TextSelection.collapsed(offset: 0);
   }
 
-  void _cutSelectedText() {
+  void _onCutSelectedText() {
     final selection = _controller.selection;
     if (!selection.isValid || selection.isCollapsed) return;
 
@@ -113,24 +99,48 @@ Dragging your finger across these paragraphs will highlight text across multiple
     final selectedText = text.substring(selStart, selEnd);
 
     Clipboard.setData(ClipboardData(text: selectedText));
+    HapticFeedback.mediumImpact();
 
     final chars = List<StyledChar>.from(_controller.styledChars);
     chars.removeRange(selStart, selEnd);
     _controller.saveUndoState();
     _controller.styledChars = chars;
     _controller.selection = TextSelection.collapsed(offset: selStart);
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('✂️ Cut ${selectedText.length} characters'),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
+  void _onCopySelectedText() {
+    final selection = _controller.selection;
+    if (!selection.isValid || selection.isCollapsed) return;
+
+    final text = _controller.text;
+    final selStart = selection.start.clamp(0, text.length);
+    final selEnd = selection.end.clamp(0, text.length);
+    final selectedText = text.substring(selStart, selEnd);
+
+    Clipboard.setData(ClipboardData(text: selectedText));
+    HapticFeedback.selectionClick();
+    _controller.selection = TextSelection.collapsed(offset: selEnd);
+  }
+
+  void _onSelectAllText() {
+    HapticFeedback.selectionClick();
+    _controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _controller.text.length,
     );
   }
 
-  void _clearSelection() {
-    _controller.selection = const TextSelection.collapsed(offset: 0);
+  void _onShareSelectedText() {
+    final selection = _controller.selection;
+    if (!selection.isValid || selection.isCollapsed) return;
+
+    final text = _controller.text;
+    final selStart = selection.start.clamp(0, text.length);
+    final selEnd = selection.end.clamp(0, text.length);
+    final selectedText = text.substring(selStart, selEnd);
+
+    Clipboard.setData(ClipboardData(text: selectedText));
+    HapticFeedback.selectionClick();
   }
 
   @override
@@ -160,55 +170,18 @@ Dragging your finger across these paragraphs will highlight text across multiple
           ),
         ],
       ),
-      bottomNavigationBar: hasSelection
+      bottomNavigationBar: hasSelection && !_isDraggingSelection
           ? SafeArea(
-              child: Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x3F000000),
-                      blurRadius: 16,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${(_controller.selection.end - _controller.selection.start).abs()} chars',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: textColor,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        TextButton.icon(
-                          onPressed: _copySelectedText,
-                          icon: const Icon(Icons.copy_rounded, size: 18),
-                          label: const Text('Copy'),
-                        ),
-                        const SizedBox(width: 4),
-                        TextButton.icon(
-                          onPressed: _cutSelectedText,
-                          icon: const Icon(Icons.content_cut_rounded, size: 18),
-                          label: const Text('Cut'),
-                        ),
-                        const SizedBox(width: 4),
-                        IconButton(
-                          onPressed: _clearSelection,
-                          icon: const Icon(Icons.close_rounded),
-                          tooltip: 'Clear Selection',
-                        ),
-                      ],
-                    ),
-                  ],
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Center(
+                  heightFactor: 1.0,
+                  child: ContextualBar(
+                    onCut: _onCutSelectedText,
+                    onCopy: _onCopySelectedText,
+                    onSelectAll: _onSelectAllText,
+                    onShare: _onShareSelectedText,
+                  ),
                 ),
               ),
             )

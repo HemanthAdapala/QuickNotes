@@ -106,6 +106,20 @@ class QuickNotesApp extends StatelessWidget {
           backgroundColor: Color(0xFF6366F1),
           foregroundColor: Color(0xFFFFFFFF),
         ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: const Color(0xFF333333),
+          elevation: 6,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentTextStyle: GoogleFonts.inter(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.3,
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
       ),
 
       // Dark Theme configuration
@@ -138,6 +152,20 @@ class QuickNotesApp extends StatelessWidget {
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: Color(0xFF818CF8),
           foregroundColor: Color(0xFF0B0D17),
+        ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: const Color(0xFF333333),
+          elevation: 6,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentTextStyle: GoogleFonts.inter(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.3,
+          ),
+          behavior: SnackBarBehavior.floating,
         ),
       ),
 

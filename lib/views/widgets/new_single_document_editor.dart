@@ -49,6 +49,7 @@ class NewSingleDocumentEditor extends StatefulWidget {
   final Widget Function(BuildContext, EditableTextState) contextMenuBuilder;
   final double formattingToolbarHeight;
   final bool readOnly;
+  final bool enableInteractiveSelection;
 
   const NewSingleDocumentEditor({
     super.key,
@@ -59,6 +60,7 @@ class NewSingleDocumentEditor extends StatefulWidget {
     required this.contextMenuBuilder,
     required this.formattingToolbarHeight,
     this.readOnly = false,
+    this.enableInteractiveSelection = true,
   });
 
   @override
@@ -70,10 +72,15 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
   final Map<int, RangeTextEditingController> _controllers = {};
   final Map<int, FocusNode> focusNodes = {};
   final Map<int, GlobalKey> _textFieldKeys = {};
+  final Map<int, GlobalKey> _segmentContainerKeys = {};
   final Map<int, GlobalKey> _imageKeys = {};
   int? _selectedImageGlobalIndex;
 
   List<TextSegment> get textSegments => _segments.whereType<TextSegment>().toList();
+  List<DocSegment> get allSegments => List.unmodifiable(_segments);
+  Map<int, GlobalKey> get imageKeys => _imageKeys;
+  Map<int, GlobalKey> get textFieldKeys => _textFieldKeys;
+  Map<int, GlobalKey> get segmentContainerKeys => _segmentContainerKeys;
   RangeTextEditingController? getSegmentController(int segmentIndex) => _controllers[segmentIndex];
 
   @override
@@ -583,6 +590,7 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     });
 
     _textFieldKeys.removeWhere((idx, key) => !activeTextIndices.contains(idx));
+    _segmentContainerKeys.removeWhere((idx, key) => !activeTextIndices.contains(idx));
 
     final activeImageIndices = _segments
         .whereType<ImageSegment>()
@@ -681,8 +689,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       focusNode: focusNode,
       readOnly: widget.readOnly,
       showCursor: !widget.readOnly,
-      enableInteractiveSelection: true,
-      selectionControls: widget.readOnly ? EmptyTextSelectionControls() : null,
+      enableInteractiveSelection: widget.enableInteractiveSelection,
+      selectionControls: (!widget.enableInteractiveSelection) ? EmptyTextSelectionControls() : null,
       maxLines: null,
       keyboardType: TextInputType.multiline,
       scrollPhysics: const NeverScrollableScrollPhysics(),
@@ -783,14 +791,20 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       );
     }
 
+    final containerKey = _segmentContainerKeys.putIfAbsent(segment.segmentIndex, () => GlobalKey());
+
+    Widget finalWidget = resultWidget;
     if (segment.indent > 0) {
-      return Padding(
+      finalWidget = Padding(
         padding: EdgeInsets.only(left: segment.indent * 24.0),
         child: resultWidget,
       );
     }
 
-    return resultWidget;
+    return KeyedSubtree(
+      key: containerKey,
+      child: finalWidget,
+    );
   }
 
   @override

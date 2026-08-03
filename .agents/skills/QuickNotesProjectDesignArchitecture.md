@@ -56,7 +56,6 @@ QuickNotes employs a deliberate dual-font architecture: **Inter** (for UI, body 
 
 ### Typography Specs
 * **Primary Font Family**: `Inter` (via `GoogleFonts.inter`).
-* **Serif Accent Font Family**: `Playfair Display` (for date titles: "Monday", "Apr 13", "Today").
 * **Weight Mapping**: Adapts strictly to specific panel and screen hierarchies:
   - **Display / Headers**: `FontWeight.w700` (Bold) or `w600` (SemiBold)
   - **Date Headers**: `Playfair Display` `w500` (Medium) / `w600` (SemiBold)

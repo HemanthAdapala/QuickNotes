@@ -2330,6 +2330,8 @@ class RangeTextEditingController extends TextEditingController {
           final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
           final clamped = localOffset < prefixOffset ? prefixOffset : localOffset;
           _localSelection = TextSelection.collapsed(offset: clamped);
+        } else {
+          _localSelection = const TextSelection.collapsed(offset: 0);
         }
       } else {
         final selStart = parentSel.start;
@@ -2351,6 +2353,8 @@ class RangeTextEditingController extends TextEditingController {
           _localSelection = const TextSelection.collapsed(offset: 0);
         }
       }
+    } else {
+      _localSelection = const TextSelection.collapsed(offset: 0);
     }
   }
 
@@ -2895,14 +2899,16 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown, {Style? baseStyle})
     while (spaces < line.length && (line[spaces] == ' ' || line[spaces] == '\t')) {
       if (line[spaces] == '\t') {
         indent += 1;
+        spaces++;
       } else {
         spaces++;
         if (spaces < line.length && line[spaces] == ' ') {
           indent += 1;
+          spaces++;
         }
       }
-      spaces++;
     }
+    spaces = spaces.clamp(0, line.length);
     line = line.substring(spaces);
 
     // Parse dividers
@@ -3024,11 +3030,13 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown, {Style? baseStyle})
       }
 
       if (line[idx] == '!' && idx + 1 < line.length && line[idx + 1] == '[') {
-        int closeBracket = line.indexOf(']', idx + 2);
+        int closeBracket = (idx + 2 <= line.length) ? line.indexOf(']', idx + 2) : -1;
         if (closeBracket != -1 &&
             closeBracket + 1 < line.length &&
             line[closeBracket + 1] == '(') {
-          int closeParenthesis = line.indexOf(')', closeBracket + 2);
+          int closeParenthesis = (closeBracket + 2 <= line.length)
+              ? line.indexOf(')', closeBracket + 2)
+              : -1;
           if (closeParenthesis != -1) {
             final alt = line.substring(idx + 2, closeBracket);
             final url = line.substring(closeBracket + 2, closeParenthesis);
