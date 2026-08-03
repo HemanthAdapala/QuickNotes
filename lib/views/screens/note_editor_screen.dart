@@ -23,6 +23,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
 import '../widgets/new_single_document_editor.dart';
+import '../widgets/single_document_drag_overlay.dart';
 import '../widgets/paper_guide_painters.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/rich_text_formatting_pill.dart';
@@ -1357,8 +1358,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   final _contentFocusNode = FocusNode();
-  final _pageController = PageController();
-  int _currentPage = 0;
+  final _pageController = PageController(initialPage: 1);
+  int _currentPage = 1;
+  bool _wasSelectionActive = false;
   
   int _colorIndex = 0;
   bool _isPinned = false;
@@ -1674,12 +1676,97 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   void _onContentTextChanged() {
     _calculateCounts();
     _startZenTimer();
+    _checkSelectionToolbarNavigation();
     setState(() {
       _hasChanges = true;
       if (_activeCategory != _ActiveCategory.none && !Platform.environment.containsKey('FLUTTER_TEST')) {
         _activeCategory = _ActiveCategory.none;
       }
     });
+  }
+
+  void _checkSelectionToolbarNavigation() {
+    if (!mounted) return;
+    final selection = _contentController.selection;
+    final isSelectionActive = selection.isValid && !selection.isCollapsed;
+
+    if (isSelectionActive != _wasSelectionActive) {
+      _wasSelectionActive = isSelectionActive;
+      if (isSelectionActive) {
+        if (_pageController.hasClients && _currentPage != 0) {
+          _pageController.animateToPage(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      } else {
+        if (_pageController.hasClients && _currentPage == 0) {
+          _pageController.animateToPage(
+            1,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    }
+  }
+
+  void _onCutSelectedText() {
+    final selection = _contentController.selection;
+    if (!selection.isValid || selection.isCollapsed) return;
+
+    final text = _contentController.text;
+    final selStart = selection.start.clamp(0, text.length);
+    final selEnd = selection.end.clamp(0, text.length);
+    final selectedText = text.substring(selStart, selEnd);
+
+    Clipboard.setData(ClipboardData(text: selectedText));
+    HapticFeedback.mediumImpact();
+
+    final chars = List<StyledChar>.from(_contentController.styledChars);
+    chars.removeRange(selStart, selEnd);
+    _contentController.saveUndoState();
+    _contentController.styledChars = chars;
+    _contentController.selection = TextSelection.collapsed(offset: selStart);
+  }
+
+  void _onCopySelectedText() {
+    final selection = _contentController.selection;
+    if (!selection.isValid || selection.isCollapsed) return;
+
+    final text = _contentController.text;
+    final selStart = selection.start.clamp(0, text.length);
+    final selEnd = selection.end.clamp(0, text.length);
+    final selectedText = text.substring(selStart, selEnd);
+
+    Clipboard.setData(ClipboardData(text: selectedText));
+    HapticFeedback.selectionClick();
+  }
+
+  void _onSelectAllText() {
+    HapticFeedback.selectionClick();
+    _contentController.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _contentController.text.length,
+    );
+  }
+
+  void _onDeleteSelectedText() {
+    final selection = _contentController.selection;
+    if (!selection.isValid || selection.isCollapsed) return;
+
+    final text = _contentController.text;
+    final selStart = selection.start.clamp(0, text.length);
+    final selEnd = selection.end.clamp(0, text.length);
+
+    HapticFeedback.mediumImpact();
+
+    final chars = List<StyledChar>.from(_contentController.styledChars);
+    chars.removeRange(selStart, selEnd);
+    _contentController.saveUndoState();
+    _contentController.styledChars = chars;
+    _contentController.selection = TextSelection.collapsed(offset: selStart);
   }
 
 
@@ -3331,7 +3418,31 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   });
                 },
                 children: [
-                  // Page 0: Styles Group
+                  // Page 0: Selection Group
+                  buildPageWrapper([
+                    buildToolbarButton(
+                      icon: Icons.content_cut_rounded,
+                      onPressed: _onCutSelectedText,
+                      tooltip: 'Cut',
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.copy_rounded,
+                      onPressed: _onCopySelectedText,
+                      tooltip: 'Copy',
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.select_all_rounded,
+                      onPressed: _onSelectAllText,
+                      tooltip: 'Select All',
+                    ),
+                    buildToolbarButton(
+                      icon: Icons.delete_outline_rounded,
+                      onPressed: _onDeleteSelectedText,
+                      tooltip: 'Delete',
+                    ),
+                  ]),
+
+                  // Page 1: Styles Group
                   buildPageWrapper([
                     buildToolbarButton(
                       icon: Icons.format_bold_rounded,
@@ -3370,7 +3481,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                     ),
                   ]),
 
-                  // Page 1: Headings & Lists Group
+                  // Page 2: Headings & Lists Group
                   buildPageWrapper([
                     buildToolbarButton(
                       icon: Icons.filter_1_rounded,
@@ -3415,7 +3526,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                     ),
                   ]),
 
-                  // Page 2: Alignments & Actions Group
+                  // Page 3: Alignments & Actions Group
                   buildPageWrapper([
                     buildToolbarButton(
                       icon: Icons.format_align_left_rounded,
@@ -3464,10 +3575,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
           // Right chevron arrow to navigate forward
           AnimatedOpacity(
-            opacity: _currentPage < 2 ? 1.0 : 0.0,
+            opacity: _currentPage < 3 ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 200),
             child: IgnorePointer(
-              ignoring: _currentPage == 2,
+              ignoring: _currentPage == 3,
               child: IconButton(
                 icon: Icon(Icons.play_arrow_rounded, color: buttonColor.withAlpha(180)),
                 onPressed: () {
@@ -4019,14 +4130,20 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                   if (_isPreviewMarkdown)
                                     _buildMarkdownPreview(textColor)
                                   else if (NoteEditorScreen.useSingleDocumentEditor)
-                                    NewSingleDocumentEditor(
-                                      key: _sdeKey,
+                                    SingleDocumentDragOverlay(
                                       controller: _contentController,
-                                      focusNode: _contentFocusNode,
-                                      textColor: textColor,
-                                      paperGuideHeight: _paperGuideHeight,
-                                      contextMenuBuilder: _buildContextMenu,
-                                      formattingToolbarHeight: targetHeight,
+                                      sdeKey: _sdeKey,
+                                      scrollController: _scrollController,
+                                      isSelectionMode: true,
+                                      child: NewSingleDocumentEditor(
+                                        key: _sdeKey,
+                                        controller: _contentController,
+                                        focusNode: _contentFocusNode,
+                                        textColor: textColor,
+                                        paperGuideHeight: _paperGuideHeight,
+                                        contextMenuBuilder: _buildContextMenu,
+                                        formattingToolbarHeight: targetHeight,
+                                      ),
                                     )
                                   else
                                     Column(
@@ -4388,6 +4505,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
               });
             },
             children: [
+              _buildCategorySelectionPage(),
               _buildCategoryPage1(activeStyle),
               _buildCategoryPage2(),
             ],
@@ -4398,7 +4516,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         _buildCategoryIconButton(
           icon: const Icon(Icons.chevron_right_rounded, size: 24),
           onTap: () {
-            if (_currentPage < 1) {
+            if (_currentPage < 2) {
               _pageController.nextPage(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOutCubic,
@@ -4406,7 +4524,47 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
             }
           },
           isActive: false,
-          isEnabled: _currentPage < 1,
+          isEnabled: _currentPage < 2,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategorySelectionPage() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildCategoryIconButton(
+          icon: const Icon(
+            Icons.content_cut_rounded,
+            size: 22,
+          ),
+          onTap: _onCutSelectedText,
+          isActive: false,
+        ),
+        _buildCategoryIconButton(
+          icon: const Icon(
+            Icons.copy_rounded,
+            size: 22,
+          ),
+          onTap: _onCopySelectedText,
+          isActive: false,
+        ),
+        _buildCategoryIconButton(
+          icon: const Icon(
+            Icons.select_all_rounded,
+            size: 22,
+          ),
+          onTap: _onSelectAllText,
+          isActive: false,
+        ),
+        _buildCategoryIconButton(
+          icon: const Icon(
+            Icons.delete_outline_rounded,
+            size: 22,
+          ),
+          onTap: _onDeleteSelectedText,
+          isActive: false,
         ),
       ],
     );
