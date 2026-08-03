@@ -23,7 +23,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
 import '../widgets/new_single_document_editor.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../widgets/single_document_drag_overlay.dart';
+import '../widgets/note_editor_options_popup.dart';
 import '../widgets/paper_guide_painters.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/rich_text_formatting_pill.dart';
@@ -1366,6 +1368,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   bool _isPinned = false;
   bool _isFavorite = false;
   bool _isArchived = false;
+  bool _isNoteOptionsOpen = false;
   String _category = 'Uncategorized';
   String _noteType = 'text'; // 'text' or 'checklist' (migration)
   bool _isLocked = false;
@@ -2845,6 +2848,39 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
   }
 
+  void _onDeleteNoteSelected() async {
+    setState(() => _isNoteOptionsOpen = false);
+    if (widget.note == null) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Note'),
+        content: const Text('Are you sure you want to delete this note? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      final provider = Provider.of<NotesProvider>(context, listen: false);
+      await provider.deleteNote(widget.note!.id);
+      if (mounted) {
+        Navigator.of(context).maybePop();
+      }
+    }
+  }
+
   // Command bar floating modal bottom sheet actions hub
   void _showCommandPalette() {
     showModalBottomSheet(
@@ -4220,6 +4256,23 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
               ),
             ),
 
+            // Backdrop Overlay for Morphing Options Popup
+            IgnorePointer(
+              ignoring: !_isNoteOptionsOpen,
+              child: AnimatedOpacity(
+                duration: Duration(milliseconds: _isNoteOptionsOpen ? 500 : 415),
+                curve: Curves.easeOutCubic,
+                opacity: _isNoteOptionsOpen ? 1.0 : 0.0,
+                child: GestureDetector(
+                  onTap: () => setState(() => _isNoteOptionsOpen = false),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.20),
+                  ),
+                ),
+              ),
+            ),
+
             // 3. Unified Top Header Overlay
             Positioned(
               top: 12.0,
@@ -4232,9 +4285,39 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                 child: IgnorePointer(
                   ignoring: notesProvider.isZenModeEnabled && _isZenTyping,
                   child: AppHeaderBar(
+                    isExpanded: _isNoteOptionsOpen,
+                    expandedWidth: 192.0,
+                    expandedHeight: 200.0,
+                    expandedChild: NoteEditorOptionsPopup(
+                      isPinned: _isPinned,
+                      isFavorite: _isFavorite,
+                      onTogglePin: () {
+                        setState(() {
+                          _isNoteOptionsOpen = false;
+                          _isPinned = !_isPinned;
+                          _hasChanges = true;
+                        });
+                      },
+                      onToggleFavorite: () {
+                        setState(() {
+                          _isNoteOptionsOpen = false;
+                          _isFavorite = !_isFavorite;
+                          _hasChanges = true;
+                        });
+                      },
+                      onExportAndShare: () {
+                        setState(() => _isNoteOptionsOpen = false);
+                        _showExportDialog();
+                      },
+                      onDeleteNote: _onDeleteNoteSelected,
+                    ),
                     leftWidth: 44.0,
                     onLeftTap: () {
-                      Navigator.of(context).maybePop();
+                      if (_isNoteOptionsOpen) {
+                        setState(() => _isNoteOptionsOpen = false);
+                      } else {
+                        Navigator.of(context).maybePop();
+                      }
                     },
                     leftChild: SvgPicture.asset(
                       'assets/icons/angle_left.svg',
@@ -4333,7 +4416,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                         compressionScale: 0.7,
                         settleDuration: const Duration(milliseconds: 1000),
                         onTap: () {
-                          _showCommandPalette();
+                          setState(() {
+                            _isNoteOptionsOpen = !_isNoteOptionsOpen;
+                          });
                         },
                         child: const Center(
                           child: Icon(
