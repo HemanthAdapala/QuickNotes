@@ -45,3 +45,9 @@
 
 # Crashlytics generated file
 ios/Firebase/FirebaseCrashlytics.js
+
+# Temporary & Conversation Artifacts
+conversations_history/
+DesignCode/
+flutter_01.png
+
