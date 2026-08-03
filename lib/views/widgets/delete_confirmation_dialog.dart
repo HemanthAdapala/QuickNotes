@@ -125,7 +125,7 @@ class DeleteConfirmationDialog extends StatelessWidget {
                         width: 125,
                         height: 40,
                         decoration: ShapeDecoration(
-                          color: const Color(0xFFFF383C),
+                          color: const Color(0x33787878),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -135,7 +135,7 @@ class DeleteConfirmationDialog extends StatelessWidget {
                             deleteText,
                             textAlign: TextAlign.center,
                             style: GoogleFonts.inter(
-                              color: Colors.white,
+                              color: const Color(0xFFFF383C),
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
                             ),
