@@ -17,6 +17,7 @@ import '../widgets/create_task_bottom_sheet.dart';
 import '../widgets/month_container.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/task_widgets_container.dart';
+import '../widgets/delete_task_confirmation_dialog.dart';
 import '../../core/animations/search_route.dart';
 import '../../core/animations/page_transitions.dart';
 import '../../core/animations/dialog_transition.dart';
@@ -193,62 +194,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
 
-    final bool isRecurring = taskItem.isRecurring || taskItem.recurrence != null || taskItem.repeatRule != RepeatRule.none;
-
-    if (!isRecurring) {
-      await tasksProvider.deleteTask(taskId);
-      if (mounted) {
-        setState(() {
-          _initMonthTasks();
-        });
-      }
-      return;
-    }
-
     final DateTime selectedDate = DateTime(_currentMonth.year, _currentMonth.month, _selectedDay);
-    final option = await showAnimatedDialog<String>(
-      context: context,
-      child: AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(
-          "Delete Recurring Task",
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: const Color(0xFF1C1C1E),
-          ),
-        ),
-        content: Text(
-          "Do you want to delete only today's occurrence or delete the entire recurring series forever?",
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            color: const Color(0xFF333333),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'today'),
-            child: Text(
-              "Delete Today",
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF0088FF),
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'forever'),
-            child: Text(
-              "Delete Forever",
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFFFF383C),
-              ),
-            ),
-          ),
-        ],
-      ),
+    final option = await showDeleteTaskDialog(
+      context,
+      isRecurring: isRecurring,
     );
 
     if (option == 'today') {
