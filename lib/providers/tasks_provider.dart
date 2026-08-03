@@ -216,9 +216,10 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
   Future<void> toggleTaskCompletionOnDate(String id, DateTime targetDate) async {
     await _ensureEngineReady();
     try {
+      final String realId = _getBaseId(id);
       final task = _engine.tasks.firstWhere(
-        (t) => t.id == id,
-        orElse: () => _engine.tasks.firstWhere((t) => t.id.startsWith(id)),
+        (t) => t.id == realId || t.id == id || id.startsWith(t.id),
+        orElse: () => _engine.tasks.firstWhere((t) => t.id.startsWith(realId)),
       );
 
       final bool isRecurring = task.isRecurring || task.recurrence != null || task.repeatRule != RepeatRule.none;
