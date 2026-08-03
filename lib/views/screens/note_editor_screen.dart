@@ -23,7 +23,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/rich_text_controller.dart';
 import '../widgets/new_single_document_editor.dart';
-import 'package:table_calendar/table_calendar.dart';
 import '../widgets/single_document_drag_overlay.dart';
 import '../widgets/note_editor_options_popup.dart';
 import '../widgets/paper_guide_painters.dart';
