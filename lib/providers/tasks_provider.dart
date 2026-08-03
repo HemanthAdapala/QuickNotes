@@ -204,7 +204,7 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
       if (!task.isRecurring && task.recurrence == null && task.repeatRule == RepeatRule.none) {
         await _engine.deleteTask(realId);
       } else {
-        await _engine.toggleCompletionOnDate(realId, date);
+        await toggleTaskCompletionOnDate(realId, date);
       }
       notifyListeners();
     } catch (e) {
