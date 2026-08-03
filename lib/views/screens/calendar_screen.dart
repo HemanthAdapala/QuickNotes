@@ -181,16 +181,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
   // ── Task dismiss (swipe-to-delete) ────────────────────────────────────────
   Future<void> _removeTask(String taskId) async {
     final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+    final String baseId = (taskId.contains('_') && !taskId.startsWith('task_')) ? taskId.split('_')[0] : taskId;
     final taskItem = tasksProvider.tasks.firstWhere(
-      (t) => t.id == taskId,
-      orElse: () => tasksProvider.tasks.firstWhere(
-        (t) => t.id.startsWith(taskId),
-        orElse: () => TaskItem(
-          id: taskId,
-          title: '',
-          dueDate: DateTime.now(),
-          priority: 'low',
-        ),
+      (t) => t.id == taskId || t.id == baseId || taskId.startsWith(t.id),
+      orElse: () => TaskItem(
+        id: taskId,
+        title: '',
+        dueDate: DateTime.now(),
+        priority: 'low',
+        isRecurring: true,
       ),
     );
 

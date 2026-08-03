@@ -162,7 +162,8 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
   Future<void> deleteTask(String id) async {
     await _ensureEngineReady();
     try {
-      await _engine.deleteTask(id);
+      final String realId = (id.contains('_') && !id.startsWith('task_')) ? id.split('_')[0] : id;
+      await _engine.deleteTask(realId);
       notifyListeners();
     } catch (e) {
       debugPrint('Error deleting task in TasksProvider: $e');
@@ -184,11 +185,15 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
   Future<void> deleteTaskOccurrence(String id, DateTime date) async {
     await _ensureEngineReady();
     try {
-      final task = _engine.tasks.firstWhere((t) => t.id == id, orElse: () => _engine.tasks.first);
+      final String realId = (id.contains('_') && !id.startsWith('task_')) ? id.split('_')[0] : id;
+      final task = _engine.tasks.firstWhere(
+        (t) => t.id == realId || t.id == id || id.startsWith(t.id),
+        orElse: () => _engine.tasks.first,
+      );
       if (!task.isRecurring && task.recurrence == null && task.repeatRule == RepeatRule.none) {
-        await _engine.deleteTask(id);
+        await _engine.deleteTask(task.id);
       } else {
-        await _engine.toggleCompletion(id);
+        await _engine.toggleCompletion(task.id);
       }
       notifyListeners();
     } catch (e) {
