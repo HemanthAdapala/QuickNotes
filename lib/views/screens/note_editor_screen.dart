@@ -4377,6 +4377,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                   child: RichTextFormattingPillContainer(
                     width: targetWidth,
                     height: targetHeight,
+                    borderRadius: _activeCategory != _ActiveCategory.none
+                        ? BorderRadius.circular(30.0)
+                        : null,
                     child: !_isFormattingBarExpanded
                         ? TactileButton(
                             useAppleSpring: true,
