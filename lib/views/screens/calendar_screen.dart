@@ -194,6 +194,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
 
+    final bool isRecurring = taskItem.isRecurring || taskItem.recurrence != null || taskItem.repeatRule != RepeatRule.none;
     final DateTime selectedDate = DateTime(_currentMonth.year, _currentMonth.month, _selectedDay);
     final option = await showDeleteTaskDialog(
       context,
