@@ -25,6 +25,7 @@ import '../widgets/rich_text_controller.dart';
 import '../widgets/new_single_document_editor.dart';
 import '../widgets/single_document_drag_overlay.dart';
 import '../widgets/note_editor_options_popup.dart';
+import '../widgets/delete_confirmation_dialog.dart';
 import '../widgets/paper_guide_painters.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/rich_text_formatting_pill.dart';
@@ -2853,23 +2854,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       Navigator.of(context).maybePop();
       return;
     }
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Note'),
-        content: const Text('Are you sure you want to delete this note? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+    final confirm = await showDeleteNoteDialog(context);
 
     if (confirm == true && mounted) {
       final provider = Provider.of<NotesProvider>(context, listen: false);

@@ -11,6 +11,7 @@ import '../../core/animations/page_transitions.dart';
 import '../../core/animations/animation_constants.dart';
 import '../../core/animations/dialog_transition.dart';
 import '../../themes/app_theme.dart';
+import 'delete_confirmation_dialog.dart';
 
 class NoteCard extends StatefulWidget {
   final NoteSummary note;
@@ -485,31 +486,15 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                           size: 18,
                           color: Colors.redAccent,
                         ),
-                        onPressed: () {
-                          showAnimatedDialog(
-                            context: context,
-                            child: AlertDialog(
-                              title: Text("Delete Note Permanently?", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                              content: const Text("This action cannot be undone. Are you sure you want to permanently delete this note?"),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text("Cancel"),
-                                ),
-                                FilledButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    _handleDelete();
-                                  },
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: theme.colorScheme.error,
-                                    foregroundColor: theme.colorScheme.onError,
-                                  ),
-                                  child: const Text("Delete"),
-                                ),
-                              ],
-                            ),
+                        onPressed: () async {
+                          final confirm = await showDeleteNoteDialog(
+                            context,
+                            title: 'Delete Note Permanently?',
+                            message: 'This action cannot be undone. Are you sure you want to permanently delete this note?',
                           );
+                          if (confirm == true) {
+                            _handleDelete();
+                          }
                         },
                         tooltip: "Delete permanently",
                       ),
@@ -524,31 +509,11 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                               ? theme.colorScheme.error.withAlpha(180) 
                               : textColor.withAlpha(150),
                         ),
-                        onPressed: () {
-                          showAnimatedDialog(
-                            context: context,
-                            child: AlertDialog(
-                              title: Text("Delete Note?", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                              content: const Text("This note will be moved to the Trash. You can restore it later."),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text("Cancel"),
-                                ),
-                                FilledButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    _handleDelete();
-                                  },
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: theme.colorScheme.error,
-                                    foregroundColor: theme.colorScheme.onError,
-                                  ),
-                                  child: const Text("Delete"),
-                                ),
-                              ],
-                            ),
-                          );
+                        onPressed: () async {
+                          final confirm = await showDeleteNoteDialog(context);
+                          if (confirm == true) {
+                            _handleDelete();
+                          }
                         },
                         tooltip: "Delete note",
                       ),

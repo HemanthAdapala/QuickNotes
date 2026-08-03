@@ -23,6 +23,7 @@ import '../widgets/home_prompt_view.dart';
 import 'profile_screen.dart';
 import 'note_editor_screen.dart';
 import 'folder_management_screen.dart';
+import '../widgets/delete_confirmation_dialog.dart';
 import 'settings_screen.dart';
 import 'calendar_screen.dart';
 import 'create_task_screen.dart';
@@ -737,22 +738,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     expandedChild: MoreOptionsPopup(
                       onDeleteData: () async {
                         setState(() => _isMoreOptionsOpen = false);
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Delete Data'),
-                            content: const Text('Are you sure you want to delete all notes and tasks? This action cannot be undone.'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(ctx).pop(false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.of(ctx).pop(true),
-                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                              ),
-                            ],
-                          ),
+                        final confirm = await showDeleteNoteDialog(
+                          context,
+                          title: 'Delete Data',
+                          message: 'Are you sure you want to delete\nall notes and tasks? This action\ncannot be undone',
                         );
                         if (confirm == true && mounted) {
                           final notesProvider = Provider.of<NotesProvider>(context, listen: false);
