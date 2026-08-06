@@ -106,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         content: Text(
           "Are you sure you want to delete your account? This action is permanent and cannot be undone.",
           style: GoogleFonts.inter(
-            color: const Color(0xFF333333).withOpacity(0.8),
+            color: const Color(0xFF333333).withValues(alpha: 0.8),
           ),
         ),
         actions: [

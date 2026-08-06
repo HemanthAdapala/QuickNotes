@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
 import '../../core/animations/page_transitions.dart';
-import 'profile_screen.dart';
+import 'profile_test_screen.dart';
 import 'glassmorphism_sandbox_screen.dart';
 
 import 'experimental/sde_drag_test_screen.dart';
@@ -73,7 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         content: Text(
           message,
           style: GoogleFonts.inter(
-            color: const Color(0xFF333333).withOpacity(0.8),
+            color: const Color(0xFF333333).withValues(alpha: 0.8),
             fontSize: 14,
           ),
         ),
@@ -96,7 +96,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     const primaryTextColor = Color(0xFF333333);
-    const borderColor = Color(0xFF333333);
     const circleColor = Color(0x33787878);
 
     return Scaffold(
@@ -287,6 +286,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(builder: (context) => const SDEDragTestScreen()),
+                                );
+                              },
+                              showBorderBottom: true,
+                            ),
+                            _buildSettingRow(
+                              iconPath: 'assets/icons/settings-sliders.svg',
+                              title: 'Edit Profile',
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                Navigator.push(
+                                  context,
+                                  buildPageRoute(const ProfileScreen()),
                                 );
                               },
                               showBorderBottom: false,
