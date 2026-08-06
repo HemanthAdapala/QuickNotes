@@ -34,11 +34,13 @@ import '../../core/animations/animated_list_entrance.dart';
 import '../../core/animations/page_transitions.dart';
 import '../../models/folder.dart';
 import '../../models/note.dart';
+import '../../models/task_item.dart';
 import '../../providers/notes_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../services/recent_searches_service.dart';
 import '../widgets/living_writing_experience.dart';
 import 'note_editor_screen.dart';
+import 'create_task_screen.dart';
 import 'folder_notes_screen.dart';
 import 'category_details_screen.dart';
 
@@ -152,16 +154,16 @@ class _SearchScreenState extends State<SearchScreen>
   String _query = '';
 
   // Results — all loaded once, then filtered client-side
-  List<Note>   _allNoteResults      = [];
-  List<Note>   _allTaskResults      = [];
-  List<Folder> _allFolderResults    = [];
-  List<String> _allCategoryResults  = [];
+  List<Note>     _allNoteResults      = [];
+  List<TaskItem> _allTaskResults      = [];
+  List<Folder>   _allFolderResults    = [];
+  List<String>   _allCategoryResults  = [];
 
   // Displayed (after scope + filter)
-  List<Note>   _noteResults     = [];
-  List<Note>   _taskResults     = [];
-  List<Folder> _folderResults   = [];
-  List<String> _categoryResults = [];
+  List<Note>     _noteResults     = [];
+  List<TaskItem> _taskResults     = [];
+  List<Folder>   _folderResults   = [];
+  List<String>   _categoryResults = [];
 
   // Recent searches
   List<String> _recentSearches = [];
@@ -287,27 +289,10 @@ class _SearchScreenState extends State<SearchScreen>
       n.previewText.toLowerCase().contains(q)
     ).toList();
 
-    // Standalone Tasks & Notes with checklists
-    final checklistNotes = notesProvider.allActiveNotes.where((n) =>
-      (n.content.contains('- [ ]') || n.content.contains('- [x]') || n.content.contains('\u2610') || n.content.contains('\u2611')) &&
-      (n.title.toLowerCase().contains(q) || n.previewText.toLowerCase().contains(q))
-    ).toList();
-    
-    final standaloneTasks = tasksProvider.tasks.where((t) =>
+    // Standalone Tasks (from tasksProvider)
+    final tasks = tasksProvider.tasks.where((t) =>
       t.title.toLowerCase().contains(q) || t.description.toLowerCase().contains(q)
-    ).map((t) => Note(
-      id: t.id,
-      title: t.title,
-      content: t.description,
-      noteType: 'text',
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
-      tags: [t.priority],
-      attachments: [],
-      colorValue: 0,
-    )).toList();
-
-    final tasks = [...checklistNotes, ...standaloneTasks];
+    ).toList();
 
     // Folders
     final folders = notesProvider.folders.where((f) =>
@@ -347,26 +332,26 @@ class _SearchScreenState extends State<SearchScreen>
 
   void _applyFilters() {
     var notes  = List<Note>.from(_allNoteResults);
-    var tasks  = List<Note>.from(_allTaskResults);
+    var tasks  = List<TaskItem>.from(_allTaskResults);
     var folders = List<Folder>.from(_allFolderResults);
     var cats   = List<String>.from(_allCategoryResults);
 
     // Folder filter
     if (_filterFolderId != null) {
       notes = notes.where((n) => n.folderId == _filterFolderId).toList();
-      tasks = tasks.where((n) => n.folderId == _filterFolderId).toList();
+      tasks = tasks.where((t) => t.folderId == _filterFolderId).toList();
     }
 
     // Category filter
     if (_filterCategory != null) {
       notes = notes.where((n) => n.category == _filterCategory).toList();
-      tasks = tasks.where((n) => n.category == _filterCategory).toList();
+      tasks = tasks.where((t) => (t.categoryId == _filterCategory || t.priority == _filterCategory)).toList();
     }
 
     // Date filter
     final now = DateTime.now();
     notes = _applyDateFilter(notes, now);
-    tasks = _applyDateFilter(tasks, now);
+    tasks = _applyTaskDateFilter(tasks, now);
 
     // Scope filter
     switch (_scope) {
@@ -405,6 +390,23 @@ class _SearchScreenState extends State<SearchScreen>
         return list.where((n) =>
           n.updatedAt.year == now.year && n.updatedAt.month == now.month
         ).toList();
+    }
+  }
+
+  List<TaskItem> _applyTaskDateFilter(List<TaskItem> list, DateTime now) {
+    switch (_dateFilter) {
+      case _DateFilter.allTime:
+        return list;
+      case _DateFilter.today:
+        return list.where((t) => _isSameDay(t.dueDate.toLocal(), now)).toList();
+      case _DateFilter.thisWeek:
+        final weekAgo = now.subtract(const Duration(days: 7));
+        return list.where((t) => t.dueDate.toLocal().isAfter(weekAgo)).toList();
+      case _DateFilter.thisMonth:
+        return list.where((t) {
+          final localDue = t.dueDate.toLocal();
+          return localDue.year == now.year && localDue.month == now.month;
+        }).toList();
     }
   }
 
@@ -501,6 +503,18 @@ class _SearchScreenState extends State<SearchScreen>
     Navigator.push(context, buildPageRoute(
       NoteEditorScreen(note: note),
     ));
+  }
+
+  void _openTask(TaskItem task) async {
+    await Navigator.push(context, buildPageRoute(
+      TaskEditorScreen(
+        initialDate: task.dueDate.toLocal(),
+        taskToEdit: task,
+      ),
+    ));
+    if (mounted && _query.isNotEmpty) {
+      _runSearch(_query);
+    }
   }
 
   void _openFolder(Folder folder) {
@@ -1106,12 +1120,12 @@ class _SearchScreenState extends State<SearchScreen>
 
     if (_taskResults.isNotEmpty) {
       addSection('TASKS', _taskResults.length,
-        _taskResults.map((n) => AnimatedListEntrance(
-          key: ValueKey('task_${n.id}_$gen'),
+        _taskResults.map((t) => AnimatedListEntrance(
+          key: ValueKey('task_${t.id}_$gen'),
           index: idx++,
           child: _TaskResultRow(
-            note: n, query: _query,
-            onTap: () => _openNote(n),
+            task: t, query: _query,
+            onTap: () => _openTask(t),
           ),
         )).toList(),
       );
@@ -1608,19 +1622,21 @@ class _NoteResultRow extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _TaskResultRow extends StatelessWidget {
-  final Note note;
+  final TaskItem task;
   final String query;
   final VoidCallback onTap;
-  const _TaskResultRow({required this.note, required this.query, required this.onTap});
+  const _TaskResultRow({required this.task, required this.query, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = note.reminderTime != null
-        ? 'Due ${DateFormat('MMM d').format(note.reminderTime!)}'
-        : DateFormat('MMM d').format(note.updatedAt);
+    final dateStr = task.reminderTime != null
+        ? 'Due ${DateFormat('MMM d').format(task.reminderTime!.toLocal())}'
+        : DateFormat('MMM d').format(task.dueDate.toLocal());
     final baseTitle = GoogleFonts.inter(
         fontSize: 15, fontWeight: FontWeight.w500, color: _kInk);
     final hlTitle  = baseTitle.copyWith(color: _kAmber, fontWeight: FontWeight.w700);
+
+    final categoryLabel = task.categoryId ?? (task.priority != 'None' ? task.priority : 'Task');
 
     return GestureDetector(
       onTap: onTap,
@@ -1635,10 +1651,13 @@ class _TaskResultRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 2),
-              child: Icon(Icons.check_box_outline_blank_rounded,
-                  size: 20, color: _kAmber),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Icon(
+                task.completed ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                size: 20,
+                color: _kAmber,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1648,7 +1667,7 @@ class _TaskResultRow extends StatelessWidget {
                   RichText(
                     text: TextSpan(children:
                       _buildHighlightSpans(
-                        note.title.isEmpty ? 'Untitled task' : note.title,
+                        task.title.isEmpty ? 'Untitled task' : task.title,
                         query, base: baseTitle, highlight: hlTitle)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1667,7 +1686,7 @@ class _TaskResultRow extends StatelessWidget {
                           color: _kAmber.withValues(alpha:0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text(note.category,
+                        child: Text(categoryLabel,
                           style: GoogleFonts.inter(
                             fontSize: 11, fontWeight: FontWeight.w600,
                             color: _kAmber)),

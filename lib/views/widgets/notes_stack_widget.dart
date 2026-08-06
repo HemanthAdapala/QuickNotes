@@ -189,8 +189,8 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     final double blurSigma = 1.0 + (dist - 1) * 0.1;
 
     final note = _currentNotesList[totalCards - 1 - index];
-    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(note.createdAt);
-    final formattedTime = DateFormat('hh:mm a').format(note.createdAt);
+    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(note.createdAt.toLocal());
+    final formattedTime = DateFormat('hh:mm a').format(note.createdAt.toLocal());
 
     Widget cardContent = Container(
       width: 322.0,
@@ -381,8 +381,8 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     final double overallHeight = 339.0 + (numCards - 1) * cardOffset;
 
     final note = _currentNotesList.first;
-    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(note.createdAt);
-    final formattedTime = DateFormat('hh:mm a').format(note.createdAt);
+    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(note.createdAt.toLocal());
+    final formattedTime = DateFormat('hh:mm a').format(note.createdAt.toLocal());
 
 
 

@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import '../../models/task_item.dart';
+import '../../models/recurrence_rule.dart';
+import '../../models/repeat_rule.dart';
 import 'tactile_button.dart';
 
 class TaskWidget extends StatefulWidget {
@@ -210,19 +212,22 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     HapticFeedback.vibrate();
     _successController.forward(from: 0.0);
 
+    final String targetId = _currentTasksList.isNotEmpty
+        ? _currentTasksList.first.id
+        : (widget.tasks.isNotEmpty ? widget.tasks.first.id : '');
+
+    if (targetId.isNotEmpty) {
+      widget.onComplete?.call(targetId);
+    }
+
     // After success animation, reset back to start with a delay
-    Future.delayed(const Duration(milliseconds: 1400), () {
+    Future.delayed(const Duration(milliseconds: 600), () {
       if (mounted) {
-        // Reset state first before calling parent callback to avoid showing the next card with a dragged slider!
         setState(() {
           _dragX = _minDrag;
           _lastHapticCheckpoint = 0;
         });
         _successController.reset();
-
-        if (widget.tasks.isNotEmpty) {
-          widget.onComplete?.call(widget.tasks.first.id);
-        }
       }
     });
   }
@@ -327,8 +332,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final double blurSigma = 1.0 + (dist - 1) * 0.1;
 
     final task = widget.tasks[totalCards - 1 - index];
-    final formattedDate = DateFormat('EEE, d MMMM').format(task.dueDate);
-    final formattedTime = DateFormat('hh:mm a').format(task.reminderTime ?? task.dueDate);
+    final formattedDate = DateFormat('EEE, d MMMM').format(task.dueDate.toLocal());
+    final formattedTime = DateFormat('hh:mm a').format((task.reminderTime ?? task.dueDate).toLocal());
 
     Widget cardContent = Container(
       width: 322.0,
@@ -539,10 +544,31 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final double overallHeight = 339.0 + (numCards - 1) * cardOffset;
 
     final task = _currentTasksList.first;
-    final formattedDate = DateFormat('EEE, d MMMM').format(task.dueDate);
-    final formattedTime = DateFormat('hh:mm a').format(task.reminderTime ?? task.dueDate);
+    final formattedDate = DateFormat('EEE, d MMMM').format(task.dueDate.toLocal());
+    final formattedTime = DateFormat('hh:mm a').format((task.reminderTime ?? task.dueDate).toLocal());
 
     final String priority = task.priority;
+    String? recurrenceLabel;
+    if (task.isRecurring || task.recurrence != null || task.repeatRule != RepeatRule.none) {
+      if (task.recurrence != null) {
+        switch (task.recurrence!.type) {
+          case RecurrenceType.daily: recurrenceLabel = 'Daily'; break;
+          case RecurrenceType.weekly: recurrenceLabel = 'Weekly'; break;
+          case RecurrenceType.monthly: recurrenceLabel = 'Monthly'; break;
+          case RecurrenceType.yearly: recurrenceLabel = 'Yearly'; break;
+          default: recurrenceLabel = 'Recurring'; break;
+        }
+      } else {
+        switch (task.repeatRule) {
+          case RepeatRule.daily: recurrenceLabel = 'Daily'; break;
+          case RepeatRule.weekly: recurrenceLabel = 'Weekly'; break;
+          case RepeatRule.monthly: recurrenceLabel = 'Monthly'; break;
+          case RepeatRule.yearly: recurrenceLabel = 'Yearly'; break;
+          default: break;
+        }
+      }
+    }
+
     final Color priorityColor;
     if (priority.toLowerCase() == 'high') {
       priorityColor = const Color(0xFFFF383C);
@@ -554,7 +580,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
       priorityColor = const Color(0xFF8E8E93);
     }
 
-    final double titleTop = (priority.toLowerCase() == 'none') ? 113.0 : 126.0;
+    final bool hasTopBadge = (priority.toLowerCase() != 'none') || (recurrenceLabel != null);
+    final double titleTop = hasTopBadge ? 126.0 : 113.0;
 
     return SizedBox(
       width: widget.width,
@@ -702,47 +729,81 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
-                              // Priority Flag Pill
-                              if (priority.toLowerCase() != 'none')
-                                Positioned(
-                                  left: 18.0,
-                                  top: 80.0,
-                                  height: 38.0,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                    decoration: ShapeDecoration(
-                                      color: const Color(0xFFF2F2F7),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(19.0),
-                                      ),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text.rich(
-                                      TextSpan(
-                                        children: [
-                                          WidgetSpan(
-                                            alignment: PlaceholderAlignment.middle,
-                                            child: SvgPicture.asset(
-                                              "assets/New Icons/flag-alt 1.svg",
-                                              width: 14.0,
-                                              height: 14.0,
-                                              colorFilter: ColorFilter.mode(priorityColor, BlendMode.srcIn),
-                                            ),
-                                          ),
-                                          const WidgetSpan(child: SizedBox(width: 6.0)),
-                                          TextSpan(
-                                            text: priority,
-                                            style: GoogleFonts.inter(
-                                              color: priorityColor,
-                                              fontSize: 15.0,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                               // Priority & Recurrence Badge Pills
+                               if (hasTopBadge)
+                                 Positioned(
+                                   left: 18.0,
+                                   top: 80.0,
+                                   height: 38.0,
+                                   child: Row(
+                                     mainAxisSize: MainAxisSize.min,
+                                     children: [
+                                       if (priority.toLowerCase() != 'none')
+                                         Container(
+                                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                           decoration: ShapeDecoration(
+                                             color: const Color(0xFFF2F2F7),
+                                             shape: RoundedRectangleBorder(
+                                               borderRadius: BorderRadius.circular(19.0),
+                                             ),
+                                           ),
+                                           alignment: Alignment.center,
+                                           child: Text.rich(
+                                             TextSpan(
+                                               children: [
+                                                 WidgetSpan(
+                                                   alignment: PlaceholderAlignment.middle,
+                                                   child: SvgPicture.asset(
+                                                     "assets/New Icons/flag-alt 1.svg",
+                                                     width: 14.0,
+                                                     height: 14.0,
+                                                     colorFilter: ColorFilter.mode(priorityColor, BlendMode.srcIn),
+                                                   ),
+                                                 ),
+                                                 const WidgetSpan(child: SizedBox(width: 6.0)),
+                                                 TextSpan(
+                                                   text: priority,
+                                                   style: GoogleFonts.inter(
+                                                     color: priorityColor,
+                                                     fontSize: 15.0,
+                                                     fontWeight: FontWeight.w600,
+                                                   ),
+                                                 ),
+                                               ],
+                                             ),
+                                           ),
+                                         ),
+                                       if (priority.toLowerCase() != 'none' && recurrenceLabel != null)
+                                         const SizedBox(width: 8.0),
+                                       if (recurrenceLabel != null)
+                                         Container(
+                                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                           decoration: ShapeDecoration(
+                                             color: const Color(0xFF0088FF).withValues(alpha: 0.12),
+                                             shape: RoundedRectangleBorder(
+                                               borderRadius: BorderRadius.circular(19.0),
+                                             ),
+                                           ),
+                                           alignment: Alignment.center,
+                                           child: Row(
+                                             mainAxisSize: MainAxisSize.min,
+                                             children: [
+                                               const Icon(Icons.autorenew_rounded, size: 14.0, color: Color(0xFF0088FF)),
+                                               const SizedBox(width: 6.0),
+                                               Text(
+                                                 recurrenceLabel,
+                                                 style: GoogleFonts.inter(
+                                                   color: const Color(0xFF0088FF),
+                                                   fontSize: 14.0,
+                                                   fontWeight: FontWeight.w600,
+                                                 ),
+                                               ),
+                                             ],
+                                           ),
+                                         ),
+                                     ],
+                                   ),
+                                 ),
                               // Title Text (constrained width and height)
                               Positioned(
                                 left: 18.0,

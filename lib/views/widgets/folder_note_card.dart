@@ -30,8 +30,8 @@ class FolderNoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('EEE, d MMM').format(note.updatedAt);
-    final timeStr = DateFormat('hh:mm a').format(note.updatedAt);
+    final dateStr = DateFormat('EEE, d MMM').format(note.updatedAt.toLocal());
+    final timeStr = DateFormat('hh:mm a').format(note.updatedAt.toLocal());
 
     // Accent color for top tab
     final Color accentColor = switch (note.colorValue) {
