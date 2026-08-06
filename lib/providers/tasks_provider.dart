@@ -204,7 +204,27 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
       if (!task.isRecurring && task.recurrence == null && task.repeatRule == RepeatRule.none) {
         await _engine.deleteTask(realId);
       } else {
-        await toggleTaskCompletionOnDate(realId, date);
+        DateTime nextDue = task.dueDate;
+        final type = task.recurrence?.type;
+        final interval = task.recurrence?.interval ?? 1;
+
+        if (type == RecurrenceType.daily || task.repeatRule == RepeatRule.daily) {
+          nextDue = nextDue.add(Duration(days: 1 * interval));
+        } else if (type == RecurrenceType.weekly || task.repeatRule == RepeatRule.weekly) {
+          nextDue = nextDue.add(Duration(days: 7 * interval));
+        } else if (type == RecurrenceType.monthly || task.repeatRule == RepeatRule.monthly) {
+          nextDue = DateTime(nextDue.year, nextDue.month + interval, nextDue.day, nextDue.hour, nextDue.minute);
+        } else if (type == RecurrenceType.yearly || task.repeatRule == RepeatRule.yearly) {
+          nextDue = DateTime(nextDue.year + interval, nextDue.month, nextDue.day, nextDue.hour, nextDue.minute);
+        } else {
+          nextDue = nextDue.add(const Duration(days: 1));
+        }
+
+        final updated = task.copyWith(
+          dueDate: nextDue,
+          updatedAt: DateTime.now(),
+        );
+        await updateTask(updated);
       }
       notifyListeners();
     } catch (e) {

@@ -186,18 +186,38 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
     }
 
     // Capture messenger BEFORE pop so we can show SnackBar after route removal
+    final String toastMsg;
+    final now = DateTime.now();
+    final localDue = fullDueDate.toLocal();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final dueStart = DateTime(localDue.year, localDue.month, localDue.day);
+    final verb = isEditing ? 'updated' : 'saved';
+
+    if (dueStart.isBefore(todayStart)) {
+      toastMsg = '🎉 Task $verb in Missed Tasks';
+    } else if (dueStart.isAtSameMomentAs(todayStart)) {
+      toastMsg = "🎉 Task $verb in Today's Tasks";
+    } else {
+      final diffDays = dueStart.difference(todayStart).inDays;
+      if (diffDays <= 7) {
+        toastMsg = '🎉 Task $verb in Weekly Tasks';
+      } else {
+        toastMsg = '🎉 Task $verb in Monthly Tasks';
+      }
+    }
+
     final messenger = ScaffoldMessenger.of(context);
     Navigator.of(context).pop();
     messenger.showSnackBar(
       SnackBar(
         content: Text(
-          isEditing ? 'Task updated' : 'Task created',
+          toastMsg,
           style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500),
         ),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: const Color(0xFF0088FF),
       ),
     );
   }
@@ -742,13 +762,13 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
             children: [
               _recurrenceChip(null, 'Never'),
               const SizedBox(width: 8),
-              _recurrenceChip(RecurrenceType.daily, 'Every Day'),
+              _recurrenceChip(RecurrenceType.daily, 'Daily'),
               const SizedBox(width: 8),
-              _recurrenceChip(RecurrenceType.weekly, 'Every Week'),
+              _recurrenceChip(RecurrenceType.weekly, 'Weekly'),
               const SizedBox(width: 8),
-              _recurrenceChip(RecurrenceType.monthly, 'Every Month'),
+              _recurrenceChip(RecurrenceType.monthly, 'Monthly'),
               const SizedBox(width: 8),
-              _recurrenceChip(RecurrenceType.yearly, 'Every Year'),
+              _recurrenceChip(RecurrenceType.yearly, 'Yearly'),
             ],
           ),
         ),

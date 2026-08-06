@@ -501,9 +501,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                            itemCount: 4,
+                            itemCount: 5,
                             itemBuilder: (context, index) {
-                              final filters = ['All', 'Today', 'Weekly', 'Monthly'];
+                              final filters = ['All', 'Missed', 'Today', 'Weekly', 'Monthly'];
                               final filter = filters[index];
                               final bool isSelected = _activeFilter == filter;
                               
@@ -512,11 +512,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 text = 'All';
                               } else {
                                 final labelText = _isNotesActive ? 'Notes' : 'Tasks';
-                                text = "${filter}'s $labelText ${_countForFilter(filter)}";
+                                text = filter == 'Missed' ? "Missed $labelText ${_countForFilter(filter)}" : "${filter}'s $labelText ${_countForFilter(filter)}";
                               }
 
                               return Padding(
-                                padding: EdgeInsets.only(right: index == 3 ? 0.0 : 12.0),
+                                padding: EdgeInsets.only(right: index == 4 ? 0.0 : 12.0),
                                   child: GestureDetector(
                                     onTap: () {
                                       HapticFeedback.selectionClick();
@@ -640,18 +640,28 @@ class _HomeScreenState extends State<HomeScreen> {
                                             onEdit: _openEditTask,
                                             onComplete: (taskId) async {
                                               final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-                                              final currentTask = _filteredTasks.firstWhere(
-                                                (t) => t.id == taskId,
-                                                orElse: () => _filteredTasks.firstWhere((t) => t.id.startsWith(taskId)),
-                                              );
-                                              await tasksProvider.toggleTaskCompletionOnDate(taskId, currentTask.dueDate);
-                                              
+                                              TaskItem? currentTask;
+                                              for (final t in tasksProvider.tasks) {
+                                                if (t.id == taskId || t.id.startsWith(taskId) || taskId.startsWith(t.id)) {
+                                                  currentTask = t;
+                                                  break;
+                                                }
+                                              }
+                                              if (currentTask != null) {
+                                                await tasksProvider.toggleTaskCompletionOnDate(currentTask.id, currentTask.dueDate);
+                                              } else {
+                                                await tasksProvider.toggleTaskCompletion(taskId);
+                                              }
+
                                               final bool allDone = tasksProvider.activeTasks.isEmpty;
                                               final String msg;
-                                              if (allDone) {
-                                                msg = '🎉 All tasks are done!';
-                                                _triggerCelebration(msg);
-                                              } else if (_activeFilter == 'Today') {
+                                               if (allDone) {
+                                                 msg = '🎉 All tasks are done!';
+                                                 _triggerCelebration(msg);
+                                               } else if (_activeFilter == 'Missed') {
+                                                 msg = '🎉 Missed task completed!';
+                                                 _triggerCelebration(msg);
+                                               } else if (_activeFilter == 'Today') {
                                                 msg = "🎉 Today's task is done!";
                                                 _triggerCelebration(msg);
                                               } else if (_activeFilter == 'Weekly') {

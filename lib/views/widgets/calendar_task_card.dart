@@ -66,6 +66,8 @@ class CalendarTaskCard extends StatelessWidget {
                   // Title — strikethrough when completed
                   Text(
                     task.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: const Color(0xFF333333),
                       fontSize: 16,
@@ -78,12 +80,13 @@ class CalendarTaskCard extends StatelessWidget {
                       decorationColor: const Color(0xFF333333),
                       decorationThickness: 1.5,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   // Subtitle
                   Text(
                     task.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Color(0xFF333333),
                       fontSize: 12,

@@ -216,10 +216,30 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
 
     HapticFeedback.mediumImpact();
     if (mounted) {
+      final String toastMsg;
+      final now = DateTime.now();
+      final localDue = dueDateTime.toLocal();
+      final todayStart = DateTime(now.year, now.month, now.day);
+      final dueStart = DateTime(localDue.year, localDue.month, localDue.day);
+      final verb = isEditing ? 'updated' : 'saved';
+
+      if (dueStart.isBefore(todayStart)) {
+        toastMsg = '🎉 Task $verb in Missed Tasks';
+      } else if (dueStart.isAtSameMomentAs(todayStart)) {
+        toastMsg = "🎉 Task $verb in Today's Tasks";
+      } else {
+        final diffDays = dueStart.difference(todayStart).inDays;
+        if (diffDays <= 7) {
+          toastMsg = '🎉 Task $verb in Weekly Tasks';
+        } else {
+          toastMsg = '🎉 Task $verb in Monthly Tasks';
+        }
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isEditing ? 'Task updated successfully' : 'Task created successfully',
+            toastMsg,
             style: GoogleFonts.inter(
               color: Colors.white,
               fontWeight: FontWeight.w500,
@@ -672,11 +692,11 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                       children: [
                                         _buildRepeatPill(null, 'Never', 88),
                                         const SizedBox(width: 9),
-                                        _buildRepeatPill(RecurrenceType.daily, 'Every day', 88),
+                                        _buildRepeatPill(RecurrenceType.daily, 'Daily', 88),
                                         const SizedBox(width: 9),
-                                        _buildRepeatPill(RecurrenceType.weekly, 'Every Week', 97),
+                                        _buildRepeatPill(RecurrenceType.weekly, 'Weekly', 97),
                                         const SizedBox(width: 9),
-                                        _buildRepeatPill(RecurrenceType.monthly, 'Every Month', 112),
+                                        _buildRepeatPill(RecurrenceType.monthly, 'Monthly', 112),
                                       ],
                                     ),
                                   ),

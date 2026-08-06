@@ -76,6 +76,14 @@ class AppStatisticsService {
     final monthEnd = DateTime(now.year, now.month, lastDayOfMonth, 23, 59, 59, 999);
 
     switch (filter) {
+      case 'Missed':
+        // Overdue tasks whose due date is strictly before today
+        final todayStart = DateTime(now.year, now.month, now.day);
+        return activeTasks.where((t) {
+          final localDue = t.dueDate.toLocal();
+          return localDue.isBefore(todayStart);
+        }).toList();
+
       case 'Today':
         // Overdue tasks + tasks due today (dueDate <= today 23:59:59)
         return activeTasks.where((t) {
