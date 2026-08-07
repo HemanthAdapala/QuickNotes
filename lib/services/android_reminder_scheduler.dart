@@ -22,9 +22,9 @@ class AndroidReminderScheduler implements ReminderScheduler {
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  static const String channelId = 'quick_notes_alarm_channel_v2';
-  static const String channelName = 'Task Alarms';
-  static const String channelDescription = 'High priority alarm ringtone alerts for scheduled task reminders';
+  static const String channelId = 'quick_notes_alarm_channel_v3';
+  static const String channelName = 'Task System Alarms';
+  static const String channelDescription = 'Full alarm ringtone notifications for task reminders';
 
   bool _isInitialized = false;
 
@@ -73,14 +73,16 @@ class AndroidReminderScheduler implements ReminderScheduler {
         }
       } catch (_) {}
 
-      // 4. Create Max Importance Alarm Notification Channel
+      // 4. Create Max Importance Alarm Notification Channel with Alarm sound stream
       const androidChannel = AndroidNotificationChannel(
         channelId,
         channelName,
         description: channelDescription,
         importance: Importance.max,
         playSound: true,
+        sound: UriAndroidNotificationSound('content://settings/system/alarm_alert'),
         enableVibration: true,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
       );
 
       final androidPlugin = _notificationsPlugin
@@ -89,6 +91,7 @@ class AndroidReminderScheduler implements ReminderScheduler {
       if (androidPlugin != null) {
         try {
           await androidPlugin.deleteNotificationChannel(channelId: 'quick_notes_tasks');
+          await androidPlugin.deleteNotificationChannel(channelId: 'quick_notes_alarm_channel_v2');
         } catch (_) {}
 
         await androidPlugin.createNotificationChannel(androidChannel);
@@ -173,6 +176,7 @@ class AndroidReminderScheduler implements ReminderScheduler {
         importance: Importance.max,
         priority: Priority.max,
         playSound: true,
+        sound: const UriAndroidNotificationSound('content://settings/system/alarm_alert'),
         enableVibration: true,
         fullScreenIntent: true,
         visibility: NotificationVisibility.public,
