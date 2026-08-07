@@ -1,7 +1,7 @@
 # TaskWidget_Changelog.md
 
 ## Version
-v1.0.0
+v1.0.1
 
 ## Date
 2026-08-07
@@ -13,32 +13,28 @@ Developer & Anti Gravity AI Assistant
 - UI
 - Animation
 - Refactor
-- Feature
-- Performance
+- Bug Fix
 
 ## Summary
-`TaskWidget` is the primary interactive card deck component on the Home Screen. This update introduced spring-physics swipe completion slider gestures, recurrence pill badges, dedicated Missed tasks filter deck integration, and multi-tier sorting (overdue tasks first, earlier due times first).
+Refactored `TaskWidget` card gesture hierarchy by moving `GestureDetector` to wrap the top-level front card, matching `NotesStackWidget` architecture. Resolves card swipe cycling unresponsiveness on physical devices while maintaining independent horizontal completion slider drags.
 
 ---
 
 ## Detailed Changes
-- Integrated `TactileButton` and Liquid Glass card container styling.
-- Added interactive swipe completion slider with tactile haptic feedback.
-- Added recurrence badge pill displaying repeat frequency (`Daily`, `Weekly`, `Monthly`, `Yearly`).
-- Integrated dynamic filter section headers (`Today`, `Weekly`, `Monthly`, `Missed`, `All`).
-- Resolved double-counting bugs where past uncompleted tasks appeared in both Today and Missed sections.
-- Verified 60fps card stack rendering performance under high task volumes (55+ tasks).
+- Aligned gesture structure 100% with `NotesStackWidget`: `GestureDetector(onPanUpdate: _handleCardPanUpdate, onPanEnd: _handleCardPanEnd, child: Center(...))`.
+- Elevated outer card drag handling above internal stack containers.
+- Disambiguated inner `onHorizontalDragUpdate` for the Liquid Glass completion slider track.
+- Verified smooth 60fps card cycling and particle slider completions on physical device (`SM S918B`).
 
 ---
 
 ## Why was this change made?
-- To provide users with an engaging, tactile card completion experience while ensuring accurate task filtering and clear visual indicators for recurring tasks.
+- The previous implementation placed `GestureDetector` inside an internal child `Positioned` layer of the card `Stack`, where upper visual containers intercepted hit-testing and blocked card swipe cycling.
 
 ---
 
 ## Architecture Impact
-- **UI & Animation**: Custom gesture detector and animated offset transition for card slider completion.
-- **State Management**: Listens reactively to `TasksProvider.activeTasks` and filter stream changes.
+- **UI & Animation**: Top-level gesture architecture for 3D card stack rotation and translation.
 
 ---
 
@@ -49,7 +45,6 @@ None.
 
 ## Files Modified
 - `lib/views/widgets/task_widget.dart`
-- `lib/providers/tasks_provider.dart`
 
 ---
 
@@ -69,8 +64,7 @@ None.
 ---
 
 ## Future Improvements
-- Customizable swipe gestures (e.g., swipe left to delete, swipe right to complete).
-- Drag-and-drop manual task reordering.
+- Custom swipe physics configuration option in Settings.
 
 ---
 
@@ -80,10 +74,33 @@ None.
 ---
 
 ## Testing Status
-- **Manual Tests**: Verified on physical device (`SM S918B`) for card completions, deck switching, and high task volumes.
-- **Automated Tests**: 95/95 unit tests passing.
+- **Manual Tests**: Verified card cycling and slider completion on physical device (`SM S918B`).
+- **Automated Tests**: 95/95 unit tests passing cleanly.
 
 ---
 
 ## Final Result
-`TaskWidget` provides a fluid, responsive, 60fps interactive card deck experience.
+`TaskWidget` supports smooth 3D card deck swiping and liquid glass slider completion simultaneously with zero gesture conflicts.
+
+---
+
+# Previous Versions
+
+## Version
+v1.0.0
+
+## Date
+2026-08-07
+
+## Author
+Developer & Anti Gravity AI Assistant
+
+## Type
+- UI
+- Animation
+- Refactor
+- Feature
+- Performance
+
+## Summary
+`TaskWidget` is the primary interactive card deck component on the Home Screen. This update introduced spring-physics swipe completion slider gestures, recurrence pill badges, dedicated Missed tasks filter deck integration, and multi-tier sorting.
