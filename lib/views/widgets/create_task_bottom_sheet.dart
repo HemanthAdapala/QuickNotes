@@ -401,7 +401,21 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                           ),
                           const SizedBox(width: 6),
 
-                          // 2. Priority
+                          // 2. Time
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _sectionLabel('Time'),
+                                const SizedBox(height: 8),
+                                _timeField(_startTime, _pickStartTime),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+
+                          // 3. Priority
                           Expanded(
                             flex: 2,
                             child: Column(
@@ -412,17 +426,6 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                                 _inlinePriorityPill(),
                               ],
                             ),
-                          ),
-                          const SizedBox(width: 6),
-
-                          // 3. Time
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _sectionLabel('Time'),
-                              const SizedBox(height: 8),
-                              _timeField(_startTime, _pickStartTime),
-                            ],
                           ),
                         ],
                       ),
@@ -669,7 +672,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
     );
   }
 
-  /// Time pill (95px wide) with alarm-clock icon on the right.
+  /// Time pill with alarm-clock icon on the right.
   Widget _timeField(TimeOfDay time, VoidCallback onTap) {
     return GestureDetector(
       onTap: () {
@@ -677,7 +680,6 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         onTap();
       },
       child: Container(
-        width: 95,
         height: 45,
         decoration: ShapeDecoration(
           color: const Color(0x28787880),
@@ -686,21 +688,24 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                _formatTime(time),
-                style: const TextStyle(
-                  color: Color(0x993C3C43),
-                  fontSize: 12,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: -0.43,
+              Flexible(
+                child: Text(
+                  _formatTime(time),
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0x993C3C43),
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.43,
+                  ),
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 3),
               SvgPicture.asset(
                 'assets/icons/alarm_clock.svg',
                 width: 13,

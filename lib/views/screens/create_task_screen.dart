@@ -431,7 +431,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
 
                                 const SizedBox(height: 22),
 
-                                // ── Due Date, Priority & Time Section (DueDate - Priority - Time) ───────
+                                // ── Due Date, Time & Priority Section (DueDate - Time - Priority) ───────
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -457,7 +457,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                 onTap: _selectDate,
                                                 child: Container(
                                                   height: 45,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8),
                                                   decoration: ShapeDecoration(
                                                     color: const Color(0x28787880),
                                                     shape: RoundedRectangleBorder(
@@ -473,15 +473,16 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                           overflow: TextOverflow.ellipsis,
                                                           style: GoogleFonts.inter(
                                                             color: const Color(0x993C3C43),
-                                                            fontSize: 13,
+                                                            fontSize: 12,
                                                             fontWeight: FontWeight.w400,
                                                           ),
                                                         ),
                                                       ),
+                                                      const SizedBox(width: 4),
                                                       SvgPicture.asset(
                                                         'assets/icons/calendar_icon.svg',
-                                                        width: 16,
-                                                        height: 16,
+                                                        width: 14,
+                                                        height: 14,
                                                         colorFilter: const ColorFilter.mode(
                                                           Color(0x993C3C43),
                                                           BlendMode.srcIn,
@@ -495,9 +496,70 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                           ),
                                         ),
 
-                                        const SizedBox(width: 8),
+                                        const SizedBox(width: 6),
 
-                                        // 2. Priority Picker
+                                        // 2. Time Picker
+                                        Expanded(
+                                          flex: 2,
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Time',
+                                                style: GoogleFonts.inter(
+                                                  color: const Color(0xFF333333),
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w500,
+                                                  letterSpacing: -0.43,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              TactileButton(
+                                                onTap: _selectTime,
+                                                child: Container(
+                                                  height: 45,
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                                  decoration: ShapeDecoration(
+                                                    color: const Color(0x28787880),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(16),
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          _selectedTime.format(context),
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: GoogleFonts.inter(
+                                                            color: const Color(0x993C3C43),
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w400,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 2),
+                                                      SvgPicture.asset(
+                                                        'assets/icons/alarm_clock.svg',
+                                                        width: 14,
+                                                        height: 14,
+                                                        colorFilter: const ColorFilter.mode(
+                                                          Color(0x993C3C43),
+                                                          BlendMode.srcIn,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        const SizedBox(width: 6),
+
+                                        // 3. Priority Picker
                                         Expanded(
                                           flex: 2,
                                           child: Column(
@@ -522,7 +584,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                 },
                                                 child: Container(
                                                   height: 45,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6),
                                                   decoration: ShapeDecoration(
                                                     color: _getPriorityColor(_selectedPriority).withOpacity(0.12),
                                                     shape: RoundedRectangleBorder(
@@ -538,8 +600,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                     children: [
                                                       SvgPicture.asset(
                                                         'assets/icons/flag_alt.svg',
-                                                        width: 14,
-                                                        height: 14,
+                                                        width: 13,
+                                                        height: 13,
                                                         colorFilter: ColorFilter.mode(
                                                           _getPriorityColor(_selectedPriority),
                                                           BlendMode.srcIn,
@@ -551,67 +613,10 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                           _selectedPriority,
                                                           overflow: TextOverflow.ellipsis,
                                                           style: GoogleFonts.inter(
-                                                            fontSize: 13,
+                                                            fontSize: 12,
                                                             fontWeight: FontWeight.w600,
                                                             color: _getPriorityColor(_selectedPriority),
                                                           ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        const SizedBox(width: 8),
-
-                                        // 3. Time Picker
-                                        Expanded(
-                                          flex: 2,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Time',
-                                                style: GoogleFonts.inter(
-                                                  color: const Color(0xFF333333),
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w500,
-                                                  letterSpacing: -0.43,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              TactileButton(
-                                                onTap: _selectTime,
-                                                child: Container(
-                                                  height: 45,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                                  decoration: ShapeDecoration(
-                                                    color: const Color(0x28787880),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(16),
-                                                    ),
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      Text(
-                                                        _selectedTime.format(context),
-                                                        style: GoogleFonts.inter(
-                                                          color: const Color(0x993C3C43),
-                                                          fontSize: 13,
-                                                          fontWeight: FontWeight.w400,
-                                                        ),
-                                                      ),
-                                                      SvgPicture.asset(
-                                                        'assets/icons/alarm_clock.svg',
-                                                        width: 16,
-                                                        height: 16,
-                                                        colorFilter: const ColorFilter.mode(
-                                                          Color(0x993C3C43),
-                                                          BlendMode.srcIn,
                                                         ),
                                                       ),
                                                     ],
