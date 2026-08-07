@@ -331,7 +331,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final int dist = totalCards - 1 - index;
     final double blurSigma = 1.0 + (dist - 1) * 0.1;
 
-    final task = widget.tasks[totalCards - 1 - index];
+    final task = _currentTasksList[totalCards - 1 - index];
     final formattedDate = DateFormat('EEE, d MMMM').format(task.dueDate.toLocal());
     final formattedTime = DateFormat('hh:mm a').format((task.reminderTime ?? task.dueDate).toLocal());
 
