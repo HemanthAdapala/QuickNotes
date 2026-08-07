@@ -461,6 +461,54 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     return result;
   }
 
+  /// Seeding helper for QA Performance Stress Verification (Test 12.1)
+  Future<void> seedTestTasks([int count = 55]) async {
+    await _ensureEngineReady();
+    final now = DateTime.now();
+
+    final titles = [
+      '⚡ Finalize Q3 System Architecture & Roadmap',
+      '🛒 Buy Grocery Essentials & Weekly Supplies',
+      '🏋️ Morning High-Intensity Interval Workout',
+      '📞 Call Client Re: Mobile UI Design Review',
+      '🚀 Launch Sprint 14 Production Deployment',
+      '📖 Read Chapter 5 of Distributed Systems Patterns',
+      '🎨 Refactor Liquid Glass Container Animations',
+      '💼 Update Resume & Portfolio Highlights',
+      '☕ Team Coffee Sync & Standup Alignment',
+      '🧼 Clean Workspace & Organize Tech Accessories',
+      '✈️ Book Flight Tickets & Hotel Reservations',
+      '📊 Audit Monthly Subscription Expenses',
+    ];
+
+    final priorities = ['High', 'Medium', 'Low', 'None'];
+
+    for (int i = 0; i < count; i++) {
+      final titleIndex = i % titles.length;
+      final priorityIndex = i % priorities.length;
+      // Spread due dates across yesterday (-1), today (0), tomorrow (1), and next week (2..5)
+      final dayOffset = (i % 7) - 1;
+      final hourOffset = (8 + (i * 2)) % 24;
+
+      final dueDate = DateTime(
+        now.year,
+        now.month,
+        now.day + dayOffset,
+        hourOffset,
+        (i * 15) % 60,
+      );
+
+      await _engine.createTask(
+        title: '${titles[titleIndex]} #$i',
+        description: 'Automated QA stress test task #$i generated for Test 12.1 rendering performance benchmark.',
+        dueDate: dueDate,
+        priority: priorities[priorityIndex],
+        reminderMode: ReminderMode.off,
+      );
+    }
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);

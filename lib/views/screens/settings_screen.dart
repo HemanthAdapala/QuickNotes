@@ -10,6 +10,8 @@ import '../../core/animations/page_transitions.dart';
 import 'profile_test_screen.dart';
 import 'glassmorphism_sandbox_screen.dart';
 
+import 'package:provider/provider.dart';
+import '../../providers/tasks_provider.dart';
 import 'experimental/sde_drag_test_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -424,6 +426,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 "User Policy",
                                 "Privacy and Data Protection Policy for QuickNotes.",
                               ),
+                              showBorderBottom: true,
+                            ),
+                            _buildSettingRow(
+                              iconPath: 'assets/icons/alarm_clock.svg',
+                              title: 'Seed 50 Test Tasks (Test 12.1)',
+                              onTap: () async {
+                                HapticFeedback.mediumImpact();
+                                final provider = Provider.of<TasksProvider>(context, listen: false);
+                                await provider.seedTestTasks(55);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('✅ 55 Test Tasks created across Today, Weekly & Missed!'),
+                                      backgroundColor: Color(0xFF34C759),
+                                      duration: Duration(seconds: 3),
+                                    ),
+                                  );
+                                }
+                              },
                               showBorderBottom: false,
                             ),
                           ],
