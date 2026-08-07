@@ -100,7 +100,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       _startTime = widget.initialTime ?? TimeOfDay.now();
       _selectedPriority = null;
       _selectedRecurrence = null;
-      _selectedReminderMode = ReminderMode.alarm;
+      _selectedReminderMode = ReminderMode.notification;
       _reminderEnabled = true;
     }
   }
@@ -387,7 +387,9 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // 1. Due Date
                           Expanded(
+                            flex: 3,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -397,7 +399,23 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
+
+                          // 2. Priority
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _sectionLabel('Priority'),
+                                const SizedBox(height: 8),
+                                _inlinePriorityPill(),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+
+                          // 3. Time
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -409,9 +427,14 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                         ],
                       ),
 
+                      if (_showPriorityPopup) ...[
+                        const SizedBox(height: 8),
+                        _priorityPopup(),
+                      ],
+
                       const SizedBox(height: 16),
 
-                      _sectionLabel('Task Description'),
+                      _sectionLabel('Task Description (Optional)'),
                       const SizedBox(height: 8),
                       _inputField(
                         controller: _descController,
@@ -421,10 +444,6 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                       const SizedBox(height: 16),
 
                       _reminderSection(),
-
-                      const SizedBox(height: 16),
-
-                      _prioritySection(),
 
                       const SizedBox(height: 16),
 
@@ -698,144 +717,92 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
     );
   }
 
-  // ── Priority section ───────────────────────────────────────────────────────
-  Widget _prioritySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Popup (animates in above the button) ──────────────────────────
-        AnimatedSize(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-          child: _showPriorityPopup
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // White pill — 219×45, shadow blur-16
-                    Container(
-                      width: 219,
-                      height: 45,
-                      decoration: ShapeDecoration(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        shadows: const [
-                          BoxShadow(
-                            color: Color(0x3F000000),
-                            blurRadius: 16,
-                            offset: Offset(0, 0),
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _priorityOption(
-                              'High', const Color(0x7FFF383C), TaskPriority.red),
-                          _priorityOption(
-                              'Medium', const Color(0x7FFFCC00), TaskPriority.yellow),
-                          _priorityOption(
-                              'Low', const Color(0x7F34C759), TaskPriority.green),
-                        ],
-                      ),
-                    ),
+  Widget _inlinePriorityPill() {
+    final color = switch (_selectedPriority) {
+      TaskPriority.red => const Color(0xFFFF453A),
+      TaskPriority.yellow => const Color(0xFFFF9F0A),
+      TaskPriority.green => const Color(0xFF30D158),
+      null => const Color(0x993C3C43),
+    };
+    final label = switch (_selectedPriority) {
+      TaskPriority.red => 'High',
+      TaskPriority.yellow => 'Medium',
+      TaskPriority.green => 'Low',
+      null => 'None',
+    };
 
-                    // Speech-bubble downward-pointing tail
-                    // Aligned to roughly the center of the Priority button
-                    const Padding(
-                      padding: EdgeInsets.only(left: 42),
-                      child: CustomPaint(
-                        size: Size(16, 8),
-                        painter: _TrianglePainter(),
-                      ),
-                    ),
-                  ],
-                )
-              : const SizedBox.shrink(),
-        ),
-
-        // ── Priority button ───────────────────────────────────────────────
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            FocusScope.of(context).unfocus();
-            setState(() => _showPriorityPopup = !_showPriorityPopup);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            height: 45,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: ShapeDecoration(
-              shape: RoundedRectangleBorder(
-                side: BorderSide(
-                  width: 1.2,
-                  color: _selectedPriority != null
-                      ? _priorityAccentColor(_selectedPriority!)
-                      : const Color(0xFF333333),
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // flag-alt icon
-                SvgPicture.asset(
-                  'assets/icons/flag_alt.svg',
-                  width: 14,
-                  height: 14,
-                  colorFilter: ColorFilter.mode(
-                    _selectedPriority != null
-                        ? _priorityAccentColor(_selectedPriority!)
-                        : const Color(0xFF333333),
-                    BlendMode.srcIn,
-                  ),
-                ),
-                const SizedBox(width: 6),
-
-                // Label: "Priority" or selected priority with dot
-                _selectedPriority != null
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 12,
-                            height: 12,
-                            decoration: ShapeDecoration(
-                              color: _priorityDotColor(_selectedPriority!),
-                              shape: const OvalBorder(),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            _priorityLabel(_selectedPriority!),
-                            style: TextStyle(
-                              color: _priorityAccentColor(_selectedPriority!),
-                              fontSize: 15,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: -0.43,
-                            ),
-                          ),
-                        ],
-                      )
-                    : const Text(
-                        'Priority',
-                        style: TextStyle(
-                          color: Color(0xFF333333),
-                          fontSize: 15,
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.43,
-                        ),
-                      ),
-              ],
-            ),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        FocusScope.of(context).unfocus();
+        setState(() {
+          _showPriorityPopup = !_showPriorityPopup;
+        });
+      },
+      child: Container(
+        height: 45,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: ShapeDecoration(
+          color: color.withOpacity(0.12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: color.withOpacity(0.4), width: 1),
           ),
         ),
-      ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/flag_alt.svg',
+              width: 14,
+              height: 14,
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _priorityPopup() {
+    return Container(
+      width: 230,
+      height: 45,
+      decoration: ShapeDecoration(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        shadows: const [
+          BoxShadow(
+            color: Color(0x3F000000),
+            blurRadius: 16,
+            offset: Offset(0, 0),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _priorityOption('High', const Color(0x7FFF383C), TaskPriority.red),
+          _priorityOption('Medium', const Color(0x7FFFCC00), TaskPriority.yellow),
+          _priorityOption('Low', const Color(0x7F34C759), TaskPriority.green),
+        ],
+      ),
     );
   }
 
