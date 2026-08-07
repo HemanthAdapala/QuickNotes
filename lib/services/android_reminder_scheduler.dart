@@ -22,9 +22,9 @@ class AndroidReminderScheduler implements ReminderScheduler {
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  static const String channelId = 'quick_notes_tasks';
-  static const String channelName = 'Tasks Reminders';
-  static const String channelDescription = 'Notifications for task reminders and due dates';
+  static const String channelId = 'quick_notes_alarm_channel_v2';
+  static const String channelName = 'Task Alarms';
+  static const String channelDescription = 'High priority alarm ringtone alerts for scheduled task reminders';
 
   bool _isInitialized = false;
 
@@ -73,12 +73,12 @@ class AndroidReminderScheduler implements ReminderScheduler {
         }
       } catch (_) {}
 
-      // 4. Create high importance notification channel
+      // 4. Create Max Importance Alarm Notification Channel
       const androidChannel = AndroidNotificationChannel(
         channelId,
         channelName,
         description: channelDescription,
-        importance: Importance.high,
+        importance: Importance.max,
         playSound: true,
         enableVibration: true,
       );
@@ -87,6 +87,10 @@ class AndroidReminderScheduler implements ReminderScheduler {
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
       if (androidPlugin != null) {
+        try {
+          await androidPlugin.deleteNotificationChannel(channelId: 'quick_notes_tasks');
+        } catch (_) {}
+
         await androidPlugin.createNotificationChannel(androidChannel);
 
         // Request POST_NOTIFICATIONS on Android 13+ (API 33+)
@@ -166,12 +170,13 @@ class AndroidReminderScheduler implements ReminderScheduler {
         channelId,
         channelName,
         channelDescription: channelDescription,
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: Importance.max,
+        priority: Priority.max,
         playSound: true,
         enableVibration: true,
+        fullScreenIntent: true,
         visibility: NotificationVisibility.public,
-        category: AndroidNotificationCategory.reminder,
+        category: AndroidNotificationCategory.alarm,
         actions: <AndroidNotificationAction>[
           const AndroidNotificationAction(
             'action_done',
