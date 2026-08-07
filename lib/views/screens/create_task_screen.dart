@@ -63,6 +63,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
   String _selectedPriority = 'None'; // 'High', 'Medium', 'Low', 'None'
   RecurrenceType? _selectedRecurrence; // null = Never, daily, weekly, monthly
   bool _showPriorityPicker = false;
+  late bool _reminderEnabled;
 
   @override
   void initState() {
@@ -80,6 +81,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
         _selectedTime = TimeOfDay(hour: due.hour, minute: due.minute);
       }
       _selectedPriority = task.priority.isNotEmpty ? task.priority : 'None';
+      _reminderEnabled = task.reminderEnabled;
       if (task.isRecurring) {
         _selectedRecurrence = task.recurrence?.type;
       }
@@ -88,6 +90,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
       _selectedTime = TimeOfDay.now();
       _selectedPriority = 'None';
       _selectedRecurrence = null;
+      _reminderEnabled = true;
     }
   }
 
@@ -175,7 +178,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
       _selectedTime.minute,
     );
 
-    final DateTime reminderDateTime = dueDateTime;
+    final DateTime? reminderDateTime = _reminderEnabled ? dueDateTime : null;
 
     final recurrenceRule = _selectedRecurrence != null
         ? RecurrenceRule(type: _selectedRecurrence!, interval: 1)
@@ -193,7 +196,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
         description: description,
         dueDate: dueDateTime,
         reminderTime: reminderDateTime,
-        reminderEnabled: true,
+        reminderEnabled: _reminderEnabled,
         priority: _selectedPriority,
         repeatRule: repeatRule,
         isRecurring: _selectedRecurrence != null,
@@ -208,6 +211,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
         dueDate: dueDateTime,
         priority: _selectedPriority,
         reminderTime: reminderDateTime,
+        reminderEnabled: _reminderEnabled,
         repeatRule: repeatRule,
         isRecurring: _selectedRecurrence != null,
         recurrence: recurrenceRule,
@@ -584,6 +588,75 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                                       border: InputBorder.none,
                                     ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 22),
+
+                                // ── Reminder Alarm Switch Card ───────────────────────
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  decoration: ShapeDecoration(
+                                    color: const Color(0x28787880),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: _reminderEnabled ? const Color(0xFF0088FF).withOpacity(0.15) : const Color(0x1F787880),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              _reminderEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
+                                              size: 20,
+                                              color: _reminderEnabled ? const Color(0xFF0088FF) : const Color(0x993C3C43),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Reminder Alarm',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: const Color(0xFF333333),
+                                                  letterSpacing: -0.43,
+                                                ),
+                                              ),
+                                              Text(
+                                                _reminderEnabled
+                                                    ? 'Alarm set for selected due time'
+                                                    : 'Reminder alarm disabled',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w400,
+                                                  color: _reminderEnabled ? const Color(0xFF0088FF) : const Color(0x993C3C43),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      Switch.adaptive(
+                                        value: _reminderEnabled,
+                                        activeColor: const Color(0xFF0088FF),
+                                        onChanged: (val) {
+                                          HapticFeedback.selectionClick();
+                                          setState(() {
+                                            _reminderEnabled = val;
+                                          });
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ),
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
@@ -38,11 +39,13 @@ import '../widgets/tactile_button.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class CreateTaskBottomSheet extends StatefulWidget {
   final DateTime initialDate;
+  final TimeOfDay? initialTime;
   final TaskItem? taskToEdit;
 
   const CreateTaskBottomSheet({
     super.key,
     required this.initialDate,
+    this.initialTime,
     this.taskToEdit,
   });
 
@@ -60,6 +63,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
   TaskPriority? _selectedPriority;
   RecurrenceType? _selectedRecurrence; // null = Never
   bool _showPriorityPopup = false;
+  late bool _reminderEnabled;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   @override
@@ -83,14 +87,16 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         'low' => TaskPriority.green,
         _ => TaskPriority.green,
       };
+      _reminderEnabled = task.reminderEnabled;
       if (task.isRecurring) {
         _selectedRecurrence = task.recurrence?.type;
       }
     } else {
       _selectedDate = widget.initialDate;
-      _startTime = TimeOfDay.now();
+      _startTime = widget.initialTime ?? TimeOfDay.now();
       _selectedPriority = null;
       _selectedRecurrence = null;
+      _reminderEnabled = true;
     }
   }
 
@@ -154,6 +160,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       _startTime.hour,
       _startTime.minute,
     );
+
+    final DateTime? reminderDateTime = _reminderEnabled ? fullDueDate : null;
 
     final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
     final isEditing = widget.taskToEdit != null;
@@ -402,6 +410,10 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
 
                       const SizedBox(height: 16),
 
+                      _reminderSection(),
+
+                      const SizedBox(height: 16),
+
                       _prioritySection(),
 
                       const SizedBox(height: 16),
@@ -414,6 +426,74 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _reminderSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: ShapeDecoration(
+        color: const Color(0x28787880),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _reminderEnabled ? const Color(0xFF0088FF).withOpacity(0.15) : const Color(0x1F787880),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _reminderEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
+                  size: 18,
+                  color: _reminderEnabled ? const Color(0xFF0088FF) : const Color(0x993C3C43),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Reminder Alarm',
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF333333),
+                      letterSpacing: -0.43,
+                    ),
+                  ),
+                  Text(
+                    _reminderEnabled
+                        ? 'Alarm set for due time'
+                        : 'Reminder alarm disabled',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                      color: _reminderEnabled ? const Color(0xFF0088FF) : const Color(0x993C3C43),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Switch.adaptive(
+            value: _reminderEnabled,
+            activeColor: const Color(0xFF0088FF),
+            onChanged: (val) {
+              HapticFeedback.selectionClick();
+              setState(() {
+                _reminderEnabled = val;
+              });
+            },
+          ),
+        ],
       ),
     );
   }

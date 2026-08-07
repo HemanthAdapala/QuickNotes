@@ -174,6 +174,7 @@ class TaskEngine {
     DateTime? endTime,
     String priority = 'None',
     DateTime? reminderTime,
+    bool reminderEnabled = true,
     RepeatRule repeatRule = RepeatRule.none,
     bool isRecurring = false,
     RecurrenceRule? recurrence,
@@ -199,7 +200,8 @@ class TaskEngine {
         throw ArgumentError('createTask requires a TaskItem or title string.');
       }
       final notificationId = await _repository.generateUniqueNotificationId();
-      final initialStatus = reminderTime != null ? TaskStatus.scheduled : TaskStatus.waiting;
+      final isReminderActive = reminderEnabled && reminderTime != null;
+      final initialStatus = isReminderActive ? TaskStatus.scheduled : TaskStatus.waiting;
       final seriesId = (isRecurring || recurrence != null)
           ? (recurringSeriesId ?? _uuid.v4())
           : recurringSeriesId;
@@ -217,8 +219,8 @@ class TaskEngine {
         status: initialStatus,
         createdAt: now,
         updatedAt: now,
-        reminderEnabled: reminderTime != null,
-        reminderTime: reminderTime?.toUtc(),
+        reminderEnabled: isReminderActive,
+        reminderTime: isReminderActive ? reminderTime.toUtc() : null,
         notificationId: notificationId,
         repeatRule: repeatRule,
         isRecurring: isRecurring || recurrence != null,
@@ -265,9 +267,10 @@ class TaskEngine {
     _tasks[index] = finalUpdatedTask;
     await _repository.updateTask(finalUpdatedTask);
 
-    // Reschedule reminder if reminderTime or dueDate changed
+    // Reschedule reminder if reminderTime, dueDate, or reminderEnabled changed
     final timeChanged = oldTask.reminderTime != finalUpdatedTask.reminderTime ||
-        oldTask.dueDate != finalUpdatedTask.dueDate;
+        oldTask.dueDate != finalUpdatedTask.dueDate ||
+        oldTask.reminderEnabled != finalUpdatedTask.reminderEnabled;
 
     if (timeChanged) {
       await _scheduler.cancelReminder(oldTask.notificationId);
