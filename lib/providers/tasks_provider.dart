@@ -339,23 +339,6 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     final lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
     final monthEnd = DateTime(now.year, now.month, lastDayOfMonth, 23, 59, 59, 999);
 
-    final DateTime maxHorizon;
-    switch (filter) {
-      case 'Today':
-        maxHorizon = todayEnd;
-        break;
-      case 'Weekly':
-        maxHorizon = weekEnd;
-        break;
-      case 'Monthly':
-        maxHorizon = monthEnd;
-        break;
-      case 'All':
-      default:
-        maxHorizon = today.add(const Duration(days: 180));
-        break;
-    }
-
     final result = <TaskItem>[];
 
     for (final t in _engine.tasks) {
@@ -364,14 +347,63 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
       if (!isRecurring) {
         if (!t.completed) {
           final localDue = t.dueDate.toLocal();
-          if (filter == 'All' || localDue.isBefore(maxHorizon) || localDue.isAtSameMomentAs(maxHorizon)) {
-            result.add(t);
+          switch (filter) {
+            case 'Missed':
+              if (localDue.isBefore(today)) {
+                result.add(t);
+              }
+              break;
+            case 'Today':
+              if ((localDue.isAfter(today.subtract(const Duration(milliseconds: 1))) || localDue.isAtSameMomentAs(today)) &&
+                  (localDue.isBefore(todayEnd) || localDue.isAtSameMomentAs(todayEnd))) {
+                result.add(t);
+              }
+              break;
+            case 'Weekly':
+              if (localDue.isBefore(weekEnd) || localDue.isAtSameMomentAs(weekEnd)) {
+                result.add(t);
+              }
+              break;
+            case 'Monthly':
+              if (localDue.isBefore(monthEnd) || localDue.isAtSameMomentAs(monthEnd)) {
+                result.add(t);
+              }
+              break;
+            case 'All':
+            default:
+              result.add(t);
+              break;
           }
         }
         continue;
       }
 
-      // For recurring tasks, find the FIRST uncompleted date starting from Today up to maxHorizon
+      // Recurring Tasks logic
+      if (filter == 'Missed') {
+        final localDue = t.dueDate.toLocal();
+        if (localDue.isBefore(today) && !t.completed) {
+          result.add(t);
+        }
+        continue;
+      }
+
+      final DateTime maxHorizon;
+      switch (filter) {
+        case 'Today':
+          maxHorizon = todayEnd;
+          break;
+        case 'Weekly':
+          maxHorizon = weekEnd;
+          break;
+        case 'Monthly':
+          maxHorizon = monthEnd;
+          break;
+        case 'All':
+        default:
+          maxHorizon = today.add(const Duration(days: 180));
+          break;
+      }
+
       final localDue = t.dueDate.toLocal();
       final taskStart = DateTime(localDue.year, localDue.month, localDue.day);
       final type = t.recurrence?.type;

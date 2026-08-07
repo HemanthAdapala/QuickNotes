@@ -85,10 +85,12 @@ class AppStatisticsService {
         }).toList();
 
       case 'Today':
-        // Overdue tasks + tasks due today (dueDate <= today 23:59:59)
+        // Tasks due today (todayStart <= dueDate <= todayEnd)
+        final todayStart = DateTime(now.year, now.month, now.day);
         return activeTasks.where((t) {
           final localDue = t.dueDate.toLocal();
-          return localDue.isBefore(todayEnd) || localDue.isAtSameMomentAs(todayEnd);
+          return (localDue.isAfter(todayStart.subtract(const Duration(milliseconds: 1))) || localDue.isAtSameMomentAs(todayStart)) &&
+                 (localDue.isBefore(todayEnd) || localDue.isAtSameMomentAs(todayEnd));
         }).toList();
 
       case 'Weekly':
