@@ -151,23 +151,7 @@ class AndroidReminderScheduler implements ReminderScheduler {
     await cancelReminder(task.notificationId);
 
     try {
-      final reminderLocal = task.reminderTime!.toLocal();
-      tz.Location location = tz.local;
-      try {
-        if (task.timezone.contains('/') && tz.timeZoneDatabase.locations.containsKey(task.timezone)) {
-          location = tz.getLocation(task.timezone);
-        }
-      } catch (_) {}
-
-      final tzScheduledTime = tz.TZDateTime(
-        location,
-        reminderLocal.year,
-        reminderLocal.month,
-        reminderLocal.day,
-        reminderLocal.hour,
-        reminderLocal.minute,
-        reminderLocal.second,
-      );
+      final tzScheduledTime = tz.TZDateTime.from(reminderUtc, tz.UTC);
 
       final androidDetails = AndroidNotificationDetails(
         channelId,
