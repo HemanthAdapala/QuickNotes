@@ -496,27 +496,31 @@ class _HomeScreenState extends State<HomeScreen> {
                       
                       // 1. Scrollable filter bar
                       if (Platform.environment.containsKey('FLUTTER_TEST') ? !_isNotesActive : true)
-                        SizedBox(
-                          height: 52.0,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                            itemCount: 5,
-                            itemBuilder: (context, index) {
-                              final filters = ['All', 'Missed', 'Today', 'Weekly', 'Monthly'];
-                              final filter = filters[index];
-                              final bool isSelected = _activeFilter == filter;
-                              
-                              final String text;
-                              if (filter == 'All') {
-                                text = 'All';
-                              } else {
-                                final labelText = _isNotesActive ? 'Notes' : 'Tasks';
-                                text = filter == 'Missed' ? "Missed $labelText ${_countForFilter(filter)}" : "${filter}'s $labelText ${_countForFilter(filter)}";
-                              }
+                        Builder(
+                          builder: (context) {
+                            final filters = _isNotesActive
+                                ? ['All', 'Today', 'Weekly', 'Monthly']
+                                : ['All', 'Missed', 'Today', 'Weekly', 'Monthly'];
+                            return SizedBox(
+                              height: 52.0,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                itemCount: filters.length,
+                                itemBuilder: (context, index) {
+                                  final filter = filters[index];
+                                  final bool isSelected = _activeFilter == filter;
+                                  
+                                  final String text;
+                                  if (filter == 'All') {
+                                    text = 'All';
+                                  } else {
+                                    final labelText = _isNotesActive ? 'Notes' : 'Tasks';
+                                    text = filter == 'Missed' ? "Missed $labelText ${_countForFilter(filter)}" : "${filter}'s $labelText ${_countForFilter(filter)}";
+                                  }
 
-                              return Padding(
-                                padding: EdgeInsets.only(right: index == 4 ? 0.0 : 12.0),
+                                  return Padding(
+                                    padding: EdgeInsets.only(right: index == filters.length - 1 ? 0.0 : 12.0),
                                   child: GestureDetector(
                                     onTap: () {
                                       HapticFeedback.selectionClick();
@@ -591,7 +595,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               );
                             },
                           ),
-                        ),
+                        );
+                      },
+                    ),
                       
                       SizedBox(height: isShortScreen ? 10.0 : 16.0),
                       
@@ -601,6 +607,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         onChanged: (val) {
                           setState(() {
                             _isNotesActive = val;
+                            if (_isNotesActive && _activeFilter == 'Missed') {
+                              _activeFilter = 'Today';
+                            }
                           });
                         },
                       ),
