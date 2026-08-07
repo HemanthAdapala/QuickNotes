@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../models/task_item.dart';
+import '../../models/reminder_mode.dart';
 import '../../models/recurrence_rule.dart';
 import '../models/calendar_task.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
@@ -66,6 +67,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
   late bool _reminderEnabled;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
+  late ReminderMode _selectedReminderMode;
+
   @override
   void initState() {
     super.initState();
@@ -87,7 +90,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         'low' => TaskPriority.green,
         _ => TaskPriority.green,
       };
-      _reminderEnabled = task.reminderEnabled;
+      _selectedReminderMode = task.reminderMode;
+      _reminderEnabled = _selectedReminderMode != ReminderMode.off;
       if (task.isRecurring) {
         _selectedRecurrence = task.recurrence?.type;
       }
@@ -96,6 +100,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       _startTime = widget.initialTime ?? TimeOfDay.now();
       _selectedPriority = null;
       _selectedRecurrence = null;
+      _selectedReminderMode = ReminderMode.alarm;
       _reminderEnabled = true;
     }
   }
@@ -161,7 +166,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       _startTime.minute,
     );
 
-    final DateTime? reminderDateTime = _reminderEnabled ? fullDueDate : null;
+    final bool isReminderActive = _selectedReminderMode != ReminderMode.off;
+    final DateTime? reminderDateTime = isReminderActive ? fullDueDate : null;
 
     final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
     final isEditing = widget.taskToEdit != null;
@@ -175,7 +181,9 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         description: _descController.text.trim(),
         dueDate: fullDueDate,
         priority: priorityStr,
-        reminderTime: fullDueDate,
+        reminderTime: reminderDateTime,
+        reminderEnabled: isReminderActive,
+        reminderMode: _selectedReminderMode,
         isRecurring: _selectedRecurrence != null,
         recurrence: recurrenceRule,
         updatedAt: DateTime.now(),
@@ -187,7 +195,9 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         description: _descController.text.trim(),
         dueDate: fullDueDate,
         priority: priorityStr,
-        reminderTime: fullDueDate,
+        reminderTime: reminderDateTime,
+        reminderEnabled: isReminderActive,
+        reminderMode: _selectedReminderMode,
         isRecurring: _selectedRecurrence != null,
         recurrence: recurrenceRule,
       );
@@ -432,68 +442,105 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
 
   Widget _reminderSection() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.all(12),
       decoration: ShapeDecoration(
         color: const Color(0x28787880),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _reminderEnabled ? const Color(0xFF0088FF).withOpacity(0.15) : const Color(0x1F787880),
-                  shape: BoxShape.circle,
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Row(
+              children: [
+                Icon(
+                  _selectedReminderMode == ReminderMode.alarm
+                      ? Icons.alarm_on_rounded
+                      : (_selectedReminderMode == ReminderMode.notification
+                          ? Icons.notifications_active_rounded
+                          : Icons.notifications_off_rounded),
+                  size: 16,
+                  color: _selectedReminderMode == ReminderMode.alarm
+                      ? const Color(0xFFFF9500)
+                      : (_selectedReminderMode == ReminderMode.notification
+                          ? const Color(0xFF0088FF)
+                          : const Color(0x993C3C43)),
                 ),
-                child: Icon(
-                  _reminderEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
-                  size: 18,
-                  color: _reminderEnabled ? const Color(0xFF0088FF) : const Color(0x993C3C43),
+                const SizedBox(width: 8),
+                Text(
+                  'Reminder Mode',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF333333),
+                    letterSpacing: -0.43,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Reminder Alarm',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF333333),
-                      letterSpacing: -0.43,
-                    ),
-                  ),
-                  Text(
-                    _reminderEnabled
-                        ? 'Alarm set for due time'
-                        : 'Reminder alarm disabled',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                      color: _reminderEnabled ? const Color(0xFF0088FF) : const Color(0x993C3C43),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
-          Switch.adaptive(
-            value: _reminderEnabled,
-            activeColor: const Color(0xFF0088FF),
-            onChanged: (val) {
-              HapticFeedback.selectionClick();
-              setState(() {
-                _reminderEnabled = val;
-              });
-            },
+          Container(
+            height: 40,
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: const Color(0x1F787880),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                _buildReminderModePill(ReminderMode.off, 'Off', null),
+                _buildReminderModePill(ReminderMode.notification, '🔔 Notification', const Color(0xFF0088FF)),
+                _buildReminderModePill(ReminderMode.alarm, '⏰ Alarm', const Color(0xFFFF9500)),
+              ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildReminderModePill(ReminderMode mode, String label, Color? activeColor) {
+    final isSelected = _selectedReminderMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          setState(() {
+            _selectedReminderMode = mode;
+            _reminderEnabled = mode != ReminderMode.off;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(11),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              color: isSelected
+                  ? (activeColor ?? const Color(0xFF333333))
+                  : const Color(0x993C3C43),
+            ),
+          ),
+        ),
       ),
     );
   }

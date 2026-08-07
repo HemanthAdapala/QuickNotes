@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/task_item.dart';
 import '../../models/recurrence_rule.dart';
+import '../../models/reminder_mode.dart';
 import '../../models/repeat_rule.dart';
 import '../../providers/tasks_provider.dart';
 import '../widgets/tactile_button.dart';
@@ -64,6 +65,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
   RecurrenceType? _selectedRecurrence; // null = Never, daily, weekly, monthly
   bool _showPriorityPicker = false;
   late bool _reminderEnabled;
+  late ReminderMode _selectedReminderMode;
 
   @override
   void initState() {
@@ -81,7 +83,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
         _selectedTime = TimeOfDay(hour: due.hour, minute: due.minute);
       }
       _selectedPriority = task.priority.isNotEmpty ? task.priority : 'None';
-      _reminderEnabled = task.reminderEnabled;
+      _selectedReminderMode = task.reminderMode;
+      _reminderEnabled = _selectedReminderMode != ReminderMode.off;
       if (task.isRecurring) {
         _selectedRecurrence = task.recurrence?.type;
       }
@@ -90,6 +93,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
       _selectedTime = TimeOfDay.now();
       _selectedPriority = 'None';
       _selectedRecurrence = null;
+      _selectedReminderMode = ReminderMode.alarm;
       _reminderEnabled = true;
     }
   }
@@ -178,7 +182,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
       _selectedTime.minute,
     );
 
-    final DateTime? reminderDateTime = _reminderEnabled ? dueDateTime : null;
+    final bool isReminderActive = _selectedReminderMode != ReminderMode.off;
+    final DateTime? reminderDateTime = isReminderActive ? dueDateTime : null;
 
     final recurrenceRule = _selectedRecurrence != null
         ? RecurrenceRule(type: _selectedRecurrence!, interval: 1)
@@ -196,7 +201,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
         description: description,
         dueDate: dueDateTime,
         reminderTime: reminderDateTime,
-        reminderEnabled: _reminderEnabled,
+        reminderEnabled: isReminderActive,
+        reminderMode: _selectedReminderMode,
         priority: _selectedPriority,
         repeatRule: repeatRule,
         isRecurring: _selectedRecurrence != null,
@@ -211,7 +217,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
         dueDate: dueDateTime,
         priority: _selectedPriority,
         reminderTime: reminderDateTime,
-        reminderEnabled: _reminderEnabled,
+        reminderEnabled: isReminderActive,
+        reminderMode: _selectedReminderMode,
         repeatRule: repeatRule,
         isRecurring: _selectedRecurrence != null,
         recurrence: recurrenceRule,
@@ -593,68 +600,62 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
 
                                 const SizedBox(height: 22),
 
-                                // ── Reminder Alarm Switch Card ───────────────────────
+                                // ── Reminder Mode Segmented Pill Selector Card ───────────────────────
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  padding: const EdgeInsets.all(12),
                                   decoration: ShapeDecoration(
                                     color: const Color(0x28787880),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color: _reminderEnabled ? const Color(0xFF0088FF).withOpacity(0.15) : const Color(0x1F787880),
-                                              shape: BoxShape.circle,
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              _selectedReminderMode == ReminderMode.alarm
+                                                  ? Icons.alarm_on_rounded
+                                                  : (_selectedReminderMode == ReminderMode.notification
+                                                      ? Icons.notifications_active_rounded
+                                                      : Icons.notifications_off_rounded),
+                                              size: 18,
+                                              color: _selectedReminderMode == ReminderMode.alarm
+                                                  ? const Color(0xFFFF9500)
+                                                  : (_selectedReminderMode == ReminderMode.notification
+                                                      ? const Color(0xFF0088FF)
+                                                      : const Color(0x993C3C43)),
                                             ),
-                                            child: Icon(
-                                              _reminderEnabled ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
-                                              size: 20,
-                                              color: _reminderEnabled ? const Color(0xFF0088FF) : const Color(0x993C3C43),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Reminder Mode',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: const Color(0xFF333333),
+                                                letterSpacing: -0.43,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Reminder Alarm',
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: const Color(0xFF333333),
-                                                  letterSpacing: -0.43,
-                                                ),
-                                              ),
-                                              Text(
-                                                _reminderEnabled
-                                                    ? 'Alarm set for selected due time'
-                                                    : 'Reminder alarm disabled',
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w400,
-                                                  color: _reminderEnabled ? const Color(0xFF0088FF) : const Color(0x993C3C43),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                      Switch.adaptive(
-                                        value: _reminderEnabled,
-                                        activeColor: const Color(0xFF0088FF),
-                                        onChanged: (val) {
-                                          HapticFeedback.selectionClick();
-                                          setState(() {
-                                            _reminderEnabled = val;
-                                          });
-                                        },
+                                      Container(
+                                        height: 42,
+                                        padding: const EdgeInsets.all(3),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0x1F787880),
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            _buildReminderModePill(ReminderMode.off, 'Off', null),
+                                            _buildReminderModePill(ReminderMode.notification, '🔔 Notification', const Color(0xFF0088FF)),
+                                            _buildReminderModePill(ReminderMode.alarm, '⏰ Alarm', const Color(0xFFFF9500)),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -999,6 +1000,50 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
               fontSize: 14,
               fontWeight: FontWeight.w400,
               letterSpacing: -0.43,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Reminder Mode Pill Helper Widget
+  Widget _buildReminderModePill(ReminderMode mode, String label, Color? activeColor) {
+    final isSelected = _selectedReminderMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          setState(() {
+            _selectedReminderMode = mode;
+            _reminderEnabled = mode != ReminderMode.off;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(13),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              color: isSelected
+                  ? (activeColor ?? const Color(0xFF333333))
+                  : const Color(0x993C3C43),
             ),
           ),
         ),

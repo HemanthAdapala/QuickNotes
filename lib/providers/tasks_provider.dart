@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/task_item.dart';
+import '../models/reminder_mode.dart';
 import '../models/task_status.dart';
 import '../models/notification_action.dart';
 import '../services/notification_action_handler.dart';
@@ -116,6 +117,7 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     required String priority,
     DateTime? reminderTime,
     bool reminderEnabled = true,
+    ReminderMode reminderMode = ReminderMode.alarm,
     RepeatRule repeatRule = RepeatRule.none,
     bool isRecurring = false,
     RecurrenceRule? recurrence,
@@ -134,6 +136,7 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         priority: priority,
         reminderTime: reminderTime,
         reminderEnabled: reminderEnabled,
+        reminderMode: reminderMode,
         repeatRule: repeatRule,
         isRecurring: isRecurring || recurrence != null,
         recurrence: recurrence,

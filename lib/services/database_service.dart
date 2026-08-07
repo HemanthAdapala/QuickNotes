@@ -29,10 +29,10 @@ class DatabaseService {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'quick_notes.db');
 
-    // Open/Create the database (version 13)
+    // Open/Create the database (version 15)
     return await openDatabase(
       path,
-      version: 13,
+      version: 15,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -96,6 +96,7 @@ class DatabaseService {
         updatedAt TEXT,
         completedAt TEXT,
         reminderEnabled INTEGER DEFAULT 0,
+        reminderMode TEXT DEFAULT "alarm",
         reminderTime TEXT,
         notificationId INTEGER DEFAULT 0,
         repeatRule TEXT DEFAULT "none",
@@ -119,6 +120,21 @@ class DatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_notificationId ON tasks(notificationId)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_tasks_recurringSeriesId ON tasks(recurringSeriesId)');
+
+    // v14 — User profiles table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS user_profiles(
+        userId TEXT PRIMARY KEY,
+        displayName TEXT NOT NULL,
+        email TEXT NOT NULL,
+        avatarId TEXT,
+        photoUrl TEXT,
+        usesGooglePhoto INTEGER NOT NULL DEFAULT 1,
+        profileVersion INTEGER NOT NULL DEFAULT 1,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
   }
 
   // Migration handling
@@ -258,6 +274,28 @@ class DatabaseService {
     if (oldVersion < 13) {
       try {
         await db.execute('ALTER TABLE tasks ADD COLUMN completedDates TEXT');
+      } catch (_) {}
+    }
+    if (oldVersion < 14) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS user_profiles(
+            userId TEXT PRIMARY KEY,
+            displayName TEXT NOT NULL,
+            email TEXT NOT NULL,
+            avatarId TEXT,
+            photoUrl TEXT,
+            usesGooglePhoto INTEGER NOT NULL DEFAULT 1,
+            profileVersion INTEGER NOT NULL DEFAULT 1,
+            createdAt TEXT NOT NULL,
+            updatedAt TEXT NOT NULL
+          )
+        ''');
+      } catch (_) {}
+    }
+    if (oldVersion < 15) {
+      try {
+        await db.execute('ALTER TABLE tasks ADD COLUMN reminderMode TEXT DEFAULT "alarm"');
       } catch (_) {}
     }
   }

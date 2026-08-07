@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/task_item.dart';
+import '../models/reminder_mode.dart';
 import '../models/task_status.dart';
 import '../models/repeat_rule.dart';
 import '../models/recurrence_rule.dart';
@@ -175,6 +176,7 @@ class TaskEngine {
     String priority = 'None',
     DateTime? reminderTime,
     bool reminderEnabled = true,
+    ReminderMode reminderMode = ReminderMode.alarm,
     RepeatRule repeatRule = RepeatRule.none,
     bool isRecurring = false,
     RecurrenceRule? recurrence,
@@ -200,7 +202,7 @@ class TaskEngine {
         throw ArgumentError('createTask requires a TaskItem or title string.');
       }
       final notificationId = await _repository.generateUniqueNotificationId();
-      final isReminderActive = reminderEnabled && reminderTime != null;
+      final isReminderActive = reminderEnabled && reminderMode != ReminderMode.off && reminderTime != null;
       final initialStatus = isReminderActive ? TaskStatus.scheduled : TaskStatus.waiting;
       final seriesId = (isRecurring || recurrence != null)
           ? (recurringSeriesId ?? _uuid.v4())
@@ -220,6 +222,7 @@ class TaskEngine {
         createdAt: now,
         updatedAt: now,
         reminderEnabled: isReminderActive,
+        reminderMode: isReminderActive ? reminderMode : ReminderMode.off,
         reminderTime: isReminderActive ? reminderTime.toUtc() : null,
         notificationId: notificationId,
         repeatRule: repeatRule,
@@ -267,10 +270,11 @@ class TaskEngine {
     _tasks[index] = finalUpdatedTask;
     await _repository.updateTask(finalUpdatedTask);
 
-    // Reschedule reminder if reminderTime, dueDate, or reminderEnabled changed
+    // Reschedule reminder if reminderTime, dueDate, reminderEnabled, or reminderMode changed
     final timeChanged = oldTask.reminderTime != finalUpdatedTask.reminderTime ||
         oldTask.dueDate != finalUpdatedTask.dueDate ||
-        oldTask.reminderEnabled != finalUpdatedTask.reminderEnabled;
+        oldTask.reminderEnabled != finalUpdatedTask.reminderEnabled ||
+        oldTask.reminderMode != finalUpdatedTask.reminderMode;
 
     if (timeChanged) {
       await _scheduler.cancelReminder(oldTask.notificationId);

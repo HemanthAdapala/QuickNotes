@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/task_item.dart';
+import '../models/reminder_mode.dart';
 import '../models/notification_action.dart';
 import '../models/notification_payload.dart';
 import 'notification_action_handler.dart';
@@ -73,16 +74,24 @@ class AndroidReminderScheduler implements ReminderScheduler {
         }
       } catch (_) {}
 
-      // 4. Create Max Importance Alarm Notification Channel with Alarm sound stream
-      const androidChannel = AndroidNotificationChannel(
-        channelId,
-        channelName,
-        description: channelDescription,
+      // 4. Create Notification & Alarm Channels
+      const notificationChannel = AndroidNotificationChannel(
+        'quick_notes_notification_channel_v3',
+        'Task Notifications',
+        description: 'Standard notifications for task reminders',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      );
+
+      const alarmChannel = AndroidNotificationChannel(
+        'quick_notes_alarm_channel_v3',
+        'Task Alarms',
+        description: 'Full alarm ringtone notifications for task reminders',
         importance: Importance.max,
         playSound: true,
         sound: UriAndroidNotificationSound('content://settings/system/alarm_alert'),
         enableVibration: true,
-        audioAttributesUsage: AudioAttributesUsage.alarm,
       );
 
       final androidPlugin = _notificationsPlugin
@@ -94,7 +103,8 @@ class AndroidReminderScheduler implements ReminderScheduler {
           await androidPlugin.deleteNotificationChannel(channelId: 'quick_notes_alarm_channel_v2');
         } catch (_) {}
 
-        await androidPlugin.createNotificationChannel(androidChannel);
+        await androidPlugin.createNotificationChannel(notificationChannel);
+        await androidPlugin.createNotificationChannel(alarmChannel);
 
         // Request POST_NOTIFICATIONS on Android 13+ (API 33+)
         await androidPlugin.requestNotificationsPermission();
@@ -135,7 +145,7 @@ class AndroidReminderScheduler implements ReminderScheduler {
       await initialize();
     }
 
-    if (!task.reminderEnabled || task.reminderTime == null) {
+    if (!task.reminderEnabled || task.reminderMode == ReminderMode.off || task.reminderTime == null) {
       return;
     }
 
@@ -153,18 +163,43 @@ class AndroidReminderScheduler implements ReminderScheduler {
     try {
       final tzScheduledTime = tz.TZDateTime.from(reminderUtc, tz.UTC);
 
+      final String targetChannelId;
+      final Importance targetImportance;
+      final Priority targetPriority;
+      final AndroidNotificationSound? targetSound;
+      final AndroidNotificationCategory targetCategory;
+      final bool isFullScreen;
+
+      if (task.reminderMode == ReminderMode.notification) {
+        targetChannelId = 'quick_notes_notification_channel_v3';
+        targetImportance = Importance.high;
+        targetPriority = Priority.high;
+        targetSound = null; // Standard notification chime
+        targetCategory = AndroidNotificationCategory.reminder;
+        isFullScreen = false;
+      } else {
+        targetChannelId = 'quick_notes_alarm_channel_v3';
+        targetImportance = Importance.max;
+        targetPriority = Priority.max;
+        targetSound = const UriAndroidNotificationSound('content://settings/system/alarm_alert');
+        targetCategory = AndroidNotificationCategory.alarm;
+        isFullScreen = true;
+      }
+
       final androidDetails = AndroidNotificationDetails(
-        channelId,
-        channelName,
-        channelDescription: channelDescription,
-        importance: Importance.max,
-        priority: Priority.max,
+        targetChannelId,
+        targetChannelId == 'quick_notes_notification_channel_v3' ? 'Task Notifications' : 'Task Alarms',
+        channelDescription: targetChannelId == 'quick_notes_notification_channel_v3'
+            ? 'Standard notifications for task reminders'
+            : 'Full alarm ringtone notifications for task reminders',
+        importance: targetImportance,
+        priority: targetPriority,
         playSound: true,
-        sound: const UriAndroidNotificationSound('content://settings/system/alarm_alert'),
+        sound: targetSound,
         enableVibration: true,
-        fullScreenIntent: true,
+        fullScreenIntent: isFullScreen,
         visibility: NotificationVisibility.public,
-        category: AndroidNotificationCategory.alarm,
+        category: targetCategory,
         actions: <AndroidNotificationAction>[
           const AndroidNotificationAction(
             'action_done',

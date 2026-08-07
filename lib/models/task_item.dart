@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'task_status.dart';
 import 'repeat_rule.dart';
 import 'recurrence_rule.dart';
+import 'reminder_mode.dart';
 
 class TaskItem {
   final String id;
@@ -18,6 +19,7 @@ class TaskItem {
   final DateTime updatedAt;
   final DateTime? completedAt;
   final bool reminderEnabled;
+  final ReminderMode reminderMode;
   final DateTime? reminderTime;
   final int notificationId;
   final RepeatRule repeatRule;
@@ -43,6 +45,7 @@ class TaskItem {
     DateTime? updatedAt,
     this.completedAt,
     bool? reminderEnabled,
+    ReminderMode? reminderMode,
     this.reminderTime,
     int? notificationId,
     RepeatRule? repeatRule,
@@ -55,7 +58,15 @@ class TaskItem {
             ((completed ?? false) ? TaskStatus.completed : TaskStatus.waiting),
         createdAt = (createdAt ?? DateTime.now()).toUtc(),
         updatedAt = (updatedAt ?? DateTime.now()).toUtc(),
-        reminderEnabled = reminderEnabled ?? (reminderTime != null),
+        reminderMode = reminderMode ??
+            ((reminderEnabled == false || (reminderTime == null && reminderEnabled == null))
+                ? ReminderMode.off
+                : ReminderMode.alarm),
+        reminderEnabled = (reminderMode ??
+                ((reminderEnabled == false || (reminderTime == null && reminderEnabled == null))
+                    ? ReminderMode.off
+                    : ReminderMode.alarm)) !=
+            ReminderMode.off,
         notificationId = notificationId ?? 0,
         repeatRule = repeatRule ??
             (recurrence != null
@@ -88,6 +99,7 @@ class TaskItem {
       'updatedAt': updatedAt.toUtc().toIso8601String(),
       'completedAt': completedAt?.toUtc().toIso8601String(),
       'reminderEnabled': reminderEnabled ? 1 : 0,
+      'reminderMode': reminderMode.toDbString(),
       'reminderTime': reminderTime?.toUtc().toIso8601String(),
       'notificationId': notificationId,
       'repeatRule': repeatRule.toDbString(),
@@ -125,6 +137,12 @@ class TaskItem {
       } catch (_) {}
     }
 
+    final rawRemEnabled = (map['reminderEnabled'] as int? ?? 0) == 1 || map['reminderTime'] != null;
+    final rawRemModeStr = map['reminderMode'] as String?;
+    final resolvedRemMode = rawRemModeStr != null
+        ? ReminderModeExtension.fromDbString(rawRemModeStr)
+        : (rawRemEnabled ? ReminderMode.alarm : ReminderMode.off);
+
     return TaskItem(
       id: map['id'] as String,
       title: map['title'] as String? ?? '',
@@ -139,7 +157,8 @@ class TaskItem {
       createdAt: rawCreatedAt.toUtc(),
       updatedAt: rawUpdatedAt.toUtc(),
       completedAt: map['completedAt'] != null ? DateTime.tryParse(map['completedAt'] as String)?.toUtc() : null,
-      reminderEnabled: (map['reminderEnabled'] as int? ?? 0) == 1 || map['reminderTime'] != null,
+      reminderEnabled: resolvedRemMode != ReminderMode.off,
+      reminderMode: resolvedRemMode,
       reminderTime: map['reminderTime'] != null ? DateTime.tryParse(map['reminderTime'] as String)?.toUtc() : null,
       notificationId: map['notificationId'] as int? ?? 0,
       repeatRule: RepeatRuleExtension.fromDbString(map['repeatRule'] as String?),
@@ -167,6 +186,7 @@ class TaskItem {
     DateTime? updatedAt,
     DateTime? completedAt,
     bool? reminderEnabled,
+    ReminderMode? reminderMode,
     DateTime? reminderTime,
     int? notificationId,
     RepeatRule? repeatRule,
@@ -182,6 +202,11 @@ class TaskItem {
       resolvedStatus = completed ? TaskStatus.completed : TaskStatus.waiting;
     }
 
+    final resolvedRemMode = reminderMode ??
+        (reminderEnabled != null
+            ? (reminderEnabled ? (this.reminderMode != ReminderMode.off ? this.reminderMode : ReminderMode.alarm) : ReminderMode.off)
+            : this.reminderMode);
+
     return TaskItem(
       id: id ?? this.id,
       title: title ?? this.title,
@@ -196,7 +221,8 @@ class TaskItem {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       completedAt: completedAt ?? this.completedAt,
-      reminderEnabled: reminderEnabled ?? this.reminderEnabled,
+      reminderEnabled: resolvedRemMode != ReminderMode.off,
+      reminderMode: resolvedRemMode,
       reminderTime: reminderTime ?? this.reminderTime,
       notificationId: notificationId ?? this.notificationId,
       repeatRule: repeatRule ?? this.repeatRule,
