@@ -568,6 +568,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   void _focusContentArea() {
     void requestFocusNow() {
       if (!mounted) return;
+      _titleFocusNode.unfocus();
       if (NoteEditorScreen.useSingleDocumentEditor) {
         _contentFocusNode.requestFocus();
         if (_contentController.selection.start < 0) {
@@ -1797,6 +1798,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     if (block is BulletedListBlock) return block.controller;
     if (block is NumberedListBlock) return block.controller;
     return null;
+  }
+
+  void _focusTitleArea() {
+    _contentFocusNode.unfocus();
+    _titleFocusNode.requestFocus();
+    _titleController.selection = TextSelection.collapsed(offset: _titleController.text.length);
   }
 
   bool get _anyBlockHasFocus {
@@ -4163,6 +4170,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                         paperGuideHeight: _paperGuideHeight,
                                         contextMenuBuilder: _buildContextMenu,
                                         formattingToolbarHeight: targetHeight,
+                                        onBackspaceAtStart: _focusTitleArea,
                                       ),
                                     )
                                   else

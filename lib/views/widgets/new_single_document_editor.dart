@@ -50,6 +50,7 @@ class NewSingleDocumentEditor extends StatefulWidget {
   final double formattingToolbarHeight;
   final bool readOnly;
   final bool enableInteractiveSelection;
+  final VoidCallback? onBackspaceAtStart;
 
   const NewSingleDocumentEditor({
     super.key,
@@ -61,6 +62,7 @@ class NewSingleDocumentEditor extends StatefulWidget {
     required this.formattingToolbarHeight,
     this.readOnly = false,
     this.enableInteractiveSelection = true,
+    this.onBackspaceAtStart,
   });
 
   @override
@@ -713,9 +715,24 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       ),
     );
 
+    final textFieldWidget = Focus(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
+          if (segment.segmentIndex == 0 && controller.selection.isCollapsed && controller.selection.start == 0) {
+            if (widget.onBackspaceAtStart != null) {
+              widget.onBackspaceAtStart!();
+              return KeyEventResult.handled;
+            }
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: textField,
+    );
+
     final double firstLineHeight = fontSize * lineHeight * widget.paperGuideHeight;
 
-    Widget resultWidget = textField;
+    Widget resultWidget = textFieldWidget;
 
     if (segment.type == 'checkbox') {
       resultWidget = Row(
