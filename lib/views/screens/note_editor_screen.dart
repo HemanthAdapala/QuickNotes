@@ -568,9 +568,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   void _focusContentArea() {
     void requestFocusNow() {
       if (!mounted) return;
-      _titleFocusNode.unfocus();
       if (NoteEditorScreen.useSingleDocumentEditor) {
-        _contentFocusNode.requestFocus();
+        FocusScope.of(context).requestFocus(_contentFocusNode);
         if (_contentController.selection.start < 0) {
           _contentController.selection = const TextSelection.collapsed(offset: 0);
         }
@@ -1801,8 +1800,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   void _focusTitleArea() {
-    _contentFocusNode.unfocus();
-    _titleFocusNode.requestFocus();
+    FocusScope.of(context).requestFocus(_titleFocusNode);
     _titleController.selection = TextSelection.collapsed(offset: _titleController.text.length);
   }
 
