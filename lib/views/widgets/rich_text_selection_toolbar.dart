@@ -29,14 +29,14 @@ class RichTextSelectionToolbar extends StatelessWidget {
 
     if (canSelectAll) {
       items.add(_buildButton(
-        label: "select all",
+        label: "Select All",
         onTap: () => editableTextState.selectAll(SelectionChangedCause.toolbar),
       ));
     }
 
     if (canCopy) {
       items.add(_buildButton(
-        label: "copy",
+        label: "Copy",
         onTap: () {
           if (isRichText) {
             (controller as RichTextEditingController).copy();
@@ -50,7 +50,7 @@ class RichTextSelectionToolbar extends StatelessWidget {
 
     if (canCut) {
       items.add(_buildButton(
-        label: "cut",
+        label: "Cut",
         onTap: () {
           if (isRichText) {
             (controller as RichTextEditingController).cut();
@@ -64,7 +64,7 @@ class RichTextSelectionToolbar extends StatelessWidget {
 
     if (canPaste) {
       items.add(_buildButton(
-        label: "paste",
+        label: "Paste",
         onTap: () {
           if (isRichText) {
             (controller as RichTextEditingController).paste();
@@ -78,7 +78,7 @@ class RichTextSelectionToolbar extends StatelessWidget {
 
     if (isRichText && hasSelection) {
       items.add(_buildButton(
-        label: "duplicate",
+        label: "Duplicate",
         onTap: () {
           (controller as RichTextEditingController).duplicateSelection();
           editableTextState.hideToolbar();
@@ -88,7 +88,7 @@ class RichTextSelectionToolbar extends StatelessWidget {
 
     if (isRichText && hasSelection) {
       items.add(_buildButton(
-        label: "highlight",
+        label: "Highlight",
         onTap: () {
           (controller as RichTextEditingController).toggleStyleAttribute(
             'highlight',
@@ -111,8 +111,8 @@ class RichTextSelectionToolbar extends StatelessWidget {
         rowChildren.add(
           Container(
             width: 0.6,
-            height: 14,
-            color: Colors.white.withOpacity(0.15),
+            height: 16,
+            color: Colors.white.withValues(alpha: 0.2),
           ),
         );
       }
@@ -126,25 +126,35 @@ class RichTextSelectionToolbar extends StatelessWidget {
         anchorAbove: anchors.primaryAnchor,
         anchorBelow: anchors.secondaryAnchor ?? anchors.primaryAnchor,
       ),
-      child: Container(
-        height: 36,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: const Color(0xFF333333),
-          boxShadow: [
-            BoxShadow(
-              offset: const Offset(0, 4),
-              blurRadius: 10,
-              spreadRadius: 0,
-              color: Colors.black.withOpacity(0.15),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
+          child: Container(
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: const Color(0xEC222226),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.15),
+                width: 0.8,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  offset: const Offset(0, 6),
+                  blurRadius: 16,
+                  spreadRadius: 0,
+                  color: Colors.black.withValues(alpha: 0.25),
+                ),
+              ],
             ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: rowChildren,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: rowChildren,
+            ),
+          ),
         ),
       ),
     );
@@ -156,18 +166,18 @@ class RichTextSelectionToolbar extends StatelessWidget {
   }) {
     return TactileButton(
       useAppleSpring: true,
-      compressionScale: 0.7, // Apple tactile compression scale: 0.7
+      compressionScale: 0.8,
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         alignment: Alignment.center,
         child: Text(
           label,
           style: GoogleFonts.inter(
-            fontSize: 11.0,
-            fontWeight: FontWeight.w500,
+            fontSize: 13.0,
+            fontWeight: FontWeight.w600,
             color: Colors.white,
-            letterSpacing: -0.15,
+            letterSpacing: -0.2,
           ),
         ),
       ),
