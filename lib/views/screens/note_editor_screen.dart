@@ -62,8 +62,40 @@ class NoteEditorScreen extends StatefulWidget {
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
 }
 
+class _TitleTextEditingController extends TextEditingController {
+  _TitleTextEditingController({super.text});
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final cleanStyle = style?.copyWith(
+      decoration: TextDecoration.none,
+      fontStyle: FontStyle.normal,
+    ) ?? const TextStyle(decoration: TextDecoration.none, fontStyle: FontStyle.normal);
+
+    if (!value.composing.isValid || !withComposing) {
+      return TextSpan(style: cleanStyle, text: text);
+    }
+
+    return TextSpan(
+      style: cleanStyle,
+      children: <TextSpan>[
+        TextSpan(text: value.composing.textBefore(value.text)),
+        TextSpan(
+          style: cleanStyle,
+          text: value.composing.textInside(value.text),
+        ),
+        TextSpan(text: value.composing.textAfter(value.text)),
+      ],
+    );
+  }
+}
+
 class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBindingObserver {
-  final _titleController = TextEditingController();
+  final _titleController = _TitleTextEditingController();
   final _titleFocusNode = FocusNode();
   final _scrollController = ScrollController();
   bool _isMetadataCollapsed = false;
@@ -4126,6 +4158,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                         fontSize: 24.0,
                                         fontWeight: FontWeight.bold,
                                         color: titleColor,
+                                        decoration: TextDecoration.none,
                                         height: 1.15,
                                       ),
                                       decoration: InputDecoration(
@@ -4135,6 +4168,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                           fontWeight: FontWeight.bold,
                                           color: titleColor.withOpacity(0.3),
                                           height: 1.15,
+                                          decoration: TextDecoration.none,
                                         ),
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.zero,
