@@ -566,30 +566,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   void _focusContentArea() {
-    void requestFocusNow() {
-      if (!mounted) return;
-      if (NoteEditorScreen.useSingleDocumentEditor) {
-        FocusScope.of(context).requestFocus(_contentFocusNode);
-        if (_contentController.selection.start < 0) {
-          _contentController.selection = const TextSelection.collapsed(offset: 0);
-        }
-      } else if (_blocks.isNotEmpty) {
-        final firstBlock = _blocks.first;
-        final fn = _getFocusNodeOfBlock(firstBlock);
-        final ctrl = _getControllerOfBlock(firstBlock);
-        if (fn != null) {
-          fn.requestFocus();
-          if (ctrl != null && ctrl.selection.start < 0) {
-            ctrl.selection = const TextSelection.collapsed(offset: 0);
-          }
+    if (!mounted) return;
+    if (NoteEditorScreen.useSingleDocumentEditor) {
+      _contentFocusNode.requestFocus();
+      if (_contentController.selection.start < 0) {
+        _contentController.selection = const TextSelection.collapsed(offset: 0);
+      }
+    } else if (_blocks.isNotEmpty) {
+      final firstBlock = _blocks.first;
+      final fn = _getFocusNodeOfBlock(firstBlock);
+      final ctrl = _getControllerOfBlock(firstBlock);
+      if (fn != null) {
+        fn.requestFocus();
+        if (ctrl != null && ctrl.selection.start < 0) {
+          ctrl.selection = const TextSelection.collapsed(offset: 0);
         }
       }
     }
-
-    requestFocusNow();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      requestFocusNow();
-    });
   }
 
   void _handleArrowDownAtEnd(NoteBlock block) {
@@ -4122,7 +4115,6 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                       maxLines: 1,
                                       textInputAction: TextInputAction.next,
                                       onEditingComplete: _focusContentArea,
-                                      onSubmitted: (_) => _focusContentArea(),
                                       contextMenuBuilder: _buildContextMenu,
                                       scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
                                       style: GoogleFonts.inter(
