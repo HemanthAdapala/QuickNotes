@@ -4134,6 +4134,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                       maxLines: 1,
                                       textInputAction: TextInputAction.next,
                                       onEditingComplete: _focusContentArea,
+                                      selectionControls: EmptyTextSelectionControls(),
                                       contextMenuBuilder: _buildContextMenu,
                                       scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
                                       style: GoogleFonts.inter(
