@@ -670,43 +670,25 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   double _getSpacingBetween(NoteBlock current, NoteBlock next) {
-    // Heading ↔ Paragraph/Text/Checklist: 4px spacing
-    if (current is HeadingBlock && (next is ParagraphBlock || next is QuoteBlock || next is ChecklistBlock)) {
-      return 4.0;
-    }
-    if ((current is ParagraphBlock || current is QuoteBlock || current is ChecklistBlock) && next is HeadingBlock) {
-      return 4.0;
+    // Heading ↔ Paragraph/Text/Checklist: 2.0px spacing
+    if (current is HeadingBlock || next is HeadingBlock) {
+      return 2.0;
     }
 
     final isCurrentMedia = current is ImageBlock || current is ImageStackBlock;
     final isNextMedia = next is ImageBlock || next is ImageStackBlock;
 
-    // Image ↔ Paragraph/Text/Checklist: 6px spacing
-    if ((isCurrentMedia && (next is ParagraphBlock || next is QuoteBlock || next is ChecklistBlock)) ||
-        ((current is ParagraphBlock || current is QuoteBlock || current is ChecklistBlock) && isNextMedia)) {
-      return 6.0;
-    }
-
-    // Paragraph ↔ Paragraph: 2px spacing
-    if ((current is ParagraphBlock || current is QuoteBlock) && (next is ParagraphBlock || next is QuoteBlock)) {
-      return 2.0;
-    }
-
-    // Checklist ↔ Checklist: 2px spacing
-    if (current is ChecklistBlock && next is ChecklistBlock) {
-      return 2.0;
-    }
-
-    // Media ↔ Media: 6px spacing
-    if (isCurrentMedia && isNextMedia) {
-      return 6.0;
+    // Image / Media ↔ Text: 4.0px spacing
+    if (isCurrentMedia || isNextMedia) {
+      return 4.0;
     }
 
     if (current is DividerBlock || next is DividerBlock) {
-      return 6.0;
+      return 4.0;
     }
 
-    return 2.0;
+    // Paragraph ↔ Paragraph / Checklist ↔ Checklist: 1.5px spacing
+    return 1.5;
   }
 
   Color _getPaperGuideColor(bool isDark) {

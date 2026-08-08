@@ -13,16 +13,13 @@ class LayoutEngine {
     final isNextImage = nextType == 'image';
 
     if (isPrevImage || isNextImage) {
-      return 24.0;
+      return 4.0;
     }
-    if (isNextHeading) {
-      return 24.0;
-    }
-    if (isPrevHeading && !isNextHeading) {
-      return 20.0;
+    if (isPrevHeading || isNextHeading) {
+      return 2.0;
     }
 
-    return 12.0; // Default spacing between elements
+    return 1.5; // Paragraph ↔ Paragraph spacing
   }
 
   static double getHorizontalMargin() {
