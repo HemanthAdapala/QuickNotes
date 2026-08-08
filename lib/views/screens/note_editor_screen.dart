@@ -1685,7 +1685,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   Widget _buildContextMenu(BuildContext context, EditableTextState editableTextState) {
-    return RichTextSelectionToolbar(editableTextState: editableTextState);
+    return const SizedBox.shrink();
   }
 
   void _onContentTextChanged() {
