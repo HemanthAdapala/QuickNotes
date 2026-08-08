@@ -129,17 +129,21 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     }
   }
 
+  void focusFirstSegment() {
+    if (focusNodes.isNotEmpty) {
+      final minIndex = focusNodes.keys.reduce((a, b) => a < b ? a : b);
+      focusNodes[minIndex]?.requestFocus();
+    }
+  }
+
   void _onParentFocusChanged() {
     if (widget.focusNode.hasFocus) {
       final alreadyFocused = focusNodes.values.any((n) => n.hasFocus);
       if (alreadyFocused) return;
 
-      _syncFocusWithParentSelection();
-
-      final stillNotFocused = !focusNodes.values.any((n) => n.hasFocus);
-      if (stillNotFocused && focusNodes.isNotEmpty) {
-        final lastIndex = focusNodes.keys.reduce((a, b) => a > b ? a : b);
-        focusNodes[lastIndex]?.requestFocus();
+      if (focusNodes.isNotEmpty) {
+        final firstIndex = focusNodes.keys.reduce((a, b) => a < b ? a : b);
+        focusNodes[firstIndex]?.requestFocus();
       }
     }
   }
