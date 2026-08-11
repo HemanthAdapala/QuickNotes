@@ -702,42 +702,16 @@ class _SearchScreenState extends State<SearchScreen>
   // ── State 1: Empty (Recent Searches & Browse Categories) ───────────────
 
   Widget _buildEmptyState() {
-    final provider = Provider.of<NotesProvider>(context, listen: false);
-    final cats = <String>{...NotesProvider.categories};
-    for (final n in provider.allActiveNotes) { cats.add(n.category); }
-
     return ListView(
       controller: _scrollCtrl,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
       children: [
-        if (_recentSearches.isNotEmpty) ...[
+        if (_recentSearches.isNotEmpty)
           ..._recentSearches.map((term) => _RecentSearchRow(
             term: term,
             onTap: () => _tapRecentSearch(term),
             onDelete: () => _removeSearch(term),
           )),
-          const SizedBox(height: 24),
-        ],
-
-        Text(
-          'BROWSE BY CATEGORY',
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: _kLabelSecondary,
-            letterSpacing: 0.8,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: cats.map((c) => _CategoryChip(
-            category: c,
-            dotColor: _categoryDotColor(c),
-            onTap: () => _tapCategoryChip(c),
-          )).toList(),
-        ),
       ],
     );
   }
@@ -949,7 +923,7 @@ class _SearchScreenState extends State<SearchScreen>
 
           Text(
             'CREATE NEW',
-            style: GoogleFonts.jetBrainsMono(
+            style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: _kLabelSecondary,
@@ -1068,7 +1042,7 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.jetBrainsMono(
+            style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: _kLabelSecondary,

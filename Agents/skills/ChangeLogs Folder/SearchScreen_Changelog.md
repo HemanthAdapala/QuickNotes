@@ -25,6 +25,8 @@ Replaced flat list tile `_FolderResultRow` in `SearchScreen` with the 3D `Folder
 - **3D Folder Card Integration**: Imported `FolderGridCard` from `lib/views/widgets/folder_card.dart` into `search_screen.dart`.
 - **2-Column Grid Layout**: Replaced single-line list tile rows under `FOLDERS` search results with a 2-column `GridView.builder`.
 - **Visual Parity with Folder Screen**: Rendered 3D folder flap graphics (`FolderBgPainter`, `FolderFgPainter`), peeking decorative note cards, sticker overlay, search query substring text highlighting (`#D49200`), and note count badge.
+- **Removed Browse by Category**: Removed the "BROWSE BY CATEGORY" section and category chips from `_buildEmptyState()` in `search_screen.dart`.
+- **Inter Typography Standardization**: Converted all section headers (`_SectionHeader`), count badges, and labels (`CREATE NEW`) from `GoogleFonts.jetBrainsMono` to `GoogleFonts.inter`.
 - **Interactive Navigation**: Connected card tap gesture to navigate directly to `FolderNotesScreen` for the target folder.
 - **Code Cleanup**: Removed legacy `_FolderResultRow` class from `search_screen.dart`.
 
