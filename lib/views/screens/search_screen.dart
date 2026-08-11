@@ -20,7 +20,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/animations/animation_constants.dart';
@@ -35,6 +34,9 @@ import '../../services/recent_searches_service.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/living_writing_experience.dart';
+import '../widgets/search_note_card.dart';
+import '../widgets/search_task_card.dart';
+import '../widgets/folder_card.dart';
 import 'note_editor_screen.dart';
 import 'create_task_screen.dart';
 import 'folder_notes_screen.dart';
@@ -55,7 +57,6 @@ const Color _kAmberYellow   = Color(0xFFFFCC00);
 const Color _kPillInactive  = Color(0x28787880);
 const Color _kLabelSecondary= Color(0x993C3C43);
 const Color _kPlaceholder   = Color(0xFF8C8987);
-const Color _kCardBorder    = Color(0x22333333);
 const Color _kDivider       = Color(0xFFE5E5EA);
 
 const Map<String, Color> _kCategoryDotColors = {
@@ -72,19 +73,6 @@ Color _categoryDotColor(String category) {
   if (_kCategoryDotColors.containsKey(category)) return _kCategoryDotColors[category]!;
   final hue = (category.hashCode.abs() % 360).toDouble();
   return HSLColor.fromAHSL(1.0, hue, 0.55, 0.50).toColor();
-}
-
-Color _noteCardColor(int colorValue) {
-  switch (colorValue) {
-    case 1: return const Color(0xFFFFAAA6);
-    case 2: return const Color(0xFFFFD3B6);
-    case 3: return const Color(0xFFFFFFA6);
-    case 4: return const Color(0xFFD4ECDD);
-    case 5: return const Color(0xFFA8DADC);
-    case 6: return const Color(0xFFD6C8FF);
-    case 7: return const Color(0xFFFFC6FF);
-    default: return const Color(0xFFFFFDF7);
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -811,7 +799,7 @@ class _SearchScreenState extends State<SearchScreen>
         _noteResults.map((n) => AnimatedListEntrance(
           key: ValueKey('note_${n.id}_$gen'),
           index: idx++,
-          child: _NoteResultRow(
+          child: SearchNoteCard(
             note: n, query: _query,
             onTap: () => _openNote(n),
           ),
@@ -824,7 +812,7 @@ class _SearchScreenState extends State<SearchScreen>
         _taskResults.map((t) => AnimatedListEntrance(
           key: ValueKey('task_${t.id}_$gen'),
           index: idx++,
-          child: _TaskResultRow(
+          child: SearchTaskCard(
             task: t, query: _query,
             onTap: () => _openTask(t),
           ),
@@ -834,19 +822,42 @@ class _SearchScreenState extends State<SearchScreen>
 
     if (_folderResults.isNotEmpty) {
       final provider = Provider.of<NotesProvider>(context, listen: false);
-      addSection('FOLDERS', _folderResults.length,
-        _folderResults.map((f) {
-          final noteCount = provider.allActiveNotes
-              .where((n) => n.folderId == f.id).length;
-          return AnimatedListEntrance(
-            key: ValueKey('folder_${f.id}_$gen'),
-            index: idx++,
-            child: _FolderResultRow(
-              folder: f, noteCount: noteCount, query: _query,
-              onTap: () => _openFolder(f),
+      items.add(AnimatedListEntrance(
+        key: ValueKey('header_FOLDERS_$gen'),
+        index: idx++,
+        child: _SectionHeader(label: 'FOLDERS', count: _folderResults.length),
+      ));
+      items.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8.0,
+              mainAxisSpacing: 16.0,
+              childAspectRatio: 150.0 / 192.0,
             ),
-          );
-        }).toList(),
+            itemCount: _folderResults.length,
+            itemBuilder: (context, folderIndex) {
+              final f = _folderResults[folderIndex];
+              final noteCount = provider.allActiveNotes
+                  .where((n) => n.folderId == f.id).length;
+              return AnimatedListEntrance(
+                key: ValueKey('folder_${f.id}_$gen'),
+                index: idx++,
+                child: FolderGridCard(
+                  folder: f,
+                  index: folderIndex,
+                  noteCount: noteCount,
+                  query: _query,
+                  onTap: () => _openFolder(f),
+                ),
+              );
+            },
+          ),
+        ),
       );
     }
 
@@ -1168,240 +1179,7 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
-class _NoteResultRow extends StatelessWidget {
-  final Note note;
-  final String query;
-  final VoidCallback onTap;
-  const _NoteResultRow({required this.note, required this.query, required this.onTap});
 
-  @override
-  Widget build(BuildContext context) {
-    final cardColor = _noteCardColor(note.colorValue);
-    final dateStr = DateFormat('MMM d').format(note.updatedAt);
-    final baseTitle = GoogleFonts.inter(
-        fontSize: 15, fontWeight: FontWeight.w600, color: _kInk);
-    final hlTitle  = baseTitle.copyWith(color: const Color(0xFFD49200), fontWeight: FontWeight.w700);
-    final baseBody = GoogleFonts.inter(fontSize: 13, color: const Color(0xFF524534));
-    final hlBody   = baseBody.copyWith(color: const Color(0xFFD49200), fontWeight: FontWeight.w600);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _kCardBorder),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RichText(
-              text: TextSpan(children:
-                _buildHighlightSpans(
-                  note.title.isEmpty ? 'Untitled' : note.title,
-                  query, base: baseTitle, highlight: hlTitle)),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (note.previewText.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              RichText(
-                text: TextSpan(children:
-                  _buildHighlightSpans(note.previewText, query,
-                      base: baseBody, highlight: hlBody)),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.07),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    note.category,
-                    style: GoogleFonts.inter(
-                      fontSize: 11, fontWeight: FontWeight.w500,
-                      color: const Color(0xFF524534)),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  width: 6, height: 6,
-                  decoration: BoxDecoration(
-                    color: _categoryDotColor(note.category),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  dateStr,
-                  style: GoogleFonts.inter(fontSize: 11, color: _kPlaceholder),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TaskResultRow extends StatelessWidget {
-  final TaskItem task;
-  final String query;
-  final VoidCallback onTap;
-  const _TaskResultRow({required this.task, required this.query, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final dateStr = task.reminderTime != null
-        ? 'Due ${DateFormat('MMM d').format(task.reminderTime!.toLocal())}'
-        : DateFormat('MMM d').format(task.dueDate.toLocal());
-    final baseTitle = GoogleFonts.inter(
-        fontSize: 15, fontWeight: FontWeight.w500, color: _kInk);
-    final hlTitle  = baseTitle.copyWith(color: const Color(0xFFD49200), fontWeight: FontWeight.w700);
-    final categoryLabel = task.categoryId ?? (task.priority != 'None' ? task.priority : 'Task');
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFFDF7),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _kDivider),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Icon(
-                task.completed ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-                size: 20,
-                color: _kAmberYellow,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RichText(
-                    text: TextSpan(children:
-                      _buildHighlightSpans(
-                        task.title.isEmpty ? 'Untitled task' : task.title,
-                        query, base: baseTitle, highlight: hlTitle)),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        dateStr,
-                        style: GoogleFonts.inter(fontSize: 12, color: _kPlaceholder),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _kAmberYellow.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          categoryLabel,
-                          style: GoogleFonts.inter(
-                            fontSize: 11, fontWeight: FontWeight.w600,
-                            color: const Color(0xFFD49200)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FolderResultRow extends StatelessWidget {
-  final Folder folder;
-  final int noteCount;
-  final String query;
-  final VoidCallback onTap;
-  const _FolderResultRow({
-    required this.folder,
-    required this.noteCount,
-    required this.query,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final base = GoogleFonts.inter(
-        fontSize: 15, fontWeight: FontWeight.w500, color: _kInk);
-    final hl   = base.copyWith(color: const Color(0xFFD49200), fontWeight: FontWeight.w700);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFFDF7),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _kDivider),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(
-                color: _kAmberYellow.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.folder_rounded, color: Color(0xFFD49200), size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: RichText(
-                text: TextSpan(children:
-                  _buildHighlightSpans(folder.name, query, base: base, highlight: hl)),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: _kPillInactive,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$noteCount notes',
-                style: GoogleFonts.inter(
-                  fontSize: 11, fontWeight: FontWeight.w600,
-                  color: _kLabelSecondary),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _CategoryResultRow extends StatelessWidget {
   final String category;
