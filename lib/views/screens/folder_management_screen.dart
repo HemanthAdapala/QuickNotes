@@ -15,6 +15,7 @@ import '../../core/animations/dialog_transition.dart';
 import '../../core/animations/animated_list_entrance.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/blurred_bottom_sheet.dart';
+import '../widgets/folder_card.dart';
 import '../../themes/app_theme.dart';
 
 
