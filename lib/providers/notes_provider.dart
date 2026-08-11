@@ -603,6 +603,108 @@ class NotesProvider with ChangeNotifier {
     }
   }
 
+  /// Seeds a comprehensive 10,000+ character test note with all features (H1-H3, checklists, images, quotes, paragraphs, dividers) for QA testing.
+  Future<Note> seedLongTestNote() async {
+    final StringBuffer buffer = StringBuffer();
+
+    buffer.writeln("# 🚀 QuickNotes Ultimate QA Performance Test Note (10,000+ Chars)");
+    buffer.writeln();
+    buffer.writeln("> \"Performance is not an afterthought; it is a fundamental property of high-quality software engineering.\" — QuickNotes Engineering Principles");
+    buffer.writeln();
+    buffer.writeln("---");
+    buffer.writeln();
+    buffer.writeln("## 1. Feature Matrix & Content Hierarchy");
+    buffer.writeln();
+    buffer.writeln("This test document is specifically generated to benchmark SingleDocumentDragOverlay gesture recognition, selection handle dragging, optical magnifier tracking, and viewport canvas painting on high-volume notes.");
+    buffer.writeln();
+    buffer.writeln("### Key Metrics & Targets");
+    buffer.writeln("* Target Frame Time: **< 16.6ms** (60fps) / **< 8.3ms** (120fps)");
+    buffer.writeln("* Character Offset Resolution: **< 2ms** per frame");
+    buffer.writeln("* Viewport Paint Execution: **< 3ms** (0 offscreen getBoxes calls)");
+    buffer.writeln("* 'Select All' Execution: **< 30ms**");
+    buffer.writeln();
+    buffer.writeln("---");
+    buffer.writeln();
+    buffer.writeln("## 2. Interactive QA Task Checklists");
+    buffer.writeln();
+    buffer.writeln("- [x] Verify word boundary expansion on long-press (Phase 1)");
+    buffer.writeln("- [x] Verify 60fps handle drag responsiveness across 500+ text lines (Phase 2)");
+    buffer.writeln("- [ ] Verify optical magnifier focal point tracking without main thread stutter (Phase 3)");
+    buffer.writeln("- [ ] Verify spatial segment lookup offset resolution O(log N) (Phase 4)");
+    buffer.writeln("- [ ] Verify visible viewport paint clipping optimization (Phase 5)");
+    buffer.writeln("- [ ] Verify dual focus gating and soft keyboard suppression (Phase 6)");
+    buffer.writeln("- [ ] Verify auto-scroll velocity scaling near top/bottom screen boundaries (Phase 7)");
+    buffer.writeln("- [ ] Benchmark 'Select All' operation across 10,000+ characters (Phase 8)");
+    buffer.writeln("- [ ] Test continuous selection drag spanning across inline image widgets (Phase 9)");
+    buffer.writeln("- [ ] Confirm instant selection clear on tap outside bounds (Phase 10)");
+    buffer.writeln();
+    buffer.writeln("---");
+    buffer.writeln();
+    buffer.writeln("## 3. Inline Image Attachments & Spanning Test");
+    buffer.writeln();
+    buffer.writeln("Below is a sample inline image segment used to verify selection drag handle spanning across mixed text and media blocks:");
+    buffer.writeln();
+    buffer.writeln("![QuickNotes Architecture Diagram](https://picsum.photos/800/400)");
+    buffer.writeln();
+    buffer.writeln("---");
+    buffer.writeln();
+    buffer.writeln("## 4. Deep Architecture Technical Specifications");
+    buffer.writeln();
+
+    final List<String> technicalParagraphs = [
+      "The SingleDocumentDragOverlay architecture provides a decoupled, high-performance gesture recognition overlay that sits directly on top of the document editor stack. By isolating touch event handling from the inner RenderEditable subtree, touch events can be processed without forcing global widget rebuilds on every touch movement.",
+      "Gesture disambiguation is managed by _LongPressDragGestureRecognizer, which intercepts PointerDownEvents and evaluates touch displacement over a strict 200ms window. If pointer movement exceeds 12.0 logical pixels before timer expiration, the recognizer yields gesture ownership immediately to the underlying Scrollable, allowing fluid 60fps and 120fps scrolling.",
+      "Character offset resolution is performed via _getGlobalOffsetFromPosition. On high-volume documents containing 100+ paragraphs and over 500 lines of rendered text, traversing every RenderEditable sequentially introduces linear O(N) performance overhead. To maintain a 16.6ms frame budget, spatial Y-coordinate clipping filters out off-screen RenderBox instances before performing hit testing.",
+      "Custom selection highlight painting is driven by _SDESelectionHighlightPainter, which paints rounded rectangular highlights over selected text blocks using semi-transparent primary blue (Color(0x503B82F6)). To prevent frame drops during rapid drag operations, the painter clips its canvas operations strictly to the visible viewport bounds.",
+      "The optical magnifier overlay utilizes Flutter's RawMagnifier widget, positioned 85 logical pixels above the active touch target. During handle dragging, local touch coordinates are transformed through the overlay key's RenderBox matrix to ensure smooth follower animation without visual tearing.",
+      "Focus gating is governed by _setFocusGated, which dynamically toggles focus node request permissions. When initiating a long-press selection in unfocused mode (Mode 2), focus gating suppresses soft keyboard invocation, preventing IME attach/detach thrashing and layout shifts.",
+      "Edge auto-scrolling triggers when selection drag handles enter the top 140px or bottom 150px viewport margin. An auto-scroll periodic timer operates at 16ms intervals, updating the scroll controller position with quadratic velocity scaling based on proximity to the screen boundary.",
+      "The RichTextEditingController serves as the single source of truth for inline text formatting, headings, bullet points, checklists, and dividers. Internal selection state mutations emit controller notifications that immediately sync with the drag overlay painter.",
+      "Memory leak prevention is guaranteed by explicit timer disposal in State.dispose. Both _pressTimer in the gesture recognizer and _autoScrollTimer in the overlay state are cancelled upon widget unmounting, eliminating dangling callbacks.",
+      "Real device verification requires testing on flagship physical hardware (such as Samsung Galaxy S23 Ultra / SM S918B) with DevTools Performance Overlay active to verify zero raster thread frame spikes during continuous 10-second handle drags."
+    ];
+
+    int sectionCounter = 5;
+    for (int i = 0; i < 3; i++) {
+      buffer.writeln("## $sectionCounter. Extended Technical Analysis (Iteration ${i + 1})");
+      buffer.writeln();
+      for (final p in technicalParagraphs) {
+        buffer.writeln(p);
+        buffer.writeln();
+      }
+      sectionCounter++;
+    }
+
+    buffer.writeln("---");
+    buffer.writeln();
+    buffer.writeln("## End of Test Document");
+    buffer.writeln("Total Character Count: \${buffer.length} characters.");
+
+    final note = Note(
+      id: _uuid.v4(),
+      title: "🚀 Long Note QA Seed (10,000+ Chars)",
+      content: buffer.toString(),
+      isPinned: true,
+      isFavorite: true,
+      category: "Work",
+      tags: ["QA-Sprint", "LongNote", "Performance", "TestSeed"],
+      attachments: [
+        {
+          "type": "image",
+          "url": "https://picsum.photos/800/400",
+          "caption": "QuickNotes Architecture Diagram"
+        }
+      ],
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      colorValue: 1,
+    );
+
+    await _notesRepository.insertNote(note);
+    await loadNotes();
+    return note;
+  }
+
   // Update an existing note
   Future<void> updateNote(Note updatedNote) async {
     String finalTitle = updatedNote.title;

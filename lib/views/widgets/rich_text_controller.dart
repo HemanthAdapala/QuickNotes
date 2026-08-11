@@ -2266,10 +2266,7 @@ class RangeTextEditingController extends TextEditingController {
     if (_isSettingValue) return;
     _transientStyledChars = null;
     if (parent.text != _lastParentText) {
-      if (kImageDebug) {
-        debugPrint("RangeTextEditingController[_onParentChanged] segmentIndex=$segmentIndex IGNORED. parent text mismatch: parent='${parent.text.length}', last='${_lastParentText.length}'");
-      }
-      return;
+      _lastParentText = parent.text;
     }
     final oldSelection = _localSelection;
     final oldText = _lastKnownText;
@@ -2315,6 +2312,15 @@ class RangeTextEditingController extends TextEditingController {
         notifyListeners();
       }
     }
+  }
+
+  /// Silently shifts start and end offsets by delta and synchronizes _lastParentText
+  /// without triggering listener notifications, selection recalculation, or value mutations.
+  void shiftOffsetsSilently(int delta) {
+    _transientStyledChars = null;
+    startOffset += delta;
+    endOffset += delta;
+    _lastParentText = parent.text;
   }
 
   void _updateLocalSelectionFromParent() {

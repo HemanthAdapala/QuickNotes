@@ -12,6 +12,7 @@ import 'glassmorphism_sandbox_screen.dart';
 
 import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
+import '../../providers/notes_provider.dart';
 import 'experimental/sde_drag_test_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -426,6 +427,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 "User Policy",
                                 "Privacy and Data Protection Policy for QuickNotes.",
                               ),
+                              showBorderBottom: true,
+                            ),
+                            _buildSettingRow(
+                              iconPath: 'assets/icons/terms-info.svg',
+                              title: 'Seed Long Note (10,000+ Chars)',
+                              onTap: () async {
+                                HapticFeedback.mediumImpact();
+                                final provider = Provider.of<NotesProvider>(context, listen: false);
+                                final seededNote = await provider.seedLongTestNote();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('✅ Seeded Long Note with ${seededNote.content.length} characters!'),
+                                      backgroundColor: const Color(0xFF34C759),
+                                      duration: const Duration(seconds: 3),
+                                    ),
+                                  );
+                                }
+                              },
                               showBorderBottom: true,
                             ),
                             _buildSettingRow(

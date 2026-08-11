@@ -81,11 +81,13 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
     _successScaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.3).chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween<double>(begin: 1.0, end: 1.3)
+            .chain(CurveTween(curve: Curves.easeOut)),
         weight: 40,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.3, end: 1.0).chain(CurveTween(curve: Curves.elasticOut)),
+        tween: Tween<double>(begin: 1.3, end: 1.0)
+            .chain(CurveTween(curve: Curves.elasticOut)),
         weight: 60,
       ),
     ]).animate(_successController);
@@ -135,7 +137,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
       });
     } else {
       for (int i = 0; i < _currentTasksList.length; i++) {
-        final updatedIndex = widget.tasks.indexWhere((t) => t.id == _currentTasksList[i].id);
+        final updatedIndex =
+            widget.tasks.indexWhere((t) => t.id == _currentTasksList[i].id);
         if (updatedIndex != -1) {
           _currentTasksList[i] = widget.tasks[updatedIndex];
         }
@@ -252,7 +255,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
   // ── Card Swiping Gestures ──────────────────────────────────────────────────
   void _handleCardPanUpdate(DragUpdateDetails details) {
-    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider) return;
+    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider)
+      return;
     setState(() {
       _swipeX += details.delta.dx;
       _swipeY += details.delta.dy;
@@ -260,7 +264,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   }
 
   void _handleCardPanEnd(DragEndDetails details) {
-    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider) return;
+    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider)
+      return;
 
     final distance = sqrt(_swipeX * _swipeX + _swipeY * _swipeY);
     if (distance > 120.0) {
@@ -332,8 +337,10 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final double blurSigma = 1.0 + (dist - 1) * 0.1;
 
     final task = _currentTasksList[totalCards - 1 - index];
-    final formattedDate = DateFormat('EEE, d MMMM').format(task.dueDate.toLocal());
-    final formattedTime = DateFormat('hh:mm a').format((task.reminderTime ?? task.dueDate).toLocal());
+    final formattedDate =
+        DateFormat('EEE, d MMMM').format(task.dueDate.toLocal());
+    final formattedTime = DateFormat('hh:mm a')
+        .format((task.reminderTime ?? task.dueDate).toLocal());
 
     Widget cardContent = Container(
       width: 322.0,
@@ -416,7 +423,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                         "assets/New Icons/fi-rr-time-past.svg",
                         width: 16.0,
                         height: 16.0,
-                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                        colorFilter: const ColorFilter.mode(
+                            Colors.white, BlendMode.srcIn),
                       ),
                     ),
                     const WidgetSpan(child: SizedBox(width: 5.0)),
@@ -537,34 +545,58 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final double maxDrag = 206.0;
     final progress = _getDragProgress(maxDrag);
     final double cardScale = 1.0 + (progress * 0.02); // Sensory drag scale lift
-    final double cardShadowBlur = 16.0 + (progress * 8.0); // Shadow lift blur (16 to 24)
+    final double cardShadowBlur =
+        16.0 + (progress * 8.0); // Shadow lift blur (16 to 24)
 
     final int numCards = _currentTasksList.length.clamp(1, 3);
     const double cardOffset = 37.0;
     final double overallHeight = 339.0 + (numCards - 1) * cardOffset;
 
     final task = _currentTasksList.first;
-    final formattedDate = DateFormat('EEE, d MMMM').format(task.dueDate.toLocal());
-    final formattedTime = DateFormat('hh:mm a').format((task.reminderTime ?? task.dueDate).toLocal());
+    final formattedDate =
+        DateFormat('EEE, d MMMM').format(task.dueDate.toLocal());
+    final formattedTime = DateFormat('hh:mm a')
+        .format((task.reminderTime ?? task.dueDate).toLocal());
 
     final String priority = task.priority;
     String? recurrenceLabel;
-    if (task.isRecurring || task.recurrence != null || task.repeatRule != RepeatRule.none) {
+    if (task.isRecurring ||
+        task.recurrence != null ||
+        task.repeatRule != RepeatRule.none) {
       if (task.recurrence != null) {
         switch (task.recurrence!.type) {
-          case RecurrenceType.daily: recurrenceLabel = 'Daily'; break;
-          case RecurrenceType.weekly: recurrenceLabel = 'Weekly'; break;
-          case RecurrenceType.monthly: recurrenceLabel = 'Monthly'; break;
-          case RecurrenceType.yearly: recurrenceLabel = 'Yearly'; break;
-          default: recurrenceLabel = 'Recurring'; break;
+          case RecurrenceType.daily:
+            recurrenceLabel = 'Daily';
+            break;
+          case RecurrenceType.weekly:
+            recurrenceLabel = 'Weekly';
+            break;
+          case RecurrenceType.monthly:
+            recurrenceLabel = 'Monthly';
+            break;
+          case RecurrenceType.yearly:
+            recurrenceLabel = 'Yearly';
+            break;
+          default:
+            recurrenceLabel = 'Recurring';
+            break;
         }
       } else {
         switch (task.repeatRule) {
-          case RepeatRule.daily: recurrenceLabel = 'Daily'; break;
-          case RepeatRule.weekly: recurrenceLabel = 'Weekly'; break;
-          case RepeatRule.monthly: recurrenceLabel = 'Monthly'; break;
-          case RepeatRule.yearly: recurrenceLabel = 'Yearly'; break;
-          default: break;
+          case RepeatRule.daily:
+            recurrenceLabel = 'Daily';
+            break;
+          case RepeatRule.weekly:
+            recurrenceLabel = 'Weekly';
+            break;
+          case RepeatRule.monthly:
+            recurrenceLabel = 'Monthly';
+            break;
+          case RepeatRule.yearly:
+            recurrenceLabel = 'Yearly';
+            break;
+          default:
+            break;
         }
       }
     }
@@ -580,7 +612,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
       priorityColor = const Color(0xFF8E8E93);
     }
 
-    final bool hasTopBadge = (priority.toLowerCase() != 'none') || (recurrenceLabel != null);
+    final bool hasTopBadge =
+        (priority.toLowerCase() != 'none') || (recurrenceLabel != null);
     final double titleTop = hasTopBadge ? 126.0 : 113.0;
 
     return SizedBox(
@@ -664,7 +697,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                   decoration: const ShapeDecoration(
                                     color: Colors.white,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(Radius.circular(30.0)),
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(30.0)),
                                     ),
                                   ),
                                 ),
@@ -697,15 +731,18 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                     TextSpan(
                                       children: [
                                         WidgetSpan(
-                                          alignment: PlaceholderAlignment.middle,
+                                          alignment:
+                                              PlaceholderAlignment.middle,
                                           child: SvgPicture.asset(
                                             "assets/New Icons/fi-rr-time-past.svg",
                                             width: 16.0,
                                             height: 16.0,
-                                            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                            colorFilter: const ColorFilter.mode(
+                                                Colors.white, BlendMode.srcIn),
                                           ),
                                         ),
-                                        const WidgetSpan(child: SizedBox(width: 5.0)),
+                                        const WidgetSpan(
+                                            child: SizedBox(width: 5.0)),
                                         TextSpan(
                                           text: formattedTime,
                                           style: GoogleFonts.inter(
@@ -719,81 +756,98 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
-                               // Priority & Recurrence Badge Pills
-                               if (hasTopBadge)
-                                 Positioned(
-                                   left: 18.0,
-                                   top: 80.0,
-                                   height: 38.0,
-                                   child: Row(
-                                     mainAxisSize: MainAxisSize.min,
-                                     children: [
-                                       if (priority.toLowerCase() != 'none')
-                                         Container(
-                                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                           decoration: ShapeDecoration(
-                                             color: const Color(0xFFF2F2F7),
-                                             shape: RoundedRectangleBorder(
-                                               borderRadius: BorderRadius.circular(19.0),
-                                             ),
-                                           ),
-                                           alignment: Alignment.center,
-                                           child: Text.rich(
-                                             TextSpan(
-                                               children: [
-                                                 WidgetSpan(
-                                                   alignment: PlaceholderAlignment.middle,
-                                                   child: SvgPicture.asset(
-                                                     "assets/New Icons/flag-alt 1.svg",
-                                                     width: 14.0,
-                                                     height: 14.0,
-                                                     colorFilter: ColorFilter.mode(priorityColor, BlendMode.srcIn),
-                                                   ),
-                                                 ),
-                                                 const WidgetSpan(child: SizedBox(width: 6.0)),
-                                                 TextSpan(
-                                                   text: priority,
-                                                   style: GoogleFonts.inter(
-                                                     color: priorityColor,
-                                                     fontSize: 15.0,
-                                                     fontWeight: FontWeight.w600,
-                                                   ),
-                                                 ),
-                                               ],
-                                             ),
-                                           ),
-                                         ),
-                                       if (priority.toLowerCase() != 'none' && recurrenceLabel != null)
-                                         const SizedBox(width: 8.0),
-                                       if (recurrenceLabel != null)
-                                         Container(
-                                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                           decoration: ShapeDecoration(
-                                             color: const Color(0xFF0088FF).withValues(alpha: 0.12),
-                                             shape: RoundedRectangleBorder(
-                                               borderRadius: BorderRadius.circular(19.0),
-                                             ),
-                                           ),
-                                           alignment: Alignment.center,
-                                           child: Row(
-                                             mainAxisSize: MainAxisSize.min,
-                                             children: [
-                                               const Icon(Icons.autorenew_rounded, size: 14.0, color: Color(0xFF0088FF)),
-                                               const SizedBox(width: 6.0),
-                                               Text(
-                                                 recurrenceLabel,
-                                                 style: GoogleFonts.inter(
-                                                   color: const Color(0xFF0088FF),
-                                                   fontSize: 14.0,
-                                                   fontWeight: FontWeight.w600,
-                                                 ),
-                                               ),
-                                             ],
-                                           ),
-                                         ),
-                                     ],
-                                   ),
-                                 ),
+                              // Priority & Recurrence Badge Pills
+                              if (hasTopBadge)
+                                Positioned(
+                                  left: 18.0,
+                                  top: 80.0,
+                                  height: 38.0,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (priority.toLowerCase() != 'none')
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12.0),
+                                          decoration: ShapeDecoration(
+                                            color: const Color(0xFFF2F2F7),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(19.0),
+                                            ),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text.rich(
+                                            TextSpan(
+                                              children: [
+                                                WidgetSpan(
+                                                  alignment:
+                                                      PlaceholderAlignment
+                                                          .middle,
+                                                  child: SvgPicture.asset(
+                                                    "assets/New Icons/flag-alt 1.svg",
+                                                    width: 14.0,
+                                                    height: 14.0,
+                                                    colorFilter:
+                                                        ColorFilter.mode(
+                                                            priorityColor,
+                                                            BlendMode.srcIn),
+                                                  ),
+                                                ),
+                                                const WidgetSpan(
+                                                    child:
+                                                        SizedBox(width: 6.0)),
+                                                TextSpan(
+                                                  text: priority,
+                                                  style: GoogleFonts.inter(
+                                                    color: priorityColor,
+                                                    fontSize: 15.0,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      if (priority.toLowerCase() != 'none' &&
+                                          recurrenceLabel != null)
+                                        const SizedBox(width: 8.0),
+                                      if (recurrenceLabel != null)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12.0),
+                                          decoration: ShapeDecoration(
+                                            color: const Color(0xFF0088FF)
+                                                .withValues(alpha: 0.12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(19.0),
+                                            ),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                  Icons.autorenew_rounded,
+                                                  size: 14.0,
+                                                  color: Color(0xFF0088FF)),
+                                              const SizedBox(width: 6.0),
+                                              Text(
+                                                recurrenceLabel,
+                                                style: GoogleFonts.inter(
+                                                  color:
+                                                      const Color(0xFF0088FF),
+                                                  fontSize: 14.0,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
                               // Title Text (constrained width and height)
                               Positioned(
                                 left: 18.0,
@@ -801,7 +855,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                 width: 223.0,
                                 height: 150.0,
                                 child: Text(
-                                  task.title.isNotEmpty ? task.title : 'Untitled Task',
+                                  task.title.isNotEmpty
+                                      ? task.title
+                                      : 'Untitled Task',
                                   maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.inter(
@@ -859,13 +915,16 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                               opacity: progress.clamp(0.0, 1.0),
                                               child: Container(
                                                 decoration: BoxDecoration(
-                                                  gradient: const LinearGradient(
+                                                  gradient:
+                                                      const LinearGradient(
                                                     colors: [
                                                       Color(0xFF0088FF),
                                                       Color(0xFF66B2FF),
                                                     ],
                                                   ),
-                                                  borderRadius: BorderRadius.circular(25.0),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          25.0),
                                                 ),
                                               ),
                                             ),
@@ -873,18 +932,23 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                         // Text
                                         Center(
                                           child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
                                             children: [
                                               const SizedBox(width: 32.0),
                                               Flexible(
                                                 child: Text(
                                                   "Drag to mark done",
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                   style: GoogleFonts.inter(
                                                     fontSize: 16.0,
                                                     fontWeight: FontWeight.w600,
-                                                    color: progress > 0.5 ? Colors.white : const Color(0xFF333333),
+                                                    color: progress > 0.5
+                                                        ? Colors.white
+                                                        : const Color(
+                                                            0xFF333333),
                                                     height: 1.0,
                                                     letterSpacing: -0.43,
                                                   ),
@@ -896,7 +960,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                                 width: 14.0,
                                                 height: 14.0,
                                                 colorFilter: ColorFilter.mode(
-                                                  progress > 0.5 ? Colors.white : const Color(0xFF333333),
+                                                  progress > 0.5
+                                                      ? Colors.white
+                                                      : const Color(0xFF333333),
                                                   BlendMode.srcIn,
                                                 ),
                                               ),
@@ -918,17 +984,21 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                                   child: CustomPaint(
                                                     painter: _ParticlePainter(
                                                       particles: _particles,
-                                                      animVal: _particleAnimation.value,
+                                                      animVal:
+                                                          _particleAnimation
+                                                              .value,
                                                     ),
                                                   ),
                                                 ),
                                                 Container(
-                                                  decoration: const BoxDecoration(
+                                                  decoration:
+                                                      const BoxDecoration(
                                                     color: Colors.white,
                                                     shape: BoxShape.circle,
                                                     boxShadow: [
                                                       BoxShadow(
-                                                        color: Color(0x20000000),
+                                                        color:
+                                                            Color(0x20000000),
                                                         blurRadius: 4.0,
                                                         offset: Offset(0, 2),
                                                       ),
@@ -939,7 +1009,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                                     "assets/New Icons/fi-rr-check.svg",
                                                     width: 22.0,
                                                     height: 22.0,
-                                                    colorFilter: const ColorFilter.mode(
+                                                    colorFilter:
+                                                        const ColorFilter.mode(
                                                       Color(0xFF0088FF),
                                                       BlendMode.srcIn,
                                                     ),
@@ -962,7 +1033,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                   onTap: () => widget.onEdit?.call(task),
                                   useAppleSpring: true,
                                   compressionScale: 0.7,
-                                  settleDuration: const Duration(milliseconds: 1000),
+                                  settleDuration:
+                                      const Duration(milliseconds: 1000),
                                   child: Container(
                                     width: 50.0,
                                     height: 50.0,
@@ -1041,7 +1113,8 @@ class _ParticlePainter extends CustomPainter {
       final distance = p.speed * animVal;
       final dx = distance * cos(p.angle);
       final dy = distance * sin(p.angle);
-      canvas.drawCircle(center + Offset(dx, dy), p.size * (1.0 - animVal), paint);
+      canvas.drawCircle(
+          center + Offset(dx, dy), p.size * (1.0 - animVal), paint);
     }
   }
 

@@ -61,6 +61,24 @@ class AppStatisticsService {
     }
   }
 
+  /// Note Sorting Engine:
+  /// - Pinned notes stay on top
+  /// - Unpinned notes sorted by latest activity (updatedAt/createdAt) descending (Newest first) or ascending (Oldest first)
+  static List<Note> sortNotes(List<Note> notes, {bool ascending = false}) {
+    final list = List<Note>.from(notes);
+    list.sort((a, b) {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+
+      final timeA = a.updatedAt.isAfter(a.createdAt) ? a.updatedAt : a.createdAt;
+      final timeB = b.updatedAt.isAfter(b.createdAt) ? b.updatedAt : b.createdAt;
+
+      final comp = timeB.compareTo(timeA);
+      return ascending ? -comp : comp;
+    });
+    return list;
+  }
+
   /// Filters active (uncompleted) tasks strictly by Due Date windows.
   static List<TaskItem> filterTasksByDateRange(List<TaskItem> tasks, String filter) {
     final activeTasks = tasks.where((t) => !t.completed).toList();

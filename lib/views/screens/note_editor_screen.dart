@@ -4104,72 +4104,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                               _pointerDownPos = null;
                             },
                             child: RepaintBoundary(
-                              child: SingleChildScrollView(
-                              controller: _scrollController,
-                              padding: const EdgeInsets.only(
-                                left: 24.0,
-                                right: 24.0,
-                                top: 59.0, // Date bar (50) + padding (9)
-                                bottom: 120.0,
-                              ),
-                              physics: const BouncingScrollPhysics(),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Title
-                                  Focus(
-                                    onKeyEvent: (node, event) {
-                                      if (event is KeyDownEvent &&
-                                          (event.logicalKey == LogicalKeyboardKey.enter ||
-                                           event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
-                                        _focusContentArea();
-                                        return KeyEventResult.handled;
-                                      }
-                                      return KeyEventResult.ignored;
-                                    },
-                                    child: TextField(
-                                      controller: _titleController,
-                                      focusNode: _titleFocusNode,
-                                      textCapitalization: TextCapitalization.sentences,
-                                      maxLines: 1,
-                                      textInputAction: TextInputAction.next,
-                                      onEditingComplete: _focusContentArea,
-                                      selectionControls: EmptyTextSelectionControls(),
-                                      contextMenuBuilder: _buildContextMenu,
-                                      scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
-                                      style: GoogleFonts.inter(
-                                        fontSize: 24.0,
-                                        fontWeight: FontWeight.bold,
-                                        color: titleColor,
-                                        decoration: TextDecoration.none,
-                                        height: 1.15,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: "Title",
-                                        hintStyle: GoogleFonts.inter(
-                                          fontSize: 24.0,
-                                          fontWeight: FontWeight.bold,
-                                          color: titleColor.withOpacity(0.3),
-                                          height: 1.15,
-                                          decoration: TextDecoration.none,
-                                        ),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.zero,
-                                        filled: false,
-                                      ),
-                                      onChanged: (val) {
-                                        setState(() {
-                                          _hasChanges = true;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4.0),
-                                  
-                                  if (_isPreviewMarkdown)
-                                    _buildMarkdownPreview(textColor)
-                                  else if (NoteEditorScreen.useSingleDocumentEditor)
-                                    SingleDocumentDragOverlay(
+                              child: (NoteEditorScreen.useSingleDocumentEditor && !_isPreviewMarkdown)
+                                  ? SingleDocumentDragOverlay(
                                       controller: _contentController,
                                       sdeKey: _sdeKey,
                                       scrollController: _scrollController,
@@ -4183,28 +4119,154 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                         contextMenuBuilder: _buildContextMenu,
                                         formattingToolbarHeight: targetHeight,
                                         onBackspaceAtStart: _focusTitleArea,
+                                        header: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Focus(
+                                              onKeyEvent: (node, event) {
+                                                if (event is KeyDownEvent &&
+                                                    (event.logicalKey == LogicalKeyboardKey.enter ||
+                                                     event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                                                  _focusContentArea();
+                                                  return KeyEventResult.handled;
+                                                }
+                                                return KeyEventResult.ignored;
+                                              },
+                                              child: TextField(
+                                                controller: _titleController,
+                                                focusNode: _titleFocusNode,
+                                                textCapitalization: TextCapitalization.sentences,
+                                                maxLines: 1,
+                                                textInputAction: TextInputAction.next,
+                                                onEditingComplete: _focusContentArea,
+                                                selectionControls: EmptyTextSelectionControls(),
+                                                contextMenuBuilder: _buildContextMenu,
+                                                scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 24.0,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: titleColor,
+                                                  decoration: TextDecoration.none,
+                                                  height: 1.15,
+                                                ),
+                                                decoration: InputDecoration(
+                                                  hintText: "Title",
+                                                  hintStyle: GoogleFonts.inter(
+                                                    fontSize: 24.0,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: titleColor.withOpacity(0.3),
+                                                    height: 1.15,
+                                                    decoration: TextDecoration.none,
+                                                  ),
+                                                  border: InputBorder.none,
+                                                  contentPadding: EdgeInsets.zero,
+                                                  filled: false,
+                                                ),
+                                                onChanged: (val) {
+                                                  setState(() {
+                                                    _hasChanges = true;
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4.0),
+                                          ],
+                                        ),
+                                        scrollController: _scrollController,
+                                        padding: const EdgeInsets.only(
+                                          left: 24.0,
+                                          right: 24.0,
+                                          top: 59.0,
+                                          bottom: 120.0,
+                                        ),
+                                        physics: const BouncingScrollPhysics(),
                                       ),
                                     )
-                                  else
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        ...() {
-                                          final List<Widget> list = [];
-                                          for (int i = 0; i < _blocks.length; i++) {
-                                            list.add(_buildBlockWidget(_blocks[i], textColor, titleColor));
-                                            if (i < _blocks.length - 1) {
-                                              final spacing = _getSpacingBetween(_blocks[i], _blocks[i + 1]);
-                                              list.add(SizedBox(height: spacing));
-                                            }
-                                          }
-                                          return list;
-                                        }(),
-                                      ],
+                                  : SingleChildScrollView(
+                                      controller: _scrollController,
+                                      padding: const EdgeInsets.only(
+                                        left: 24.0,
+                                        right: 24.0,
+                                        top: 59.0, // Date bar (50) + padding (9)
+                                        bottom: 120.0,
+                                      ),
+                                      physics: const BouncingScrollPhysics(),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // Title
+                                          Focus(
+                                            onKeyEvent: (node, event) {
+                                              if (event is KeyDownEvent &&
+                                                  (event.logicalKey == LogicalKeyboardKey.enter ||
+                                                   event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                                                _focusContentArea();
+                                                return KeyEventResult.handled;
+                                              }
+                                              return KeyEventResult.ignored;
+                                            },
+                                            child: TextField(
+                                              controller: _titleController,
+                                              focusNode: _titleFocusNode,
+                                              textCapitalization: TextCapitalization.sentences,
+                                              maxLines: 1,
+                                              textInputAction: TextInputAction.next,
+                                              onEditingComplete: _focusContentArea,
+                                              selectionControls: EmptyTextSelectionControls(),
+                                              contextMenuBuilder: _buildContextMenu,
+                                              scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
+                                              style: GoogleFonts.inter(
+                                                fontSize: 24.0,
+                                                fontWeight: FontWeight.bold,
+                                                color: titleColor,
+                                                decoration: TextDecoration.none,
+                                                height: 1.15,
+                                              ),
+                                              decoration: InputDecoration(
+                                                hintText: "Title",
+                                                hintStyle: GoogleFonts.inter(
+                                                  fontSize: 24.0,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: titleColor.withOpacity(0.3),
+                                                  height: 1.15,
+                                                  decoration: TextDecoration.none,
+                                                ),
+                                                border: InputBorder.none,
+                                                contentPadding: EdgeInsets.zero,
+                                                filled: false,
+                                              ),
+                                              onChanged: (val) {
+                                                setState(() {
+                                                  _hasChanges = true;
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4.0),
+                                          
+                                          if (_isPreviewMarkdown)
+                                            _buildMarkdownPreview(textColor)
+                                          else
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                ...() {
+                                                  final List<Widget> list = [];
+                                                  for (int i = 0; i < _blocks.length; i++) {
+                                                    list.add(_buildBlockWidget(_blocks[i], textColor, titleColor));
+                                                    if (i < _blocks.length - 1) {
+                                                      final spacing = _getSpacingBetween(_blocks[i], _blocks[i + 1]);
+                                                      list.add(SizedBox(height: spacing));
+                                                    }
+                                                  }
+                                                  return list;
+                                                }(),
+                                              ],
+                                            ),
+                                        ],
+                                      ),
                                     ),
-                                ],
-                              ),
-                            ),
                             ),
                           ),
                         ),

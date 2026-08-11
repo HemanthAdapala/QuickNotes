@@ -27,7 +27,8 @@ class NotesStackWidget extends StatefulWidget {
   State<NotesStackWidget> createState() => _NotesStackWidgetState();
 }
 
-class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProviderStateMixin {
+class _NotesStackWidgetState extends State<NotesStackWidget>
+    with TickerProviderStateMixin {
   // Swipe Dismiss State
   double _swipeX = 0.0;
   double _swipeY = 0.0;
@@ -90,7 +91,8 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     } else {
       // Sync contents while keeping order if same length & same set
       for (int i = 0; i < _currentNotesList.length; i++) {
-        final updatedIndex = widget.notes.indexWhere((n) => n.id == _currentNotesList[i].id);
+        final updatedIndex =
+            widget.notes.indexWhere((n) => n.id == _currentNotesList[i].id);
         if (updatedIndex != -1) {
           _currentNotesList[i] = widget.notes[updatedIndex];
         }
@@ -181,16 +183,16 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     });
   }
 
-
-
   Widget _buildBackgroundCard(int index, int totalCards) {
     final double offset = 37.0 * index;
     final int dist = totalCards - 1 - index;
     final double blurSigma = 1.0 + (dist - 1) * 0.1;
 
     final note = _currentNotesList[totalCards - 1 - index];
-    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(note.createdAt.toLocal());
-    final formattedTime = DateFormat('hh:mm a').format(note.createdAt.toLocal());
+    final formattedDate =
+        DateFormat('EEE, d MMMM yyyy').format(note.createdAt.toLocal());
+    final formattedTime =
+        DateFormat('hh:mm a').format(note.createdAt.toLocal());
 
     Widget cardContent = Container(
       width: 322.0,
@@ -381,10 +383,10 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
     final double overallHeight = 339.0 + (numCards - 1) * cardOffset;
 
     final note = _currentNotesList.first;
-    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(note.createdAt.toLocal());
-    final formattedTime = DateFormat('hh:mm a').format(note.createdAt.toLocal());
-
-
+    final formattedDate =
+        DateFormat('EEE, d MMMM yyyy').format(note.createdAt.toLocal());
+    final formattedTime =
+        DateFormat('hh:mm a').format(note.createdAt.toLocal());
 
     final double rotationAngle = (_swipeX / 400.0) * (pi / 24.0);
 
@@ -426,146 +428,200 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
                     type: MaterialType.transparency,
                     child: Transform.rotate(
                       angle: rotationAngle,
-                child: Center(
-                  child: SizedBox(
-                    width: 322.0,
-                    height: 339.0,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0x3F000000),
-                            blurRadius: 16.0,
-                            offset: Offset(0, 0),
-                            spreadRadius: 0,
-                          )
-                        ],
-                      ),
-                      child: Stack(
-                        children: [
-                          // Yellow Header Background
-                          Positioned(
-                            left: 0,
-                            top: 0,
-                            child: Container(
-                              width: 322.0,
-                              height: 306.0,
-                              decoration: const ShapeDecoration(
-                                color: Color(0xFFFFCC00),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(30.0),
-                                    topRight: Radius.circular(30.0),
-                                  ),
-                                ),
-                              ),
+                      child: Center(
+                        child: SizedBox(
+                          width: 322.0,
+                          height: 339.0,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0x3F000000),
+                                  blurRadius: 16.0,
+                                  offset: Offset(0, 0),
+                                  spreadRadius: 0,
+                                )
+                              ],
                             ),
-                          ),
-                          // White Card Body
-                          Positioned(
-                            left: 0,
-                            top: 37.0,
-                            child: Container(
-                              width: 322.0,
-                              height: 302.0,
-                              decoration: const ShapeDecoration(
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(30.0)),
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Date & Time
-                          Positioned(
-                            left: 17.0,
-                            top: 9.0,
-                            child: Container(
-                              width: 279.62,
-                              height: 23.0,
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    left: 11.0,
-                                    top: 0,
-                                    child: SizedBox(
-                                      width: 144.0,
-                                      height: 23.0,
-                                      child: Text(
-                                        formattedDate,
-                                        style: GoogleFonts.inter(
-                                          color: const Color(0xFF333333),
-                                          fontSize: 16.0,
-                                          fontWeight: FontWeight.w400,
-                                          height: 1.2,
-                                          letterSpacing: -0.43,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: 178.0,
-                                    top: 2.0,
-                                    child: SizedBox(
-                                      width: 100.0,
-                                      height: 18.0,
-                                      child: Text(
-                                        formattedTime,
-                                        textAlign: TextAlign.right,
-                                        style: GoogleFonts.inter(
-                                          color: const Color(0xFF333333),
-                                          fontSize: 16.0,
-                                          fontWeight: FontWeight.w400,
-                                          height: 0.88,
-                                          letterSpacing: -0.43,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          // Unified Content Area (Adaptive Column)
-                          Positioned(
-                            left: 17.0,
-                            top: 67.0,
-                            width: 289.0,
-                            bottom: 22.0,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Stack(
                               children: [
-                                // Title Box (Dynamic height up to 2 lines, constrained width to avoid edit button overlap)
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 224.0),
-                                  child: Text(
-                                    note.title.isNotEmpty ? note.title : 'Untitled',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.inter(
-                                      color: const Color(0xFF333333),
-                                      fontSize: 40.0,
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.0,
-                                      letterSpacing: -0.43,
+                                // Yellow Header Background
+                                Positioned(
+                                  left: 0,
+                                  top: 0,
+                                  child: Container(
+                                    width: 322.0,
+                                    height: 306.0,
+                                    decoration: const ShapeDecoration(
+                                      color: Color(0xFFFFCC00),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(30.0),
+                                          topRight: Radius.circular(30.0),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 12.0),
-                                // Preview Container (Dynamic scroll view)
-                                Expanded(
+                                // White Card Body
+                                Positioned(
+                                  left: 0,
+                                  top: 37.0,
                                   child: Container(
-                                    clipBehavior: Clip.antiAlias,
-                                    decoration: const BoxDecoration(),
-                                    child: SingleChildScrollView(
-                                      physics: const BouncingScrollPhysics(),
-                                      padding: const EdgeInsets.only(bottom: 40.0),
-                                      child: Text(
-                                        note.previewText.isNotEmpty ? note.previewText : 'No additional text',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 16.0,
-                                          color: const Color(0xFF333333),
-                                          height: 1.4,
+                                    width: 322.0,
+                                    height: 302.0,
+                                    decoration: const ShapeDecoration(
+                                      color: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(30.0)),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // Date & Time
+                                Positioned(
+                                  left: 17.0,
+                                  top: 9.0,
+                                  child: Container(
+                                    width: 279.62,
+                                    height: 23.0,
+                                    child: Stack(
+                                      children: [
+                                        Positioned(
+                                          left: 11.0,
+                                          top: 0,
+                                          child: SizedBox(
+                                            width: 144.0,
+                                            height: 23.0,
+                                            child: Text(
+                                              formattedDate,
+                                              style: GoogleFonts.inter(
+                                                color: const Color(0xFF333333),
+                                                fontSize: 16.0,
+                                                fontWeight: FontWeight.w400,
+                                                height: 1.2,
+                                                letterSpacing: -0.43,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          left: 178.0,
+                                          top: 2.0,
+                                          child: SizedBox(
+                                            width: 100.0,
+                                            height: 18.0,
+                                            child: Text(
+                                              formattedTime,
+                                              textAlign: TextAlign.right,
+                                              style: GoogleFonts.inter(
+                                                color: const Color(0xFF333333),
+                                                fontSize: 16.0,
+                                                fontWeight: FontWeight.w400,
+                                                height: 0.88,
+                                                letterSpacing: -0.43,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                // Unified Content Area (Adaptive Column)
+                                Positioned(
+                                  left: 17.0,
+                                  top: 67.0,
+                                  width: 289.0,
+                                  bottom: 22.0,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Title Box (Dynamic height up to 2 lines, constrained width to avoid edit button overlap)
+                                      ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                            maxWidth: 224.0),
+                                        child: Text(
+                                          note.title.isNotEmpty
+                                              ? note.title
+                                              : 'Untitled',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.inter(
+                                            color: const Color(0xFF333333),
+                                            fontSize: 40.0,
+                                            fontWeight: FontWeight.w600,
+                                            height: 1.0,
+                                            letterSpacing: -0.43,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12.0),
+                                      // Preview Container (Dynamic scroll view)
+                                      Expanded(
+                                        child: Container(
+                                          clipBehavior: Clip.antiAlias,
+                                          decoration: const BoxDecoration(),
+                                          child: SingleChildScrollView(
+                                            physics:
+                                                const BouncingScrollPhysics(),
+                                            padding: const EdgeInsets.only(
+                                                bottom: 40.0),
+                                            child: Text(
+                                              note.previewText.isNotEmpty
+                                                  ? note.previewText
+                                                  : 'No additional text',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 16.0,
+                                                color: const Color(0xFF333333),
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Floating Edit Button
+                                Positioned(
+                                  left: 263.0,
+                                  top: 282.0,
+                                  child: TactileButton(
+                                    onTap: () => widget.onEdit(note),
+                                    useAppleSpring: true,
+                                    compressionScale: 0.7,
+                                    settleDuration:
+                                        const Duration(milliseconds: 1000),
+                                    playSelectionHaptic: true,
+                                    child: Container(
+                                      width: 47.52,
+                                      height: 47.52,
+                                      decoration: ShapeDecoration(
+                                        color: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(100.0),
+                                        ),
+                                        shadows: const [
+                                          BoxShadow(
+                                            color: Color(0x3F000000),
+                                            blurRadius: 16.0,
+                                            offset: Offset(0, 0),
+                                            spreadRadius: 0,
+                                          )
+                                        ],
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: SvgPicture.asset(
+                                        "assets/icons/bottom_navigation/pencil.svg",
+                                        width: 20.0,
+                                        height: 20.0,
+                                        colorFilter: const ColorFilter.mode(
+                                          Color(0xFF1C1C1E),
+                                          BlendMode.srcIn,
                                         ),
                                       ),
                                     ),
@@ -574,47 +630,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
                               ],
                             ),
                           ),
-                          // Floating Edit Button
-                          Positioned(
-                            left: 263.0,
-                            top: 282.0,
-                            child: TactileButton(
-                              onTap: () => widget.onEdit(note),
-                              useAppleSpring: true,
-                              compressionScale: 0.7,
-                              settleDuration: const Duration(milliseconds: 1000),
-                              playSelectionHaptic: true,
-                              child: Container(
-                                width: 47.52,
-                                height: 47.52,
-                                decoration: ShapeDecoration(
-                                  color: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(100.0),
-                                  ),
-                                  shadows: const [
-                                    BoxShadow(
-                                      color: Color(0x3F000000),
-                                      blurRadius: 16.0,
-                                      offset: Offset(0, 0),
-                                      spreadRadius: 0,
-                                    )
-                                  ],
-                                ),
-                                alignment: Alignment.center,
-                                child: SvgPicture.asset(
-                                  "assets/icons/bottom_navigation/pencil.svg",
-                                  width: 20.0,
-                                  height: 20.0,
-                                  colorFilter: const ColorFilter.mode(
-                                    Color(0xFF1C1C1E),
-                                    BlendMode.srcIn,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -622,10 +638,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget> with TickerProvider
               ),
             ),
           ),
-        ),
-      ),
-    ),
-  ],
+        ],
       ),
     );
   }

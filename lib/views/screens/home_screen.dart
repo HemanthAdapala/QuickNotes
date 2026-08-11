@@ -148,7 +148,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Note> get _filteredNotes {
     final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-    return AppStatisticsService.filterNotesByDateRange(notesProvider.notes, _activeFilter);
+    final filtered = AppStatisticsService.filterNotesByDateRange(notesProvider.notes, _activeFilter);
+    return AppStatisticsService.sortNotes(filtered, ascending: _isSortAscending);
   }
 
   int _countForFilter(String filter) {
@@ -524,8 +525,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: GestureDetector(
                                     onTap: () {
                                       HapticFeedback.selectionClick();
-                                      if (_activeFilter == filter && !_isNotesActive) {
-                                        // Toggle sort direction on active task filter tap
+                                      if (_activeFilter == filter) {
+                                        // Toggle sort direction on active filter tap (both Notes & Tasks)
                                         _isSortAscending = !_isSortAscending;
                                         final sortLabel = _isSortAscending ? 'Oldest to Newest' : 'Newest to Oldest';
                                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -538,7 +539,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 fontWeight: FontWeight.w500,
                                               ),
                                             ),
-                                            backgroundColor: const Color(0xFF0088FF),
+                                            backgroundColor: _isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
                                             behavior: SnackBarBehavior.floating,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(16),
