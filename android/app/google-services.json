@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "54420304044",
+    "project_id": "quick-notes-7e3c2",
+    "storage_bucket": "quick-notes-7e3c2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:54420304044:android:7de9ddeb82a5ad87edef09",
+        "android_client_info": {
+          "package_name": "com.quicknotes.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "54420304044-9mqvorpvgrluhvkdr58gub5s9n85jafq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.quicknotes.app",
+            "certificate_hash": "a4c8ad47c8ac59d16ac116177152382b01f172fb"
+          }
+        },
+        {
+          "client_id": "54420304044-28ldt4q9hlj22vreht6d2lqmndj27o6d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqMps03fUU0TWKm9ZAXn4jqhF_EuCuUuc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "54420304044-28ldt4q9hlj22vreht6d2lqmndj27o6d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

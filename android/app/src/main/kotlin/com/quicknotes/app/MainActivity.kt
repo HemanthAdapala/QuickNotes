@@ -1,4 +1,4 @@
-package com.example.gravity_notes
+package com.quicknotes.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

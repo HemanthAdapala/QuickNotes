@@ -51,6 +51,7 @@ dependencies:
   flutter_inset_shadow: ^2.0.3
   flutter_animate: ^4.5.2
   lottie: ^3.1.2
+  google_sign_in: ^6.2.1
 
 dev_dependencies:
   flutter_test:
@@ -71,3 +72,5 @@ flutter:
     - assets/stickers/
     - assets/animations/
     - DesignCode/LottieFiles/
+    - DesignCode/Welcome Screens/
+

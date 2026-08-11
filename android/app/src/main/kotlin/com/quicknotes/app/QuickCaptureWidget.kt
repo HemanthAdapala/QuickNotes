@@ -1,4 +1,4 @@
-package com.example.gravity_notes
+package com.quicknotes.app
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -25,7 +25,7 @@ class QuickCaptureWidget : AppWidgetProvider() {
             // Setup PendingIntent for text note creation via deep link
             val addNoteIntent = Intent(context, MainActivity::class.java).apply {
                 action = Intent.ACTION_VIEW
-                data = Uri.parse("gravitynotes://add?type=text")
+                data = Uri.parse("quicknotes://add?type=text")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             val pendingAddNote = PendingIntent.getActivity(
@@ -39,7 +39,7 @@ class QuickCaptureWidget : AppWidgetProvider() {
             // Setup PendingIntent for checklist note creation via deep link
             val addChecklistIntent = Intent(context, MainActivity::class.java).apply {
                 action = Intent.ACTION_VIEW
-                data = Uri.parse("gravitynotes://add?type=checklist")
+                data = Uri.parse("quicknotes://add?type=checklist")
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             val pendingAddChecklist = PendingIntent.getActivity(
