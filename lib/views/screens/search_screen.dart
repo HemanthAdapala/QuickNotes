@@ -431,11 +431,6 @@ class _SearchScreenState extends State<SearchScreen>
     _queryCtrl.selection = TextSelection.collapsed(offset: term.length);
   }
 
-  void _tapCategoryChip(String category) {
-    _queryCtrl.text = category;
-    _queryCtrl.selection = TextSelection.collapsed(offset: category.length);
-    _scope = _Scope.categories;
-  }
 
   _Scope _scopeFromString(String s) {
     switch (s) {
@@ -1112,46 +1107,6 @@ class _RecentSearchRow extends StatelessWidget {
   }
 }
 
-class _CategoryChip extends StatelessWidget {
-  final String category;
-  final Color dotColor;
-  final VoidCallback onTap;
-  const _CategoryChip({
-    required this.category,
-    required this.dotColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF0EDD8),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _kDivider),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 8, height: 8,
-              decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 7),
-            Text(
-              category,
-              style: GoogleFonts.inter(
-                fontSize: 13, fontWeight: FontWeight.w500, color: _kInk),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 
 
