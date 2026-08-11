@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'rich_text_controller.dart';
 import 'new_single_document_editor.dart';
@@ -206,8 +207,23 @@ class SingleDocumentDragOverlay extends StatefulWidget {
       _SingleDocumentDragOverlayState();
 }
 
-class _SingleDocumentDragOverlayState
-    extends State<SingleDocumentDragOverlay> {
+class _MountedSegmentInfo {
+  final DocSegment segment;
+  final Rect rect;
+  final int start;
+  final int end;
+  final RenderBox? renderEditable;
+
+  _MountedSegmentInfo({
+    required this.segment,
+    required this.rect,
+    required this.start,
+    required this.end,
+    this.renderEditable,
+  });
+}
+
+class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   int? _dragStartOffset;
   int? _initialWordStart;
   int? _initialWordEnd;
@@ -256,6 +272,7 @@ class _SingleDocumentDragOverlayState
   @override
   void dispose() {
     _stopAutoScroll();
+    _setFocusGated(false);
     widget.controller.removeListener(_onControllerChanged);
     super.dispose();
   }
@@ -303,62 +320,159 @@ class _SingleDocumentDragOverlayState
     final sdeState = widget.sdeKey.currentState;
     if (sdeState == null) return widget.controller.text.length;
 
-    final textSegments = sdeState.textSegments;
-    if (textSegments.isEmpty) return widget.controller.text.length;
+    final allSegments = sdeState.allSegments;
+    if (allSegments.isEmpty) return widget.controller.text.length;
 
-    int closestOffset = widget.controller.text.length;
-    double minDistance = double.infinity;
+    final List<_MountedSegmentInfo> mounted = [];
 
-    for (final segment in textSegments) {
-      final containerKey = sdeState.segmentContainerKeys[segment.segmentIndex];
-      final key = sdeState.textFieldKeys[segment.segmentIndex];
-      final focusNode = sdeState.focusNodes[segment.segmentIndex];
-      final context = containerKey?.currentContext ??
-          key?.currentContext ??
-          focusNode?.context;
-      if (context == null) continue;
+    for (int i = 0; i < allSegments.length; i++) {
+      final segment = allSegments[i];
+      if (segment is TextSegment) {
+        final containerKey =
+            sdeState.segmentContainerKeys[segment.segmentIndex];
+        final key = sdeState.textFieldKeys[segment.segmentIndex];
+        final focusNode = sdeState.focusNodes[segment.segmentIndex];
+        final context = containerKey?.currentContext ??
+            key?.currentContext ??
+            focusNode?.context;
+        if (context == null || !context.mounted) continue;
 
-      final outerRenderBox = context.findRenderObject() as RenderBox?;
-      if (outerRenderBox == null || !outerRenderBox.hasSize) continue;
-
-      final renderEditable = _findRenderEditable(outerRenderBox);
-      if (renderEditable == null ||
-          renderEditable is! RenderBox ||
-          !renderEditable.hasSize) {
-        continue;
-      }
-
-      final lineTopLeft = outerRenderBox.localToGlobal(Offset.zero);
-      final lineRect = lineTopLeft & outerRenderBox.size;
-
-      final subController =
-          sdeState.getSegmentController(segment.segmentIndex);
-      final String displayedText = subController?.text ?? '';
-
-      if (globalPosition.dy >= lineRect.top &&
-          globalPosition.dy <= lineRect.bottom) {
+        RenderBox? outerRenderBox;
         try {
-          final dynamic editable = renderEditable;
-          final TextPosition textPosition =
-              editable.getPositionForPoint(globalPosition);
-          final localDisplayedOffset = textPosition.offset;
+          outerRenderBox = context.findRenderObject() as RenderBox?;
+        } catch (_) {
+          continue;
+        }
+        if (outerRenderBox == null || !outerRenderBox.hasSize) continue;
 
-          final int rawLineLen = segment.end - segment.start;
-          final int rawOffsetInLine =
-              localDisplayedOffset.clamp(0, rawLineLen);
-          return (segment.start + rawOffsetInLine)
-              .clamp(0, widget.controller.text.length)
-              .toInt();
-        } catch (_) {}
-      } else {
-        final double dist = (globalPosition.dy - lineRect.center.dy).abs();
-        if (dist < minDistance) {
-          minDistance = dist;
-          if (globalPosition.dy < lineRect.top) {
-            closestOffset = segment.start;
-          } else {
-            closestOffset = segment.end;
+        final lineTopLeft = outerRenderBox.localToGlobal(Offset.zero);
+        final lineRect = lineTopLeft & outerRenderBox.size;
+        final renderEditable = _findRenderEditable(outerRenderBox);
+
+        mounted.add(_MountedSegmentInfo(
+          segment: segment,
+          rect: lineRect,
+          start: segment.start,
+          end: segment.end,
+          renderEditable: renderEditable is RenderBox && renderEditable.hasSize
+              ? renderEditable
+              : null,
+        ));
+      } else if (segment is ImageSegment) {
+        final imageKey = sdeState.imageKeys[segment.globalIndex];
+        final context = imageKey?.currentContext;
+        if (context == null || !context.mounted) continue;
+
+        RenderBox? renderBox;
+        try {
+          renderBox = context.findRenderObject() as RenderBox?;
+        } catch (_) {
+          continue;
+        }
+        if (renderBox == null || !renderBox.hasSize) continue;
+
+        final imgTopLeft = renderBox.localToGlobal(Offset.zero);
+        final imgRect = imgTopLeft & renderBox.size;
+
+        int nextStart = segment.globalIndex + 1;
+        if (i + 1 < allSegments.length) {
+          final nextSeg = allSegments[i + 1];
+          if (nextSeg is TextSegment) {
+            nextStart = nextSeg.start;
+          } else if (nextSeg is ImageSegment) {
+            nextStart = nextSeg.globalIndex;
           }
+        }
+
+        mounted.add(_MountedSegmentInfo(
+          segment: segment,
+          rect: imgRect,
+          start: segment.globalIndex,
+          end: nextStart,
+        ));
+      }
+    }
+
+    if (mounted.isEmpty) return widget.controller.text.length;
+
+    mounted.sort((a, b) => a.rect.top.compareTo(b.rect.top));
+
+    final double highestTop = mounted.first.rect.top;
+    final double lowestBottom = mounted.last.rect.bottom;
+
+    if (globalPosition.dy < highestTop && highestTop != double.infinity) {
+      return mounted.first.start;
+    }
+    if (globalPosition.dy > lowestBottom && lowestBottom != -double.infinity) {
+      return mounted.last.end;
+    }
+
+    // 1. Direct Hit Test inside a mounted segment's bounding box
+    for (final m in mounted) {
+      if (globalPosition.dy >= m.rect.top &&
+          globalPosition.dy <= m.rect.bottom) {
+        if (m.segment is TextSegment) {
+          if (m.renderEditable != null) {
+            try {
+              final dynamic editable = m.renderEditable!;
+              final TextPosition textPosition =
+                  editable.getPositionForPoint(globalPosition);
+              final localDisplayedOffset = textPosition.offset;
+              final int rawLineLen = m.end - m.start;
+              final int rawOffsetInLine =
+                  localDisplayedOffset.clamp(0, rawLineLen);
+              return (m.start + rawOffsetInLine)
+                  .clamp(0, widget.controller.text.length)
+                  .toInt();
+            } catch (_) {}
+          }
+
+          // Robust fallback: Compute character offset within segment line using horizontal touch X ratio
+          final double localX =
+              (globalPosition.dx - m.rect.left).clamp(0, m.rect.width);
+          final double ratio = m.rect.width > 0 ? localX / m.rect.width : 0.0;
+          final int rawLineLen = m.end - m.start;
+          final int charOffset =
+              (ratio * rawLineLen).round().clamp(0, rawLineLen);
+          return m.start + charOffset;
+        } else if (m.segment is ImageSegment) {
+          if (globalPosition.dy < m.rect.center.dy) {
+            return m.start;
+          } else {
+            return m.end;
+          }
+        } else {
+          return m.start;
+        }
+      }
+    }
+
+    // 2. Inter-Segment Gap Hit Test (when dy is between mounted[i] and mounted[i+1])
+    for (int i = 0; i < mounted.length - 1; i++) {
+      final current = mounted[i];
+      final next = mounted[i + 1];
+      if (globalPosition.dy > current.rect.bottom &&
+          globalPosition.dy < next.rect.top) {
+        final double gapCenter = (current.rect.bottom + next.rect.top) / 2.0;
+        if (globalPosition.dy < gapCenter) {
+          return current.end;
+        } else {
+          return next.start;
+        }
+      }
+    }
+
+    // 3. Fallback: Pick closest mounted segment by vertical distance
+    int closestOffset = widget.controller.text.length;
+    double minDist = double.infinity;
+    for (final m in mounted) {
+      final double dist = (globalPosition.dy - m.rect.center.dy).abs();
+      if (dist < minDist) {
+        minDist = dist;
+        if (globalPosition.dy < m.rect.top) {
+          closestOffset = m.start;
+        } else {
+          closestOffset = m.end;
         }
       }
     }
@@ -413,26 +527,188 @@ class _SingleDocumentDragOverlayState
     return RegExp(r'[a-zA-Z0-9_\-\u00C0-\u024F]').hasMatch(char);
   }
 
+  (Offset?, Offset?) _computeCurrentHandlePositions() {
+    final selection = widget.controller.selection;
+    if (!selection.isValid || selection.isCollapsed) return (null, null);
+
+    final sdeState = widget.sdeKey.currentState;
+    if (sdeState == null) return (null, null);
+
+    final overlayRenderBox =
+        _overlayKey.currentContext?.findRenderObject() as RenderBox?;
+    if (overlayRenderBox == null || !overlayRenderBox.hasSize)
+      return (null, null);
+
+    final selStart = selection.start;
+    final selEnd = selection.end;
+
+    Offset? startHandlePos;
+    Offset? endHandlePos;
+
+    for (final segment in sdeState.textSegments) {
+      final segStart = segment.start;
+      final segEnd = segment.end;
+
+      if (selEnd >= segStart && selStart <= segEnd) {
+        final containerKey =
+            sdeState.segmentContainerKeys[segment.segmentIndex];
+        final key = sdeState.textFieldKeys[segment.segmentIndex];
+        final focusNode = sdeState.focusNodes[segment.segmentIndex];
+        final context = containerKey?.currentContext ??
+            key?.currentContext ??
+            focusNode?.context;
+        if (context == null || !context.mounted) continue;
+
+        RenderBox? outerRenderBox;
+        try {
+          outerRenderBox = context.findRenderObject() as RenderBox?;
+        } catch (_) {
+          continue;
+        }
+        if (outerRenderBox == null || !outerRenderBox.hasSize) continue;
+
+        final renderEditable = _findRenderEditable(outerRenderBox);
+        if (renderEditable == null ||
+            renderEditable is! RenderBox ||
+            !renderEditable.hasSize) {
+          final lineTopLeft = overlayRenderBox
+              .globalToLocal(outerRenderBox.localToGlobal(Offset.zero));
+          final Rect rect = lineTopLeft & outerRenderBox.size;
+          if (startHandlePos == null) {
+            startHandlePos = Offset(rect.left, rect.bottom);
+          }
+          endHandlePos = Offset(rect.right, rect.bottom);
+          continue;
+        }
+
+        final editableTopLeftInOverlay = overlayRenderBox
+            .globalToLocal(renderEditable.localToGlobal(Offset.zero));
+
+        final clampedStart = selStart.clamp(segStart, segEnd);
+        final clampedEnd = selEnd.clamp(segStart, segEnd);
+
+        final subController =
+            sdeState.getSegmentController(segment.segmentIndex);
+        final String displayedText = subController?.text ?? '';
+        final int maxLen = displayedText.length;
+
+        final localStartOffset = (clampedStart - segStart).clamp(0, maxLen);
+        final localEndOffset = (clampedEnd - segStart).clamp(0, maxLen);
+        final int effectiveEndOffset =
+            localStartOffset == localEndOffset && maxLen > 0
+                ? (localStartOffset + 1).clamp(0, maxLen)
+                : localEndOffset;
+
+        bool paintedBox = false;
+        if (localStartOffset < effectiveEndOffset) {
+          try {
+            final dynamic editable = renderEditable;
+            final TextSelection localSel = TextSelection(
+              baseOffset: localStartOffset,
+              extentOffset: effectiveEndOffset,
+            );
+            final List<TextBox> boxes = editable.getBoxesForSelection(localSel);
+
+            if (boxes.isNotEmpty) {
+              paintedBox = true;
+              for (final box in boxes) {
+                final Rect rect = Rect.fromLTRB(
+                  editableTopLeftInOverlay.dx + box.left,
+                  editableTopLeftInOverlay.dy + box.top,
+                  editableTopLeftInOverlay.dx + box.right,
+                  editableTopLeftInOverlay.dy + box.bottom,
+                );
+                if (startHandlePos == null) {
+                  startHandlePos = Offset(rect.left, rect.bottom);
+                }
+                endHandlePos = Offset(rect.right, rect.bottom);
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (!paintedBox) {
+          final lineTopLeft = overlayRenderBox
+              .globalToLocal(outerRenderBox.localToGlobal(Offset.zero));
+          final Rect rect = lineTopLeft & outerRenderBox.size;
+          if (startHandlePos == null) {
+            startHandlePos = Offset(rect.left, rect.bottom);
+          }
+          endHandlePos = Offset(rect.right, rect.bottom);
+        }
+      }
+    }
+
+    for (final docSegment in sdeState.allSegments) {
+      if (docSegment is ImageSegment) {
+        final imageKey = sdeState.imageKeys[docSegment.globalIndex];
+        final imageContext = imageKey?.currentContext;
+        if (imageContext != null && imageContext.mounted) {
+          RenderBox? renderBox;
+          try {
+            renderBox = imageContext.findRenderObject() as RenderBox?;
+          } catch (_) {
+            continue;
+          }
+          if (renderBox != null && renderBox.hasSize) {
+            final localTopLeft = overlayRenderBox
+                .globalToLocal(renderBox.localToGlobal(Offset.zero));
+            final Rect imgRect = localTopLeft & renderBox.size;
+            if (selStart <= docSegment.globalIndex &&
+                selEnd >= docSegment.globalIndex + 1) {
+              if (startHandlePos == null) {
+                startHandlePos = Offset(imgRect.left, imgRect.bottom);
+              }
+              endHandlePos = Offset(imgRect.right, imgRect.bottom);
+            }
+          }
+        }
+      }
+    }
+
+    final double overlayHeight = overlayRenderBox.size.height;
+    final double overlayWidth = overlayRenderBox.size.width;
+
+    if (startHandlePos == null || startHandlePos!.dy < 0) {
+      startHandlePos = Offset(startHandlePos?.dx ?? 24.0, 0.0);
+    }
+    if (endHandlePos == null || endHandlePos!.dy > overlayHeight) {
+      endHandlePos =
+          Offset(endHandlePos?.dx ?? (overlayWidth - 24.0), overlayHeight);
+    }
+
+    return (startHandlePos, endHandlePos);
+  }
+
   bool _isTouchOnHandle(Offset globalPos) {
     if (_isDraggingStartHandle || _isDraggingEndHandle) return true;
 
     final selection = widget.controller.selection;
     if (!selection.isValid || selection.isCollapsed) return false;
-    if (_overlayKey.currentContext == null) return false;
+    final context = _overlayKey.currentContext;
+    if (context == null || !context.mounted) return false;
 
-    final overlayBox =
-        _overlayKey.currentContext!.findRenderObject() as RenderBox?;
+    RenderBox? overlayBox;
+    try {
+      overlayBox = context.findRenderObject() as RenderBox?;
+    } catch (_) {
+      return false;
+    }
     if (overlayBox == null || !overlayBox.hasSize) return false;
 
     final localTouch = overlayBox.globalToLocal(globalPos);
-    const double handleHitRadius = 40.0;
+    const double handleHitRadius = 64.0;
 
-    if (_startHandlePos != null &&
-        (localTouch - _startHandlePos!).distance <= handleHitRadius) {
+    final handlePositions = _computeCurrentHandlePositions();
+    final effectiveStart = handlePositions.$1 ?? _startHandlePos;
+    final effectiveEnd = handlePositions.$2 ?? _endHandlePos;
+
+    if (effectiveStart != null &&
+        (localTouch - effectiveStart).distance <= handleHitRadius) {
       return true;
     }
-    if (_endHandlePos != null &&
-        (localTouch - _endHandlePos!).distance <= handleHitRadius) {
+    if (effectiveEnd != null &&
+        (localTouch - effectiveEnd).distance <= handleHitRadius) {
       return true;
     }
 
@@ -469,32 +745,46 @@ class _SingleDocumentDragOverlayState
     final hasSelection = selection.isValid && !selection.isCollapsed;
 
     if (hasSelection && _overlayKey.currentContext != null) {
-      final overlayBox =
-          _overlayKey.currentContext!.findRenderObject() as RenderBox?;
-      if (overlayBox != null && overlayBox.hasSize) {
-        final localTouch = overlayBox.globalToLocal(details.globalPosition);
-        const double handleHitRadius = 40.0;
+      final overlayContext = _overlayKey.currentContext;
+      if (overlayContext != null && overlayContext.mounted) {
+        RenderBox? overlayBox;
+        try {
+          overlayBox = overlayContext.findRenderObject() as RenderBox?;
+        } catch (_) {}
+        if (overlayBox != null && overlayBox.hasSize) {
+          final localTouch = overlayBox.globalToLocal(details.globalPosition);
+          const double handleHitRadius = 64.0;
 
-        if (_startHandlePos != null &&
-            (localTouch - _startHandlePos!).distance <= handleHitRadius) {
-          _isDraggingStartHandle = true;
-          _isDraggingEndHandle = false;
-          _lastCurrentPos = details.globalPosition;
-          widget.onDragStateChanged?.call(true);
-          _startAutoScrollIfNeeded(details.globalPosition);
-          setState(() {});
-          return;
-        }
+          final handlePositions = _computeCurrentHandlePositions();
+          final effectiveStart = handlePositions.$1 ?? _startHandlePos;
+          final effectiveEnd = handlePositions.$2 ?? _endHandlePos;
 
-        if (_endHandlePos != null &&
-            (localTouch - _endHandlePos!).distance <= handleHitRadius) {
-          _isDraggingEndHandle = true;
-          _isDraggingStartHandle = false;
-          _lastCurrentPos = details.globalPosition;
-          widget.onDragStateChanged?.call(true);
-          _startAutoScrollIfNeeded(details.globalPosition);
-          setState(() {});
-          return;
+          double distStart = double.infinity;
+          double distEnd = double.infinity;
+
+          if (effectiveStart != null) {
+            distStart = (localTouch - effectiveStart).distance;
+          }
+          if (effectiveEnd != null) {
+            distEnd = (localTouch - effectiveEnd).distance;
+          }
+
+          if (distStart <= handleHitRadius || distEnd <= handleHitRadius) {
+            if (distStart <= distEnd) {
+              _isDraggingStartHandle = true;
+              _isDraggingEndHandle = false;
+            } else {
+              _isDraggingStartHandle = false;
+              _isDraggingEndHandle = true;
+            }
+            _lastCurrentPos = details.globalPosition;
+            _setFocusGated(true);
+            _hideKeyboard();
+            widget.onDragStateChanged?.call(true);
+            _startAutoScrollIfNeeded(details.globalPosition);
+            setState(() {});
+            return;
+          }
         }
       }
     }
@@ -502,7 +792,7 @@ class _SingleDocumentDragOverlayState
     _isDraggingStartHandle = false;
     _isDraggingEndHandle = false;
 
-    if (_dragStartOffset == null) {
+    if (!hasSelection && _dragStartOffset == null) {
       _onLongPressDetected(details.globalPosition);
     }
   }
@@ -538,6 +828,18 @@ class _SingleDocumentDragOverlayState
     _initialWordEnd = null;
     _lastCurrentPos = null;
     _stopAutoScroll();
+
+    final selection = widget.controller.selection;
+    final hasActiveSelection = selection.isValid && !selection.isCollapsed;
+
+    // Keep focus gated while selection handles remain active to prevent keyboard popping on subsequent handle taps.
+    if (hasActiveSelection) {
+      _setFocusGated(true);
+      _hideKeyboard();
+    } else {
+      _setFocusGated(false);
+    }
+
     widget.onDragStateChanged?.call(false);
     if (mounted) {
       setState(() {});
@@ -549,40 +851,38 @@ class _SingleDocumentDragOverlayState
     }
   }
 
-  void _updateSelectionForStartHandle(Offset currentPos) {
+  void _updateSelectionForStartHandle(Offset currentPos,
+      {bool enableHaptics = true}) {
     final currentOffset = _getGlobalOffsetFromPosition(currentPos);
-    final endOffset = widget.controller.selection.end;
-    int newBase = currentOffset;
-    int newExtent = endOffset;
-    if (newBase > newExtent) {
-      final temp = newBase;
-      newBase = newExtent;
-      newExtent = temp;
-      _isDraggingStartHandle = false;
-      _isDraggingEndHandle = true;
-    }
-    final newSel = TextSelection(baseOffset: newBase, extentOffset: newExtent);
+    final currentExtent = widget.controller.selection.extentOffset;
+    final extentOffset =
+        currentExtent >= 0 ? currentExtent : widget.controller.selection.end;
+    final newSel = TextSelection(
+      baseOffset: currentOffset,
+      extentOffset: extentOffset,
+    );
     if (widget.controller.selection != newSel) {
-      HapticFeedback.selectionClick();
+      if (enableHaptics) {
+        HapticFeedback.selectionClick();
+      }
       widget.controller.selection = newSel;
     }
   }
 
-  void _updateSelectionForEndHandle(Offset currentPos) {
+  void _updateSelectionForEndHandle(Offset currentPos,
+      {bool enableHaptics = true}) {
     final currentOffset = _getGlobalOffsetFromPosition(currentPos);
-    final startOffset = widget.controller.selection.start;
-    int newBase = startOffset;
-    int newExtent = currentOffset;
-    if (newExtent < newBase) {
-      final temp = newBase;
-      newBase = newExtent;
-      newExtent = temp;
-      _isDraggingStartHandle = true;
-      _isDraggingEndHandle = false;
-    }
-    final newSel = TextSelection(baseOffset: newBase, extentOffset: newExtent);
+    final currentBase = widget.controller.selection.baseOffset;
+    final baseOffset =
+        currentBase >= 0 ? currentBase : widget.controller.selection.start;
+    final newSel = TextSelection(
+      baseOffset: baseOffset,
+      extentOffset: currentOffset,
+    );
     if (widget.controller.selection != newSel) {
-      HapticFeedback.selectionClick();
+      if (enableHaptics) {
+        HapticFeedback.selectionClick();
+      }
       widget.controller.selection = newSel;
     }
   }
@@ -597,14 +897,18 @@ class _SingleDocumentDragOverlayState
     double scrollDelta = 0;
 
     if (dy > screenHeight - bottomScrollThreshold) {
-      final ratio =
-          ((dy - (screenHeight - bottomScrollThreshold)) / bottomScrollThreshold)
-              .clamp(0.1, 1.0);
-      scrollDelta = (10.0 + 40.0 * ratio * ratio);
+      if (_isDraggingEndHandle || _dragStartOffset != null) {
+        final ratio = ((dy - (screenHeight - bottomScrollThreshold)) /
+                bottomScrollThreshold)
+            .clamp(0.1, 1.0);
+        scrollDelta = (10.0 + 40.0 * ratio * ratio);
+      }
     } else if (dy < topScrollThreshold) {
-      final ratio =
-          ((topScrollThreshold - dy) / topScrollThreshold).clamp(0.1, 1.0);
-      scrollDelta = -(10.0 + 40.0 * ratio * ratio);
+      if (_isDraggingStartHandle || _dragStartOffset != null) {
+        final ratio =
+            ((topScrollThreshold - dy) / topScrollThreshold).clamp(0.1, 1.0);
+        scrollDelta = -(10.0 + 40.0 * ratio * ratio);
+      }
     }
     return scrollDelta;
   }
@@ -615,45 +919,48 @@ class _SingleDocumentDragOverlayState
     if (scrollController == null || !scrollController.hasClients) return;
 
     final initialDelta = _calculateScrollDelta(currentPos);
-
-    if (initialDelta != 0) {
-      if (_autoScrollTimer == null || !_autoScrollTimer!.isActive) {
-        _autoScrollTimer =
-            Timer.periodic(const Duration(milliseconds: 16), (_) {
-          final isDragging = _dragStartOffset != null ||
-              _isDraggingStartHandle ||
-              _isDraggingEndHandle;
-          if (isDragging &&
-              _lastCurrentPos != null &&
-              scrollController.hasClients) {
-            final delta = _calculateScrollDelta(_lastCurrentPos!);
-            if (delta == 0) {
-              _stopAutoScroll();
-              return;
-            }
-
-            final newOffset = (scrollController.offset + delta).clamp(
-              0.0,
-              scrollController.position.maxScrollExtent,
-            );
-            if (newOffset != scrollController.offset) {
-              scrollController.jumpTo(newOffset);
-              if (_isDraggingStartHandle) {
-                _updateSelectionForStartHandle(_lastCurrentPos!);
-              } else if (_isDraggingEndHandle) {
-                _updateSelectionForEndHandle(_lastCurrentPos!);
-              } else if (_dragStartOffset != null) {
-                _updateSelectionWithStartOffset(
-                    _dragStartOffset!, _lastCurrentPos!);
-              }
-            }
-          } else {
-            _stopAutoScroll();
-          }
-        });
-      }
-    } else {
+    if (initialDelta == 0) {
       _stopAutoScroll();
+      return;
+    }
+
+    if (_autoScrollTimer == null || !_autoScrollTimer!.isActive) {
+      _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+        final isDragging = _dragStartOffset != null ||
+            _isDraggingStartHandle ||
+            _isDraggingEndHandle;
+        if (isDragging &&
+            _lastCurrentPos != null &&
+            scrollController.hasClients) {
+          final delta = _calculateScrollDelta(_lastCurrentPos!);
+          if (delta == 0) {
+            _stopAutoScroll();
+            return;
+          }
+
+          final newOffset = (scrollController.offset + delta).clamp(
+            0.0,
+            scrollController.position.maxScrollExtent,
+          );
+          if (newOffset != scrollController.offset) {
+            scrollController.jumpTo(newOffset);
+            _setFocusGated(true);
+            _hideKeyboard();
+            if (_isDraggingStartHandle) {
+              _updateSelectionForStartHandle(_lastCurrentPos!,
+                  enableHaptics: false);
+            } else if (_isDraggingEndHandle) {
+              _updateSelectionForEndHandle(_lastCurrentPos!,
+                  enableHaptics: false);
+            } else if (_dragStartOffset != null) {
+              _updateSelectionWithStartOffset(
+                  _dragStartOffset!, _lastCurrentPos!);
+            }
+          }
+        } else {
+          _stopAutoScroll();
+        }
+      });
     }
   }
 
@@ -703,6 +1010,7 @@ class _SingleDocumentDragOverlayState
 
   void _hideKeyboard() {
     debugPrint('[KB_LOG] _hideKeyboard() called');
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     FocusManager.instance.primaryFocus?.unfocus();
     final sdeState = widget.sdeKey.currentState;
     if (sdeState != null) {
@@ -718,19 +1026,29 @@ class _SingleDocumentDragOverlayState
 
   void _handlePointerDown(PointerDownEvent event) {
     if (!widget.isSelectionMode) return;
-    if (_isDraggingStartHandle || _isDraggingEndHandle) return;
+
+    final selection = widget.controller.selection;
+    final hasSelection = selection.isValid && !selection.isCollapsed;
+
+    if (hasSelection ||
+        _isDraggingStartHandle ||
+        _isDraggingEndHandle ||
+        _isTouchOnHandle(event.position)) {
+      _setFocusGated(true);
+      _hideKeyboard();
+    }
 
     _pointerDownPos = event.position;
     _pointerDownTime = DateTime.now();
     _pointerScrolled = false;
 
     _wasEditorFocusedOnDown = _isEditorFocused();
-    debugPrint('[KB_LOG] PointerDown: Editor already focused = $_wasEditorFocusedOnDown');
+    debugPrint(
+        '[KB_LOG] PointerDown: Editor already focused = $_wasEditorFocusedOnDown');
 
-    // Mode 2 (Editor Not Focused): Gate focus during pending gesture window so TextInput.attach() is never called during long press.
-    // Mode 1 (Editor Already Focused): Do NOT gate focus so active editing focus is preserved during word-to-word cursor movement.
-    if (!_wasEditorFocusedOnDown) {
+    if (!_wasEditorFocusedOnDown || hasSelection) {
       _setFocusGated(true);
+      _hideKeyboard();
     }
   }
 
@@ -756,11 +1074,16 @@ class _SingleDocumentDragOverlayState
         : 0;
 
     if (hasSelection) {
-      if (!_isTouchOnHandle(event.position) && !_pointerScrolled && duration < 300) {
-        // Quick tap on selection clears selection
-        debugPrint('[KB_LOG] PointerUp: Quick tap on selection -> clearing selection');
+      if (!_isTouchOnHandle(event.position) &&
+          !_pointerScrolled &&
+          duration < 300) {
+        // Quick tap on selection clears selection and sets caret at tapped offset
+        debugPrint(
+            '[KB_LOG] PointerUp: Quick tap on selection -> clearing selection');
         _setFocusGated(false);
-        widget.controller.selection = const TextSelection.collapsed(offset: 0);
+        final rawOffset = _getGlobalOffsetFromPosition(event.position);
+        widget.controller.selection =
+            TextSelection.collapsed(offset: rawOffset);
       }
     } else {
       if (duration < 300 && !_pointerScrolled) {
@@ -771,19 +1094,22 @@ class _SingleDocumentDragOverlayState
           // Mode 1 — Editor Already Focused:
           // Keep focus exactly as-is. Update selection/caret position only.
           // NO unfocus(), NO requestFocus(), NO TextInput.attach(), NO TextInput.close().
-          debugPrint('[KB_LOG] PointerUp (Mode 1 - Editor Already Focused): Updating selection only, NO focus change');
+          debugPrint(
+              '[KB_LOG] PointerUp (Mode 1 - Editor Already Focused): Updating selection only, NO focus change');
           widget.controller.selection = newSelection;
         } else {
           // Mode 2 — Editor Not Focused:
           // Ungate focus and request focus for target segment to open keyboard.
-          debugPrint('[KB_LOG] PointerUp (Mode 2 - Editor Not Focused): Ungating focus & requesting focus for segment');
+          debugPrint(
+              '[KB_LOG] PointerUp (Mode 2 - Editor Not Focused): Ungating focus & requesting focus for segment');
           _setFocusGated(false);
           widget.controller.selection = newSelection;
           final sdeState = widget.sdeKey.currentState;
           if (sdeState != null) {
             for (final seg in sdeState.textSegments) {
               if (rawOffset >= seg.start && rawOffset <= seg.end) {
-                debugPrint('[KB_LOG] requestFocus() on segment ${seg.segmentIndex}');
+                debugPrint(
+                    '[KB_LOG] requestFocus() on segment ${seg.segmentIndex}');
                 sdeState.focusNodes[seg.segmentIndex]?.requestFocus();
                 break;
               }
@@ -796,6 +1122,17 @@ class _SingleDocumentDragOverlayState
     _pointerDownPos = null;
     _pointerDownTime = null;
     _pointerScrolled = false;
+    _setFocusGated(false);
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (!widget.isSelectionMode) return;
+    debugPrint(
+        '[KB_LOG] PointerCancel: Restoring focus gate & resetting pointer state');
+    _pointerDownPos = null;
+    _pointerDownTime = null;
+    _pointerScrolled = false;
+    _setFocusGated(false);
   }
 
   @override
@@ -830,12 +1167,14 @@ class _SingleDocumentDragOverlayState
         onPointerDown: _handlePointerDown,
         onPointerMove: _handlePointerMove,
         onPointerUp: _handlePointerUp,
+        onPointerCancel: _handlePointerCancel,
         behavior: HitTestBehavior.translucent,
         child: RawGestureDetector(
           key: _overlayKey,
           gestures: {
-            _LongPressDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<
-                _LongPressDragGestureRecognizer>(
+            _LongPressDragGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<
+                    _LongPressDragGestureRecognizer>(
               () => _LongPressDragGestureRecognizer(),
               (_LongPressDragGestureRecognizer instance) {
                 instance
@@ -908,12 +1247,12 @@ class _SDESelectionHighlightPainter extends CustomPainter {
     this.onHandlePositionsUpdated,
   }) : super(repaint: controller);
 
-  RenderObject? _findRenderEditable(RenderObject? renderObject) {
+  RenderEditable? _findRenderEditable(RenderObject? renderObject) {
     if (renderObject == null) return null;
-    if (renderObject.runtimeType.toString().contains('RenderEditable')) {
+    if (renderObject is RenderEditable) {
       return renderObject;
     }
-    RenderObject? found;
+    RenderEditable? found;
     renderObject.visitChildren((child) {
       if (found == null) {
         found = _findRenderEditable(child);
@@ -924,22 +1263,41 @@ class _SDESelectionHighlightPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
     final selection = controller.selection;
     if (!selection.isValid || selection.isCollapsed) {
       onHandlePositionsUpdated?.call(null, null);
+      canvas.restore();
       return;
     }
 
     final sdeState = sdeKey.currentState;
     if (sdeState == null) {
       onHandlePositionsUpdated?.call(null, null);
+      canvas.restore();
       return;
     }
 
-    final overlayRenderBox =
-        overlayKey.currentContext?.findRenderObject() as RenderBox?;
+    final overlayContext = overlayKey.currentContext;
+    if (overlayContext == null || !overlayContext.mounted) {
+      onHandlePositionsUpdated?.call(null, null);
+      canvas.restore();
+      return;
+    }
+
+    RenderBox? overlayRenderBox;
+    try {
+      overlayRenderBox = overlayContext.findRenderObject() as RenderBox?;
+    } catch (_) {
+      onHandlePositionsUpdated?.call(null, null);
+      canvas.restore();
+      return;
+    }
     if (overlayRenderBox == null || !overlayRenderBox.hasSize) {
       onHandlePositionsUpdated?.call(null, null);
+      canvas.restore();
       return;
     }
 
@@ -966,15 +1324,21 @@ class _SDESelectionHighlightPainter extends CustomPainter {
       final segEnd = segment.end;
 
       if (selEnd >= segStart && selStart <= segEnd) {
-        final containerKey = sdeState.segmentContainerKeys[segment.segmentIndex];
+        final containerKey =
+            sdeState.segmentContainerKeys[segment.segmentIndex];
         final key = sdeState.textFieldKeys[segment.segmentIndex];
         final focusNode = sdeState.focusNodes[segment.segmentIndex];
         final context = containerKey?.currentContext ??
             key?.currentContext ??
             focusNode?.context;
-        if (context == null) continue;
+        if (context == null || !context.mounted) continue;
 
-        final outerRenderBox = context.findRenderObject() as RenderBox?;
+        RenderBox? outerRenderBox;
+        try {
+          outerRenderBox = context.findRenderObject() as RenderBox?;
+        } catch (_) {
+          continue;
+        }
         if (outerRenderBox == null || !outerRenderBox.hasSize) continue;
 
         final renderEditable = _findRenderEditable(outerRenderBox);
@@ -1017,8 +1381,7 @@ class _SDESelectionHighlightPainter extends CustomPainter {
               baseOffset: localStartOffset,
               extentOffset: effectiveEndOffset,
             );
-            final List<TextBox> boxes =
-                editable.getBoxesForSelection(localSel);
+            final List<TextBox> boxes = editable.getBoxesForSelection(localSel);
 
             if (boxes.isNotEmpty) {
               paintedBox = true;
@@ -1045,7 +1408,25 @@ class _SDESelectionHighlightPainter extends CustomPainter {
         if (!paintedBox) {
           final lineTopLeft = overlayRenderBox
               .globalToLocal(outerRenderBox.localToGlobal(Offset.zero));
-          final Rect rect = lineTopLeft & outerRenderBox.size;
+          final double startRatio =
+              maxLen > 0 ? (localStartOffset / maxLen).clamp(0.0, 1.0) : 0.0;
+          final double endRatio =
+              maxLen > 0 ? (effectiveEndOffset / maxLen).clamp(0.0, 1.0) : 1.0;
+          final double startX =
+              lineTopLeft.dx + startRatio * outerRenderBox.size.width;
+          final double endX =
+              lineTopLeft.dx + endRatio * outerRenderBox.size.width;
+          final Rect rect = Rect.fromLTRB(
+            startX,
+            lineTopLeft.dy,
+            (endX < startX + 4.0 ? startX + 4.0 : endX).clamp(
+                startX + 4.0, overlayRenderBox.size.width + lineTopLeft.dx),
+            lineTopLeft.dy + outerRenderBox.size.height,
+          );
+          final RRect rrect =
+              RRect.fromRectAndRadius(rect, const Radius.circular(3));
+          canvas.drawRRect(rrect, paint);
+
           if (startHandlePos == null) {
             startHandlePos = Offset(rect.left, rect.bottom);
           }
@@ -1059,8 +1440,13 @@ class _SDESelectionHighlightPainter extends CustomPainter {
       if (docSegment is ImageSegment) {
         final imageKey = sdeState.imageKeys[docSegment.globalIndex];
         final imageContext = imageKey?.currentContext;
-        if (imageContext != null) {
-          final renderBox = imageContext.findRenderObject() as RenderBox?;
+        if (imageContext != null && imageContext.mounted) {
+          RenderBox? renderBox;
+          try {
+            renderBox = imageContext.findRenderObject() as RenderBox?;
+          } catch (_) {
+            continue;
+          }
           if (renderBox != null && renderBox.hasSize) {
             final localTopLeft = overlayRenderBox
                 .globalToLocal(renderBox.localToGlobal(Offset.zero));
@@ -1076,6 +1462,17 @@ class _SDESelectionHighlightPainter extends CustomPainter {
       }
     }
 
+    final double overlayHeight = overlayRenderBox.size.height;
+    final double overlayWidth = overlayRenderBox.size.width;
+
+    if (startHandlePos == null || startHandlePos!.dy < 0) {
+      startHandlePos = Offset(startHandlePos?.dx ?? 24.0, 0.0);
+    }
+    if (endHandlePos == null || endHandlePos!.dy > overlayHeight) {
+      endHandlePos =
+          Offset(endHandlePos?.dx ?? (overlayWidth - 24.0), overlayHeight);
+    }
+
     if (startHandlePos != null) {
       canvas.drawCircle(startHandlePos, 7, handlePaint);
       canvas.drawCircle(startHandlePos, 3, handleInnerPaint);
@@ -1086,6 +1483,7 @@ class _SDESelectionHighlightPainter extends CustomPainter {
     }
 
     onHandlePositionsUpdated?.call(startHandlePos, endHandlePos);
+    canvas.restore();
   }
 
   @override

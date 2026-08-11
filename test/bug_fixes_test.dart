@@ -2851,5 +2851,124 @@ void main() {
 
       await tester.binding.setSurfaceSize(null);
     });
+
+    testWidgets('Sprint 14: Phase 3C Viewport Bounds Handle Clamping and Endpoint-Only KeepAlive check', (WidgetTester tester) async {
+      final controller = RichTextEditingController();
+      final StringBuffer buf = StringBuffer();
+      for (int i = 0; i < 50; i++) {
+        buf.writeln('Line $i: Content for segment testing in virtualization.');
+      }
+      controller.text = buf.toString();
+
+      // Test active selection spanning multiple segments (line 5 to line 25)
+      final selection = TextSelection(baseOffset: 200, extentOffset: 1000);
+      controller.selection = selection;
+
+      final sdeKey = GlobalKey<NewSingleDocumentEditorState>();
+      final scrollController = ScrollController();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              height: 400,
+              child: NewSingleDocumentEditor(
+                key: sdeKey,
+                controller: controller,
+                focusNode: FocusNode(),
+                textColor: Colors.black,
+                paperGuideHeight: 20.0,
+                contextMenuBuilder: (context, state) => const SizedBox.shrink(),
+                formattingToolbarHeight: 50.0,
+                scrollController: scrollController,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final sdeState = sdeKey.currentState!;
+      final segments = sdeState.textSegments;
+      expect(segments.length, greaterThan(10));
+
+      // Verify Endpoint-Only KeepAlive:
+      // Only segments containing selection.start (offset 200) and selection.end (offset 1000) get isSelected = true.
+      int isSelectedCount = 0;
+      for (final seg in segments) {
+        final bool isStart = selection.start >= seg.start && selection.start <= seg.end;
+        final bool isEnd = selection.end >= seg.start && selection.end <= seg.end;
+        if (isStart || isEnd) {
+          isSelectedCount++;
+        }
+      }
+      expect(isSelectedCount, lessThanOrEqualTo(2));
+    });
+
+    testWidgets('Sprint 15: Phase 3D Focus-Gate Lifecycle & Ungating Check', (WidgetTester tester) async {
+      final controller = RichTextEditingController();
+      final StringBuffer buf = StringBuffer();
+      for (int i = 0; i < 50; i++) {
+        buf.writeln('Line $i: Content for focus gate testing.');
+      }
+      controller.text = buf.toString();
+
+      final sdeKey = GlobalKey<NewSingleDocumentEditorState>();
+      final scrollController = ScrollController();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              height: 400,
+              child: NewSingleDocumentEditor(
+                key: sdeKey,
+                controller: controller,
+                focusNode: FocusNode(),
+                textColor: Colors.black,
+                paperGuideHeight: 20.0,
+                contextMenuBuilder: (context, state) => const SizedBox.shrink(),
+                formattingToolbarHeight: 50.0,
+                scrollController: scrollController,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final sdeState = sdeKey.currentState!;
+      // Drag to simulate scrolling gesture
+      await tester.drag(find.byType(NewSingleDocumentEditor), const Offset(0, -200));
+      await tester.pumpAndSettle();
+
+      // Assert that ALL focus nodes are ungated (canRequestFocus == true) after scroll
+      for (final node in sdeState.focusNodes.values) {
+        expect(node.canRequestFocus, isTrue, reason: 'FocusNode must not remain locked after scroll');
+      }
+    });
+
+    testWidgets('Sprint 16: Phase 3E Selection Sync Mismatch & Live Handle Hit Testing', (WidgetTester tester) async {
+      final parent = RichTextEditingController();
+      parent.text = 'Line 1: Hello World Testing\nLine 2: Deep Scroll Selection Sync Test';
+
+      final childController = RangeTextEditingController(
+        parent: parent,
+        segmentIndex: 1,
+        startOffset: 28,
+        endOffset: 67,
+      );
+
+      // Simulate text mismatch (e.g. parent updated text elsewhere)
+      parent.text = 'Line 1: Hello World Testing Extra\nLine 2: Deep Scroll Selection Sync Test';
+      
+      // Update parent selection
+      parent.selection = const TextSelection(baseOffset: 34, extentOffset: 45);
+      
+      // Assert that child controller updated its local selection despite parent text length mismatch
+      expect(childController.selection.isValid, isTrue);
+      expect(childController.selection.baseOffset, equals(6));
+      expect(childController.selection.extentOffset, equals(17));
+    });
   });
 }

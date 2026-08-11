@@ -51,6 +51,11 @@ class NewSingleDocumentEditor extends StatefulWidget {
   final bool readOnly;
   final bool enableInteractiveSelection;
   final VoidCallback? onBackspaceAtStart;
+  final Widget? header;
+  final ScrollController? scrollController;
+  final EdgeInsetsGeometry? padding;
+  final ScrollPhysics? physics;
+  final bool shrinkWrap;
 
   const NewSingleDocumentEditor({
     super.key,
@@ -63,6 +68,11 @@ class NewSingleDocumentEditor extends StatefulWidget {
     this.readOnly = false,
     this.enableInteractiveSelection = true,
     this.onBackspaceAtStart,
+    this.header,
+    this.scrollController,
+    this.padding,
+    this.physics,
+    this.shrinkWrap = false,
   });
 
   @override
@@ -77,6 +87,10 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
   final Map<int, GlobalKey> _segmentContainerKeys = {};
   final Map<int, GlobalKey> _imageKeys = {};
   int? _selectedImageGlobalIndex;
+
+  bool _needsFullRebuild = false;
+  int _lastKnownNewlineCount = 0;
+  int _lastKnownImageCount = 0;
 
   List<TextSegment> get textSegments => _segments.whereType<TextSegment>().toList();
   List<DocSegment> get allSegments => List.unmodifiable(_segments);
@@ -122,11 +136,190 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
   void _onControllerChanged() {
     if (mounted) {
-      setState(() {
-        parseCurrentSegments();
-      });
+      if (_needsFullRebuild) {
+        _needsFullRebuild = false;
+        debugPrint("[SDE FullParse] Rebuild required from explicit parseCurrentSegments. Running setState.");
+        setState(() {});
+        _syncFocusWithParentSelection();
+        return;
+      }
+
+      final bool fastPathSuccess = _tryIncrementalUpdate();
+      if (!fastPathSuccess) {
+        debugPrint("[SDE FullParse] Structural edit or fallback detected. Running parseCurrentSegments().");
+        setState(() {
+          parseCurrentSegments();
+        });
+      }
       _syncFocusWithParentSelection();
     }
+  }
+
+  bool _tryIncrementalUpdate() {
+    if (_needsFullRebuild || _segments.isEmpty) return false;
+
+    final chars = widget.controller.styledChars;
+
+    // Verify newline and image count in current document match last known counts
+    int currentNewlineCount = 0;
+    int currentImageCount = 0;
+    for (int i = 0; i < chars.length; i++) {
+      if (chars[i].char == '\n') currentNewlineCount++;
+      if (chars[i].char == '\uFFFC') currentImageCount++;
+    }
+
+    if (currentNewlineCount != _lastKnownNewlineCount || currentImageCount != _lastKnownImageCount) {
+      return false; // Structural edit! Line break or image count changed.
+    }
+
+    // 1. Identify active/edited segment
+    int activeSegmentIdx = -1;
+    for (int i = 0; i < _segments.length; i++) {
+      final seg = _segments[i];
+      if (seg is TextSegment && focusNodes[seg.segmentIndex]?.hasFocus == true) {
+        activeSegmentIdx = i;
+        break;
+      }
+    }
+
+    // Fallback if no focusNode reports focus: check selection offset
+    if (activeSegmentIdx == -1) {
+      final parentSel = widget.controller.selection;
+      if (parentSel.isValid) {
+        for (int i = 0; i < _segments.length; i++) {
+          final seg = _segments[i];
+          if (seg is TextSegment && parentSel.baseOffset >= seg.start && parentSel.baseOffset <= seg.end) {
+            activeSegmentIdx = i;
+            break;
+          }
+        }
+        if (activeSegmentIdx == -1 && _segments.isNotEmpty) {
+          final lastSeg = _segments.last;
+          if (lastSeg is TextSegment && parentSel.baseOffset >= lastSeg.start) {
+            activeSegmentIdx = _segments.length - 1;
+          }
+        }
+      }
+    }
+
+    if (activeSegmentIdx == -1) return false;
+
+    final targetSeg = _segments[activeSegmentIdx] as TextSegment;
+
+    // Calculate total character count from current _segments list
+    int oldTotalChars = 0;
+    for (final seg in _segments) {
+      if (seg is TextSegment) {
+        oldTotalChars = seg.end;
+      } else if (seg is ImageSegment) {
+        oldTotalChars = seg.globalIndex + 1;
+      }
+    }
+
+    final int delta = chars.length - oldTotalChars;
+
+    // If no text length change occurred, fast path succeeds
+    if (delta == 0 && chars.length == oldTotalChars) {
+      return true;
+    }
+
+    final int oldStart = targetSeg.start;
+    final int oldEnd = targetSeg.end;
+    final int oldLen = oldEnd - oldStart;
+    final int newLen = oldLen + delta;
+
+    // Quick boundary checks
+    if (oldStart < 0 || oldStart > chars.length || newLen < 0 || (oldStart + newLen) > chars.length) {
+      return false;
+    }
+
+    // Check 1: Does the edited segment text contain newlines or image markers?
+    for (int i = oldStart; i < oldStart + newLen; i++) {
+      final c = chars[i].char;
+      if (c == '\n' || c == '\uFFFC') {
+        return false; // Structural edit! Newline or image marker present in segment.
+      }
+    }
+
+    // Check 2: Verify block styling of the first character hasn't changed structural type
+    if (oldStart < chars.length) {
+      final style = chars[oldStart].style;
+      String currentType = 'paragraph';
+      if (style.heading != 'normal') {
+        currentType = style.heading;
+      } else if (style.listType != 'normal') {
+        currentType = style.listType;
+      }
+      if (currentType != targetSeg.type || style.indent != targetSeg.indent) {
+        return false; // Block format changed!
+      }
+    }
+
+    // Check 3: Verify tail length matches
+    int oldTailLen = oldTotalChars - oldEnd;
+    int newTailLen = chars.length - (oldStart + newLen);
+    if (oldTailLen != newTailLen) {
+      return false; // Tail mismatch -> structural edit elsewhere!
+    }
+
+    // ALL CHECKS PASSED: Perform incremental update
+    _segments[activeSegmentIdx] = TextSegment(
+      globalIndex: oldStart,
+      segmentIndex: targetSeg.segmentIndex,
+      type: targetSeg.type,
+      start: oldStart,
+      end: oldStart + newLen,
+      checked: targetSeg.checked,
+      indent: targetSeg.indent,
+    );
+
+    // Shift subsequent segment offsets by delta
+    for (int i = activeSegmentIdx + 1; i < _segments.length; i++) {
+      final seg = _segments[i];
+      if (seg is TextSegment) {
+        _segments[i] = TextSegment(
+          globalIndex: seg.start + delta,
+          segmentIndex: seg.segmentIndex,
+          type: seg.type,
+          start: seg.start + delta,
+          end: seg.end + delta,
+          checked: seg.checked,
+          indent: seg.indent,
+        );
+      } else if (seg is ImageSegment) {
+        _segments[i] = ImageSegment(
+          globalIndex: seg.globalIndex + delta,
+          imageUrl: seg.imageUrl,
+          width: seg.width,
+          caption: seg.caption,
+        );
+      }
+    }
+
+    // 1. Sync preceding segments (j < activeSegmentIdx) silently (delta = 0)
+    for (int i = 0; i < activeSegmentIdx; i++) {
+      final seg = _segments[i];
+      if (seg is TextSegment) {
+        _controllers[seg.segmentIndex]?.shiftOffsetsSilently(0);
+      }
+    }
+
+    // 2. Update active segment controller via full updateOffsets
+    final activeController = _controllers[targetSeg.segmentIndex];
+    if (activeController != null) {
+      activeController.updateOffsets(oldStart, oldStart + newLen);
+    }
+
+    // 3. Propagate offset shift silently to ALL subsequent segments (j > activeSegmentIdx)
+    for (int i = activeSegmentIdx + 1; i < _segments.length; i++) {
+      final seg = _segments[i];
+      if (seg is TextSegment) {
+        _controllers[seg.segmentIndex]?.shiftOffsetsSilently(delta);
+      }
+    }
+
+    debugPrint("[SDE FastPath] Non-structural edit in segment ${targetSeg.segmentIndex} (delta=$delta, newLen=$newLen). Bypassing parseCurrentSegments().");
+    return true;
   }
 
   void focusFirstSegment() {
@@ -203,7 +396,7 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
   void _syncFocusWithParentSelection() {
     if (_selectedImageGlobalIndex != null) return;
     final parentSel = widget.controller.selection;
-    if (!parentSel.isValid) return;
+    if (!parentSel.isValid || !parentSel.isCollapsed) return;
 
     for (final segment in _segments.whereType<TextSegment>()) {
       final controller = _controllers[segment.segmentIndex];
@@ -530,7 +723,15 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
   }
 
   void parseCurrentSegments() {
+    _needsFullRebuild = true;
     final chars = widget.controller.styledChars;
+    _lastKnownNewlineCount = 0;
+    _lastKnownImageCount = 0;
+    for (int i = 0; i < chars.length; i++) {
+      if (chars[i].char == '\n') _lastKnownNewlineCount++;
+      if (chars[i].char == '\uFFFC') _lastKnownImageCount++;
+    }
+
     final List<DocSegment> parsed = [];
     int textSegmentIndex = 0;
 
@@ -609,6 +810,10 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
         segment.segmentIndex,
         () {
           final n = FocusNode();
+          final selection = widget.controller.selection;
+          if (selection.isValid && !selection.isCollapsed) {
+            n.canRequestFocus = false;
+          }
           n.addListener(() {
             if (n.hasFocus && _selectedImageGlobalIndex != null) {
               setState(() {
@@ -689,33 +894,41 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       height: lineHeight * widget.paperGuideHeight,
     );
 
-    final textField = TextField(
-      key: key,
-      controller: controller,
-      focusNode: focusNode,
-      readOnly: widget.readOnly,
-      showCursor: !widget.readOnly,
-      enableInteractiveSelection: widget.enableInteractiveSelection,
-      selectionControls: EmptyTextSelectionControls(),
-      maxLines: null,
-      keyboardType: TextInputType.multiline,
-      scrollPhysics: const NeverScrollableScrollPhysics(),
-      scrollPadding: EdgeInsets.only(bottom: bottomPadding),
-      contextMenuBuilder: widget.contextMenuBuilder,
-      style: textStyle,
-      textAlign: controller.lineAlignment,
-      decoration: InputDecoration(
-        hintText: segment.segmentIndex == 0 && controller.text.isEmpty
-            ? "Start writing..."
-            : null,
-        hintStyle: GoogleFonts.inter(
-          fontSize: fontSize,
-          color: widget.textColor.withOpacity(0.3),
+    // [SelectionDragOverlay Architecture & Stabilization]:
+    // Suppress native selection blue background color so selection highlights are painted
+    // exclusively by _SDESelectionHighlightPainter with single uniform blue tint.
+    final textField = TextSelectionTheme(
+      data: const TextSelectionThemeData(
+        selectionColor: Colors.transparent,
+      ),
+      child: TextField(
+        key: key,
+        controller: controller,
+        focusNode: focusNode,
+        readOnly: widget.readOnly,
+        showCursor: !widget.readOnly,
+        enableInteractiveSelection: widget.enableInteractiveSelection,
+        selectionControls: EmptyTextSelectionControls(),
+        maxLines: null,
+        keyboardType: TextInputType.multiline,
+        scrollPhysics: const NeverScrollableScrollPhysics(),
+        scrollPadding: EdgeInsets.only(bottom: bottomPadding),
+        contextMenuBuilder: widget.contextMenuBuilder,
+        style: textStyle,
+        textAlign: controller.lineAlignment,
+        decoration: InputDecoration(
+          hintText: segment.segmentIndex == 0 && controller.text.isEmpty
+              ? "Start writing..."
+              : null,
+          hintStyle: GoogleFonts.inter(
+            fontSize: fontSize,
+            color: widget.textColor.withOpacity(0.3),
+          ),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.zero,
+          filled: false,
+          isDense: true,
         ),
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.zero,
-        filled: false,
-        isDense: true,
       ),
     );
 
@@ -830,59 +1043,108 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> children = [];
+    _needsFullRebuild = false;
 
-    for (int i = 0; i < _segments.length; i++) {
-      final segment = _segments[i];
-      Widget segmentWidget;
+    final hasHeader = widget.header != null;
+    final int headerOffset = hasHeader ? 1 : 0;
+    final int itemCount = _segments.length + headerOffset;
 
-      if (segment is TextSegment) {
-        segmentWidget = _buildTextSegmentWidget(segment);
-      } else if (segment is ImageSegment) {
-        final key = _imageKeys.putIfAbsent(segment.globalIndex, () => GlobalKey());
-        segmentWidget = KeyedSubtree(
-          key: key,
-          child: NewImageWidget(
-            imagePath: segment.imageUrl,
-            width: segment.width,
-            caption: segment.caption,
-            isSelected: _selectedImageGlobalIndex == segment.globalIndex,
-            onTap: () {
-              setState(() {
-                if (_selectedImageGlobalIndex == segment.globalIndex) {
-                  _selectedImageGlobalIndex = null;
-                } else {
-                  _selectedImageGlobalIndex = segment.globalIndex;
-                  for (final node in focusNodes.values) {
-                    node.unfocus();
+    final selection = widget.controller.selection;
+    final bool hasActiveSelection = selection.isValid && !selection.isCollapsed;
+    final int selStart = hasActiveSelection ? selection.start : -1;
+    final int selEnd = hasActiveSelection ? selection.end : -1;
+
+    return ListView.builder(
+      controller: widget.scrollController,
+      padding: widget.padding ?? EdgeInsets.zero,
+      physics: widget.physics,
+      shrinkWrap: widget.shrinkWrap || widget.scrollController == null,
+      cacheExtent: 1500.0,
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        if (hasHeader && index == 0) {
+          return widget.header!;
+        }
+
+        final int segmentIndex = index - headerOffset;
+        final segment = _segments[segmentIndex];
+
+        Widget segmentWidget;
+        bool isFocused = false;
+        bool isSelected = false;
+
+        if (hasActiveSelection) {
+          if (segment is TextSegment) {
+            final bool isStart = selStart >= segment.start && selStart <= segment.end;
+            final bool isEnd = selEnd >= segment.start && selEnd <= segment.end;
+            isSelected = isStart || isEnd;
+          } else if (segment is ImageSegment) {
+            final bool isStart = selStart == segment.globalIndex;
+            final bool isEnd = selEnd == segment.globalIndex;
+            isSelected = isStart || isEnd;
+          }
+        }
+
+        if (segment is TextSegment) {
+          segmentWidget = _buildTextSegmentWidget(segment);
+          final fn = focusNodes[segment.segmentIndex];
+          if (fn != null && fn.hasFocus) {
+            isFocused = true;
+          }
+        } else if (segment is ImageSegment) {
+          final key = _imageKeys.putIfAbsent(segment.globalIndex, () => GlobalKey());
+          isFocused = _selectedImageGlobalIndex == segment.globalIndex;
+          segmentWidget = KeyedSubtree(
+            key: key,
+            child: NewImageWidget(
+              imagePath: segment.imageUrl,
+              width: segment.width,
+              caption: segment.caption,
+              isSelected: isFocused,
+              onTap: () {
+                setState(() {
+                  if (_selectedImageGlobalIndex == segment.globalIndex) {
+                    _selectedImageGlobalIndex = null;
+                  } else {
+                    _selectedImageGlobalIndex = segment.globalIndex;
+                    for (final node in focusNodes.values) {
+                      node.unfocus();
+                    }
+                    widget.controller.selection = TextSelection.collapsed(offset: segment.globalIndex);
                   }
-                  widget.controller.selection = TextSelection.collapsed(offset: segment.globalIndex);
-                }
-              });
-            },
-            onResize: (newWidth) => _resizeImage(segment.globalIndex, newWidth),
-            onDelete: () => _deleteImage(segment.globalIndex),
-          ),
+                });
+              },
+              onResize: (newWidth) => _resizeImage(segment.globalIndex, newWidth),
+              onDelete: () => _deleteImage(segment.globalIndex),
+            ),
+          );
+        } else {
+          segmentWidget = const SizedBox.shrink();
+        }
+
+        double bottomSpacing = 0.0;
+        if (segmentIndex < _segments.length - 1) {
+          final nextSegment = _segments[segmentIndex + 1];
+          final String currentType = segment is ImageSegment ? 'image' : (segment as TextSegment).type;
+          final String nextType = nextSegment is ImageSegment ? 'image' : (nextSegment as TextSegment).type;
+          bottomSpacing = LayoutEngine.getSpacing(prevType: currentType, nextType: nextType);
+        }
+
+        final paddedWidget = bottomSpacing > 0
+            ? Padding(
+                padding: EdgeInsets.only(bottom: bottomSpacing),
+                child: segmentWidget,
+              )
+            : segmentWidget;
+
+        final itemKey = ValueKey('seg_${segment.globalIndex}_$segmentIndex');
+
+        return _SegmentWidgetWrapper(
+          key: itemKey,
+          keepAlive: isFocused || isSelected,
+          child: paddedWidget,
         );
-      } else {
-        segmentWidget = const SizedBox.shrink();
-      }
-
-      children.add(segmentWidget);
-
-      if (i < _segments.length - 1) {
-        final nextSegment = _segments[i + 1];
-        final String currentType = segment is ImageSegment ? 'image' : (segment as TextSegment).type;
-        final String nextType = nextSegment is ImageSegment ? 'image' : (nextSegment as TextSegment).type;
-
-        final double spacing = LayoutEngine.getSpacing(prevType: currentType, nextType: nextType);
-        children.add(SizedBox(height: spacing));
-      }
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
+      },
     );
   }
 
@@ -898,50 +1160,63 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
     final textKey = _textFieldKeys[activeIdx];
     final textContext = textKey?.currentContext;
-    if (textContext == null) return;
-
-    int? prevImageGlobalIdx;
-    for (int i = _segments.length - 1; i >= 0; i--) {
-      final seg = _segments[i];
-      if (seg is TextSegment && seg.segmentIndex == activeIdx) {
-        if (i > 0 && _segments[i - 1] is ImageSegment) {
-          prevImageGlobalIdx = _segments[i - 1].globalIndex;
+    if (textContext != null) {
+      Scrollable.ensureVisible(
+        textContext,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      );
+    } else {
+      int targetSegIndex = -1;
+      for (int i = 0; i < _segments.length; i++) {
+        final seg = _segments[i];
+        if (seg is TextSegment && seg.segmentIndex == activeIdx) {
+          targetSegIndex = i;
+          break;
         }
-        break;
       }
-    }
-
-    if (prevImageGlobalIdx != null) {
-      final imgKey = _imageKeys[prevImageGlobalIdx];
-      final imgContext = imgKey?.currentContext;
-      if (imgContext != null) {
-        Scrollable.ensureVisible(
-          imgContext,
+      if (targetSegIndex != -1 && widget.scrollController != null && widget.scrollController!.hasClients) {
+        final double estimatedOffset = targetSegIndex * 35.0;
+        widget.scrollController!.animateTo(
+          estimatedOffset.clamp(0.0, widget.scrollController!.position.maxScrollExtent),
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
-          alignment: 0.05,
-        ).then((_) {
-          if (mounted) {
-            final txtContext = _textFieldKeys[activeIdx]?.currentContext;
-            if (txtContext != null) {
-              Scrollable.ensureVisible(
-                txtContext,
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOutCubic,
-                alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
-              );
-            }
-          }
-        });
-        return;
+        );
       }
     }
+  }
+}
 
-    Scrollable.ensureVisible(
-      textContext,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
-    );
+class _SegmentWidgetWrapper extends StatefulWidget {
+  final Widget child;
+  final bool keepAlive;
+  const _SegmentWidgetWrapper({
+    super.key,
+    required this.child,
+    required this.keepAlive,
+  });
+
+  @override
+  State<_SegmentWidgetWrapper> createState() => _SegmentWidgetWrapperState();
+}
+
+class _SegmentWidgetWrapperState extends State<_SegmentWidgetWrapper>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => widget.keepAlive;
+
+  @override
+  void didUpdateWidget(covariant _SegmentWidgetWrapper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.keepAlive != widget.keepAlive) {
+      updateKeepAlive();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
