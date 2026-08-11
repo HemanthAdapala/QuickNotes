@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../models/calendar_task.dart';
 import '../../models/task_item.dart';
 import '../../models/repeat_rule.dart';
@@ -20,7 +19,6 @@ import '../widgets/task_widgets_container.dart';
 import '../widgets/delete_task_confirmation_dialog.dart';
 import '../../core/animations/search_route.dart';
 import '../../core/animations/page_transitions.dart';
-import '../../core/animations/dialog_transition.dart';
 import 'search_screen.dart';
 import '../../themes/app_theme.dart';
 
@@ -368,7 +366,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             HapticFeedback.lightImpact();
                             Navigator.of(context).push(SearchRoute(
                               builder: (_) => const SearchScreen(
-                                initialScope: 'tasks',
+                                initialScope: 'all',
                               ),
                             ));
                           },

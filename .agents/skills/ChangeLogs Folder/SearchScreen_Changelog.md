@@ -1,0 +1,185 @@
+# SearchScreen Changelog
+
+All implementation details, visual design tokens, interaction mechanics, and architectural specifications for `SearchScreen` are documented in this changelog in accordance with `MasterChangelogDocumentationPolicy.md`.
+
+---
+
+## [v2.0.0] - 2026-08-11
+
+### Author
+Developer / Anti Gravity
+
+### Type
+- Feature
+- UI
+- Animation
+- Architecture
+
+---
+
+### Summary
+Redesigned `SearchScreen` into a liquid glass Apple-inspired Global Search screen based on Figma specifications ("Global Search Screen Basic"). Integrates a 44px liquid glass header bar (left `angle_left` back pill, expanded glass `TextField` search pill, right `close` pill), an animated horizontal Scope Selector Bar (`All`, `Notes`, `Tasks`, `Folders`, `Categories`) on grouped grey background (`#F2F2F7`), and a top-rounded 20px white sheet card with a top drop shadow (`BoxShadow(blurRadius: 16)`). Updated the right close button to immediately dismiss the screen when empty or clear query text when present, and updated `CalendarScreen` to default `initialScope` to `'all'`.
+
+---
+
+### Detailed Changes
+- **Liquid Glass AppHeader Bar**: Added 44px left glass pill (`angle_left.svg`), expanded glass input pill (`TextField` autofocus), and right 44px glass pill (`close_rounded`).
+- **Right Glass Button Logic**: Tapping `X` clears text if present, or immediately pops the search screen (`Navigator.of(context).pop()`) with haptics if empty.
+- **Scope Pill Selector**: Rendered 40px tall scrollable pill bar on `#F2F2F7` background. Active pill uses Accent Yellow (`#FFCC00`) with white text; inactive pills use `Color(0x28787880)` with grey text (`Color(0x993C3C43)`).
+- **Responsive Sheet Body Card**: Built a responsive `Expanded` container with `BorderRadius.vertical(top: Radius.circular(20.0))` and subtle top shadow.
+- **Recent Searches Header**: Added `"Recent Searches"` and `"Clear all"` action row inside the white card sheet.
+- **CalendarScreen Integration**: Updated top-right search button to launch `SearchScreen` with `initialScope: 'all'`.
+
+---
+
+## [v1.0.0] - 2026-08-11
+
+### Author
+Developer / Anti Gravity
+
+### Type
+- Feature
+- UI
+- Animation
+- Architecture
+- Performance
+- Documentation
+
+---
+
+### Summary
+`SearchScreen` provides a high-performance, unified, real-time search engine for QuickNotes. Accessible via the top-right search button on the Calendar Screen (`CalendarScreen`), as well as from Folder Details (`FolderNotesScreen`) and Category Details (`CategoryDetailsScreen`), it offers multi-domain query search across **Notes**, **Tasks**, **Folders**, and **Categories**. Built with a 4-state state machine (`empty`, `typing`, `results`, `noResults`), debounced typing, amber keyword highlighting, multi-dimensional filter pills, persistent recent searches via `SharedPreferences`, and liquid Apple-inspired spring animations (`SearchRoute`).
+
+---
+
+### Detailed Changes
+
+#### 1. Four-State State Machine (`_UiState`)
+`SearchScreen` transitions cleanly between four user states based on text length, query execution, and result count:
+- **`empty` (`_UiState.empty`)**:
+  - Displays persistent **Recent Searches** list (up to 8 deduplicated terms) with individual deletion (`X`) and a global **Clear all** trigger.
+  - Displays a **Browse by Category** wrap grid of interactive category chips pre-populated with default and custom active note categories, formatted with category color dots.
+  - Animated with entry fade transition (`_entryFade`).
+- **`typing` (`_UiState.typing`)**:
+  - Activated when input query length reaches 2 or more characters.
+  - Features a **300ms Timer debounce** (`_debounce`) to prevent redundant query executions on fast keypresses.
+  - Displays 5 animated shimmer skeleton placeholder rows (`_ShimmerRow`) driven by a pulsing opacity animation controller (`1200ms Curves.easeInOut`) alongside a central Amber `CircularProgressIndicator`.
+- **`results` (`_UiState.results`)**:
+  - Real-time client-side search executed against `NotesProvider.allActiveNotes`, `TasksProvider.tasks`, `NotesProvider.folders`, and system category lists.
+  - Results are rendered in grouped, labelled sections: **NOTES**, **TASKS**, **FOLDERS**, and **CATEGORIES**.
+  - Includes interactive result count badges (`_SectionHeader`) next to monospace section titles (`GoogleFonts.jetBrainsMono`).
+  - Staggered list entrance animations utilizing `AnimatedListEntrance` keyed with result generation IDs (`_resultGeneration`).
+  - Matching text strings in titles and preview snippets are dynamically highlighted using Amber background spans (`_buildHighlightSpans`).
+  - Tapping a successful search automatically saves/prepends the query string into persistent recent searches (`RecentSearchesService`).
+- **`noResults` (`_UiState.noResults`)**:
+  - Displayed when no matching entities are found after filtering.
+  - Features an empty-state search icon badge with a close indicator.
+  - Offers immediate recovery actions via **Ghost Chips** (`_GhostChip`): `Clear filters` and `Search in all folders`.
+  - Includes a **"CREATE NEW"** card allowing the user to instantly launch `NoteEditorScreen` pre-seeded with the search query as the new note title.
+
+#### 2. Scope & Filter Engine
+- **Horizontal Scope Pills (`_buildScopePills`)**:
+  - Filters displayed entities by scope: `All`, `Notes`, `Tasks`, `Folders`, `Categories` (`_Scope` enum).
+  - Tapping triggers tactile haptic feedback (`HapticFeedback.selectionClick()`) and updates state smoothly.
+- **Contextual Pre-Filtering**:
+  - Accepts initial configuration parameters: `initialScope` (e.g. `'tasks'` when launched from Calendar Screen), `presetFolder`, and `presetCategory`.
+- **Secondary Multi-Dimensional Filter Bar (`_buildFilterBar`)**:
+  - **Folder Filter**: Modal bottom-sheet (`_showFolderPicker`) to isolate search to specific user folders.
+  - **Category Filter**: Modal bottom-sheet (`_showCategoryPicker`) to isolate search to specific categories.
+  - **Date Range Filter**: Modal bottom-sheet (`_showDatePicker`) filtering notes/tasks by `allTime`, `today`, `thisWeek`, or `thisMonth`.
+
+#### 3. Persistent Recent Searches (`RecentSearchesService`)
+- Singleton service (`RecentSearchesService.instance`) managing `quick_notes_recent_searches` key in `SharedPreferences`.
+- Deduplicates search terms, prepends most recent searches, and caps storage at 8 items.
+- Provides atomic methods: `load()`, `addSearch(term)`, `removeSearch(term)`, and `clearAll()`.
+
+#### 4. Navigation & Page Transition (`SearchRoute`)
+- Customized page route (`SearchRoute`) extending `PageRouteBuilder`.
+- Slide-up entrance from `Offset(0.0, 1.0)` to `Offset.zero` with `kCurveEnter` combined with fade transition over `kDurationNormal` (300ms).
+- Quick reverse exit transition over `kDurationFast` (150ms).
+
+#### 5. Visual & Design Tokens
+- **Background**: `#FFFFFF` (`_kBg`).
+- **Primary Ink**: `#333333` (`_kInk`).
+- **Accent Amber**: `#FFCC00` / `#FFA322` (`_kAmber`).
+- **Placeholder**: `#73333333` (`_kPlaceholder`).
+- **Typography**: `GoogleFonts.inter` for body and inputs, `GoogleFonts.jetBrainsMono` for section labels, and `GoogleFonts.playfairDisplay` for titles.
+- **Corner Radii**: `16.0px` (`_kBorderRadius`) for cards, `20.0px` for search bar and scope chips.
+
+---
+
+### Why Was This Change Made?
+1. **Unified Search Experience**: Previously, note browsing and task lookups were fragmented across individual views. `SearchScreen` provides a single entry point for querying the entire application.
+2. **Calendar Screen Integration**: Users viewing scheduled tasks on the Calendar Screen required a fast mechanism to locate specific tasks and related notes without returning to the home tab.
+3. **UX Efficiency**: Debounced typing, recent searches history, and instant keyword highlighting minimize friction when locating notes and tasks.
+
+---
+
+### Architecture Impact
+- **Navigation**: Uses custom `SearchRoute` slide-up transitions. Opened from Calendar Screen (`calendar_screen.dart`), Folder Screen (`folder_notes_screen.dart`), and Category Screen (`category_details_screen.dart`).
+- **State Management**: Consumes `NotesProvider` and `TasksProvider` via Provider without mutating underlying note/task models.
+- **Storage & Persistence**: Integrates `RecentSearchesService` backed by `SharedPreferences`.
+- **Performance**: Client-side single-pass filtering with 300ms debounce prevents unnecessary CPU/re-render churn.
+
+---
+
+### Files Created
+- `lib/views/screens/search_screen.dart`
+- `lib/services/recent_searches_service.dart`
+- `lib/core/animations/search_route.dart`
+- `.agents/skills/ChangeLogs Folder/SearchScreen_Changelog.md`
+
+---
+
+### Files Modified
+- `lib/views/screens/calendar_screen.dart`: Connected top-right search glass pill button to navigate to `SearchScreen(initialScope: 'tasks')`.
+- `lib/views/screens/note_calendar_screen.dart`: Wired search navigation.
+- `lib/views/screens/folder_notes_screen.dart`: Wired preset folder search navigation.
+- `lib/views/screens/category_details_screen.dart`: Wired preset category search navigation.
+
+---
+
+### Dependencies Added
+- `shared_preferences` (for recent searches storage)
+- `intl` (for date formatting)
+- `google_fonts` (for Inter & JetBrains Mono typography)
+- `provider` (for reading `NotesProvider` and `TasksProvider` state)
+
+---
+
+### Breaking Changes
+None.
+
+---
+
+### Migration Notes
+None required.
+
+---
+
+### Future Improvements
+- Add global full-text indexing for note body text inside SQLite DB (`FTS5`).
+- Support voice query input integration.
+- Include image attachment alt-text matching.
+
+---
+
+### Known Issues
+None.
+
+---
+
+### Testing Status
+- **Manual Tests**:
+  - Opened search from Calendar Screen top-right search button (verified initial scope set to `tasks`).
+  - Tested search queries across Notes, Tasks, Folders, and Categories.
+  - Verified amber text highlight rendering.
+  - Verified 300ms debounce and shimmer loading placeholders.
+  - Tested adding, deleting, and clearing recent search items.
+  - Tested "CREATE NEW" note action when search returns no results.
+- **Automated Tests**: Verified via app build and test suite pass.
+
+---
+
+### Final Result
+`SearchScreen` is fully operational, fully integrated with Calendar Screen and other views, and documented in detail in accordance with the project's master documentation policy.
