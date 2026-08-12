@@ -1107,97 +1107,100 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     final int selStart = hasActiveSelection ? selection.start : -1;
     final int selEnd = hasActiveSelection ? selection.end : -1;
 
-    return ListView.builder(
-      controller: widget.scrollController,
-      padding: widget.padding ?? EdgeInsets.zero,
-      physics: widget.physics,
-      shrinkWrap: widget.shrinkWrap || widget.scrollController == null,
-      cacheExtent: 1500.0,
-      itemCount: itemCount,
-      itemBuilder: (context, index) {
-        if (hasHeader && index == 0) {
-          return widget.header!;
-        }
+    return Focus(
+      focusNode: widget.focusNode,
+      child: ListView.builder(
+        controller: widget.scrollController,
+        padding: widget.padding ?? EdgeInsets.zero,
+        physics: widget.physics,
+        shrinkWrap: widget.shrinkWrap || widget.scrollController == null,
+        cacheExtent: 1500.0,
+        itemCount: itemCount,
+        itemBuilder: (context, index) {
+          if (hasHeader && index == 0) {
+            return widget.header!;
+          }
 
-        final int segmentIndex = index - headerOffset;
-        final segment = _segments[segmentIndex];
+          final int segmentIndex = index - headerOffset;
+          final segment = _segments[segmentIndex];
 
-        Widget segmentWidget;
-        bool isFocused = false;
-        bool isSelected = false;
+          Widget segmentWidget;
+          bool isFocused = false;
+          bool isSelected = false;
 
-        if (hasActiveSelection) {
+          if (hasActiveSelection) {
+            if (segment is TextSegment) {
+              final bool isStart = selStart >= segment.start && selStart <= segment.end;
+              final bool isEnd = selEnd >= segment.start && selEnd <= segment.end;
+              isSelected = isStart || isEnd;
+            } else if (segment is ImageSegment) {
+              final bool isStart = selStart == segment.globalIndex;
+              final bool isEnd = selEnd == segment.globalIndex;
+              isSelected = isStart || isEnd;
+            }
+          }
+
           if (segment is TextSegment) {
-            final bool isStart = selStart >= segment.start && selStart <= segment.end;
-            final bool isEnd = selEnd >= segment.start && selEnd <= segment.end;
-            isSelected = isStart || isEnd;
+            segmentWidget = _buildTextSegmentWidget(segment);
+            final fn = focusNodes[segment.segmentIndex];
+            if (fn != null && fn.hasFocus) {
+              isFocused = true;
+            }
           } else if (segment is ImageSegment) {
-            final bool isStart = selStart == segment.globalIndex;
-            final bool isEnd = selEnd == segment.globalIndex;
-            isSelected = isStart || isEnd;
-          }
-        }
-
-        if (segment is TextSegment) {
-          segmentWidget = _buildTextSegmentWidget(segment);
-          final fn = focusNodes[segment.segmentIndex];
-          if (fn != null && fn.hasFocus) {
-            isFocused = true;
-          }
-        } else if (segment is ImageSegment) {
-          final key = _imageKeys.putIfAbsent(segment.globalIndex, () => GlobalKey());
-          isFocused = _selectedImageGlobalIndex == segment.globalIndex;
-          segmentWidget = KeyedSubtree(
-            key: key,
-            child: NewImageWidget(
-              imagePath: segment.imageUrl,
-              width: segment.width,
-              caption: segment.caption,
-              isSelected: isFocused,
-              onTap: () {
-                setState(() {
-                  if (_selectedImageGlobalIndex == segment.globalIndex) {
-                    _selectedImageGlobalIndex = null;
-                  } else {
-                    _selectedImageGlobalIndex = segment.globalIndex;
-                    for (final node in focusNodes.values) {
-                      node.unfocus();
+            final key = _imageKeys.putIfAbsent(segment.globalIndex, () => GlobalKey());
+            isFocused = _selectedImageGlobalIndex == segment.globalIndex;
+            segmentWidget = KeyedSubtree(
+              key: key,
+              child: NewImageWidget(
+                imagePath: segment.imageUrl,
+                width: segment.width,
+                caption: segment.caption,
+                isSelected: isFocused,
+                onTap: () {
+                  setState(() {
+                    if (_selectedImageGlobalIndex == segment.globalIndex) {
+                      _selectedImageGlobalIndex = null;
+                    } else {
+                      _selectedImageGlobalIndex = segment.globalIndex;
+                      for (final node in focusNodes.values) {
+                        node.unfocus();
+                      }
+                      widget.controller.selection = TextSelection.collapsed(offset: segment.globalIndex);
                     }
-                    widget.controller.selection = TextSelection.collapsed(offset: segment.globalIndex);
-                  }
-                });
-              },
-              onResize: (newWidth) => _resizeImage(segment.globalIndex, newWidth),
-              onDelete: () => _deleteImage(segment.globalIndex),
-            ),
+                  });
+                },
+                onResize: (newWidth) => _resizeImage(segment.globalIndex, newWidth),
+                onDelete: () => _deleteImage(segment.globalIndex),
+              ),
+            );
+          } else {
+            segmentWidget = const SizedBox.shrink();
+          }
+
+          double bottomSpacing = 0.0;
+          if (segmentIndex < _segments.length - 1) {
+            final nextSegment = _segments[segmentIndex + 1];
+            final String currentType = segment is ImageSegment ? 'image' : (segment as TextSegment).type;
+            final String nextType = nextSegment is ImageSegment ? 'image' : (nextSegment as TextSegment).type;
+            bottomSpacing = LayoutEngine.getSpacing(prevType: currentType, nextType: nextType);
+          }
+
+          final paddedWidget = bottomSpacing > 0
+              ? Padding(
+                  padding: EdgeInsets.only(bottom: bottomSpacing),
+                  child: segmentWidget,
+                )
+              : segmentWidget;
+
+          final itemKey = ValueKey('seg_${segment.globalIndex}_$segmentIndex');
+
+          return _SegmentWidgetWrapper(
+            key: itemKey,
+            keepAlive: isFocused || isSelected,
+            child: paddedWidget,
           );
-        } else {
-          segmentWidget = const SizedBox.shrink();
-        }
-
-        double bottomSpacing = 0.0;
-        if (segmentIndex < _segments.length - 1) {
-          final nextSegment = _segments[segmentIndex + 1];
-          final String currentType = segment is ImageSegment ? 'image' : (segment as TextSegment).type;
-          final String nextType = nextSegment is ImageSegment ? 'image' : (nextSegment as TextSegment).type;
-          bottomSpacing = LayoutEngine.getSpacing(prevType: currentType, nextType: nextType);
-        }
-
-        final paddedWidget = bottomSpacing > 0
-            ? Padding(
-                padding: EdgeInsets.only(bottom: bottomSpacing),
-                child: segmentWidget,
-              )
-            : segmentWidget;
-
-        final itemKey = ValueKey('seg_${segment.globalIndex}_$segmentIndex');
-
-        return _SegmentWidgetWrapper(
-          key: itemKey,
-          keepAlive: isFocused || isSelected,
-          child: paddedWidget,
-        );
-      },
+        },
+      ),
     );
   }
 
