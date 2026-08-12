@@ -4,6 +4,34 @@ All implementation details, visual design tokens, interaction mechanics, and arc
 
 ---
 
+## [v2.5.0] - 2026-08-12
+
+### Author
+Developer / Anti Gravity
+
+### Type
+- Feature
+- Animation
+- UI
+
+---
+
+### Summary
+Implemented Apple iOS 18 Sheet Slide & In-Place Glass Expansion transition for `SearchScreen` with 100% pixel-locked header bar geometry, and added In-Editor Local Text Search inside `NoteEditorScreen`.
+
+---
+
+### Detailed Changes
+- **Pixel-Locked Header Bar**: Locked top header bar padding in `SearchScreen` to `EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0)` matching all primary app screens, eliminating header icon shifting.
+- **Apple iOS 18 Transition**: Added `TweenAnimationBuilder` slide (+36px -> 0px) and opacity fade for the Scope Pill Bar and Body Sheet Card under the fixed top glass header bar.
+- **In-Editor Local Search (`NoteEditorScreen`)**:
+  - Integrated "Find in Note" menu item into `NoteEditorOptionsPopup`.
+  - Added inline Liquid Glass Search Bar overlay at `top: 12.0, left: 24.0, right: 24.0` inside `NoteEditorScreen`.
+  - Real-time in-note text searching with match counter badge (`1 / N`).
+  - Next (`▼`) and Previous (`▲`) match stepping controls.
+
+---
+
 ## [v2.4.0] - 2026-08-12
 
 ### Author

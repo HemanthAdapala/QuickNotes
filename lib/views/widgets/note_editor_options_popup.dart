@@ -14,6 +14,7 @@ class NoteEditorOptionsPopup extends StatelessWidget {
   final bool isFavorite;
   final VoidCallback? onTogglePin;
   final VoidCallback? onToggleFavorite;
+  final VoidCallback? onFindInNote;
   final VoidCallback? onExportAndShare;
   final VoidCallback? onDeleteNote;
 
@@ -23,6 +24,7 @@ class NoteEditorOptionsPopup extends StatelessWidget {
     required this.isFavorite,
     this.onTogglePin,
     this.onToggleFavorite,
+    this.onFindInNote,
     this.onExportAndShare,
     this.onDeleteNote,
   });
@@ -100,7 +102,7 @@ class NoteEditorOptionsPopup extends StatelessWidget {
 
     return SizedBox(
       width: 192,
-      height: 200,
+      height: 250,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,7 +131,19 @@ class NoteEditorOptionsPopup extends StatelessWidget {
             hasBottomDivider: true,
           ),
 
-          // 3. Export and Share
+          // 3. Find in Note
+          _buildMenuItem(
+            icon: const Icon(
+              Icons.search_rounded,
+              size: 16,
+              color: textColor,
+            ),
+            label: 'Find in Note',
+            onTap: onFindInNote,
+            hasBottomDivider: true,
+          ),
+
+          // 4. Export and Share
           _buildMenuItem(
             icon: const Icon(
               Icons.share_rounded,
