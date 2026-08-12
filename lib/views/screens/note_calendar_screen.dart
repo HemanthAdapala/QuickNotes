@@ -15,8 +15,8 @@ import '../widgets/app_header_bar.dart';
 import 'note_editor_screen.dart';
 import 'create_task_screen.dart';
 import '../../core/animations/page_transitions.dart';
-import '../../core/animations/search_route.dart';
 import 'search_screen.dart';
+import '../../core/animations/search_transition_routes.dart';
 import '../../core/animations/dialog_transition.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -310,7 +310,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                    settleDuration: const Duration(milliseconds: 1000),
                    onTap: () {
                      HapticFeedback.lightImpact();
-                     Navigator.of(context).push(SearchRoute(
+                     Navigator.of(context).push(buildSearchTransitionRoute(
                        builder: (_) => const SearchScreen(
                          initialScope: 'tasks',
                        ),

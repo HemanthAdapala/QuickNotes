@@ -17,7 +17,7 @@ import '../../models/folder.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/animated_list_entrance.dart';
 import '../../core/animations/page_transitions.dart';
-import '../../core/animations/search_route.dart';
+import '../../core/animations/search_transition_routes.dart';
 import 'search_screen.dart';
 import '../../core/animations/bottom_sheet_transition.dart';
 import '../../core/animations/dialog_transition.dart';
@@ -898,7 +898,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                   settleDuration: const Duration(milliseconds: 1000),
                                   onTap: () {
                                     HapticFeedback.lightImpact();
-                                    Navigator.of(context).push(SearchRoute(
+                                    Navigator.of(context).push(buildSearchTransitionRoute(
                                       builder: (_) => SearchScreen(
                                         initialScope: 'notes',
                                         presetFolder: widget.folder.id,

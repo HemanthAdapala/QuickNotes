@@ -19,6 +19,7 @@ import '../widgets/folder_card.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/page_transitions.dart';
 import 'search_screen.dart';
+import '../../core/animations/search_transition_routes.dart';
 
 
 class FolderManagementScreen extends StatefulWidget {
@@ -535,7 +536,9 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                             HapticFeedback.selectionClick();
                             Navigator.push(
                               context,
-                              buildPageRoute(const SearchScreen(initialScope: 'notes')),
+                              buildSearchTransitionRoute(
+                                builder: (_) => const SearchScreen(initialScope: 'notes'),
+                              ),
                             );
                           },
                           child: const Center(

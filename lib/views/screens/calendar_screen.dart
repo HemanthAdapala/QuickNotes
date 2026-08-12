@@ -17,9 +17,9 @@ import '../widgets/month_container.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/task_widgets_container.dart';
 import '../widgets/delete_task_confirmation_dialog.dart';
-import '../../core/animations/search_route.dart';
 import '../../core/animations/page_transitions.dart';
 import 'search_screen.dart';
+import '../../core/animations/search_transition_routes.dart';
 import '../../themes/app_theme.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -364,7 +364,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           settleDuration: const Duration(milliseconds: 1000),
                           onTap: () {
                             HapticFeedback.selectionClick();
-                            Navigator.of(context).push(SearchRoute(
+                            Navigator.of(context).push(buildSearchTransitionRoute(
                               builder: (_) => const SearchScreen(
                                 initialScope: 'tasks',
                               ),
