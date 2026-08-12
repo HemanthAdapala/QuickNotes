@@ -23,22 +23,17 @@ import '../widgets/home_prompt_view.dart';
 import 'profile_screen.dart';
 import 'note_editor_screen.dart';
 import 'folder_management_screen.dart';
-import '../widgets/delete_confirmation_dialog.dart';
 import 'settings_screen.dart';
+import 'search_screen.dart';
 import 'calendar_screen.dart';
 import 'create_task_screen.dart';
-import '../widgets/create_task_bottom_sheet.dart';
 import '../widgets/celebration_overlay.dart';
 import '../widgets/app_header_bar.dart';
-import '../widgets/more_options_popup.dart';
 import '../widgets/notes_and_task_pill.dart';
 import '../widgets/task_widget.dart';
 import '../widgets/notes_stack_widget.dart';
-import '../widgets/more_options_popup.dart';
-import '../../core/animations/glass_popup_route.dart';
 import '../../models/task_item.dart';
 import '../../models/note.dart';
-import '../../models/folder.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Calendar tab content
@@ -752,50 +747,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
                   child: AppHeaderBar(
-                    isExpanded: _isMoreOptionsOpen,
-                    expandedWidth: 192.0,
-                    expandedHeight: 100.0,
-                    expandedChild: MoreOptionsPopup(
-                      onDeleteData: () async {
-                        setState(() => _isMoreOptionsOpen = false);
-                        final confirm = await showDeleteNoteDialog(
-                          context,
-                          title: 'Delete Data',
-                          message: 'Are you sure you want to delete\nall notes and tasks? This action\ncannot be undone',
-                        );
-                        if (confirm == true && mounted) {
-                          final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-                          final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-                          for (final note in List<Note>.from(notesProvider.notes)) {
-                            await notesProvider.deleteNote(note.id);
-                          }
-                          for (final task in List<TaskItem>.from(tasksProvider.tasks)) {
-                            await tasksProvider.deleteTask(task.id);
-                          }
-                          for (final folder in List<Folder>.from(notesProvider.folders)) {
-                            await notesProvider.deleteFolder(folder.id);
-                          }
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('All data deleted successfully.')),
-                            );
-                          }
-                        }
-                      },
-                      onRefresh: () async {
-                        setState(() => _isMoreOptionsOpen = false);
-                        final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-                        final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-                        await notesProvider.loadFolders();
-                        await notesProvider.loadNotes();
-                        await tasksProvider.loadTasks();
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Data refreshed.')),
-                          );
-                        }
-                      },
-                    ),
+                    rightHeroTag: 'hero_home_search',
                     leftWidth: 44.0,
                     onLeftTap: () {
                       HapticFeedback.selectionClick();
@@ -838,42 +790,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       settleDuration: const Duration(milliseconds: 1000),
                       onTap: () {
                         HapticFeedback.selectionClick();
-                        setState(() {
-                          _isMoreOptionsOpen = !_isMoreOptionsOpen;
-                        });
+                        Navigator.push(
+                          context,
+                          buildPageRoute(const SearchScreen(initialScope: 'all')),
+                        );
                       },
                       child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 5.0,
-                              height: 5.0,
-                              decoration: BoxDecoration(
-                                color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4.0),
-                            Container(
-                              width: 5.0,
-                              height: 5.0,
-                              decoration: BoxDecoration(
-                                color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4.0),
-                            Container(
-                              width: 5.0,
-                              height: 5.0,
-                              decoration: BoxDecoration(
-                                color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1C1C1E).withValues(alpha: 0.8),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
+                        child: Icon(
+                          Icons.search_rounded,
+                          color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white : const Color(0xFF1C1C1E),
+                          size: 22,
                         ),
                       ),
                     ),

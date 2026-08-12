@@ -14,6 +14,11 @@ import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/notes_provider.dart';
 import 'experimental/sde_drag_test_screen.dart';
+import '../widgets/more_options_popup.dart';
+import '../widgets/delete_confirmation_dialog.dart';
+import '../../models/note.dart';
+import '../../models/task_item.dart';
+import '../../models/folder.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -36,6 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _username = 'byhmnth';
   String? _imagePath;
   bool _isDummyDarkMode = true;
+  bool _isMoreOptionsOpen = false;
 
   @override
   void initState() {
@@ -129,6 +135,97 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     fontWeight: FontWeight.w700,
                     height: 0.70,
                     letterSpacing: -0.43,
+                  ),
+                ),
+                rightHeroTag: 'hero_settings_more',
+                rightWidth: 44.0,
+                isExpanded: _isMoreOptionsOpen,
+                expandedWidth: 192.0,
+                expandedHeight: 100.0,
+                expandedChild: MoreOptionsPopup(
+                  onDeleteData: () async {
+                    setState(() => _isMoreOptionsOpen = false);
+                    final confirm = await showDeleteNoteDialog(
+                      context,
+                      title: 'Delete Data',
+                      message: 'Are you sure you want to delete\nall notes and tasks? This action\ncannot be undone',
+                    );
+                    if (confirm == true && mounted) {
+                      final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+                      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                      for (final note in List<Note>.from(notesProvider.notes)) {
+                        await notesProvider.deleteNote(note.id);
+                      }
+                      for (final task in List<TaskItem>.from(tasksProvider.tasks)) {
+                        await tasksProvider.deleteTask(task.id);
+                      }
+                      for (final folder in List<Folder>.from(notesProvider.folders)) {
+                        await notesProvider.deleteFolder(folder.id);
+                      }
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('All data deleted successfully.')),
+                        );
+                      }
+                    }
+                  },
+                  onRefresh: () async {
+                    setState(() => _isMoreOptionsOpen = false);
+                    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+                    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                    await notesProvider.loadFolders();
+                    await notesProvider.loadNotes();
+                    await tasksProvider.loadTasks();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Data refreshed.')),
+                      );
+                    }
+                  },
+                ),
+                rightChild: TactileButton(
+                  useAppleSpring: true,
+                  compressionScale: 0.7,
+                  settleDuration: const Duration(milliseconds: 1000),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _isMoreOptionsOpen = !_isMoreOptionsOpen;
+                    });
+                  },
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 5.0,
+                          height: 5.0,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4.0),
+                        Container(
+                          width: 5.0,
+                          height: 5.0,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4.0),
+                        Container(
+                          width: 5.0,
+                          height: 5.0,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

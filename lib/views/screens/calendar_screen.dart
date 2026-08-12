@@ -363,10 +363,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           compressionScale: 0.7,
                           settleDuration: const Duration(milliseconds: 1000),
                           onTap: () {
-                            HapticFeedback.lightImpact();
+                            HapticFeedback.selectionClick();
                             Navigator.of(context).push(SearchRoute(
                               builder: (_) => const SearchScreen(
-                                initialScope: 'all',
+                                initialScope: 'tasks',
                               ),
                             ));
                           },

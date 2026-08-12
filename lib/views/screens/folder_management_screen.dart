@@ -17,6 +17,8 @@ import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/blurred_bottom_sheet.dart';
 import '../widgets/folder_card.dart';
 import '../../themes/app_theme.dart';
+import '../../core/animations/page_transitions.dart';
+import 'search_screen.dart';
 
 
 class FolderManagementScreen extends StatefulWidget {
@@ -518,26 +520,30 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                     top: 0,
                     width: 44.0,
                     height: 44.0,
-                    child: BottomBarGlassSurface(
-                      width: 44.0,
-                      height: 44.0,
-                      borderRadius: BorderRadius.circular(22.0),
-                      useFrost: true,
-                      child: TactileButton(
-                        useAppleSpring: true,
-                        compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          setState(() {
-                            _isSearchExpanded = true;
-                          });
-                        },
-                        child: const Center(
-                          child: Icon(
-                            Icons.search_rounded,
-                            color: Color(0xFF1C1C1E),
-                            size: 22,
+                    child: Hero(
+                      tag: 'hero_folders_search',
+                      child: BottomBarGlassSurface(
+                        width: 44.0,
+                        height: 44.0,
+                        borderRadius: BorderRadius.circular(22.0),
+                        useFrost: true,
+                        child: TactileButton(
+                          useAppleSpring: true,
+                          compressionScale: 0.7,
+                          settleDuration: const Duration(milliseconds: 1000),
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            Navigator.push(
+                              context,
+                              buildPageRoute(const SearchScreen(initialScope: 'notes')),
+                            );
+                          },
+                          child: const Center(
+                            child: Icon(
+                              Icons.search_rounded,
+                              color: Color(0xFF1C1C1E),
+                              size: 22,
+                            ),
                           ),
                         ),
                       ),

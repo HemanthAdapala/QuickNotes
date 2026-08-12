@@ -4,6 +4,34 @@ All implementation details, visual design tokens, interaction mechanics, and arc
 
 ---
 
+## [v2.4.0] - 2026-08-12
+
+### Author
+Developer / Anti Gravity
+
+### Type
+- Feature
+- UI
+- Refactor
+
+---
+
+### Summary
+Made Search Screen universally accessible from all primary tabs (Home, Folders, Calendar) except Settings with standardized 44x44 liquid glass Search buttons, contextual default scope pills (`All` for Home, `Notes` for Folders, `Tasks` for Calendar), and relocated the 3-dots `MoreOptionsPopup` to the Settings Screen.
+
+---
+
+### Detailed Changes
+- **Universal Search Glass Button**: Replaced the 3-dots header button in `HomeScreen` with a 44x44 liquid glass Search button (`BottomBarGlassSurface` + `TactileButton` + `Icons.search_rounded`).
+- **Contextual Default Scope Pills**:
+  - Home tab opens `SearchScreen(initialScope: 'all')` (default active scope pill: **All**).
+  - Folders tab opens `SearchScreen(initialScope: 'notes')` (default active scope pill: **Notes**).
+  - Calendar tab opens `SearchScreen(initialScope: 'tasks')` (default active scope pill: **Tasks**).
+- **Settings Screen Header Action**: Relocated the 3-dots `MoreOptionsPopup` menu (with "Delete Data" and "Refresh Data" options) to `SettingsScreen`'s top-right header action bar. Settings Screen explicitly excludes the Search button.
+- **Hero Tag Disambiguation**: Applied unique Hero tags (`hero_home_search`, `hero_folders_search`, `hero_settings_more`) across `IndexedStack` tabs to prevent Hero animation conflicts.
+
+---
+
 ## [v2.3.0] - 2026-08-11
 
 ### Author
