@@ -834,6 +834,8 @@ class RichTextEditingController extends TextEditingController {
     final cacheKey = '$url-$index';
     return _imageKeyCache.putIfAbsent(cacheKey, () => GlobalKey());
   }
+  String searchQuery = '';
+  TextRange? activeMatchRange;
   Style currentActiveStyle = const Style();
   VoidCallback? onStyleChanged;
   void Function(int index)? onReplaceImage;
@@ -2127,26 +2129,16 @@ class RichTextEditingController extends TextEditingController {
               handleUrlLaunch(currentStyle.linkUrl!);
             };
           _recognizers.add(recognizer);
-          children.add(TextSpan(
-            text: textRun,
-            style: linkStyle,
-            recognizer: recognizer,
-          ));
+          _addSearchHighlightedSpans(children, textRun, start, linkStyle, recognizer);
         } else {
           final urlMatches = findUrlMatches(textRun);
           if (urlMatches.isEmpty) {
-            children.add(TextSpan(
-              text: textRun,
-              style: runStyle,
-            ));
+            _addSearchHighlightedSpans(children, textRun, start, runStyle, null);
           } else {
             int lastIndex = 0;
             for (final match in urlMatches) {
               if (match.start > lastIndex) {
-                children.add(TextSpan(
-                  text: textRun.substring(lastIndex, match.start),
-                  style: runStyle,
-                ));
+                _addSearchHighlightedSpans(children, textRun.substring(lastIndex, match.start), start + lastIndex, runStyle, null);
               }
               final url = match.group(0)!;
               final linkStyle = runStyle.copyWith(
@@ -2158,18 +2150,11 @@ class RichTextEditingController extends TextEditingController {
                   handleUrlLaunch(url);
                 };
               _recognizers.add(recognizer);
-              children.add(TextSpan(
-                text: url,
-                style: linkStyle,
-                recognizer: recognizer,
-              ));
+              _addSearchHighlightedSpans(children, url, start + match.start, linkStyle, recognizer);
               lastIndex = match.end;
             }
             if (lastIndex < textRun.length) {
-              children.add(TextSpan(
-                text: textRun.substring(lastIndex),
-                style: runStyle,
-              ));
+              _addSearchHighlightedSpans(children, textRun.substring(lastIndex), start + lastIndex, runStyle, null);
             }
           }
         }
@@ -2177,6 +2162,64 @@ class RichTextEditingController extends TextEditingController {
     }
 
     return TextSpan(children: children, style: baseStyle);
+  }
+
+  void _addSearchHighlightedSpans(
+    List<InlineSpan> children,
+    String textRun,
+    int globalStart,
+    TextStyle runStyle,
+    GestureRecognizer? recognizer,
+  ) {
+    final query = searchQuery.trim().toLowerCase();
+    if (query.isEmpty || textRun.isEmpty) {
+      children.add(TextSpan(text: textRun, style: runStyle, recognizer: recognizer));
+      return;
+    }
+
+    final lowerRun = textRun.toLowerCase();
+    int current = 0;
+    int idx;
+
+    while ((idx = lowerRun.indexOf(query, current)) != -1) {
+      if (idx > current) {
+        children.add(TextSpan(
+          text: textRun.substring(current, idx),
+          style: runStyle,
+          recognizer: recognizer,
+        ));
+      }
+
+      final matchEnd = idx + query.length;
+      final globalMatchStart = globalStart + idx;
+      final globalMatchEnd = globalStart + matchEnd;
+
+      final isActive = activeMatchRange != null &&
+          activeMatchRange!.start == globalMatchStart &&
+          activeMatchRange!.end == globalMatchEnd;
+
+      final highlightStyle = runStyle.copyWith(
+        backgroundColor: isActive ? const Color(0xFFFF9800) : const Color(0xFFFFE082),
+        color: isActive ? Colors.black : const Color(0xFF1C1C1E),
+        fontWeight: FontWeight.bold,
+      );
+
+      children.add(TextSpan(
+        text: textRun.substring(idx, matchEnd),
+        style: highlightStyle,
+        recognizer: recognizer,
+      ));
+
+      current = matchEnd;
+    }
+
+    if (current < textRun.length) {
+      children.add(TextSpan(
+        text: textRun.substring(current),
+        style: runStyle,
+        recognizer: recognizer,
+      ));
+    }
   }
 
   List<RegExpMatch> findUrlMatches(String text) {

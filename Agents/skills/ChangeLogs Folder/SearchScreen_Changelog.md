@@ -27,8 +27,10 @@ Implemented Apple iOS 18 Sheet Slide & In-Place Glass Expansion transition for `
 - **In-Editor Local Search (`NoteEditorScreen`)**:
   - Integrated "Find in Note" menu item into `NoteEditorOptionsPopup`.
   - Added inline Liquid Glass Search Bar overlay at `top: 12.0, left: 24.0, right: 24.0` inside `NoteEditorScreen`.
-  - Real-time in-note text searching with match counter badge (`1 / N`).
-  - Next (`▼`) and Previous (`▲`) match stepping controls.
+  - Real-time live in-note text highlighting across Note Title (`_TitleTextEditingController`) and Note Body (`RichTextEditingController`):
+    - All matched occurrences highlight in amber/yellow (`#FFE082`).
+    - The active focused match highlights in bright orange (`#FFFF9800`) with black text.
+  - Tapping Next (`▼`) and Previous (`▲`) arrows steps through match occurrences, selects the matched character range, and automatically scrolls `_scrollController` to display the active match in the editor viewport.
 
 ---
 

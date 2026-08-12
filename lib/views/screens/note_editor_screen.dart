@@ -62,7 +62,22 @@ class NoteEditorScreen extends StatefulWidget {
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
 }
 
+class _LocalSearchMatch {
+  final bool isTitle;
+  final int start;
+  final int end;
+
+  const _LocalSearchMatch({
+    required this.isTitle,
+    required this.start,
+    required this.end,
+  });
+}
+
 class _TitleTextEditingController extends TextEditingController {
+  String searchQuery = '';
+  TextRange? activeMatchRange;
+
   _TitleTextEditingController({super.text});
 
   @override
@@ -75,6 +90,39 @@ class _TitleTextEditingController extends TextEditingController {
       decoration: TextDecoration.none,
       fontStyle: FontStyle.normal,
     ) ?? const TextStyle(decoration: TextDecoration.none, fontStyle: FontStyle.normal);
+
+    final query = searchQuery.trim().toLowerCase();
+    if (query.isNotEmpty && text.isNotEmpty) {
+      final List<TextSpan> spans = [];
+      final lowerText = text.toLowerCase();
+      int start = 0;
+      int matchIdx;
+
+      while ((matchIdx = lowerText.indexOf(query, start)) != -1) {
+        if (matchIdx > start) {
+          spans.add(TextSpan(text: text.substring(start, matchIdx), style: cleanStyle));
+        }
+        final matchEnd = matchIdx + query.length;
+        final isActive = activeMatchRange != null &&
+            activeMatchRange!.start == matchIdx &&
+            activeMatchRange!.end == matchEnd;
+
+        final highlightStyle = cleanStyle.copyWith(
+          backgroundColor: isActive ? const Color(0xFFFF9800) : const Color(0xFFFFE082),
+          color: isActive ? Colors.black : const Color(0xFF1C1C1E),
+          fontWeight: FontWeight.bold,
+        );
+
+        spans.add(TextSpan(text: text.substring(matchIdx, matchEnd), style: highlightStyle));
+        start = matchEnd;
+      }
+
+      if (start < text.length) {
+        spans.add(TextSpan(text: text.substring(start), style: cleanStyle));
+      }
+
+      return TextSpan(style: cleanStyle, children: spans);
+    }
 
     if (!value.composing.isValid || !withComposing) {
       return TextSpan(style: cleanStyle, text: text);
@@ -3309,20 +3357,103 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     );
   }
 
-  Widget _buildLocalSearchBar() {
-    final query = _localSearchCtrl.text.toLowerCase().trim();
-    int totalMatches = 0;
-    if (query.isNotEmpty) {
-      if (_titleController.text.toLowerCase().contains(query)) {
-        totalMatches++;
-      }
-      final contentText = _contentController.text.toLowerCase();
-      int index = 0;
-      while ((index = contentText.indexOf(query, index)) != -1) {
-        totalMatches++;
-        index += query.length;
-      }
+  List<_LocalSearchMatch> _getLocalMatches() {
+    final query = _localSearchCtrl.text.trim().toLowerCase();
+    if (query.isEmpty) return [];
+
+    final List<_LocalSearchMatch> matches = [];
+
+    // Title matches
+    final titleText = _titleController.text.toLowerCase();
+    int idx = 0;
+    while ((idx = titleText.indexOf(query, idx)) != -1) {
+      matches.add(_LocalSearchMatch(
+        isTitle: true,
+        start: idx,
+        end: idx + query.length,
+      ));
+      idx += query.length;
     }
+
+    // Content matches
+    final contentText = _contentController.text.toLowerCase();
+    idx = 0;
+    while ((idx = contentText.indexOf(query, idx)) != -1) {
+      matches.add(_LocalSearchMatch(
+        isTitle: false,
+        start: idx,
+        end: idx + query.length,
+      ));
+      idx += query.length;
+    }
+
+    return matches;
+  }
+
+  void _navigateToLocalMatch(int index) {
+    final matches = _getLocalMatches();
+    if (matches.isEmpty) {
+      setState(() {
+        _titleController.searchQuery = _localSearchCtrl.text;
+        _titleController.activeMatchRange = null;
+        _contentController.searchQuery = _localSearchCtrl.text;
+        _contentController.activeMatchRange = null;
+        _currentLocalMatchIndex = 0;
+      });
+      return;
+    }
+
+    final targetIndex = (index + matches.length) % matches.length;
+    final match = matches[targetIndex];
+
+    setState(() {
+      _currentLocalMatchIndex = targetIndex;
+
+      if (match.isTitle) {
+        _titleController.searchQuery = _localSearchCtrl.text;
+        _titleController.activeMatchRange = TextRange(start: match.start, end: match.end);
+        _contentController.searchQuery = _localSearchCtrl.text;
+        _contentController.activeMatchRange = null;
+
+        _titleFocusNode.requestFocus();
+        _titleController.selection = TextSelection(baseOffset: match.start, extentOffset: match.end);
+
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      } else {
+        _titleController.searchQuery = _localSearchCtrl.text;
+        _titleController.activeMatchRange = null;
+        _contentController.searchQuery = _localSearchCtrl.text;
+        _contentController.activeMatchRange = TextRange(start: match.start, end: match.end);
+
+        _contentFocusNode.requestFocus();
+        _contentController.selection = TextSelection(baseOffset: match.start, extentOffset: match.end);
+
+        if (_scrollController.hasClients && _scrollController.position.maxScrollExtent > 0) {
+          final totalLen = max(1, _contentController.text.length);
+          final ratio = match.start / totalLen;
+          final targetOffset = (ratio * _scrollController.position.maxScrollExtent)
+              .clamp(0.0, _scrollController.position.maxScrollExtent);
+
+          _scrollController.animateTo(
+            targetOffset,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      }
+    });
+  }
+
+  Widget _buildLocalSearchBar() {
+    final matches = _getLocalMatches();
+    final totalMatches = matches.length;
+    final query = _localSearchCtrl.text.trim();
 
     return SizedBox(
       height: 44.0,
@@ -3343,6 +3474,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                 setState(() {
                   _isLocalSearchOpen = false;
                   _localSearchCtrl.clear();
+                  _titleController.searchQuery = '';
+                  _titleController.activeMatchRange = null;
+                  _contentController.searchQuery = '';
+                  _contentController.activeMatchRange = null;
                   _currentLocalMatchIndex = 0;
                 });
               },
@@ -3395,10 +3530,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                        onChanged: (_) {
-                          setState(() {
-                            _currentLocalMatchIndex = 0;
-                          });
+                        onChanged: (val) {
+                          if (val.trim().isNotEmpty) {
+                            _navigateToLocalMatch(0);
+                          } else {
+                            setState(() {
+                              _titleController.searchQuery = '';
+                              _titleController.activeMatchRange = null;
+                              _contentController.searchQuery = '';
+                              _contentController.activeMatchRange = null;
+                              _currentLocalMatchIndex = 0;
+                            });
+                          }
                         },
                       ),
                     ),
@@ -3443,10 +3586,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                     onTap: totalMatches > 0
                         ? () {
                             HapticFeedback.selectionClick();
-                            setState(() {
-                              _currentLocalMatchIndex =
-                                  (_currentLocalMatchIndex - 1 + totalMatches) % totalMatches;
-                            });
+                            _navigateToLocalMatch(_currentLocalMatchIndex - 1);
                           }
                         : () {},
                     child: const Center(
@@ -3467,10 +3607,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                     onTap: totalMatches > 0
                         ? () {
                             HapticFeedback.selectionClick();
-                            setState(() {
-                              _currentLocalMatchIndex =
-                                  (_currentLocalMatchIndex + 1) % totalMatches;
-                            });
+                            _navigateToLocalMatch(_currentLocalMatchIndex + 1);
                           }
                         : () {},
                     child: const Center(
