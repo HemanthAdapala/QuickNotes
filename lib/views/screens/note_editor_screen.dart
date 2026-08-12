@@ -34,6 +34,8 @@ import '../widgets/glass_container.dart';
 import '../../themes/glassmorphism_presets.dart';
 import '../../controllers/in_editor_local_search_controller.dart';
 import '../widgets/in_editor_local_search_bar.dart';
+import '../../controllers/editor_auto_scroll_controller.dart';
+import '../widgets/editor_quick_scroll_pill.dart';
 import 'package:flutter/services.dart';
 import '../../core/animations/page_transitions.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
@@ -139,6 +141,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   final _titleController = _TitleTextEditingController();
   final _titleFocusNode = FocusNode();
   final _scrollController = ScrollController();
+  late final EditorAutoScrollController _autoScrollController;
   bool _isMetadataCollapsed = false;
   bool _isKeyboardVisible = false;
   bool _isLocalSearchOpen = false;
@@ -1586,6 +1589,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     });
     
     _scrollController.addListener(_onScroll);
+    _autoScrollController = EditorAutoScrollController(scrollController: _scrollController);
     
     _contentFocusNode.addListener(() {
       if (mounted) {
@@ -1639,6 +1643,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     WidgetsBinding.instance.removeObserver(this);
     _titleController.dispose();
     _titleFocusNode.dispose();
+    _autoScrollController.dispose();
     _scrollController.dispose();
     _contentController.dispose();
     _tagController.dispose();
@@ -4694,6 +4699,23 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
               ),
             ),
           ),
+
+            // Floating Quick-Scroll Pill (AutoScroll to Beginning / End)
+            Positioned(
+              right: 16.0,
+              bottom: 80.0,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                opacity: (notesProvider.isZenModeEnabled && _isZenTyping) ? 0.0 : 1.0,
+                child: IgnorePointer(
+                  ignoring: notesProvider.isZenModeEnabled && _isZenTyping,
+                  child: EditorQuickScrollPill(
+                    controller: _autoScrollController,
+                  ),
+                ),
+              ),
+            ),
             
             // Custom Delete Popup
             if (_showDeletePopup)
