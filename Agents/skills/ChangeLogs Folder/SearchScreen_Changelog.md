@@ -4,6 +4,32 @@ All implementation details, visual design tokens, interaction mechanics, and arc
 
 ---
 
+## [v2.6.0] - 2026-08-12
+
+### Author
+Developer / Anti Gravity
+
+### Type
+- Bug Fix
+- UI
+- Refactor
+
+---
+
+### Summary
+Fixed physical device focus stealing (Bug 1) and exact match scrolling offset (Bug 2) in `NoteEditorScreen` local search.
+
+---
+
+### Detailed Changes
+- **Focus Stealing Prevention (Bug 1 Fix)**:
+  - Added search focus guards to `_onTitleTextChanged` and `_onContentTextChanged` in [note_editor_screen.dart](file:///c:/Users/heman/.gemini/antigravity-ide/scratch/QuickNotes/lib/views/screens/note_editor_screen.dart#L1730): when `_isLocalSearchOpen && _localSearchFocusNode.hasFocus` is true, text change listeners ignore highlight notifications and bypass `setState()`, preventing editor focus listeners from stealing focus from `_localSearchFocusNode` and returning the cursor to the search bar.
+- **Native Rendered Segment Match Scrolling (Bug 2 Fix)**:
+  - Added `scrollToMatchOffset(int matchStart)` method to `NewSingleDocumentEditorState` in [new_single_document_editor.dart](file:///c:/Users/heman/.gemini/antigravity-ide/scratch/QuickNotes/lib/views/widgets/new_single_document_editor.dart#L1042): uses Flutter's native `Scrollable.ensureVisible` on the exact target `TextSegment`'s `GlobalKey` context with `alignment: 0.15`.
+  - Every match (first match, next `▼`, previous `▲`) reliably scrolls to **15% from the top of the physical device viewport**, sitting comfortably above the RTF toolbar and soft keyboard.
+
+---
+
 ## [v2.5.0] - 2026-08-12
 
 ### Author

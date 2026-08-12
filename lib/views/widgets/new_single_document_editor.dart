@@ -1041,6 +1041,23 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     );
   }
 
+  void scrollToMatchOffset(int matchStart) {
+    for (final seg in _segments) {
+      if (seg is TextSegment && matchStart >= seg.start && matchStart <= seg.end) {
+        final key = _segmentContainerKeys[seg.segmentIndex];
+        if (key?.currentContext != null) {
+          Scrollable.ensureVisible(
+            key!.currentContext!,
+            alignment: 0.15,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+          );
+          return;
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     _needsFullRebuild = false;

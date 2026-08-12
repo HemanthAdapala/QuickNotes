@@ -1727,6 +1727,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   void _onTitleTextChanged() {
+    if (_isLocalSearchOpen && _localSearchFocusNode.hasFocus) return;
     _calculateCounts();
     setState(() {
       _hasChanges = true;
@@ -1741,6 +1742,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   void _onContentTextChanged() {
+    if (_isLocalSearchOpen && _localSearchFocusNode.hasFocus) return;
     _calculateCounts();
     _startZenTimer();
     _checkSelectionToolbarNavigation();
@@ -3454,7 +3456,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       _contentController.searchQuery = _localSearchCtrl.text;
       _contentController.activeMatchRange = TextRange(start: match.start, end: match.end);
 
-      if (_scrollController.hasClients) {
+      if (_sdeKey.currentState != null) {
+        _sdeKey.currentState!.scrollToMatchOffset(match.start);
+      } else if (_scrollController.hasClients) {
         final maxScroll = _scrollController.position.maxScrollExtent;
         final matchPixelTop = _getMatchPixelOffset(match.start);
 
