@@ -463,9 +463,29 @@ class _SearchScreenState extends State<SearchScreen>
           children: [
             _buildHeaderBar(),
             const SizedBox(height: 12),
-            _buildScopePillBar(),
-            const SizedBox(height: 12),
-            Expanded(child: _buildBodySheetCard()),
+            Expanded(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 320),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Transform.translate(
+                    offset: Offset(0, 36.0 * (1.0 - value)),
+                    child: Opacity(
+                      opacity: value,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Column(
+                  children: [
+                    _buildScopePillBar(),
+                    const SizedBox(height: 12),
+                    Expanded(child: _buildBodySheetCard()),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
