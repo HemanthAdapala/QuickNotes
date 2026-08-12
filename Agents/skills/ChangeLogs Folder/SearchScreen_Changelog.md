@@ -4,6 +4,36 @@ All implementation details, visual design tokens, interaction mechanics, and arc
 
 ---
 
+## [v2.8.0] - 2026-08-12
+
+### Author
+Developer / Anti Gravity
+
+### Type
+- Feature
+- UI/UX
+- Animation
+
+---
+
+### Summary
+Standardized the fluid iOS 18 Search Screen transition animation (`buildSearchTransitionRoute` / `PixelAlignedSearchRoute`) across Folder, Calendar, Category, and Note screens. Replaced legacy slide-up and standard page routes with the pixel-aligned expansion transition used on `HomeScreen`.
+
+---
+
+### Detailed Changes
+- **`SearchRoute` (`lib/core/animations/search_route.dart`)**:
+  - Updated `SearchRoute<T>` to extend `PixelAlignedSearchRoute<T>` directly from `search_transition_routes.dart`.
+  - Guarantees legacy callers automatically inherit the fluid iOS 18 search transition.
+- **Folder Screens (`folder_management_screen.dart`, `folder_notes_screen.dart`)**:
+  - Updated search button `onTap` handlers to use `buildSearchTransitionRoute`.
+- **Calendar Screens (`calendar_screen.dart`, `note_calendar_screen.dart`)**:
+  - Updated search button `onTap` handlers to use `buildSearchTransitionRoute`.
+- **Category Screen (`category_details_screen.dart`)**:
+  - Updated search button `onTap` handler to use `buildSearchTransitionRoute`.
+
+---
+
 ## [v2.7.0] - 2026-08-12
 
 ### Author
