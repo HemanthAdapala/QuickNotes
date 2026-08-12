@@ -2378,9 +2378,13 @@ class RangeTextEditingController extends TextEditingController {
           final localOffset = parentSel.baseOffset - start;
           final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
           final clamped = localOffset < prefixOffset ? prefixOffset : localOffset;
-          _localSelection = TextSelection.collapsed(offset: clamped);
+          _localSelection = TextSelection.collapsed(offset: clamped.clamp(0, text.length));
+        } else if (parentSel.baseOffset > end) {
+          final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
+          _localSelection = TextSelection.collapsed(offset: text.length.clamp(prefixOffset, text.length));
         } else {
-          _localSelection = const TextSelection.collapsed(offset: 0);
+          final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
+          _localSelection = TextSelection.collapsed(offset: prefixOffset.clamp(0, text.length));
         }
       } else {
         final selStart = parentSel.start;
@@ -2395,11 +2399,15 @@ class RangeTextEditingController extends TextEditingController {
           final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
 
           _localSelection = TextSelection(
-            baseOffset: localBase < prefixOffset ? prefixOffset : localBase,
-            extentOffset: localExtent < prefixOffset ? prefixOffset : localExtent,
+            baseOffset: (localBase < prefixOffset ? prefixOffset : localBase).clamp(0, text.length),
+            extentOffset: (localExtent < prefixOffset ? prefixOffset : localExtent).clamp(0, text.length),
           );
+        } else if (parentSel.baseOffset > end) {
+          final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
+          _localSelection = TextSelection.collapsed(offset: text.length.clamp(prefixOffset, text.length));
         } else {
-          _localSelection = const TextSelection.collapsed(offset: 0);
+          final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
+          _localSelection = TextSelection.collapsed(offset: prefixOffset.clamp(0, text.length));
         }
       }
     } else {
@@ -2630,8 +2638,8 @@ class RangeTextEditingController extends TextEditingController {
         final baseOffset = clampedSel.baseOffset;
         final extentOffset = clampedSel.extentOffset;
         final cleanSelection = TextSelection(
-          baseOffset: baseOffset > adjustedInsertStart ? baseOffset - 1 : baseOffset,
-          extentOffset: extentOffset > adjustedInsertStart ? extentOffset - 1 : extentOffset,
+          baseOffset: (baseOffset > adjustedInsertStart ? baseOffset - 1 : baseOffset).clamp(0, cleanText.length),
+          extentOffset: (extentOffset > adjustedInsertStart ? extentOffset - 1 : extentOffset).clamp(0, cleanText.length),
         );
 
         final List<StyledChar> tempChars = [];

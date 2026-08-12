@@ -140,7 +140,11 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
         _needsFullRebuild = false;
         debugPrint("[SDE FullParse] Rebuild required from explicit parseCurrentSegments. Running setState.");
         setState(() {});
-        _syncFocusWithParentSelection();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _syncFocusWithParentSelection();
+          }
+        });
         return;
       }
 
@@ -150,8 +154,14 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
         setState(() {
           parseCurrentSegments();
         });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _syncFocusWithParentSelection();
+          }
+        });
+      } else {
+        _syncFocusWithParentSelection();
       }
-      _syncFocusWithParentSelection();
     }
   }
 
