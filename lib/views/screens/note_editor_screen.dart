@@ -3396,8 +3396,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       setState(() {
         _titleController.searchQuery = _localSearchCtrl.text;
         _titleController.activeMatchRange = null;
+        _titleController.selection = const TextSelection.collapsed(offset: -1);
         _contentController.searchQuery = _localSearchCtrl.text;
         _contentController.activeMatchRange = null;
+        _contentController.selection = const TextSelection.collapsed(offset: -1);
         _currentLocalMatchIndex = 0;
       });
       return;
@@ -3412,11 +3414,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       if (match.isTitle) {
         _titleController.searchQuery = _localSearchCtrl.text;
         _titleController.activeMatchRange = TextRange(start: match.start, end: match.end);
+        _titleController.selection = const TextSelection.collapsed(offset: -1);
+
         _contentController.searchQuery = _localSearchCtrl.text;
         _contentController.activeMatchRange = null;
-
-        _titleFocusNode.requestFocus();
-        _titleController.selection = TextSelection(baseOffset: match.start, extentOffset: match.end);
+        _contentController.selection = const TextSelection.collapsed(offset: -1);
 
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -3428,17 +3430,20 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       } else {
         _titleController.searchQuery = _localSearchCtrl.text;
         _titleController.activeMatchRange = null;
+        _titleController.selection = const TextSelection.collapsed(offset: -1);
+
         _contentController.searchQuery = _localSearchCtrl.text;
         _contentController.activeMatchRange = TextRange(start: match.start, end: match.end);
-
-        _contentFocusNode.requestFocus();
-        _contentController.selection = TextSelection(baseOffset: match.start, extentOffset: match.end);
+        _contentController.selection = const TextSelection.collapsed(offset: -1);
 
         if (_scrollController.hasClients && _scrollController.position.maxScrollExtent > 0) {
+          final maxScroll = _scrollController.position.maxScrollExtent;
           final totalLen = max(1, _contentController.text.length);
           final ratio = match.start / totalLen;
-          final targetOffset = (ratio * _scrollController.position.maxScrollExtent)
-              .clamp(0.0, _scrollController.position.maxScrollExtent);
+
+          // Position target match comfortably above the RTF toolbar (+140px scroll offset)
+          final targetOffset = (ratio * maxScroll + 140.0)
+              .clamp(0.0, maxScroll);
 
           _scrollController.animateTo(
             targetOffset,
@@ -3476,8 +3481,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   _localSearchCtrl.clear();
                   _titleController.searchQuery = '';
                   _titleController.activeMatchRange = null;
+                  _titleController.selection = const TextSelection.collapsed(offset: -1);
                   _contentController.searchQuery = '';
                   _contentController.activeMatchRange = null;
+                  _contentController.selection = const TextSelection.collapsed(offset: -1);
                   _currentLocalMatchIndex = 0;
                 });
               },
@@ -3537,8 +3544,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                             setState(() {
                               _titleController.searchQuery = '';
                               _titleController.activeMatchRange = null;
+                              _titleController.selection = const TextSelection.collapsed(offset: -1);
                               _contentController.searchQuery = '';
                               _contentController.activeMatchRange = null;
+                              _contentController.selection = const TextSelection.collapsed(offset: -1);
                               _currentLocalMatchIndex = 0;
                             });
                           }

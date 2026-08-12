@@ -30,7 +30,8 @@ Implemented Apple iOS 18 Sheet Slide & In-Place Glass Expansion transition for `
   - Real-time live in-note text highlighting across Note Title (`_TitleTextEditingController`) and Note Body (`RichTextEditingController`):
     - All matched occurrences highlight in amber/yellow (`#FFE082`).
     - The active focused match highlights in bright orange (`#FFFF9800`) with black text.
-  - Tapping Next (`▼`) and Previous (`▲`) arrows steps through match occurrences, selects the matched character range, and automatically scrolls `_scrollController` to display the active match in the editor viewport.
+  - Tapping Next (`▼`) and Previous (`▲`) arrows steps through match occurrences and automatically scrolls `_scrollController` with a +140px offset boost to position the target matched text comfortably in the upper-middle viewport, safely above the RTF toolbar.
+  - Eliminated selection handle leaks on cancel/clear by collapsing `TextSelection` to `-1` and resetting active match states cleanly.
 
 ---
 
