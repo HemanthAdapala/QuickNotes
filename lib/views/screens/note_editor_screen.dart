@@ -32,6 +32,8 @@ import '../widgets/tactile_button.dart';
 import '../widgets/rich_text_formatting_pill.dart';
 import '../widgets/glass_container.dart';
 import '../../themes/glassmorphism_presets.dart';
+import '../../controllers/in_editor_local_search_controller.dart';
+import '../widgets/in_editor_local_search_bar.dart';
 import 'package:flutter/services.dart';
 import '../../core/animations/page_transitions.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
@@ -63,17 +65,7 @@ class NoteEditorScreen extends StatefulWidget {
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
 }
 
-class _LocalSearchMatch {
-  final bool isTitle;
-  final int start;
-  final int end;
 
-  const _LocalSearchMatch({
-    required this.isTitle,
-    required this.start,
-    required this.end,
-  });
-}
 
 class _TitleTextEditingController extends TextEditingController {
   String searchQuery = '';
@@ -150,8 +142,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   bool _isMetadataCollapsed = false;
   bool _isKeyboardVisible = false;
   bool _isLocalSearchOpen = false;
-  final _localSearchCtrl = TextEditingController();
-  final _localSearchFocusNode = FocusNode();
+  final _localSearchController = InEditorLocalSearchController();
   late final RichTextEditingController _contentController;
   final _tagController = TextEditingController();
   List<NoteBlock> _blocks = [];
@@ -1727,7 +1718,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   void _onTitleTextChanged() {
-    if (_isLocalSearchOpen && _localSearchFocusNode.hasFocus) return;
     _calculateCounts();
     setState(() {
       _hasChanges = true;
@@ -1742,7 +1732,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   void _onContentTextChanged() {
-    if (_isLocalSearchOpen && _localSearchFocusNode.hasFocus) return;
     _calculateCounts();
     _startZenTimer();
     _checkSelectionToolbarNavigation();
@@ -3359,87 +3348,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     );
   }
 
-  List<_LocalSearchMatch> _getLocalMatches() {
-    final query = _localSearchCtrl.text.trim().toLowerCase();
-    if (query.isEmpty) return [];
-
-    final List<_LocalSearchMatch> matches = [];
-
-    // Title matches
-    final titleText = _titleController.text.toLowerCase();
-    int idx = 0;
-    while ((idx = titleText.indexOf(query, idx)) != -1) {
-      matches.add(_LocalSearchMatch(
-        isTitle: true,
-        start: idx,
-        end: idx + query.length,
-      ));
-      idx += query.length;
-    }
-
-    // Content matches
-    final contentText = _contentController.text.toLowerCase();
-    idx = 0;
-    while ((idx = contentText.indexOf(query, idx)) != -1) {
-      matches.add(_LocalSearchMatch(
-        isTitle: false,
-        start: idx,
-        end: idx + query.length,
-      ));
-      idx += query.length;
-    }
-
-    return matches;
-  }
-
-  final ValueNotifier<int> _localMatchNotifier = ValueNotifier<int>(0);
-
-  double _getMatchPixelOffset(int matchStart) {
-    if (matchStart <= 0 || _contentController.text.isEmpty) return 0.0;
-    final safeStart = matchStart.clamp(0, _contentController.text.length);
-    final textBefore = _contentController.text.substring(0, safeStart);
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final contentWidth = max(100.0, screenWidth - 48.0);
-
-    final textStyle = GoogleFonts.inter(
-      fontSize: 16.0,
-      height: 1.5,
-      color: const Color(0xFF1C1C1E),
-    );
-
-    final tp = TextPainter(
-      text: TextSpan(text: textBefore, style: textStyle),
-      textDirection: ui.TextDirection.ltr,
-    );
-    tp.layout(maxWidth: contentWidth);
-
-    return tp.height;
-  }
-
-  void _navigateToLocalMatch(int index) {
-    final matches = _getLocalMatches();
-    if (matches.isEmpty) {
-      _titleController.searchQuery = _localSearchCtrl.text;
+  void _onLocalMatchChanged(LocalSearchMatch? match) {
+    if (match == null) {
+      _titleController.searchQuery = '';
       _titleController.activeMatchRange = null;
-      _contentController.searchQuery = _localSearchCtrl.text;
+      _contentController.searchQuery = '';
       _contentController.activeMatchRange = null;
-      _localMatchNotifier.value = 0;
       _titleController.notifyListeners();
       _contentController.notifyListeners();
       return;
     }
 
-    final targetIndex = (index + matches.length) % matches.length;
-    final match = matches[targetIndex];
-
-    _localMatchNotifier.value = targetIndex;
-
+    final query = _localSearchController.query;
     if (match.isTitle) {
-      _titleController.searchQuery = _localSearchCtrl.text;
+      _titleController.searchQuery = query;
       _titleController.activeMatchRange = TextRange(start: match.start, end: match.end);
 
-      _contentController.searchQuery = _localSearchCtrl.text;
+      _contentController.searchQuery = query;
       _contentController.activeMatchRange = null;
 
       if (_scrollController.hasClients) {
@@ -3450,221 +3375,19 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         );
       }
     } else {
-      _titleController.searchQuery = _localSearchCtrl.text;
+      _titleController.searchQuery = query;
       _titleController.activeMatchRange = null;
 
-      _contentController.searchQuery = _localSearchCtrl.text;
+      _contentController.searchQuery = query;
       _contentController.activeMatchRange = TextRange(start: match.start, end: match.end);
 
       if (_sdeKey.currentState != null) {
         _sdeKey.currentState!.scrollToMatchOffset(match.start);
-      } else if (_scrollController.hasClients) {
-        final maxScroll = _scrollController.position.maxScrollExtent;
-        final matchPixelTop = _getMatchPixelOffset(match.start);
-
-        // Position target match 80px from top header bar (top 15% of viewport, far above RTF toolbar and soft keyboard)
-        final targetOffset = (matchPixelTop - 80.0).clamp(0.0, maxScroll);
-
-        _scrollController.animateTo(
-          targetOffset,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOutCubic,
-        );
       }
     }
 
     _titleController.notifyListeners();
     _contentController.notifyListeners();
-  }
-
-  Widget _buildLocalSearchBar() {
-    final query = _localSearchCtrl.text.trim();
-
-    return SizedBox(
-      height: 44.0,
-      child: Row(
-        children: [
-          // Left glass close button (44x44)
-          BottomBarGlassSurface(
-            width: 44.0,
-            height: 44.0,
-            borderRadius: BorderRadius.circular(22.0),
-            useFrost: true,
-            child: TactileButton(
-              useAppleSpring: true,
-              compressionScale: 0.7,
-              settleDuration: const Duration(milliseconds: 1000),
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _isLocalSearchOpen = false;
-                });
-                _localSearchCtrl.clear();
-                _titleController.searchQuery = '';
-                _titleController.activeMatchRange = null;
-                _contentController.searchQuery = '';
-                _contentController.activeMatchRange = null;
-                _localMatchNotifier.value = 0;
-                _titleController.notifyListeners();
-                _contentController.notifyListeners();
-              },
-              child: const Center(
-                child: Icon(
-                  Icons.close_rounded,
-                  color: Color(0xFF1C1C1E),
-                  size: 22,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          // Center expanded glass search field
-          Expanded(
-            child: BottomBarGlassSurface(
-              width: double.infinity,
-              height: 44.0,
-              borderRadius: BorderRadius.circular(22.0),
-              useFrost: true,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.search_rounded,
-                      color: Color(0xFFD49200),
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _localSearchCtrl,
-                        focusNode: _localSearchFocusNode,
-                        autofocus: true,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFF1C1C1E),
-                          fontWeight: FontWeight.w400,
-                        ),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          hintText: 'Find in note...',
-                          hintStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: const Color(0xFF8E8E93),
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        onChanged: (val) {
-                          if (val.trim().isNotEmpty) {
-                            _navigateToLocalMatch(0);
-                          } else {
-                            _titleController.searchQuery = '';
-                            _titleController.activeMatchRange = null;
-                            _contentController.searchQuery = '';
-                            _contentController.activeMatchRange = null;
-                            _localMatchNotifier.value = 0;
-                            _titleController.notifyListeners();
-                            _contentController.notifyListeners();
-                          }
-                        },
-                      ),
-                    ),
-                    ValueListenableBuilder<int>(
-                      valueListenable: _localMatchNotifier,
-                      builder: (context, matchIndex, _) {
-                        final matches = _getLocalMatches();
-                        final totalMatches = matches.length;
-                        if (_localSearchCtrl.text.trim().isEmpty) return const SizedBox.shrink();
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0x1A787880),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            totalMatches > 0 ? "${matchIndex + 1}/$totalMatches" : "0",
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF555558),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          // Right glass match navigation pill (88x44)
-          ValueListenableBuilder<int>(
-            valueListenable: _localMatchNotifier,
-            builder: (context, matchIndex, _) {
-              final matches = _getLocalMatches();
-              final totalMatches = matches.length;
-
-              return BottomBarGlassSurface(
-                width: 88.0,
-                height: 44.0,
-                borderRadius: BorderRadius.circular(22.0),
-                useFrost: true,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TactileButton(
-                        useAppleSpring: true,
-                        compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
-                        onTap: totalMatches > 0
-                            ? () {
-                                HapticFeedback.selectionClick();
-                                _navigateToLocalMatch(matchIndex - 1);
-                              }
-                            : () {},
-                        child: const Center(
-                          child: Icon(
-                            Icons.keyboard_arrow_up_rounded,
-                            color: Color(0xFF1C1C1E),
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Container(width: 1, height: 20, color: const Color(0x33000000)),
-                    Expanded(
-                      child: TactileButton(
-                        useAppleSpring: true,
-                        compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
-                        onTap: totalMatches > 0
-                            ? () {
-                                HapticFeedback.selectionClick();
-                                _navigateToLocalMatch(matchIndex + 1);
-                              }
-                            : () {},
-                        child: const Center(
-                          child: Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: Color(0xFF1C1C1E),
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildCategorySelector(Color titleColor) {
@@ -4713,7 +4436,18 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                 child: IgnorePointer(
                   ignoring: notesProvider.isZenModeEnabled && _isZenTyping,
                   child: _isLocalSearchOpen
-                      ? _buildLocalSearchBar()
+                      ? InEditorLocalSearchBar(
+                          searchController: _localSearchController,
+                          titleText: _titleController.text,
+                          bodyText: _contentController.text,
+                          onMatchChanged: _onLocalMatchChanged,
+                          onClose: () {
+                            setState(() {
+                              _isLocalSearchOpen = false;
+                            });
+                            _onLocalMatchChanged(null);
+                          },
+                        )
                       : AppHeaderBar(
                           isExpanded: _isNoteOptionsOpen,
                           expandedWidth: 192.0,

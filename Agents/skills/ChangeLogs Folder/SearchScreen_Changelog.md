@@ -4,6 +4,35 @@ All implementation details, visual design tokens, interaction mechanics, and arc
 
 ---
 
+## [v2.7.0] - 2026-08-12
+
+### Author
+Developer / Anti Gravity
+
+### Type
+- Refactor
+- Architecture
+
+---
+
+### Summary
+Modularized In-Editor Local Search into an independent controller (`InEditorLocalSearchController`) and self-contained glass search bar widget (`InEditorLocalSearchBar`). Fully decoupled search state, match calculation, keyboard focus, and UI rendering from `NoteEditorScreen`.
+
+---
+
+### Detailed Changes
+- **`InEditorLocalSearchController` (`lib/controllers/in_editor_local_search_controller.dart`)**:
+  - Implemented standalone `ChangeNotifier` managing `searchQuery`, `matches` list, `currentMatchIndex`, and next/previous wrap-around navigation methods (`nextMatch()`, `previousMatch()`).
+- **`InEditorLocalSearchBar` (`lib/views/widgets/in_editor_local_search_bar.dart`)**:
+  - Created standalone glass search bar widget encapsulating its own `TextEditingController` and `FocusNode`.
+  - Re-usable component rendering left close button, center search input, match counter badge (`1/N`), and right match navigation pill (`▲`/`▼`).
+  - Isolates keyboard focus 100% inside the search bar, making focus-stealing bugs architectural impossibilities.
+- **`NoteEditorScreen` (`lib/views/screens/note_editor_screen.dart`)**:
+  - Removed ~200+ lines of search state variables (`_localSearchCtrl`, `_localSearchFocusNode`, `_localMatchNotifier`), focus guards, and ad-hoc match calculation/UI builders (`_getLocalMatches()`, `_buildLocalSearchBar()`, `_getMatchPixelOffset()`).
+  - Integrated `<InEditorLocalSearchBar>` into the bottom bar overlay stack with clean callback interface `_onLocalMatchChanged`.
+
+---
+
 ## [v2.6.0] - 2026-08-12
 
 ### Author
