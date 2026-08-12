@@ -25,11 +25,9 @@ Implemented Apple iOS 18 Sheet Slide & In-Place Glass Expansion transition for `
 - **Pixel-Locked Header Bar**: Locked top header bar padding in `SearchScreen` to `EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0)` matching all primary app screens, eliminating header icon shifting.
 - **Apple iOS 18 Transition**: Added `TweenAnimationBuilder` slide (+36px -> 0px) and opacity fade for the Scope Pill Bar and Body Sheet Card under the fixed top glass header bar.
 - **In-Editor Local Search (`NoteEditorScreen`)**:
-  - Integrated "Find in Note" menu item into `NoteEditorOptionsPopup`.
-  - Added inline Liquid Glass Search Bar overlay at `top: 12.0, left: 24.0, right: 24.0` inside `NoteEditorScreen`.
   - Decoupled In-Editor Local Search completely from `SingleDocumentDragOverlay` and text selection mutations, preventing native selection handle glitches.
-  - Preserved cursor focus continuously in `_localSearchFocusNode` so typing queries (e.g., "Drag") keeps focus seamlessly without cursor drops.
-  - Implemented exact line height calculation (`_getMatchPixelOffset`) for auto-scrolling: positions every matched line (first, next, previous) exactly 100px below the top header bar, comfortably in the upper 20% viewport, far above the RTF toolbar.
+  - Isolated search bar state rebuilds with `ValueNotifier<int>` (`_localMatchNotifier`) and `ValueListenableBuilder`: typing in `_localSearchCtrl` zero-rebuilds parent `NoteEditorScreenState`, preserving soft keyboard and cursor focus 100% on physical Android and iOS devices.
+  - Implemented exact physical device layout height calculation using Flutter `TextPainter` (`ui.TextDirection.ltr`): calculates physical screen width and font metrics to scroll every match line (first match, next `▼`, previous `▲`) to 80px below the top header, sitting at the top 15% of the viewport far above the soft keyboard and RTF toolbar.
   - Implemented pure Marker highlighting across Title (`_TitleTextEditingController`), Body (`RichTextEditingController`), and SDE segments (`RangeTextEditingController`):
     - All matches paint with a soft yellow marker pen background (`#FFF59D`).
     - Active match paints with a warm orange marker pen background (`#FFB74D`) and bold text.

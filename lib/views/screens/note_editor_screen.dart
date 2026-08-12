@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -151,7 +152,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   bool _isLocalSearchOpen = false;
   final _localSearchCtrl = TextEditingController();
   final _localSearchFocusNode = FocusNode();
-  int _currentLocalMatchIndex = 0;
   late final RichTextEditingController _contentController;
   final _tagController = TextEditingController();
   List<NoteBlock> _blocks = [];
@@ -3390,36 +3390,40 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     return matches;
   }
 
+  final ValueNotifier<int> _localMatchNotifier = ValueNotifier<int>(0);
+
   double _getMatchPixelOffset(int matchStart) {
-    final text = _contentController.text;
-    if (matchStart <= 0 || text.isEmpty) return 0.0;
-    final safeStart = matchStart.clamp(0, text.length);
-    final textBefore = text.substring(0, safeStart);
-    final lines = textBefore.split('\n');
+    if (matchStart <= 0 || _contentController.text.isEmpty) return 0.0;
+    final safeStart = matchStart.clamp(0, _contentController.text.length);
+    final textBefore = _contentController.text.substring(0, safeStart);
 
-    double totalPixelHeight = 0.0;
-    for (int i = 0; i < lines.length - 1; i++) {
-      final line = lines[i];
-      final wrappedCount = max(1, (line.length / 45.0).ceil());
-      totalPixelHeight += wrappedCount * 28.0;
-    }
-    final currentLine = lines.last;
-    final currentWrapped = (currentLine.length / 45.0).floor();
-    totalPixelHeight += currentWrapped * 28.0;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final contentWidth = max(100.0, screenWidth - 48.0);
 
-    return totalPixelHeight;
+    final textStyle = GoogleFonts.inter(
+      fontSize: 16.0,
+      height: 1.5,
+      color: const Color(0xFF1C1C1E),
+    );
+
+    final tp = TextPainter(
+      text: TextSpan(text: textBefore, style: textStyle),
+      textDirection: ui.TextDirection.ltr,
+    );
+    tp.layout(maxWidth: contentWidth);
+
+    return tp.height;
   }
 
   void _navigateToLocalMatch(int index) {
     final matches = _getLocalMatches();
     if (matches.isEmpty) {
-      setState(() {
-        _titleController.searchQuery = _localSearchCtrl.text;
-        _titleController.activeMatchRange = null;
-        _contentController.searchQuery = _localSearchCtrl.text;
-        _contentController.activeMatchRange = null;
-        _currentLocalMatchIndex = 0;
-      });
+      _titleController.searchQuery = _localSearchCtrl.text;
+      _titleController.activeMatchRange = null;
+      _contentController.searchQuery = _localSearchCtrl.text;
+      _contentController.activeMatchRange = null;
+      _localMatchNotifier.value = 0;
+      _titleController.notifyListeners();
       _contentController.notifyListeners();
       return;
     }
@@ -3427,57 +3431,49 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     final targetIndex = (index + matches.length) % matches.length;
     final match = matches[targetIndex];
 
-    setState(() {
-      _currentLocalMatchIndex = targetIndex;
+    _localMatchNotifier.value = targetIndex;
 
-      if (match.isTitle) {
-        _titleController.searchQuery = _localSearchCtrl.text;
-        _titleController.activeMatchRange = TextRange(start: match.start, end: match.end);
+    if (match.isTitle) {
+      _titleController.searchQuery = _localSearchCtrl.text;
+      _titleController.activeMatchRange = TextRange(start: match.start, end: match.end);
 
-        _contentController.searchQuery = _localSearchCtrl.text;
-        _contentController.activeMatchRange = null;
+      _contentController.searchQuery = _localSearchCtrl.text;
+      _contentController.activeMatchRange = null;
 
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            0.0,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-          );
-        }
-      } else {
-        _titleController.searchQuery = _localSearchCtrl.text;
-        _titleController.activeMatchRange = null;
-
-        _contentController.searchQuery = _localSearchCtrl.text;
-        _contentController.activeMatchRange = TextRange(start: match.start, end: match.end);
-
-        if (_scrollController.hasClients) {
-          final maxScroll = _scrollController.position.maxScrollExtent;
-          final matchPixelTop = _getMatchPixelOffset(match.start);
-
-          // Position target match 100px from top header (comfortably in upper 20% viewport, far above RTF toolbar)
-          final targetOffset = (matchPixelTop - 100.0).clamp(0.0, maxScroll);
-
-          _scrollController.animateTo(
-            targetOffset,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-          );
-        }
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+        );
       }
-    });
+    } else {
+      _titleController.searchQuery = _localSearchCtrl.text;
+      _titleController.activeMatchRange = null;
 
-    _contentController.notifyListeners();
+      _contentController.searchQuery = _localSearchCtrl.text;
+      _contentController.activeMatchRange = TextRange(start: match.start, end: match.end);
 
-    // Ensure cursor stays active in search bar without losing focus while typing/navigating
-    if (_localSearchFocusNode.canRequestFocus && !_localSearchFocusNode.hasFocus) {
-      _localSearchFocusNode.requestFocus();
+      if (_scrollController.hasClients) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        final matchPixelTop = _getMatchPixelOffset(match.start);
+
+        // Position target match 80px from top header bar (top 15% of viewport, far above RTF toolbar and soft keyboard)
+        final targetOffset = (matchPixelTop - 80.0).clamp(0.0, maxScroll);
+
+        _scrollController.animateTo(
+          targetOffset,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+        );
+      }
     }
+
+    _titleController.notifyListeners();
+    _contentController.notifyListeners();
   }
 
   Widget _buildLocalSearchBar() {
-    final matches = _getLocalMatches();
-    final totalMatches = matches.length;
     final query = _localSearchCtrl.text.trim();
 
     return SizedBox(
@@ -3498,13 +3494,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                 HapticFeedback.selectionClick();
                 setState(() {
                   _isLocalSearchOpen = false;
-                  _localSearchCtrl.clear();
-                  _titleController.searchQuery = '';
-                  _titleController.activeMatchRange = null;
-                  _contentController.searchQuery = '';
-                  _contentController.activeMatchRange = null;
-                  _currentLocalMatchIndex = 0;
                 });
+                _localSearchCtrl.clear();
+                _titleController.searchQuery = '';
+                _titleController.activeMatchRange = null;
+                _contentController.searchQuery = '';
+                _contentController.activeMatchRange = null;
+                _localMatchNotifier.value = 0;
+                _titleController.notifyListeners();
                 _contentController.notifyListeners();
               },
               child: const Center(
@@ -3560,36 +3557,40 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                           if (val.trim().isNotEmpty) {
                             _navigateToLocalMatch(0);
                           } else {
-                            setState(() {
-                              _titleController.searchQuery = '';
-                              _titleController.activeMatchRange = null;
-                              _contentController.searchQuery = '';
-                              _contentController.activeMatchRange = null;
-                              _currentLocalMatchIndex = 0;
-                            });
+                            _titleController.searchQuery = '';
+                            _titleController.activeMatchRange = null;
+                            _contentController.searchQuery = '';
+                            _contentController.activeMatchRange = null;
+                            _localMatchNotifier.value = 0;
+                            _titleController.notifyListeners();
                             _contentController.notifyListeners();
                           }
                         },
                       ),
                     ),
-                    if (query.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0x1A787880),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          totalMatches > 0
-                              ? "${_currentLocalMatchIndex + 1}/$totalMatches"
-                              : "0",
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF555558),
+                    ValueListenableBuilder<int>(
+                      valueListenable: _localMatchNotifier,
+                      builder: (context, matchIndex, _) {
+                        final matches = _getLocalMatches();
+                        final totalMatches = matches.length;
+                        if (_localSearchCtrl.text.trim().isEmpty) return const SizedBox.shrink();
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0x1A787880),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        ),
-                      ),
+                          child: Text(
+                            totalMatches > 0 ? "${matchIndex + 1}/$totalMatches" : "0",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF555558),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -3598,56 +3599,64 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           const SizedBox(width: 10),
 
           // Right glass match navigation pill (88x44)
-          BottomBarGlassSurface(
-            width: 88.0,
-            height: 44.0,
-            borderRadius: BorderRadius.circular(22.0),
-            useFrost: true,
-            child: Row(
-              children: [
-                Expanded(
-                  child: TactileButton(
-                    useAppleSpring: true,
-                    compressionScale: 0.7,
-                    settleDuration: const Duration(milliseconds: 1000),
-                    onTap: totalMatches > 0
-                        ? () {
-                            HapticFeedback.selectionClick();
-                            _navigateToLocalMatch(_currentLocalMatchIndex - 1);
-                          }
-                        : () {},
-                    child: const Center(
-                      child: Icon(
-                        Icons.keyboard_arrow_up_rounded,
-                        color: Color(0xFF1C1C1E),
-                        size: 20,
+          ValueListenableBuilder<int>(
+            valueListenable: _localMatchNotifier,
+            builder: (context, matchIndex, _) {
+              final matches = _getLocalMatches();
+              final totalMatches = matches.length;
+
+              return BottomBarGlassSurface(
+                width: 88.0,
+                height: 44.0,
+                borderRadius: BorderRadius.circular(22.0),
+                useFrost: true,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TactileButton(
+                        useAppleSpring: true,
+                        compressionScale: 0.7,
+                        settleDuration: const Duration(milliseconds: 1000),
+                        onTap: totalMatches > 0
+                            ? () {
+                                HapticFeedback.selectionClick();
+                                _navigateToLocalMatch(matchIndex - 1);
+                              }
+                            : () {},
+                        child: const Center(
+                          child: Icon(
+                            Icons.keyboard_arrow_up_rounded,
+                            color: Color(0xFF1C1C1E),
+                            size: 20,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                Container(width: 1, height: 20, color: const Color(0x33000000)),
-                Expanded(
-                  child: TactileButton(
-                    useAppleSpring: true,
-                    compressionScale: 0.7,
-                    settleDuration: const Duration(milliseconds: 1000),
-                    onTap: totalMatches > 0
-                        ? () {
-                            HapticFeedback.selectionClick();
-                            _navigateToLocalMatch(_currentLocalMatchIndex + 1);
-                          }
-                        : () {},
-                    child: const Center(
-                      child: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Color(0xFF1C1C1E),
-                        size: 20,
+                    Container(width: 1, height: 20, color: const Color(0x33000000)),
+                    Expanded(
+                      child: TactileButton(
+                        useAppleSpring: true,
+                        compressionScale: 0.7,
+                        settleDuration: const Duration(milliseconds: 1000),
+                        onTap: totalMatches > 0
+                            ? () {
+                                HapticFeedback.selectionClick();
+                                _navigateToLocalMatch(matchIndex + 1);
+                              }
+                            : () {},
+                        child: const Center(
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: Color(0xFF1C1C1E),
+                            size: 20,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),
