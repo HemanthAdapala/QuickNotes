@@ -461,7 +461,6 @@ class _SearchScreenState extends State<SearchScreen>
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 8),
             _buildHeaderBar(),
             const SizedBox(height: 12),
             _buildScopePillBar(),
@@ -477,7 +476,7 @@ class _SearchScreenState extends State<SearchScreen>
 
   Widget _buildHeaderBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
       child: SizedBox(
         height: 44.0,
         child: Row(
