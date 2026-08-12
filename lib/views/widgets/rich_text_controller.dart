@@ -2199,9 +2199,9 @@ class RichTextEditingController extends TextEditingController {
           activeMatchRange!.end == globalMatchEnd;
 
       final highlightStyle = runStyle.copyWith(
-        backgroundColor: isActive ? const Color(0xFFFF9800) : const Color(0xFFFFE082),
+        backgroundColor: isActive ? const Color(0xFFFFB74D) : const Color(0xFFFFF59D),
         color: isActive ? Colors.black : const Color(0xFF1C1C1E),
-        fontWeight: FontWeight.bold,
+        fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
       );
 
       children.add(TextSpan(
@@ -2885,26 +2885,16 @@ class RangeTextEditingController extends TextEditingController {
           ..onTap = () {
             parent.handleUrlLaunch(currentStyle.linkUrl!);
           };
-        children.add(TextSpan(
-          text: textRun,
-          style: linkStyle,
-          recognizer: recognizer,
-        ));
+        parent._addSearchHighlightedSpans(children, textRun, range.start + start, linkStyle, recognizer);
       } else {
         final urlMatches = parent.findUrlMatches(textRun);
         if (urlMatches.isEmpty) {
-          children.add(TextSpan(
-            text: textRun,
-            style: runStyle,
-          ));
+          parent._addSearchHighlightedSpans(children, textRun, range.start + start, runStyle, null);
         } else {
           int lastIndex = 0;
           for (final match in urlMatches) {
             if (match.start > lastIndex) {
-              children.add(TextSpan(
-                text: textRun.substring(lastIndex, match.start),
-                style: runStyle,
-              ));
+              parent._addSearchHighlightedSpans(children, textRun.substring(lastIndex, match.start), range.start + start + lastIndex, runStyle, null);
             }
             final url = match.group(0)!;
             final linkStyle = runStyle.copyWith(
@@ -2915,18 +2905,11 @@ class RangeTextEditingController extends TextEditingController {
               ..onTap = () {
                 parent.handleUrlLaunch(url);
               };
-            children.add(TextSpan(
-              text: url,
-              style: linkStyle,
-              recognizer: recognizer,
-            ));
+            parent._addSearchHighlightedSpans(children, url, range.start + start + match.start, linkStyle, recognizer);
             lastIndex = match.end;
           }
           if (lastIndex < textRun.length) {
-            children.add(TextSpan(
-              text: textRun.substring(lastIndex),
-              style: runStyle,
-            ));
+            parent._addSearchHighlightedSpans(children, textRun.substring(lastIndex), range.start + start + lastIndex, runStyle, null);
           }
         }
       }

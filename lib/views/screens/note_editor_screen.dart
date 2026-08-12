@@ -108,9 +108,9 @@ class _TitleTextEditingController extends TextEditingController {
             activeMatchRange!.end == matchEnd;
 
         final highlightStyle = cleanStyle.copyWith(
-          backgroundColor: isActive ? const Color(0xFFFF9800) : const Color(0xFFFFE082),
+          backgroundColor: isActive ? const Color(0xFFFFB74D) : const Color(0xFFFFF59D),
           color: isActive ? Colors.black : const Color(0xFF1C1C1E),
-          fontWeight: FontWeight.bold,
+          fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
         );
 
         spans.add(TextSpan(text: text.substring(matchIdx, matchEnd), style: highlightStyle));
@@ -3396,12 +3396,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       setState(() {
         _titleController.searchQuery = _localSearchCtrl.text;
         _titleController.activeMatchRange = null;
-        _titleController.selection = const TextSelection.collapsed(offset: -1);
         _contentController.searchQuery = _localSearchCtrl.text;
         _contentController.activeMatchRange = null;
-        _contentController.selection = const TextSelection.collapsed(offset: -1);
         _currentLocalMatchIndex = 0;
       });
+      _contentController.notifyListeners();
       return;
     }
 
@@ -3414,11 +3413,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       if (match.isTitle) {
         _titleController.searchQuery = _localSearchCtrl.text;
         _titleController.activeMatchRange = TextRange(start: match.start, end: match.end);
-        _titleController.selection = const TextSelection.collapsed(offset: -1);
 
         _contentController.searchQuery = _localSearchCtrl.text;
         _contentController.activeMatchRange = null;
-        _contentController.selection = const TextSelection.collapsed(offset: -1);
 
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -3430,18 +3427,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       } else {
         _titleController.searchQuery = _localSearchCtrl.text;
         _titleController.activeMatchRange = null;
-        _titleController.selection = const TextSelection.collapsed(offset: -1);
 
         _contentController.searchQuery = _localSearchCtrl.text;
         _contentController.activeMatchRange = TextRange(start: match.start, end: match.end);
-        _contentController.selection = const TextSelection.collapsed(offset: -1);
 
         if (_scrollController.hasClients && _scrollController.position.maxScrollExtent > 0) {
           final maxScroll = _scrollController.position.maxScrollExtent;
           final totalLen = max(1, _contentController.text.length);
           final ratio = match.start / totalLen;
 
-          // Position target match comfortably above the RTF toolbar (+140px scroll offset)
+          // Position target match comfortably in upper-middle viewport (+140px offset boost)
           final targetOffset = (ratio * maxScroll + 140.0)
               .clamp(0.0, maxScroll);
 
@@ -3453,6 +3448,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         }
       }
     });
+    _contentController.notifyListeners();
   }
 
   Widget _buildLocalSearchBar() {
@@ -3481,12 +3477,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   _localSearchCtrl.clear();
                   _titleController.searchQuery = '';
                   _titleController.activeMatchRange = null;
-                  _titleController.selection = const TextSelection.collapsed(offset: -1);
                   _contentController.searchQuery = '';
                   _contentController.activeMatchRange = null;
-                  _contentController.selection = const TextSelection.collapsed(offset: -1);
                   _currentLocalMatchIndex = 0;
                 });
+                _contentController.notifyListeners();
               },
               child: const Center(
                 child: Icon(
@@ -3544,12 +3539,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                             setState(() {
                               _titleController.searchQuery = '';
                               _titleController.activeMatchRange = null;
-                              _titleController.selection = const TextSelection.collapsed(offset: -1);
                               _contentController.searchQuery = '';
                               _contentController.activeMatchRange = null;
-                              _contentController.selection = const TextSelection.collapsed(offset: -1);
                               _currentLocalMatchIndex = 0;
                             });
+                            _contentController.notifyListeners();
                           }
                         },
                       ),
