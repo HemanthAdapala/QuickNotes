@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../controllers/in_editor_local_search_controller.dart';
-import '../../themes/glassmorphism_presets.dart';
+import 'app_bottom_navigation_bar.dart';
 import 'tactile_button.dart';
 
 /// Standalone, modular search bar for NoteEditorScreen.
