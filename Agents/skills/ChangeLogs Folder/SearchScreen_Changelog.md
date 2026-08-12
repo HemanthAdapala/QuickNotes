@@ -28,6 +28,8 @@ Implemented Apple iOS 18 Sheet Slide & In-Place Glass Expansion transition for `
   - Integrated "Find in Note" menu item into `NoteEditorOptionsPopup`.
   - Added inline Liquid Glass Search Bar overlay at `top: 12.0, left: 24.0, right: 24.0` inside `NoteEditorScreen`.
   - Decoupled In-Editor Local Search completely from `SingleDocumentDragOverlay` and text selection mutations, preventing native selection handle glitches.
+  - Preserved cursor focus continuously in `_localSearchFocusNode` so typing queries (e.g., "Drag") keeps focus seamlessly without cursor drops.
+  - Implemented exact line height calculation (`_getMatchPixelOffset`) for auto-scrolling: positions every matched line (first, next, previous) exactly 100px below the top header bar, comfortably in the upper 20% viewport, far above the RTF toolbar.
   - Implemented pure Marker highlighting across Title (`_TitleTextEditingController`), Body (`RichTextEditingController`), and SDE segments (`RangeTextEditingController`):
     - All matches paint with a soft yellow marker pen background (`#FFF59D`).
     - Active match paints with a warm orange marker pen background (`#FFB74D`) and bold text.

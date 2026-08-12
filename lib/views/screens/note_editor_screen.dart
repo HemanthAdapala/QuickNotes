@@ -3390,6 +3390,26 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     return matches;
   }
 
+  double _getMatchPixelOffset(int matchStart) {
+    final text = _contentController.text;
+    if (matchStart <= 0 || text.isEmpty) return 0.0;
+    final safeStart = matchStart.clamp(0, text.length);
+    final textBefore = text.substring(0, safeStart);
+    final lines = textBefore.split('\n');
+
+    double totalPixelHeight = 0.0;
+    for (int i = 0; i < lines.length - 1; i++) {
+      final line = lines[i];
+      final wrappedCount = max(1, (line.length / 45.0).ceil());
+      totalPixelHeight += wrappedCount * 28.0;
+    }
+    final currentLine = lines.last;
+    final currentWrapped = (currentLine.length / 45.0).floor();
+    totalPixelHeight += currentWrapped * 28.0;
+
+    return totalPixelHeight;
+  }
+
   void _navigateToLocalMatch(int index) {
     final matches = _getLocalMatches();
     if (matches.isEmpty) {
@@ -3431,14 +3451,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         _contentController.searchQuery = _localSearchCtrl.text;
         _contentController.activeMatchRange = TextRange(start: match.start, end: match.end);
 
-        if (_scrollController.hasClients && _scrollController.position.maxScrollExtent > 0) {
+        if (_scrollController.hasClients) {
           final maxScroll = _scrollController.position.maxScrollExtent;
-          final totalLen = max(1, _contentController.text.length);
-          final ratio = match.start / totalLen;
+          final matchPixelTop = _getMatchPixelOffset(match.start);
 
-          // Position target match comfortably in upper-middle viewport (+140px offset boost)
-          final targetOffset = (ratio * maxScroll + 140.0)
-              .clamp(0.0, maxScroll);
+          // Position target match 100px from top header (comfortably in upper 20% viewport, far above RTF toolbar)
+          final targetOffset = (matchPixelTop - 100.0).clamp(0.0, maxScroll);
 
           _scrollController.animateTo(
             targetOffset,
@@ -3448,7 +3466,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         }
       }
     });
+
     _contentController.notifyListeners();
+
+    // Ensure cursor stays active in search bar without losing focus while typing/navigating
+    if (_localSearchFocusNode.canRequestFocus && !_localSearchFocusNode.hasFocus) {
+      _localSearchFocusNode.requestFocus();
+    }
   }
 
   Widget _buildLocalSearchBar() {
