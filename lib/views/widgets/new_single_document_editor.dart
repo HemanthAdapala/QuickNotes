@@ -395,6 +395,7 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
   void _syncFocusWithParentSelection() {
     if (_selectedImageGlobalIndex != null) return;
+    if (!widget.focusNode.hasFocus) return; // Prevent focus stealing during search or external focus
     final parentSel = widget.controller.selection;
     if (!parentSel.isValid || !parentSel.isCollapsed) return;
 
@@ -1042,19 +1043,44 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
   }
 
   void scrollToMatchOffset(int matchStart) {
-    for (final seg in _segments) {
-      if (seg is TextSegment && matchStart >= seg.start && matchStart <= seg.end) {
-        final key = _segmentContainerKeys[seg.segmentIndex];
-        if (key?.currentContext != null) {
-          Scrollable.ensureVisible(
-            key!.currentContext!,
-            alignment: 0.15,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-          );
-          return;
-        }
-      }
+    final targetSegIdx = _segments.indexWhere(
+      (seg) => seg is TextSegment && matchStart >= seg.start && matchStart <= seg.end,
+    );
+    if (targetSegIdx == -1) return;
+
+    final targetSeg = _segments[targetSegIdx] as TextSegment;
+    final key = _segmentContainerKeys[targetSeg.segmentIndex];
+
+    if (key?.currentContext != null) {
+      Scrollable.ensureVisible(
+        key!.currentContext!,
+        alignment: 0.15,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    } else if (widget.scrollController != null && widget.scrollController!.hasClients) {
+      final maxScroll = widget.scrollController!.position.maxScrollExtent;
+      final totalSegs = _segments.isEmpty ? 1 : _segments.length;
+      final targetFraction = (targetSegIdx / totalSegs).clamp(0.0, 1.0);
+      final approxOffset = maxScroll * targetFraction;
+
+      widget.scrollController!.animateTo(
+        approxOffset,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOutCubic,
+      ).then((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final newKey = _segmentContainerKeys[targetSeg.segmentIndex];
+          if (newKey?.currentContext != null) {
+            Scrollable.ensureVisible(
+              newKey!.currentContext!,
+              alignment: 0.15,
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
+            );
+          }
+        });
+      });
     }
   }
 

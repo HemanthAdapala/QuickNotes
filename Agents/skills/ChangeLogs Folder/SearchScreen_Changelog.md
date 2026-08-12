@@ -23,10 +23,12 @@ Fixed physical device focus stealing (Bug 1) and exact match scrolling offset (B
 
 ### Detailed Changes
 - **Focus Stealing Prevention (Bug 1 Fix)**:
-  - Added search focus guards to `_onTitleTextChanged` and `_onContentTextChanged` in [note_editor_screen.dart](file:///c:/Users/heman/.gemini/antigravity-ide/scratch/QuickNotes/lib/views/screens/note_editor_screen.dart#L1730): when `_isLocalSearchOpen && _localSearchFocusNode.hasFocus` is true, text change listeners ignore highlight notifications and bypass `setState()`, preventing editor focus listeners from stealing focus from `_localSearchFocusNode` and returning the cursor to the search bar.
-- **Native Rendered Segment Match Scrolling (Bug 2 Fix)**:
-  - Added `scrollToMatchOffset(int matchStart)` method to `NewSingleDocumentEditorState` in [new_single_document_editor.dart](file:///c:/Users/heman/.gemini/antigravity-ide/scratch/QuickNotes/lib/views/widgets/new_single_document_editor.dart#L1042): uses Flutter's native `Scrollable.ensureVisible` on the exact target `TextSegment`'s `GlobalKey` context with `alignment: 0.15`.
-  - Every match (first match, next `▼`, previous `▲`) reliably scrolls to **15% from the top of the physical device viewport**, sitting comfortably above the RTF toolbar and soft keyboard.
+  - Added `if (!widget.focusNode.hasFocus) return;` guard to `_syncFocusWithParentSelection` in [new_single_document_editor.dart](file:///c:/Users/heman/.gemini/antigravity-ide/scratch/QuickNotes/lib/views/widgets/new_single_document_editor.dart#L398): prevents `NewSingleDocumentEditor` from calling `node.requestFocus()` when typing inside `_localSearchFocusNode`, keeping cursor focus 100% locked in the search bar.
+  - Added search focus guards to `_onTitleTextChanged` and `_onContentTextChanged` in [note_editor_screen.dart](file:///c:/Users/heman/.gemini/antigravity-ide/scratch/QuickNotes/lib/views/screens/note_editor_screen.dart#L1730).
+- **2-Stage Native Segment Match Scrolling (Bug 2 Fix)**:
+  - Implemented 2-stage scrolling in `scrollToMatchOffset(int matchStart)` inside [new_single_document_editor.dart](file:///c:/Users/heman/.gemini/antigravity-ide/scratch/QuickNotes/lib/views/widgets/new_single_document_editor.dart#L1045):
+    1. **Immediate Mode**: If the segment key context is already rendered in the viewport tree, `Scrollable.ensureVisible(alignment: 0.15)` executes immediately.
+    2. **Deferred Mode**: If the target segment is off-screen, `widget.scrollController.animateTo(approxOffset)` first scrolls the target segment into the viewport neighborhood, and a post-frame callback executes `Scrollable.ensureVisible(alignment: 0.15)` once mounted.
 
 ---
 
