@@ -18,6 +18,7 @@ import '../../services/notification_action_handler.dart';
 import '../../models/notification_payload.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/page_transitions.dart';
+import '../../core/animations/search_transition_routes.dart';
 import '../widgets/living_writing_experience.dart';
 import '../widgets/home_prompt_view.dart';
 import 'profile_screen.dart';
@@ -792,7 +793,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         HapticFeedback.selectionClick();
                         Navigator.push(
                           context,
-                          buildPageRoute(const SearchScreen(initialScope: 'all')),
+                          buildSearchTransitionRoute(
+                            builder: (_) => const SearchScreen(initialScope: 'all'),
+                          ),
                         );
                       },
                       child: Center(
