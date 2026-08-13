@@ -11,6 +11,7 @@ import '../../models/user_profile.dart';
 import '../../repositories/user_repository.dart';
 import '../../services/session_manager.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
+import '../widgets/grouped_list_container.dart';
 import '../widgets/tactile_button.dart';
 import 'home_screen.dart';
 
@@ -472,149 +473,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(height: 24),
 
                           // Username & Email Card (322px wide)
-                          Center(
-                            child: Container(
-                              width: 322,
-                              clipBehavior: Clip.antiAlias,
-                              decoration: ShapeDecoration(
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(26),
-                                ),
-                                shadows: const [
-                                  BoxShadow(
-                                    color: Color(0x1A000000),
-                                    blurRadius: 12,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
+                          GroupedListContainer(
+                            borderRadius: 26.0,
+                            children: [
+                              GroupedTile.input(
+                                controller: _usernameController,
+                                focusNode: _usernameFocusNode,
+                                hintText: 'Username',
                               ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Username Row with live TextField & clear (x) button
-                                  Container(
-                                    width: double.infinity,
-                                    height: 52,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: TextField(
-                                            controller: _usernameController,
-                                            focusNode: _usernameFocusNode,
-                                            style: GoogleFonts.inter(
-                                              color: primaryTextColor,
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w500,
-                                              letterSpacing: -0.3,
-                                            ),
-                                            decoration: InputDecoration(
-                                              hintText: 'Username',
-                                              hintStyle: GoogleFonts.inter(
-                                                color: const Color(0x4C3C3C43),
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
-                                                letterSpacing: -0.3,
-                                              ),
-                                              border: InputBorder.none,
-                                              contentPadding: EdgeInsets.zero,
-                                            ),
-                                          ),
-                                        ),
-                                        if (_usernameController.text.isNotEmpty)
-                                          GestureDetector(
-                                            onTap: () {
-                                              HapticFeedback.lightImpact();
-                                              _usernameController.clear();
-                                            },
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(left: 8.0),
-                                              child: Icon(
-                                                Icons.cancel,
-                                                size: 18,
-                                                color: const Color(0xFF3C3C43).withValues(alpha: 0.3),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  // Separator Line
-                                  Container(
-                                    width: double.infinity,
-                                    height: 1,
-                                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                                    color: const Color(0xFFE6E6E6),
-                                  ),
-
-                                  // Email Row with TextField (disabled if Google User) & Check Icon (Verified) or Clear (x) button
-                                  Container(
-                                    width: double.infinity,
-                                    height: 52,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: TextField(
-                                            controller: _emailController,
-                                            focusNode: _emailFocusNode,
-                                            readOnly: _isGoogleUser,
-                                            enabled: !_isGoogleUser,
-                                            keyboardType: TextInputType.emailAddress,
-                                            style: GoogleFonts.inter(
-                                              color: _isGoogleUser
-                                                  ? primaryTextColor.withValues(alpha: 0.6)
-                                                  : primaryTextColor,
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w500,
-                                              letterSpacing: -0.3,
-                                            ),
-                                            decoration: InputDecoration(
-                                              hintText: 'Email',
-                                              hintStyle: GoogleFonts.inter(
-                                                color: const Color(0x4C3C3C43),
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w500,
-                                                letterSpacing: -0.3,
-                                              ),
-                                              border: InputBorder.none,
-                                              contentPadding: EdgeInsets.zero,
-                                            ),
-                                          ),
-                                        ),
-                                        if (_isGoogleUser)
-                                          Padding(
-                                            padding: const EdgeInsets.only(left: 8.0),
-                                            child: Image.asset(
-                                              'assets/icons/check.png',
-                                              width: 18,
-                                              height: 18,
-                                              fit: BoxFit.contain,
-                                            ),
-                                          )
-                                        else if (_emailController.text.isNotEmpty)
-                                          GestureDetector(
-                                            onTap: () {
-                                              HapticFeedback.lightImpact();
-                                              _emailController.clear();
-                                            },
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(left: 8.0),
-                                              child: Icon(
-                                                Icons.cancel,
-                                                size: 18,
-                                                color: const Color(0xFF3C3C43).withValues(alpha: 0.3),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                              GroupedTile.input(
+                                controller: _emailController,
+                                focusNode: _emailFocusNode,
+                                hintText: 'Email',
+                                isReadOnly: _isGoogleUser,
+                                isEnabled: !_isGoogleUser,
+                                keyboardType: TextInputType.emailAddress,
+                                showVerifiedBadge: _isGoogleUser,
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),

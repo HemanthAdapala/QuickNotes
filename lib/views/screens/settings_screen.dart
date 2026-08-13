@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/grouped_list_container.dart';
 import '../../core/animations/page_transitions.dart';
 import 'profile_screen.dart';
 import 'glassmorphism_sandbox_screen.dart';
@@ -348,223 +349,149 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                     const SizedBox(height: 26.0),
 
-                    // Section 1 Card (Pause Notifications, General Settings)
-                    Center(
-                      child: Container(
-                        width: 322,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: ShapeDecoration(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                    // Section 1 Card (Pause Notifications, General Settings, SDEDragTest)
+                    GroupedListContainer(
+                      children: [
+                        GroupedTile.navigation(
+                          iconPath: 'assets/icons/pause-notifications.svg',
+                          title: 'Pause Notifications',
+                          onTap: () => _showInfoDialog(
+                            context,
+                            "Pause Notifications",
+                            "Notification alerts are currently paused.",
                           ),
-                          shadows: const [
-                            BoxShadow(
-                              color: Color(0x3F000000),
-                              blurRadius: 16,
-                              offset: Offset(0, 0),
-                              spreadRadius: 0,
-                            ),
-                          ],
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/pause-notifications.svg',
-                              title: 'Pause Notifications',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "Pause Notifications",
-                                "Notification alerts are currently paused.",
-                              ),
-                              showBorderBottom: true,
-                            ),
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/settings-sliders.svg',
-                              title: 'General Settings',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "General Settings",
-                                "General application preferences configured.",
-                              ),
-                              showBorderBottom: true,
-                            ),
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/settings-sliders.svg',
-                              title: '🧪 Test SDE Drag Selection',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (context) => const SDEDragTestScreen()),
-                                );
-                              },
-                              showBorderBottom: false,
-                            ),
-                          ],
+                        GroupedTile.navigation(
+                          iconPath: 'assets/icons/settings-sliders.svg',
+                          title: 'General Settings',
+                          onTap: () => _showInfoDialog(
+                            context,
+                            "General Settings",
+                            "General application preferences configured.",
+                          ),
                         ),
-                      ),
+                        GroupedTile.navigation(
+                          iconPath: 'assets/icons/settings-sliders.svg',
+                          title: '🧪 Test SDE Drag Selection',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) => const SDEDragTestScreen()),
+                            );
+                          },
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 16.0),
 
                     // Section 2 Card (Dark Mode, Language)
-                    Center(
-                      child: Container(
-                        width: 322,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: ShapeDecoration(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                    GroupedListContainer(
+                      children: [
+                        GroupedTile.toggle(
+                          iconPath: 'assets/icons/night-day.svg',
+                          title: 'Dark Mode',
+                          trailingSwitch: ToggleSwitch(
+                            value: _isDummyDarkMode,
+                            onChanged: (val) {
+                              HapticFeedback.selectionClick();
+                              setState(() {
+                                _isDummyDarkMode = val;
+                              });
+                            },
                           ),
-                          shadows: const [
-                            BoxShadow(
-                              color: Color(0x3F000000),
-                              blurRadius: 16,
-                              offset: Offset(0, 0),
-                              spreadRadius: 0,
-                            ),
-                          ],
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/night-day.svg',
-                              title: 'Dark Mode',
-                              trailing: ToggleSwitch(
-                                value: _isDummyDarkMode,
-                                onChanged: (val) {
-                                  HapticFeedback.selectionClick();
-                                  setState(() {
-                                    _isDummyDarkMode = val;
-                                  });
-                                },
-                              ),
-                              showBorderBottom: true,
-                            ),
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/translate.svg',
-                              title: 'Language',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "Language",
-                                "Current application language: English (US)",
-                              ),
-                              showBorderBottom: false,
-                            ),
-                          ],
+                        GroupedTile.navigation(
+                          iconPath: 'assets/icons/translate.svg',
+                          title: 'Language',
+                          onTap: () => _showInfoDialog(
+                            context,
+                            "Language",
+                            "Current application language: English (US)",
+                          ),
                         ),
-                      ),
+                      ],
                     ),
 
                     const SizedBox(height: 16.0),
 
-                    // Section 3 Card (FAQ, Terms of service, User Policy)
-                    Center(
-                      child: Container(
-                        width: 322,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: ShapeDecoration(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                    // Section 3 Card (Glassmorphism, FAQ, Terms, Policy, Seeds)
+                    GroupedListContainer(
+                      children: [
+                        GroupedTile.navigation(
+                          iconPath: 'assets/icons/refresh.svg',
+                          title: 'Glassmorphism Sandbox',
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            Navigator.push(
+                              context,
+                              buildPageRoute(const GlassmorphismSandboxScreen()),
+                            );
+                          },
+                        ),
+                        GroupedTile.navigation(
+                          iconPath: 'assets/icons/interrogation.svg',
+                          title: 'FAQ',
+                          onTap: () => _showInfoDialog(
+                            context,
+                            "FAQ",
+                            "Frequently asked questions and support resources.",
                           ),
-                          shadows: const [
-                            BoxShadow(
-                              color: Color(0x3F000000),
-                              blurRadius: 16,
-                              offset: Offset(0, 0),
-                              spreadRadius: 0,
-                            ),
-                          ],
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/refresh.svg',
-                              title: 'Glassmorphism Sandbox',
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                Navigator.push(
-                                  context,
-                                  buildPageRoute(const GlassmorphismSandboxScreen()),
-                                );
-                              },
-                              showBorderBottom: true,
-                            ),
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/interrogation.svg',
-                              title: 'FAQ',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "FAQ",
-                                "Frequently asked questions and support resources.",
-                              ),
-                              showBorderBottom: true,
-                            ),
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/terms-info.svg',
-                              title: 'Terms of service',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "Terms of service",
-                                "Standard Terms of Service for QuickNotes.",
-                              ),
-                              showBorderBottom: true,
-                            ),
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/insurance.svg',
-                              title: 'User Policy',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "User Policy",
-                                "Privacy and Data Protection Policy for QuickNotes.",
-                              ),
-                              showBorderBottom: true,
-                            ),
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/terms-info.svg',
-                              title: 'Seed Long Note (10,000+ Chars)',
-                              onTap: () async {
-                                HapticFeedback.mediumImpact();
-                                final provider = Provider.of<NotesProvider>(context, listen: false);
-                                final seededNote = await provider.seedLongTestNote();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('✅ Seeded Long Note with ${seededNote.content.length} characters!'),
-                                      backgroundColor: const Color(0xFF34C759),
-                                      duration: const Duration(seconds: 3),
-                                    ),
-                                  );
-                                }
-                              },
-                              showBorderBottom: true,
-                            ),
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/alarm_clock.svg',
-                              title: 'Seed 50 Test Tasks (Test 12.1)',
-                              onTap: () async {
-                                HapticFeedback.mediumImpact();
-                                final provider = Provider.of<TasksProvider>(context, listen: false);
-                                await provider.seedTestTasks(55);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('✅ 55 Test Tasks created across Today, Weekly & Missed!'),
-                                      backgroundColor: Color(0xFF34C759),
-                                      duration: Duration(seconds: 3),
-                                    ),
-                                  );
-                                }
-                              },
-                              showBorderBottom: false,
-                            ),
-                          ],
+                        GroupedTile.navigation(
+                          iconPath: 'assets/icons/terms-info.svg',
+                          title: 'Terms of service',
+                          onTap: () => _showInfoDialog(
+                            context,
+                            "Terms of service",
+                            "Standard Terms of Service for QuickNotes.",
+                          ),
                         ),
-                      ),
+                        GroupedTile.navigation(
+                          iconPath: 'assets/icons/insurance.svg',
+                          title: 'User Policy',
+                          onTap: () => _showInfoDialog(
+                            context,
+                            "User Policy",
+                            "Privacy and Data Protection Policy for QuickNotes.",
+                          ),
+                        ),
+                        GroupedTile.navigation(
+                          iconPath: 'assets/icons/terms-info.svg',
+                          title: 'Seed Long Note (10,000+ Chars)',
+                          onTap: () async {
+                            HapticFeedback.mediumImpact();
+                            final provider = Provider.of<NotesProvider>(context, listen: false);
+                            final seededNote = await provider.seedLongTestNote();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('✅ Seeded Long Note with ${seededNote.content.length} characters!'),
+                                  backgroundColor: const Color(0xFF34C759),
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        GroupedTile.navigation(
+                          iconPath: 'assets/icons/alarm_clock.svg',
+                          title: 'Seed 50 Test Tasks (Test 12.1)',
+                          onTap: () async {
+                            HapticFeedback.mediumImpact();
+                            final provider = Provider.of<TasksProvider>(context, listen: false);
+                            await provider.seedTestTasks(55);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('✅ 55 Test Tasks created across Today, Weekly & Missed!'),
+                                  backgroundColor: Color(0xFF34C759),
+                                  duration: Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
