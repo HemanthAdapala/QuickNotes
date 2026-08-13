@@ -11,6 +11,7 @@ import '../widgets/grouped_list_container.dart';
 import '../../core/animations/page_transitions.dart';
 import 'profile_screen.dart';
 import 'glassmorphism_sandbox_screen.dart';
+import 'account/account_settings_screen.dart';
 
 import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
@@ -278,11 +279,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             GroupedTile.navigation(
                               iconPath: 'assets/icons/bottom_navigation/settings.svg',
                               title: 'Account',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "Account",
-                                "Manage user account preferences.",
-                              ),
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                Navigator.push(
+                                  context,
+                                  buildPageRoute(const AccountSettingsScreen()),
+                                );
+                              },
                             ),
                             GroupedTile.navigation(
                               iconPath: 'assets/icons/settings-sliders.svg',

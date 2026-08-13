@@ -31,6 +31,11 @@ Redesigned the Settings Screen (`lib/views/screens/settings_screen.dart`) matchi
 - **Two-Line User Details**: Rendered display name (`Hemanth A`) on line 1, and handle/email (`@fakehemanth20@gmail.com`) on line 2.
 - **Bottom Frosted Blur Edge**: Added glassmorphic gradient blur overlay (`BackdropFilter` + `LinearGradient`) at the bottom edge so cards dissolve smoothly when scrolling above navigation dock.
 - **Fixed Asset Icons**: Resolved asset icon paths across all 4 `GroupedListContainer` sections.
+- **Account Multi-Screen Navigation Flow**:
+  - `AccountSettingsScreen`: Main Account menu container featuring `Profile >`, `Backup & Sync >`, and `Delete your data and account >`.
+  - `AccountProfileScreen`: Displays `User Name` and `Email Address` grouped input/display fields.
+  - `BackupAndSyncScreen`: Displays user details and Gmail backup caption at the bottom of the screen.
+  - `DeleteAccountScreen`: Account closing warning, Username & Email confirmation, and primary blue **`Continue`** button.
 - **Section 1 Card**: User & App Controls (`Account`, `General Settings`).
 - **Section 2 Card**: Display & Storage (`Dark Mode` toggle, `Storage and Data`).
 - **Section 3 Card**: Information & Legal (`FAQ`, `Terms of service`, `Privacy Policy`, `About`).
