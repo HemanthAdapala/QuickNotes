@@ -5,7 +5,7 @@ import '../../controllers/splash_controller.dart';
 import 'welcome_screen.dart';
 import 'login_screen.dart';
 import 'passcode_lock_screen.dart';
-import 'profile_test_screen.dart';
+import 'profile_screen.dart';
 import 'home_screen.dart';
 import '../../core/animations/page_transitions.dart';
 

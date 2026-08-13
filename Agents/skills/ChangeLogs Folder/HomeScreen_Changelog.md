@@ -123,3 +123,41 @@ None.
 ### Final Result
 
 `HomeScreen` is a fully session-agnostic pure presentation screen. It is the terminal destination for all authentication and onboarding flows. It interacts only with application repositories and providers. It is completely future-proof: adding new authentication providers (Apple, email), new data sources (cloud, sync queue), or new session types requires zero changes to `HomeScreen`.
+
+---
+
+## v2.9.0
+
+### Date
+2026-08-13
+
+### Author
+Anti Gravity
+
+### Type
+- Feature
+- UI
+- Bug Fix
+- Architecture
+
+---
+
+### Summary
+
+Connected the character-picker Edit Profile screen to the main Homescreen top-left profile icon, synchronized profile avatar and username updates dynamically upon returning from Edit Profile, updated the greeting text to be dynamic, and fixed the header username alignment issue.
+
+---
+
+### Detailed Changes
+
+- Updated `AppHeaderBar` on `HomeScreen` so tapping the top-left glass pill profile avatar opens `ProfileScreen()` and awaits `_loadUserData()` upon pop.
+- Dynamically rendered the user's selected profile character avatar (`profile_avatar_path`) inside the 34x34 glass pill container in `AppHeaderBar`.
+- Removed `SizedBox(width: 54.0)` inside `AppHeaderBar`'s `titleWidget`, perfectly centering the username text on the Homescreen header.
+- Updated `HomePromptView` greeting text (`"Hi ${_displayName},"`) to dynamically reflect the user's name from `SharedPreferences`.
+
+---
+
+### Architecture Impact
+
+- **UI presentation**: `HomeScreen` header reflects active user profile state reactively without full app reload.
+- **Navigation**: Left header pill opens `ProfileScreen` directly and refreshes state on return.

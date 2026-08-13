@@ -6,7 +6,7 @@ import '../../controllers/login_controller.dart';
 import '../../core/animations/page_transitions.dart';
 import '../widgets/app_header_bar.dart';
 import 'home_screen.dart';
-import 'profile_test_screen.dart';
+import 'profile_screen.dart';
 import 'welcome_screen.dart';
 
 class LoginScreen extends StatefulWidget {

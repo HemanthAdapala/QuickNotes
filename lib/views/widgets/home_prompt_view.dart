@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
@@ -154,14 +155,27 @@ class HomePromptView extends StatefulWidget {
 
 class _HomePromptViewState extends State<HomePromptView> {
   late final String _placeholderPrompt;
+  String _displayName = 'HA';
 
   @override
   void initState() {
     super.initState();
+    _loadUserDisplayName();
     if (Platform.environment.containsKey('FLUTTER_TEST')) {
       _placeholderPrompt = "Start writing...";
     } else {
       _placeholderPrompt = HomePromptView._getRandomPrompt();
+    }
+  }
+
+  Future<void> _loadUserDisplayName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('profile_username') ?? prefs.getString('profile_full_name');
+    if (name != null && name.trim().isNotEmpty && mounted) {
+      setState(() {
+        final parts = name.trim().split(' ');
+        _displayName = parts.isNotEmpty ? parts.first : name.trim();
+      });
     }
   }
 
@@ -281,7 +295,7 @@ class _HomePromptViewState extends State<HomePromptView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Hi HA,",
+                  "Hi ${_displayName},",
                   style: GoogleFonts.inter(
                     fontSize: 36.0,
                     fontWeight: FontWeight.bold,

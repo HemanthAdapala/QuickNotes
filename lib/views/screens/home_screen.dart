@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/tactile_button.dart';
@@ -64,6 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isMoreOptionsOpen = false;
   String _activeFilter = 'Today';
   bool _isSortAscending = false;
+  String _username = 'Hemanth Adapala';
+  String? _avatarPath;
   final GlobalKey<FolderManagementScreenState> _foldersKey = GlobalKey<FolderManagementScreenState>();
   final List<OverlayEntry> _overlayEntries = [];
   StreamSubscription<NotificationPayload>? _notificationSub;
@@ -77,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserData();
     final initialIndex = Provider.of<NotesProvider>(context, listen: false).selectedBgIndex;
     _updatePresetsForBackground(initialIndex);
 
@@ -107,6 +111,18 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() => _activeNavIndex = 0);
       },
     );
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      final name = prefs.getString('profile_username') ?? prefs.getString('profile_full_name');
+      if (name != null && name.trim().isNotEmpty) {
+        _username = name.trim();
+      }
+      _avatarPath = prefs.getString('profile_avatar_path');
+    });
   }
 
   @override
@@ -750,12 +766,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: AppHeaderBar(
                     rightHeroTag: 'hero_home_search',
                     leftWidth: 44.0,
-                    onLeftTap: () {
+                    onLeftTap: () async {
                       HapticFeedback.selectionClick();
-                      Navigator.push(
+                      await Navigator.push(
                         context,
                         buildPageRoute(const ProfileScreen()),
                       );
+                      _loadUserData();
                     },
                     leftChild: Container(
                       width: 34.0,
@@ -765,24 +782,39 @@ class _HomeScreenState extends State<HomeScreen> {
                         shape: BoxShape.circle,
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: SvgPicture.asset(
-                        "assets/Profile Icons/maxim_transparent.svg",
-                        width: 34.0,
-                        height: 34.0,
-                      ),
+                      child: _avatarPath != null && _avatarPath!.startsWith('assets/')
+                          ? Padding(
+                              padding: const EdgeInsets.all(3.0),
+                              child: Image.asset(
+                                _avatarPath!,
+                                width: 28.0,
+                                height: 28.0,
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                          : _avatarPath != null && File(_avatarPath!).existsSync()
+                              ? Image.file(
+                                  File(_avatarPath!),
+                                  width: 34.0,
+                                  height: 34.0,
+                                  fit: BoxFit.cover,
+                                )
+                              : SvgPicture.asset(
+                                  "assets/Profile Icons/maxim_transparent.svg",
+                                  width: 34.0,
+                                  height: 34.0,
+                                ),
                     ),
-                    titleWidget: Row(
-                      children: [
-                        const SizedBox(width: 54.0), // avatar (44) + gap (10)
-                        Text(
-                          "Hemanth Adapala",
-                          style: GoogleFonts.inter(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.w500,
-                            color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white : const Color(0xFF1C1C1E),
-                          ),
-                        ),
-                      ],
+                    titleWidget: Text(
+                      _username,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w500,
+                        color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white : const Color(0xFF1C1C1E),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     rightWidth: 44.0,
                     rightChild: TactileButton(

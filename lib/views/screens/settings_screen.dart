@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
 import '../../core/animations/page_transitions.dart';
-import 'profile_test_screen.dart';
+import 'profile_screen.dart';
 import 'glassmorphism_sandbox_screen.dart';
 
 import 'package:provider/provider.dart';
@@ -52,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      final name = prefs.getString('profile_full_name');
+      final name = prefs.getString('profile_username') ?? prefs.getString('profile_full_name');
       final uname = prefs.getString('profile_username');
       if (name != null && name.trim().isNotEmpty) {
         _fullName = name.trim();
@@ -60,7 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (uname != null && uname.trim().isNotEmpty) {
         _username = uname.trim().replaceAll('@', '');
       }
-      _imagePath = prefs.getString('profile_image_path');
+      _imagePath = prefs.getString('profile_avatar_path') ?? prefs.getString('profile_image_path');
     });
   }
 
@@ -280,14 +280,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     shape: OvalBorder(),
                                   ),
                                   clipBehavior: Clip.antiAlias,
-                                  child: _imagePath != null && File(_imagePath!).existsSync()
-                                      ? Image.file(
-                                          File(_imagePath!),
-                                          width: 44,
-                                          height: 44,
-                                          fit: BoxFit.cover,
+                                  child: _imagePath != null && _imagePath!.startsWith('assets/')
+                                      ? Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: Image.asset(
+                                            _imagePath!,
+                                            width: 36,
+                                            height: 36,
+                                            fit: BoxFit.contain,
+                                          ),
                                         )
-                                      : null,
+                                      : _imagePath != null && File(_imagePath!).existsSync()
+                                          ? Image.file(
+                                              File(_imagePath!),
+                                              width: 44,
+                                              height: 44,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -386,18 +396,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(builder: (context) => const SDEDragTestScreen()),
-                                );
-                              },
-                              showBorderBottom: true,
-                            ),
-                            _buildSettingRow(
-                              iconPath: 'assets/icons/settings-sliders.svg',
-                              title: 'Edit Profile',
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                Navigator.push(
-                                  context,
-                                  buildPageRoute(const ProfileScreen()),
                                 );
                               },
                               showBorderBottom: false,

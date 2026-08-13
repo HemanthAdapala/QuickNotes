@@ -217,3 +217,32 @@ None.
 
 ### Final Result
 Google-authenticated users enjoy a secure, read-only Email field marked with a clean `check.png` VERIFIED badge, maintaining identity safety and clear visual feedback.
+
+---
+
+## v2.9.0
+
+### Date
+2026-08-13
+
+### Author
+Anti Gravity
+
+### Type
+- Refactor
+- Architecture
+- Documentation
+
+---
+
+### Summary
+
+Consolidated `ProfileScreen` into `lib/views/screens/profile_screen.dart` as the single source of truth for profile setup and editing throughout QuickNotes, and removed `profile_test_screen.dart`.
+
+---
+
+### Detailed Changes
+
+- Merged the full character-grid profile editor implementation into `profile_screen.dart`.
+- Removed `profile_test_screen.dart`.
+- Updated all app routes (`splash_screen.dart`, `login_screen.dart`, `settings_screen.dart`) to import `profile_screen.dart`.
