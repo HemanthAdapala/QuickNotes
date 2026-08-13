@@ -444,35 +444,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
 
-          // 4. Bottom Edge Frosted Blur & Gradient Fade Overlay
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 80,
-            child: IgnorePointer(
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withValues(alpha: 0.0),
-                          Colors.white.withValues(alpha: 0.7),
-                          Colors.white,
-                        ],
-                        stops: const [0.0, 0.5, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
           // 3. Header Bar Overlay
           Positioned(
             top: 0,
