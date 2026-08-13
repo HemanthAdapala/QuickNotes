@@ -152,7 +152,7 @@ Connected the character-picker Edit Profile screen to the main Homescreen top-le
 
 - Updated `AppHeaderBar` on `HomeScreen` so tapping the top-left glass pill profile avatar opens `ProfileScreen()` and awaits `_loadUserData()` upon pop.
 - Dynamically rendered the user's selected profile character avatar (`profile_avatar_path`) inside the 34x34 glass pill container in `AppHeaderBar`.
-- Removed `SizedBox(width: 54.0)` inside `AppHeaderBar`'s `titleWidget`, perfectly centering the username text on the Homescreen header.
+- Removed username text from `AppHeaderBar` for clean Apple minimal header design.
 - Updated `HomePromptView` greeting text (`"Hi ${_displayName},"`) to dynamically reflect the user's name from `SharedPreferences`.
 
 ---

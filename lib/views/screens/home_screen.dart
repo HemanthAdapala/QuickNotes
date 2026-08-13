@@ -805,17 +805,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   height: 34.0,
                                 ),
                     ),
-                    titleWidget: Text(
-                      _username,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w500,
-                        color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white : const Color(0xFF1C1C1E),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                     rightWidth: 44.0,
                     rightChild: TactileButton(
                       useAppleSpring: true,
