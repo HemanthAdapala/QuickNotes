@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -214,7 +215,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
 
-                    // Fixed User Info (FullName, Username, Email)
+                    // Fixed User Info (FullName, @Email)
                     Positioned(
                       top: 195,
                       left: 24,
@@ -242,27 +243,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: 4),
                             Text(
-                              '@$_username',
+                              '@${_email.isNotEmpty ? _email : _username}',
                               style: GoogleFonts.inter(
                                 color: const Color(0xFF8E8E93),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                                 height: 1.1,
                                 letterSpacing: -0.43,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              _email,
-                              style: GoogleFonts.inter(
-                                color: const Color(0xFF8E8E93).withValues(alpha: 0.8),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                height: 1.1,
-                                letterSpacing: -0.3,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -280,14 +269,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: Colors.white,
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 120.0),
+                    padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 100.0),
                     child: Column(
                       children: [
                         // Section 1 Card (Account, General Settings)
                         GroupedListContainer(
                           children: [
                             GroupedTile.navigation(
-                              iconPath: 'assets/icons/user.svg',
+                              iconPath: 'assets/icons/bottom_navigation/settings.svg',
                               title: 'Account',
                               onTap: () => _showInfoDialog(
                                 context,
@@ -450,6 +439,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ],
+          ),
+
+          // 4. Bottom Edge Frosted Blur & Gradient Fade Overlay
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 80,
+            child: IgnorePointer(
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.0),
+                          Colors.white.withValues(alpha: 0.7),
+                          Colors.white,
+                        ],
+                        stops: const [0.0, 0.5, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
 
           // 3. Header Bar Overlay

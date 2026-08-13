@@ -27,9 +27,10 @@ Redesigned the Settings Screen (`lib/views/screens/settings_screen.dart`) matchi
 ### Detailed Changes
 
 - **Top Decorative Background**: Integrated `assets/Settings Screen/Background.svg` as top floral header banner behind `AppHeaderBar`.
-- **Overlapping Profile Avatar & Static Header**: Positioned 90x90 white avatar circle directly over seam line, pinning floral header, avatar, name, username, and email in a static top header block.
-- **User Details Header & Email Line**: Rendered `_fullName`, `@_username`, and `_email` below the avatar with tap response to open `ProfileScreen()`.
-- **Isolated Card Scrolling**: Restricted vertical scrolling to `GroupedListContainer` cards inside an `Expanded(SingleChildScrollView(...))`, keeping the header perfectly fixed.
+- **Overlapping Profile Avatar & Static Header**: Positioned 90x90 white avatar circle directly over seam line, pinning floral header, avatar, name, and email handle in a static top header block.
+- **Two-Line User Details**: Rendered display name (`Hemanth A`) on line 1, and handle/email (`@fakehemanth20@gmail.com`) on line 2.
+- **Bottom Frosted Blur Edge**: Added glassmorphic gradient blur overlay (`BackdropFilter` + `LinearGradient`) at the bottom edge so cards dissolve smoothly when scrolling above navigation dock.
+- **Fixed Asset Icons**: Resolved asset icon paths across all 4 `GroupedListContainer` sections.
 - **Section 1 Card**: User & App Controls (`Account`, `General Settings`).
 - **Section 2 Card**: Display & Storage (`Dark Mode` toggle, `Storage and Data`).
 - **Section 3 Card**: Information & Legal (`FAQ`, `Terms of service`, `Privacy Policy`, `About`).
