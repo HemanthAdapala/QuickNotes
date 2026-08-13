@@ -69,6 +69,7 @@ flutter:
     - assets/app_bottom_navigation_bar_Icons/
     - assets/icons/bottom_navigation/
     - assets/Profile Icons/
+    - assets/Settings Screen/
     - assets/stickers/
     - assets/animations/
     - DesignCode/LottieFiles/
