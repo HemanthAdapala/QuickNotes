@@ -332,4 +332,69 @@ abstract class GroupedTile {
       ),
     );
   }
+
+  /// Key-Value Display Tile — displays title on left and value text on right.
+  static Widget keyValue({
+    Key? key,
+    required String title,
+    required String value,
+    String? iconPath,
+    Widget? leading,
+    VoidCallback? onTap,
+    double height = 50.0,
+  }) {
+    const primaryTextColor = Color(0xFF333333);
+    const valueTextColor = Color(0xFF8E8E93);
+
+    return TactileButton(
+      key: key,
+      useAppleSpring: true,
+      onTap: onTap ?? () {},
+      child: Container(
+        width: double.infinity,
+        height: height,
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
+          children: [
+            if (leading != null) ...[
+              leading,
+              const SizedBox(width: 12),
+            ] else if (iconPath != null) ...[
+              SvgPicture.asset(
+                iconPath,
+                width: 18,
+                height: 18,
+                colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                color: primaryTextColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 1.0,
+                letterSpacing: -0.43,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                value,
+                textAlign: TextAlign.right,
+                style: GoogleFonts.inter(
+                  color: valueTextColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  height: 1.0,
+                  letterSpacing: -0.43,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

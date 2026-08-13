@@ -6,11 +6,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/tactile_button.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import 'package:provider/provider.dart';
-import '../../providers/notes_provider.dart';
-import '../../providers/tasks_provider.dart';
-import '../../models/note.dart';
-import '../../models/task_item.dart';
-import '../../models/folder.dart';
+import 'package:quick_notes/providers/notes_provider.dart';
+import 'package:quick_notes/providers/tasks_provider.dart';
+import 'package:quick_notes/models/note.dart';
+import 'package:quick_notes/models/task_item.dart';
+import 'package:quick_notes/models/folder.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
   const DeleteAccountScreen({super.key});

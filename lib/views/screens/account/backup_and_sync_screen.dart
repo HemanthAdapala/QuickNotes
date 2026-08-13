@@ -114,21 +114,15 @@ class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
                   children: [
                     GroupedListContainer(
                       children: [
-                        GroupedTile.input(
+                        GroupedTile.keyValue(
                           iconPath: 'assets/icons/bottom_navigation/settings.svg',
                           title: 'User Name',
                           value: _username,
-                          onChanged: (val) {
-                            setState(() => _username = val);
-                          },
                         ),
-                        GroupedTile.input(
+                        GroupedTile.keyValue(
                           iconPath: 'assets/icons/terms-info.svg',
                           title: 'Email Address',
                           value: _email,
-                          onChanged: (val) {
-                            setState(() => _email = val);
-                          },
                         ),
                       ],
                     ),
