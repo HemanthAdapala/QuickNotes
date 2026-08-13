@@ -40,6 +40,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   String _fullName = 'Hemanth Adapala';
   String _username = 'byhmnth';
+  String _email = 'hemanth@example.com';
   String? _imagePath;
   bool _isDummyDarkMode = true;
   bool _isMoreOptionsOpen = false;
@@ -55,11 +56,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       final name = prefs.getString('profile_username') ?? prefs.getString('profile_full_name');
       final uname = prefs.getString('profile_username');
+      final mail = prefs.getString('profile_email') ?? prefs.getString('user_email');
       if (name != null && name.trim().isNotEmpty) {
         _fullName = name.trim();
       }
       if (uname != null && uname.trim().isNotEmpty) {
         _username = uname.trim().replaceAll('@', '');
+      }
+      if (mail != null && mail.trim().isNotEmpty) {
+        _email = mail.trim();
       }
       _imagePath = prefs.getString('profile_avatar_path') ?? prefs.getString('profile_image_path');
     });
@@ -111,12 +116,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // 1. Top Decorative Floral SVG Background Banner
+          // 1. Fixed Top Floral Background Banner
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            height: 220,
+            height: 180,
             child: SvgPicture.asset(
               'assets/Settings Screen/Background.svg',
               fit: BoxFit.cover,
@@ -124,24 +129,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
 
-          // 2. Scrollable Body Content Sheet
-          Positioned.fill(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  const SizedBox(height: 165), // Spacer to offset top floral pattern
-                  Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          // 2. Fixed Upper Header Block + Scrollable Cards Column
+          Column(
+            children: [
+              // Fixed Top Header Area (Height: 285px) — Floral background + white curved top + Avatar + User info
+              SizedBox(
+                height: 285,
+                child: Stack(
+                  children: [
+                    // White rounded sheet top
+                    Positioned(
+                      top: 140,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                        ),
+                      ),
                     ),
-                    padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 56.0, bottom: 120.0),
-                    child: Column(
-                      children: [
-                        // User Name & Handle (Tap target to open ProfileScreen)
-                        TactileButton(
+
+                    // Overlapping Profile Avatar Circle
+                    Positioned(
+                      top: 95,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: TactileButton(
                           useAppleSpring: true,
                           onTap: () async {
                             HapticFeedback.lightImpact();
@@ -151,37 +167,122 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             );
                             _loadUserData();
                           },
-                          child: Column(
-                            children: [
-                              Text(
-                                _fullName,
-                                style: GoogleFonts.inter(
-                                  color: primaryTextColor,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.1,
-                                  letterSpacing: -0.43,
-                                ),
-                                textAlign: TextAlign.center,
+                          child: Container(
+                            width: 90,
+                            height: 90,
+                            decoration: const ShapeDecoration(
+                              color: Colors.white,
+                              shape: OvalBorder(
+                                side: BorderSide(width: 4, color: Colors.white),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '@$_username',
-                                style: GoogleFonts.inter(
-                                  color: const Color(0xFF8E8E93),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.1,
-                                  letterSpacing: -0.43,
+                              shadows: [
+                                BoxShadow(
+                                  color: Color(0x26000000),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 4),
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+                              ],
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: _imagePath != null && _imagePath!.startsWith('assets/')
+                                ? Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: Image.asset(
+                                      _imagePath!,
+                                      width: 78,
+                                      height: 78,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  )
+                                : _imagePath != null && File(_imagePath!).existsSync()
+                                    ? Image.file(
+                                        File(_imagePath!),
+                                        width: 90,
+                                        height: 90,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        color: const Color(0xFFE2E2DF),
+                                        child: SvgPicture.asset(
+                                          "assets/Profile Icons/maxim_transparent.svg",
+                                          width: 90,
+                                          height: 90,
+                                        ),
+                                      ),
                           ),
                         ),
+                      ),
+                    ),
 
-                        const SizedBox(height: 28.0),
+                    // Fixed User Info (FullName, Username, Email)
+                    Positioned(
+                      top: 195,
+                      left: 24,
+                      right: 24,
+                      child: TactileButton(
+                        useAppleSpring: true,
+                        onTap: () async {
+                          HapticFeedback.lightImpact();
+                          await Navigator.push(
+                            context,
+                            buildPageRoute(const ProfileScreen()),
+                          );
+                          _loadUserData();
+                        },
+                        child: Column(
+                          children: [
+                            Text(
+                              _fullName,
+                              style: GoogleFonts.inter(
+                                color: primaryTextColor,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                height: 1.1,
+                                letterSpacing: -0.43,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '@$_username',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF8E8E93),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                height: 1.1,
+                                letterSpacing: -0.43,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              _email,
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF8E8E93).withValues(alpha: 0.8),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                height: 1.1,
+                                letterSpacing: -0.3,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
+              // Scrollable Cards Only (GroupedListContainer Section 1, 2, 3, 4)
+              Expanded(
+                child: Container(
+                  color: Colors.white,
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 120.0),
+                    child: Column(
+                      children: [
                         // Section 1 Card (Account, General Settings)
                         GroupedListContainer(
                           children: [
@@ -346,75 +447,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-
-          // 3. Overlapping Profile Avatar Circle (Positioned right over seam at top: 120)
-          Positioned(
-            top: 120,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: TactileButton(
-                useAppleSpring: true,
-                onTap: () async {
-                  HapticFeedback.lightImpact();
-                  await Navigator.push(
-                    context,
-                    buildPageRoute(const ProfileScreen()),
-                  );
-                  _loadUserData();
-                },
-                child: Container(
-                  width: 90,
-                  height: 90,
-                  decoration: const ShapeDecoration(
-                    color: Colors.white,
-                    shape: OvalBorder(
-                      side: BorderSide(width: 4, color: Colors.white),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x26000000),
-                        blurRadius: 16,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: _imagePath != null && _imagePath!.startsWith('assets/')
-                      ? Padding(
-                          padding: const EdgeInsets.all(6.0),
-                          child: Image.asset(
-                            _imagePath!,
-                            width: 78,
-                            height: 78,
-                            fit: BoxFit.contain,
-                          ),
-                        )
-                      : _imagePath != null && File(_imagePath!).existsSync()
-                          ? Image.file(
-                              File(_imagePath!),
-                              width: 90,
-                              height: 90,
-                              fit: BoxFit.cover,
-                            )
-                          : Container(
-                              color: const Color(0xFFE2E2DF),
-                              child: SvgPicture.asset(
-                                "assets/Profile Icons/maxim_transparent.svg",
-                                width: 90,
-                                height: 90,
-                              ),
-                            ),
                 ),
               ),
-            ),
+            ],
           ),
 
-          // 4. Header Bar Overlay
+          // 3. Header Bar Overlay
           Positioned(
             top: 0,
             left: 0,

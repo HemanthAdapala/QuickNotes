@@ -27,8 +27,9 @@ Redesigned the Settings Screen (`lib/views/screens/settings_screen.dart`) matchi
 ### Detailed Changes
 
 - **Top Decorative Background**: Integrated `assets/Settings Screen/Background.svg` as top floral header banner behind `AppHeaderBar`.
-- **Overlapping Profile Avatar**: Positioned 90x90 white avatar circle directly over seam line between header background and white content sheet.
-- **User Details Header**: Rendered `_fullName` and `@_username` with tap response to open `ProfileScreen()`.
+- **Overlapping Profile Avatar & Static Header**: Positioned 90x90 white avatar circle directly over seam line, pinning floral header, avatar, name, username, and email in a static top header block.
+- **User Details Header & Email Line**: Rendered `_fullName`, `@_username`, and `_email` below the avatar with tap response to open `ProfileScreen()`.
+- **Isolated Card Scrolling**: Restricted vertical scrolling to `GroupedListContainer` cards inside an `Expanded(SingleChildScrollView(...))`, keeping the header perfectly fixed.
 - **Section 1 Card**: User & App Controls (`Account`, `General Settings`).
 - **Section 2 Card**: Display & Storage (`Dark Mode` toggle, `Storage and Data`).
 - **Section 3 Card**: Information & Legal (`FAQ`, `Terms of service`, `Privacy Policy`, `About`).
