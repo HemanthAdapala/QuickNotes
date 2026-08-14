@@ -25,6 +25,7 @@ dependencies:
   # Helper Utilities
   uuid: ^4.3.3
   intl: ^0.20.2
+  connectivity_plus: ^6.1.4
 
   # Premium UI & Styling
   google_fonts: ^8.1.0
