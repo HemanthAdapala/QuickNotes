@@ -8,6 +8,8 @@ import '../repositories/outbox_repository.dart';
 import 'sync_network_client.dart';
 import 'session_manager.dart';
 
+import 'pull_sync_engine.dart';
+
 /// Engine operational state.
 enum SyncEngineState {
   idle,
@@ -16,11 +18,12 @@ enum SyncEngineState {
   stopped,
 }
 
-/// SyncEngine — Orchestration service for processing local outbox mutations.
+/// SyncEngine — Orchestration service for processing local outbox mutations and pulling remote changes.
 class SyncEngine {
   final OutboxRepository _outboxRepo;
   final SyncNetworkClient _networkClient;
   final SessionManager _sessionManager;
+  final PullSyncEngine _pullSyncEngine;
 
   final int initialDelaySeconds;
   final double multiplier;
@@ -39,6 +42,7 @@ class SyncEngine {
     OutboxRepository? outboxRepo,
     required SyncNetworkClient networkClient,
     SessionManager? sessionManager,
+    PullSyncEngine? pullSyncEngine,
     this.initialDelaySeconds = 2,
     this.multiplier = 2.0,
     this.maximumDelaySeconds = 300,
@@ -47,6 +51,11 @@ class SyncEngine {
   })  : _outboxRepo = outboxRepo ?? SqliteOutboxRepository(),
         _networkClient = networkClient,
         _sessionManager = sessionManager ?? SessionManager(),
+        _pullSyncEngine = pullSyncEngine ??
+            PullSyncEngine(
+              networkClient: networkClient,
+              sessionManager: sessionManager,
+            ),
         nowProvider = nowProvider ?? DateTime.now;
 
   /// Initializes engine state on application startup.
@@ -81,31 +90,40 @@ class SyncEngine {
 
     try {
       final items = await _outboxRepo.getPendingOutboxItems(activeUserId);
-      if (items.isEmpty) {
-        _state = SyncEngineState.idle;
-        return;
-      }
-
-      for (final item in items) {
-        // Session isolation guard before every mutation
-        if (_sessionManager.activeUserId != activeUserId || _state == SyncEngineState.stopped) {
-          debugPrint('SyncEngine flush aborted: Session changed or engine stopped.');
-          break;
-        }
-
-        // Retry eligibility check based on nextAttemptAt
-        final now = nowProvider();
-        if (item.nextAttemptAt != null && item.nextAttemptAt!.isAfter(now)) {
-          debugPrint('SyncEngine skipping item ${item.id}: Backoff timer active until ${item.nextAttemptAt}');
-          continue;
-        }
-
-        final success = await _processItem(item, activeUserId);
-        if (!success) {
-          // If paused for authentication or transient error, exit loop
-          if (_state == SyncEngineState.pausedAuthentication) {
+      if (items.isNotEmpty) {
+        for (final item in items) {
+          // Session isolation guard before every mutation
+          if (_sessionManager.activeUserId != activeUserId || _state == SyncEngineState.stopped) {
+            debugPrint('SyncEngine flush aborted: Session changed or engine stopped.');
             break;
           }
+
+          // Retry eligibility check based on nextAttemptAt
+          final now = nowProvider();
+          if (item.nextAttemptAt != null && item.nextAttemptAt!.isAfter(now)) {
+            debugPrint('SyncEngine skipping item ${item.id}: Backoff timer active until ${item.nextAttemptAt}');
+            continue;
+          }
+
+          final success = await _processItem(item, activeUserId);
+          if (!success) {
+            // If paused for authentication or transient error, exit loop
+            if (_state == SyncEngineState.pausedAuthentication) {
+              break;
+            }
+          }
+        }
+      }
+
+      // Execute PULL phase if authentication is valid and session matches
+      if (_state != SyncEngineState.pausedAuthentication &&
+          _sessionManager.activeUserId == activeUserId &&
+          !_isDisposed &&
+          _state != SyncEngineState.stopped) {
+        try {
+          await _pullSyncEngine.pull(activeUserId: activeUserId);
+        } catch (e) {
+          debugPrint('SyncEngine: Error during pull phase: $e');
         }
       }
     } catch (e, stack) {

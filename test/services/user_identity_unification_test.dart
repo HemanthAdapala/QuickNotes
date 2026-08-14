@@ -34,10 +34,25 @@ void main() {
       const MethodChannel('plugins.flutter.io/path_provider'),
       (MethodCall methodCall) async => '.',
     );
+    final secureStorageStore = <String, String>{};
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
       const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
-      (MethodCall methodCall) async => null,
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'write') {
+          final args = Map<String, dynamic>.from(methodCall.arguments as Map);
+          secureStorageStore[args['key'] as String] = args['value'] as String;
+          return null;
+        } else if (methodCall.method == 'read') {
+          final args = Map<String, dynamic>.from(methodCall.arguments as Map);
+          return secureStorageStore[args['key'] as String];
+        } else if (methodCall.method == 'delete') {
+          final args = Map<String, dynamic>.from(methodCall.arguments as Map);
+          secureStorageStore.remove(args['key'] as String);
+          return null;
+        }
+        return null;
+      },
     );
 
     sqfliteFfiInit();
@@ -45,6 +60,15 @@ void main() {
   });
 
   setUp(() async {
+    final db = await DatabaseService.instance.database;
+    await db.delete('users');
+    await db.delete('user_identities');
+    await db.delete('user_profiles');
+    await db.delete('notes');
+    await db.delete('folders');
+    await db.delete('tasks');
+    await db.delete('sync_outbox');
+
     identityRepo = SqliteUserIdentityRepository();
     identityService = UserIdentityService();
     notesRepo = SqliteNotesRepository();
