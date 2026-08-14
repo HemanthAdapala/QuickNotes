@@ -102,6 +102,10 @@ class SessionManager {
     return await _secureStorage.read(key: _keyAccessToken);
   }
 
+  Future<String?> getIdToken() async {
+    return await _secureStorage.read(key: _keyIdToken);
+  }
+
   // ── 5. Clear Session ───────────────────────────────────────────────────
   Future<void> clearSession() async {
     await init();
