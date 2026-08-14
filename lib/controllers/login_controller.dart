@@ -3,6 +3,7 @@ import '../repositories/user_repository.dart';
 import '../services/authentication_service.dart';
 import '../services/local_profile_service.dart';
 import '../services/session_manager.dart';
+import '../services/user_identity_service.dart';
 
 /// Describes the navigation outcome of a login attempt.
 ///
@@ -41,6 +42,7 @@ class LoginController extends ChangeNotifier {
   final _localProfileService = LocalProfileService();
   final _userRepository = UserRepository();
   final _sessionManager = SessionManager();
+  final _userIdentityService = UserIdentityService();
 
   void _setState(LoginUiState newState, [String? error]) {
     _state = newState;
@@ -73,11 +75,23 @@ class LoginController extends ChangeNotifier {
       return LoginResult.error;
     }
 
-    final user = authResult.user!;
-    await _userRepository.saveUser(user);
+    final authUser = authResult.user!;
+
+    // Phase 1.7.1 — Unify external Google account ID with canonical User.id ("usr_...")
+    final canonicalUserId = await _userIdentityService.getOrCreateCanonicalUser(
+      provider: 'google',
+      providerUserId: authUser.id,
+      email: authUser.email,
+      displayName: authUser.displayName,
+      photoUrl: authUser.photoUrl,
+    );
+
+    final canonicalUser = authUser.copyWith(id: canonicalUserId);
+
+    await _userRepository.saveUser(canonicalUser);
     await _sessionManager.saveSession(
-      userId: user.id,
-      sessionType: user.sessionType,
+      userId: canonicalUserId,
+      sessionType: authUser.sessionType,
       accessToken: authResult.accessToken,
       idToken: authResult.idToken,
     );
