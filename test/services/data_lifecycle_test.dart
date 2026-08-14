@@ -443,7 +443,7 @@ void main() {
       final db = await dbService.database;
 
       final ver = await db.getVersion();
-      expect(ver, equals(17));
+      expect(ver, equals(18));
 
       final notesInfo = await db.rawQuery('PRAGMA table_info(notes)');
       final foldersInfo = await db.rawQuery('PRAGMA table_info(folders)');

@@ -36,6 +36,10 @@ class Note {
   final double paperGuideOpacity;
   final int paperGuideColor;
 
+  // Phase 1.6 Versioning & Sync Metadata
+  final int version;
+  final int lastSyncedVersion;
+
   Note({
     required this.id,
     this.userId,
@@ -67,6 +71,8 @@ class Note {
     this.paperGuideHeight = 1.05,
     this.paperGuideOpacity = 0.15,
     this.paperGuideColor = 0,
+    this.version = 1,
+    this.lastSyncedVersion = 0,
   }) : previewText = previewText ?? _generatePreviewText(content);
 
   static String _generatePreviewText(String content) {
@@ -166,6 +172,8 @@ class Note {
       'habitStreak': habitStreak,
       'habitLastCompleted': habitLastCompleted?.toIso8601String(),
       'previewText': previewText,
+      'version': version,
+      'lastSyncedVersion': lastSyncedVersion,
       'paperSettings': jsonEncode({
         'guideType': paperGuideType,
         'guideVisible': paperGuideVisible,
@@ -248,6 +256,8 @@ class Note {
       paperGuideHeight: paperGuideHeight,
       paperGuideOpacity: paperGuideOpacity,
       paperGuideColor: paperGuideColor,
+      version: (map['version'] ?? 1) as int,
+      lastSyncedVersion: (map['lastSyncedVersion'] ?? 0) as int,
     );
   }
 
@@ -288,6 +298,8 @@ class Note {
     double? paperGuideHeight,
     double? paperGuideOpacity,
     int? paperGuideColor,
+    int? version,
+    int? lastSyncedVersion,
   }) {
     return Note(
       id: id ?? this.id,
@@ -320,6 +332,8 @@ class Note {
       paperGuideHeight: paperGuideHeight ?? this.paperGuideHeight,
       paperGuideOpacity: paperGuideOpacity ?? this.paperGuideOpacity,
       paperGuideColor: paperGuideColor ?? this.paperGuideColor,
+      version: version ?? this.version,
+      lastSyncedVersion: lastSyncedVersion ?? this.lastSyncedVersion,
     );
   }
 }

@@ -45,6 +45,7 @@ void main() {
     late SessionManager sessionManager;
     late SqliteNotesRepository notesRepo;
     late SqliteFoldersRepository foldersRepo;
+    late SqliteTasksRepository tasksRepo;
     late NotesProvider notesProvider;
     late String testUserId;
 

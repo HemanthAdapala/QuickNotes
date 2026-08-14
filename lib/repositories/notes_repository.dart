@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'package:sqflite/sqflite.dart';
+import 'package:uuid/uuid.dart';
 import '../models/note.dart';
+import '../models/sync_outbox_item.dart';
 import '../services/database_service.dart';
 import '../services/session_manager.dart';
 import '../services/database_exceptions.dart';
@@ -41,6 +45,32 @@ class SqliteNotesRepository implements NotesRepository {
       throw const OwnershipException('No active canonical user exists for this repository operation.');
     }
     return activeId;
+  }
+
+  Future<void> _recordOutboxEvent(
+    DatabaseExecutor executor, {
+    required String userId,
+    required String entityId,
+    required String operation,
+    required Map<String, dynamic> payloadMap,
+    required int localVersion,
+  }) async {
+    final outboxItem = SyncOutboxItem(
+      id: const Uuid().v4(),
+      operationId: const Uuid().v4(),
+      userId: userId,
+      entityType: 'note',
+      entityId: entityId,
+      operation: operation,
+      payload: jsonEncode(payloadMap),
+      localVersion: localVersion,
+      createdAt: DateTime.now(),
+    );
+    await executor.insert(
+      'sync_outbox',
+      outboxItem.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   @override
@@ -106,179 +136,406 @@ class SqliteNotesRepository implements NotesRepository {
   @override
   Future<int> insertNote(Note note) async {
     final uid = _resolveActiveUserId();
-    final scopedNote = Note(
-      id: note.id,
-      userId: uid,
-      title: note.title,
-      content: note.content,
-      isPinned: note.isPinned,
-      isFavorite: note.isFavorite,
-      isArchived: note.isArchived,
-      category: note.category,
-      noteType: note.noteType,
-      tags: note.tags,
-      attachments: note.attachments,
-      isLocked: note.isLocked,
-      reminderTime: note.reminderTime,
-      createdAt: note.createdAt,
-      updatedAt: note.updatedAt,
-      colorValue: note.colorValue,
-      isDeleted: note.isDeleted,
-      deletedAt: note.deletedAt,
-      trashedByFolderId: note.trashedByFolderId,
-      folderId: note.folderId,
-      isHabit: note.isHabit,
-      habitRecurrence: note.habitRecurrence,
-      habitStreak: note.habitStreak,
-      habitLastCompleted: note.habitLastCompleted,
-      previewText: note.previewText,
-      paperGuideType: note.paperGuideType,
-      paperGuideVisible: note.paperGuideVisible,
-      paperGuideHeight: note.paperGuideHeight,
-      paperGuideOpacity: note.paperGuideOpacity,
-      paperGuideColor: note.paperGuideColor,
-    );
-    return await _dbService.insert(scopedNote);
+    return await _dbService.runInTransaction((executor) async {
+      final now = DateTime.now();
+      final scopedNote = Note(
+        id: note.id,
+        userId: uid,
+        title: note.title,
+        content: note.content,
+        isPinned: note.isPinned,
+        isFavorite: note.isFavorite,
+        isArchived: note.isArchived,
+        category: note.category,
+        noteType: note.noteType,
+        tags: note.tags,
+        attachments: note.attachments,
+        isLocked: note.isLocked,
+        reminderTime: note.reminderTime,
+        createdAt: note.createdAt,
+        updatedAt: now,
+        colorValue: note.colorValue,
+        isDeleted: note.isDeleted,
+        deletedAt: note.deletedAt,
+        trashedByFolderId: note.trashedByFolderId,
+        folderId: note.folderId,
+        isHabit: note.isHabit,
+        habitRecurrence: note.habitRecurrence,
+        habitStreak: note.habitStreak,
+        habitLastCompleted: note.habitLastCompleted,
+        previewText: note.previewText,
+        paperGuideType: note.paperGuideType,
+        paperGuideVisible: note.paperGuideVisible,
+        paperGuideHeight: note.paperGuideHeight,
+        paperGuideOpacity: note.paperGuideOpacity,
+        paperGuideColor: note.paperGuideColor,
+        version: 1,
+        lastSyncedVersion: note.lastSyncedVersion,
+      );
+      await executor.insert(
+        'notes',
+        scopedNote.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await _recordOutboxEvent(
+        executor,
+        userId: uid,
+        entityId: scopedNote.id,
+        operation: 'create',
+        payloadMap: scopedNote.toMap(),
+        localVersion: 1,
+      );
+      return 1;
+    });
   }
 
   @override
   Future<int> updateNote(Note note) async {
     final uid = _resolveActiveUserId();
-    final existing = await _dbService.queryById(note.id);
-    if (existing != null && existing.userId != null && existing.userId != uid) {
-      throw OwnershipException('Ownership violation: User $uid cannot update note belonging to User ${existing.userId}');
-    }
-    final scopedNote = Note(
-      id: note.id,
-      userId: uid,
-      title: note.title,
-      content: note.content,
-      isPinned: note.isPinned,
-      isFavorite: note.isFavorite,
-      isArchived: note.isArchived,
-      category: note.category,
-      noteType: note.noteType,
-      tags: note.tags,
-      attachments: note.attachments,
-      isLocked: note.isLocked,
-      reminderTime: note.reminderTime,
-      createdAt: note.createdAt,
-      updatedAt: DateTime.now(),
-      colorValue: note.colorValue,
-      isDeleted: note.isDeleted,
-      deletedAt: note.deletedAt,
-      trashedByFolderId: note.trashedByFolderId,
-      folderId: note.folderId,
-      isHabit: note.isHabit,
-      habitRecurrence: note.habitRecurrence,
-      habitStreak: note.habitStreak,
-      habitLastCompleted: note.habitLastCompleted,
-      previewText: note.previewText,
-      paperGuideType: note.paperGuideType,
-      paperGuideVisible: note.paperGuideVisible,
-      paperGuideHeight: note.paperGuideHeight,
-      paperGuideOpacity: note.paperGuideOpacity,
-      paperGuideColor: note.paperGuideColor,
-    );
-    return await _dbService.update(scopedNote);
+    return await _dbService.runInTransaction((executor) async {
+      final existingMap = await executor.query(
+        'notes',
+        where: 'id = ?',
+        whereArgs: [note.id],
+      );
+      if (existingMap.isNotEmpty) {
+        final ownerId = existingMap.first['userId'] as String?;
+        if (ownerId != null && ownerId != uid) {
+          throw OwnershipException('Ownership violation: User $uid cannot update note belonging to User $ownerId');
+        }
+      }
+      final currentVersion = existingMap.isNotEmpty ? (existingMap.first['version'] as int? ?? 1) : 1;
+      final newVersion = currentVersion + 1;
+      final now = DateTime.now();
+
+      final scopedNote = Note(
+        id: note.id,
+        userId: uid,
+        title: note.title,
+        content: note.content,
+        isPinned: note.isPinned,
+        isFavorite: note.isFavorite,
+        isArchived: note.isArchived,
+        category: note.category,
+        noteType: note.noteType,
+        tags: note.tags,
+        attachments: note.attachments,
+        isLocked: note.isLocked,
+        reminderTime: note.reminderTime,
+        createdAt: note.createdAt,
+        updatedAt: now,
+        colorValue: note.colorValue,
+        isDeleted: note.isDeleted,
+        deletedAt: note.deletedAt,
+        trashedByFolderId: note.trashedByFolderId,
+        folderId: note.folderId,
+        isHabit: note.isHabit,
+        habitRecurrence: note.habitRecurrence,
+        habitStreak: note.habitStreak,
+        habitLastCompleted: note.habitLastCompleted,
+        previewText: note.previewText,
+        paperGuideType: note.paperGuideType,
+        paperGuideVisible: note.paperGuideVisible,
+        paperGuideHeight: note.paperGuideHeight,
+        paperGuideOpacity: note.paperGuideOpacity,
+        paperGuideColor: note.paperGuideColor,
+        version: newVersion,
+        lastSyncedVersion: note.lastSyncedVersion,
+      );
+      final count = await executor.update(
+        'notes',
+        scopedNote.toMap(),
+        where: 'id = ? AND userId = ?',
+        whereArgs: [note.id, uid],
+      );
+      if (count > 0) {
+        await _recordOutboxEvent(
+          executor,
+          userId: uid,
+          entityId: scopedNote.id,
+          operation: 'update',
+          payloadMap: scopedNote.toMap(),
+          localVersion: newVersion,
+        );
+      }
+      return count;
+    });
   }
 
   @override
   Future<int> togglePin(String id) async {
     final uid = _resolveActiveUserId();
-    final existing = await getNoteById(id);
-    if (existing == null) return 0;
+    return await _dbService.runInTransaction((executor) async {
+      final existingMap = await executor.query(
+        'notes',
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+      if (existingMap.isEmpty) return 0;
+      final existing = Note.fromMap(existingMap.first);
 
-    final updatedNote = existing.copyWith(
-      isPinned: !existing.isPinned,
-      updatedAt: DateTime.now(),
-    );
-    return await _dbService.update(updatedNote);
+      final newVersion = existing.version + 1;
+      final updatedNote = existing.copyWith(
+        isPinned: !existing.isPinned,
+        updatedAt: DateTime.now(),
+        version: newVersion,
+      );
+      await executor.update(
+        'notes',
+        updatedNote.toMap(),
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+      await _recordOutboxEvent(
+        executor,
+        userId: uid,
+        entityId: id,
+        operation: 'update',
+        payloadMap: updatedNote.toMap(),
+        localVersion: newVersion,
+      );
+      return 1;
+    });
   }
 
   @override
   Future<int> toggleFavorite(String id) async {
     final uid = _resolveActiveUserId();
-    final existing = await getNoteById(id);
-    if (existing == null) return 0;
+    return await _dbService.runInTransaction((executor) async {
+      final existingMap = await executor.query(
+        'notes',
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+      if (existingMap.isEmpty) return 0;
+      final existing = Note.fromMap(existingMap.first);
 
-    final updatedNote = existing.copyWith(
-      isFavorite: !existing.isFavorite,
-      updatedAt: DateTime.now(),
-    );
-    return await _dbService.update(updatedNote);
+      final newVersion = existing.version + 1;
+      final updatedNote = existing.copyWith(
+        isFavorite: !existing.isFavorite,
+        updatedAt: DateTime.now(),
+        version: newVersion,
+      );
+      await executor.update(
+        'notes',
+        updatedNote.toMap(),
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+      await _recordOutboxEvent(
+        executor,
+        userId: uid,
+        entityId: id,
+        operation: 'update',
+        payloadMap: updatedNote.toMap(),
+        localVersion: newVersion,
+      );
+      return 1;
+    });
   }
 
   @override
   Future<int> toggleArchive(String id) async {
     final uid = _resolveActiveUserId();
-    final existing = await getNoteById(id);
-    if (existing == null) return 0;
+    return await _dbService.runInTransaction((executor) async {
+      final existingMap = await executor.query(
+        'notes',
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+      if (existingMap.isEmpty) return 0;
+      final existing = Note.fromMap(existingMap.first);
 
-    final updatedNote = existing.copyWith(
-      isArchived: !existing.isArchived,
-      updatedAt: DateTime.now(),
-    );
-    return await _dbService.update(updatedNote);
+      final newVersion = existing.version + 1;
+      final updatedNote = existing.copyWith(
+        isArchived: !existing.isArchived,
+        updatedAt: DateTime.now(),
+        version: newVersion,
+      );
+      await executor.update(
+        'notes',
+        updatedNote.toMap(),
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+      await _recordOutboxEvent(
+        executor,
+        userId: uid,
+        entityId: id,
+        operation: 'update',
+        payloadMap: updatedNote.toMap(),
+        localVersion: newVersion,
+      );
+      return 1;
+    });
   }
 
   @override
   Future<int> trashNote(String id) async {
     final uid = _resolveActiveUserId();
-    final existing = await _dbService.queryById(id);
-    if (existing != null && existing.userId != null && existing.userId != uid) {
-      throw OwnershipException('Ownership violation: User $uid cannot trash note belonging to User ${existing.userId}');
-    }
-    if (existing == null) return 0;
-    if (existing.isDeleted) return 1; // Idempotent
+    return await _dbService.runInTransaction((executor) async {
+      final existingMap = await executor.query(
+        'notes',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (existingMap.isEmpty) return 0;
+      final ownerId = existingMap.first['userId'] as String?;
+      if (ownerId != null && ownerId != uid) {
+        throw OwnershipException('Ownership violation: User $uid cannot trash note belonging to User $ownerId');
+      }
+      final existing = Note.fromMap(existingMap.first);
+      if (existing.isDeleted) return 1; // Idempotent
 
-    final trashedNote = existing.copyWith(
-      isDeleted: true,
-      deletedAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      clearTrashedByFolderId: true,
-    );
-    return await _dbService.update(trashedNote);
+      final newVersion = existing.version + 1;
+      final trashedNote = existing.copyWith(
+        isDeleted: true,
+        deletedAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        clearTrashedByFolderId: true,
+        version: newVersion,
+      );
+      await executor.update(
+        'notes',
+        trashedNote.toMap(),
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+      await _recordOutboxEvent(
+        executor,
+        userId: uid,
+        entityId: id,
+        operation: 'update',
+        payloadMap: trashedNote.toMap(),
+        localVersion: newVersion,
+      );
+      return 1;
+    });
   }
 
   @override
   Future<int> restoreNote(String id) async {
     final uid = _resolveActiveUserId();
-    final existing = await _dbService.queryById(id);
-    if (existing != null && existing.userId != null && existing.userId != uid) {
-      throw OwnershipException('Ownership violation: User $uid cannot restore note belonging to User ${existing.userId}');
-    }
-    if (existing == null) return 0;
-    if (!existing.isDeleted) return 1; // Idempotent
+    return await _dbService.runInTransaction((executor) async {
+      final existingMap = await executor.query(
+        'notes',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (existingMap.isEmpty) return 0;
+      final ownerId = existingMap.first['userId'] as String?;
+      if (ownerId != null && ownerId != uid) {
+        throw OwnershipException('Ownership violation: User $uid cannot restore note belonging to User $ownerId');
+      }
+      final existing = Note.fromMap(existingMap.first);
+      if (!existing.isDeleted) return 1; // Idempotent
 
-    final restoredNote = existing.copyWith(
-      isDeleted: false,
-      clearDeletedAt: true,
-      clearTrashedByFolderId: true,
-      updatedAt: DateTime.now(),
-    );
-    return await _dbService.update(restoredNote);
+      final newVersion = existing.version + 1;
+      final restoredNote = existing.copyWith(
+        isDeleted: false,
+        clearDeletedAt: true,
+        clearTrashedByFolderId: true,
+        updatedAt: DateTime.now(),
+        version: newVersion,
+      );
+      await executor.update(
+        'notes',
+        restoredNote.toMap(),
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+      await _recordOutboxEvent(
+        executor,
+        userId: uid,
+        entityId: id,
+        operation: 'update',
+        payloadMap: restoredNote.toMap(),
+        localVersion: newVersion,
+      );
+      return 1;
+    });
   }
 
   @override
   Future<int> deleteNote(String id) async {
     final uid = _resolveActiveUserId();
-    final existing = await _dbService.queryById(id);
-    if (existing != null && existing.userId != null && existing.userId != uid) {
-      throw OwnershipException('Ownership violation: User $uid cannot delete note belonging to User ${existing.userId}');
-    }
-    return await _dbService.delete(id);
+    return await _dbService.runInTransaction((executor) async {
+      final existingMap = await executor.query(
+        'notes',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (existingMap.isEmpty) return 0;
+      final ownerId = existingMap.first['userId'] as String?;
+      if (ownerId != null && ownerId != uid) {
+        throw OwnershipException('Ownership violation: User $uid cannot delete note belonging to User $ownerId');
+      }
+      final existing = Note.fromMap(existingMap.first);
+
+      final count = await executor.delete(
+        'notes',
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+
+      // Hard Delete Rule
+      if (existing.lastSyncedVersion == 0) {
+        // Silent purge: Delete pending outbox items for entityId
+        await executor.delete(
+          'sync_outbox',
+          where: 'entityId = ? AND userId = ?',
+          whereArgs: [id, uid],
+        );
+      } else {
+        // Previously synced: Record DELETE outbox event
+        await _recordOutboxEvent(
+          executor,
+          userId: uid,
+          entityId: id,
+          operation: 'delete',
+          payloadMap: {'id': id, 'version': existing.version},
+          localVersion: existing.version,
+        );
+      }
+      return count;
+    });
   }
 
   @override
   Future<int> emptyTrash() async {
     final uid = _resolveActiveUserId();
     return await _dbService.runInTransaction((executor) async {
+      final trashedNotesMaps = await executor.query(
+        'notes',
+        where: 'userId = ? AND isDeleted = 1',
+        whereArgs: [uid],
+      );
+      final trashedNotes = trashedNotesMaps.map((m) => Note.fromMap(m)).toList();
+
       final res = await executor.delete(
         'notes',
         where: 'userId = ? AND isDeleted = 1',
         whereArgs: [uid],
       );
+
+      for (final note in trashedNotes) {
+        if (note.lastSyncedVersion == 0) {
+          await executor.delete(
+            'sync_outbox',
+            where: 'entityId = ? AND userId = ?',
+            whereArgs: [note.id, uid],
+          );
+        } else {
+          await _recordOutboxEvent(
+            executor,
+            userId: uid,
+            entityId: note.id,
+            operation: 'delete',
+            payloadMap: {'id': note.id, 'version': note.version},
+            localVersion: note.version,
+          );
+        }
+      }
       return res;
     });
   }

@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'package:sqflite/sqflite.dart';
+import 'package:uuid/uuid.dart';
 import '../models/task_item.dart';
+import '../models/sync_outbox_item.dart';
 import '../services/database_service.dart';
 import '../services/session_manager.dart';
 import '../services/database_exceptions.dart';
@@ -30,6 +34,32 @@ class SqliteTasksRepository implements TasksRepository {
     return activeId;
   }
 
+  Future<void> _recordOutboxEvent(
+    DatabaseExecutor executor, {
+    required String userId,
+    required String entityId,
+    required String operation,
+    required Map<String, dynamic> payloadMap,
+    required int localVersion,
+  }) async {
+    final outboxItem = SyncOutboxItem(
+      id: const Uuid().v4(),
+      operationId: const Uuid().v4(),
+      userId: userId,
+      entityType: 'task',
+      entityId: entityId,
+      operation: operation,
+      payload: jsonEncode(payloadMap),
+      localVersion: localVersion,
+      createdAt: DateTime.now(),
+    );
+    await executor.insert(
+      'sync_outbox',
+      outboxItem.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   @override
   Future<List<TaskItem>> getTasks() async {
     final uid = _resolveActiveUserId();
@@ -57,121 +87,248 @@ class SqliteTasksRepository implements TasksRepository {
   @override
   Future<int> insertTask(TaskItem task) async {
     final uid = _resolveActiveUserId();
-    final scopedTask = TaskItem(
-      id: task.id,
-      userId: uid,
-      title: task.title,
-      description: task.description,
-      folderId: task.folderId,
-      categoryId: task.categoryId,
-      dueDate: task.dueDate,
-      startTime: task.startTime,
-      endTime: task.endTime,
-      priority: task.priority,
-      status: task.status,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
-      completedAt: task.completedAt,
-      reminderEnabled: task.reminderEnabled,
-      reminderMode: task.reminderMode,
-      reminderTime: task.reminderTime,
-      notificationId: task.notificationId,
-      repeatRule: task.repeatRule,
-      isRecurring: task.isRecurring,
-      recurrence: task.recurrence,
-      recurringSeriesId: task.recurringSeriesId,
-      timezone: task.timezone,
-      completedDates: task.completedDates,
-      isDeleted: task.isDeleted,
-      deletedAt: task.deletedAt,
-    );
-    return await _dbService.insertTask(scopedTask);
+    return await _dbService.runInTransaction((executor) async {
+      final now = DateTime.now();
+      final scopedTask = TaskItem(
+        id: task.id,
+        userId: uid,
+        title: task.title,
+        description: task.description,
+        folderId: task.folderId,
+        categoryId: task.categoryId,
+        dueDate: task.dueDate,
+        startTime: task.startTime,
+        endTime: task.endTime,
+        priority: task.priority,
+        status: task.status,
+        createdAt: task.createdAt,
+        updatedAt: now,
+        completedAt: task.completedAt,
+        reminderEnabled: task.reminderEnabled,
+        reminderMode: task.reminderMode,
+        reminderTime: task.reminderTime,
+        notificationId: task.notificationId,
+        repeatRule: task.repeatRule,
+        isRecurring: task.isRecurring,
+        recurrence: task.recurrence,
+        recurringSeriesId: task.recurringSeriesId,
+        timezone: task.timezone,
+        completedDates: task.completedDates,
+        isDeleted: task.isDeleted,
+        deletedAt: task.deletedAt,
+        version: 1,
+        lastSyncedVersion: task.lastSyncedVersion,
+      );
+      await executor.insert(
+        'tasks',
+        scopedTask.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await _recordOutboxEvent(
+        executor,
+        userId: uid,
+        entityId: scopedTask.id,
+        operation: 'create',
+        payloadMap: scopedTask.toMap(),
+        localVersion: 1,
+      );
+      return 1;
+    });
   }
 
   @override
   Future<int> updateTask(TaskItem task) async {
     final uid = _resolveActiveUserId();
-    final scopedTask = TaskItem(
-      id: task.id,
-      userId: uid,
-      title: task.title,
-      description: task.description,
-      folderId: task.folderId,
-      categoryId: task.categoryId,
-      dueDate: task.dueDate,
-      startTime: task.startTime,
-      endTime: task.endTime,
-      priority: task.priority,
-      status: task.status,
-      createdAt: task.createdAt,
-      updatedAt: DateTime.now(),
-      completedAt: task.completedAt,
-      reminderEnabled: task.reminderEnabled,
-      reminderMode: task.reminderMode,
-      reminderTime: task.reminderTime,
-      notificationId: task.notificationId,
-      repeatRule: task.repeatRule,
-      isRecurring: task.isRecurring,
-      recurrence: task.recurrence,
-      recurringSeriesId: task.recurringSeriesId,
-      timezone: task.timezone,
-      completedDates: task.completedDates,
-      isDeleted: task.isDeleted,
-      deletedAt: task.deletedAt,
-    );
-    return await _dbService.updateTask(scopedTask);
+    return await _dbService.runInTransaction((executor) async {
+      final existingMap = await executor.query(
+        'tasks',
+        where: 'id = ?',
+        whereArgs: [task.id],
+      );
+      if (existingMap.isNotEmpty) {
+        final ownerId = existingMap.first['userId'] as String?;
+        if (ownerId != null && ownerId != uid) {
+          throw OwnershipException('Ownership violation: User $uid cannot update task belonging to User $ownerId');
+        }
+      }
+      final currentVersion = existingMap.isNotEmpty ? (existingMap.first['version'] as int? ?? 1) : 1;
+      final newVersion = currentVersion + 1;
+      final now = DateTime.now();
+
+      final scopedTask = TaskItem(
+        id: task.id,
+        userId: uid,
+        title: task.title,
+        description: task.description,
+        folderId: task.folderId,
+        categoryId: task.categoryId,
+        dueDate: task.dueDate,
+        startTime: task.startTime,
+        endTime: task.endTime,
+        priority: task.priority,
+        status: task.status,
+        createdAt: task.createdAt,
+        updatedAt: now,
+        completedAt: task.completedAt,
+        reminderEnabled: task.reminderEnabled,
+        reminderMode: task.reminderMode,
+        reminderTime: task.reminderTime,
+        notificationId: task.notificationId,
+        repeatRule: task.repeatRule,
+        isRecurring: task.isRecurring,
+        recurrence: task.recurrence,
+        recurringSeriesId: task.recurringSeriesId,
+        timezone: task.timezone,
+        completedDates: task.completedDates,
+        isDeleted: task.isDeleted,
+        deletedAt: task.deletedAt,
+        version: newVersion,
+        lastSyncedVersion: task.lastSyncedVersion,
+      );
+      final count = await executor.update(
+        'tasks',
+        scopedTask.toMap(),
+        where: 'id = ? AND userId = ?',
+        whereArgs: [task.id, uid],
+      );
+      if (count > 0) {
+        await _recordOutboxEvent(
+          executor,
+          userId: uid,
+          entityId: scopedTask.id,
+          operation: 'update',
+          payloadMap: scopedTask.toMap(),
+          localVersion: newVersion,
+        );
+      }
+      return count;
+    });
   }
 
   @override
   Future<int> trashTask(String id) async {
     final uid = _resolveActiveUserId();
-    final all = await _dbService.getAllTasks();
-    final matches = all.where((t) => t.id == id);
-    if (matches.isEmpty) return 0;
-    final existing = matches.first;
-    if (existing.userId != null && existing.userId != uid) {
-      throw OwnershipException('Ownership violation: User $uid cannot trash task belonging to User ${existing.userId}');
-    }
-    if (existing.isDeleted) return 1; // Idempotent
+    return await _dbService.runInTransaction((executor) async {
+      final existingMap = await executor.query(
+        'tasks',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (existingMap.isEmpty) return 0;
+      final ownerId = existingMap.first['userId'] as String?;
+      if (ownerId != null && ownerId != uid) {
+        throw OwnershipException('Ownership violation: User $uid cannot trash task belonging to User $ownerId');
+      }
+      final existing = TaskItem.fromMap(existingMap.first);
+      if (existing.isDeleted) return 1; // Idempotent
 
-    final trashedTask = existing.copyWith(
-      isDeleted: true,
-      deletedAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-    return await _dbService.updateTask(trashedTask);
+      final newVersion = existing.version + 1;
+      final trashedTask = existing.copyWith(
+        isDeleted: true,
+        deletedAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        version: newVersion,
+      );
+      await executor.update(
+        'tasks',
+        trashedTask.toMap(),
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+      await _recordOutboxEvent(
+        executor,
+        userId: uid,
+        entityId: id,
+        operation: 'update',
+        payloadMap: trashedTask.toMap(),
+        localVersion: newVersion,
+      );
+      return 1;
+    });
   }
 
   @override
   Future<int> restoreTask(String id) async {
     final uid = _resolveActiveUserId();
-    final all = await _dbService.getAllTasks();
-    final matches = all.where((t) => t.id == id);
-    if (matches.isEmpty) return 0;
-    final existing = matches.first;
-    if (existing.userId != null && existing.userId != uid) {
-      throw OwnershipException('Ownership violation: User $uid cannot restore task belonging to User ${existing.userId}');
-    }
-    if (!existing.isDeleted) return 1; // Idempotent
+    return await _dbService.runInTransaction((executor) async {
+      final existingMap = await executor.query(
+        'tasks',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (existingMap.isEmpty) return 0;
+      final ownerId = existingMap.first['userId'] as String?;
+      if (ownerId != null && ownerId != uid) {
+        throw OwnershipException('Ownership violation: User $uid cannot restore task belonging to User $ownerId');
+      }
+      final existing = TaskItem.fromMap(existingMap.first);
+      if (!existing.isDeleted) return 1; // Idempotent
 
-    final restoredTask = existing.copyWith(
-      isDeleted: false,
-      clearDeletedAt: true,
-      updatedAt: DateTime.now(),
-    );
-    return await _dbService.updateTask(restoredTask);
+      final newVersion = existing.version + 1;
+      final restoredTask = existing.copyWith(
+        isDeleted: false,
+        clearDeletedAt: true,
+        updatedAt: DateTime.now(),
+        version: newVersion,
+      );
+      await executor.update(
+        'tasks',
+        restoredTask.toMap(),
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+      await _recordOutboxEvent(
+        executor,
+        userId: uid,
+        entityId: id,
+        operation: 'update',
+        payloadMap: restoredTask.toMap(),
+        localVersion: newVersion,
+      );
+      return 1;
+    });
   }
 
   @override
   Future<int> deleteTask(String id) async {
     final uid = _resolveActiveUserId();
     return await _dbService.runInTransaction((executor) async {
-      final res = await executor.delete(
+      final existingMap = await executor.query(
+        'tasks',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (existingMap.isEmpty) return 0;
+      final ownerId = existingMap.first['userId'] as String?;
+      if (ownerId != null && ownerId != uid) {
+        throw OwnershipException('Ownership violation: User $uid cannot delete task belonging to User $ownerId');
+      }
+      final existing = TaskItem.fromMap(existingMap.first);
+
+      final count = await executor.delete(
         'tasks',
         where: 'id = ? AND userId = ?',
         whereArgs: [id, uid],
       );
-      return res;
+
+      // Hard Delete Rule
+      if (existing.lastSyncedVersion == 0) {
+        await executor.delete(
+          'sync_outbox',
+          where: 'entityId = ? AND userId = ?',
+          whereArgs: [id, uid],
+        );
+      } else {
+        await _recordOutboxEvent(
+          executor,
+          userId: uid,
+          entityId: id,
+          operation: 'delete',
+          payloadMap: {'id': id, 'version': existing.version},
+          localVersion: existing.version,
+        );
+      }
+      return count;
     });
   }
 
@@ -179,11 +336,37 @@ class SqliteTasksRepository implements TasksRepository {
   Future<int> emptyTrash() async {
     final uid = _resolveActiveUserId();
     return await _dbService.runInTransaction((executor) async {
+      final trashedMaps = await executor.query(
+        'tasks',
+        where: 'userId = ? AND isDeleted = 1',
+        whereArgs: [uid],
+      );
+      final trashedTasks = trashedMaps.map((m) => TaskItem.fromMap(m)).toList();
+
       final res = await executor.delete(
         'tasks',
         where: 'userId = ? AND isDeleted = 1',
         whereArgs: [uid],
       );
+
+      for (final task in trashedTasks) {
+        if (task.lastSyncedVersion == 0) {
+          await executor.delete(
+            'sync_outbox',
+            where: 'entityId = ? AND userId = ?',
+            whereArgs: [task.id, uid],
+          );
+        } else {
+          await _recordOutboxEvent(
+            executor,
+            userId: uid,
+            entityId: task.id,
+            operation: 'delete',
+            payloadMap: {'id': task.id, 'version': task.version},
+            localVersion: task.version,
+          );
+        }
+      }
       return res;
     });
   }
@@ -193,3 +376,4 @@ class SqliteTasksRepository implements TasksRepository {
     return await _dbService.generateUniqueNotificationId();
   }
 }
+

@@ -2,6 +2,44 @@
 
 ---
 
+## v1.6.0
+
+### Date
+2026-08-14
+
+### Author
+Anti Gravity
+
+### Type
+- Feature
+- Architecture
+- Testing
+
+---
+
+### Summary
+
+Engineered Phase 1.6 Entity Versioning & Sync Outbox Infrastructure in `SqliteNotesRepository` (`lib/repositories/notes_repository.dart`). Wrapped all write mutations (`insertNote`, `updateNote`, `togglePin`, `toggleFavorite`, `toggleArchive`, `trashNote`, `restoreNote`, `deleteNote`, `emptyTrash`) inside `runInTransaction()` to guarantee the atomic contract: `UPDATE notes SET version = version + 1` + `INSERT INTO sync_outbox`. Implemented `lastSyncedVersion` hard-delete branching rules.
+
+---
+
+### Detailed Changes
+
+- **Atomic Write Mutations**:
+  - `insertNote`: Sets `version = 1`, `lastSyncedVersion = note.lastSyncedVersion`, updates `updatedAt = DateTime.now()`, and records a `create` outbox event.
+  - `updateNote`, `togglePin`, `toggleFavorite`, `toggleArchive`, `trashNote`, `restoreNote`: Increments `version = version + 1`, updates `updatedAt = DateTime.now()`, and records an `update` outbox event with full JSON payload.
+- **Hard Delete Rule**:
+  - If `lastSyncedVersion == 0` (never synced): Purges entity row and removes pending outbox events silently without network traffic.
+  - If `lastSyncedVersion > 0` (previously synced): Purges entity row and creates a `delete` outbox event with `operationId`.
+
+---
+
+### Testing Status
+
+- **Automated Tests**: Passed 100% of workspace tests (158/158 tests passed).
+
+---
+
 ## v1.5.0
 
 ### Date

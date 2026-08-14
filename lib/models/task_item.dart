@@ -31,6 +31,8 @@ class TaskItem {
   final List<String> completedDates;
   final bool isDeleted;
   final DateTime? deletedAt;
+  final int version;
+  final int lastSyncedVersion;
 
   TaskItem({
     required this.id,
@@ -60,6 +62,8 @@ class TaskItem {
     this.completedDates = const [],
     this.isDeleted = false,
     this.deletedAt,
+    this.version = 1,
+    this.lastSyncedVersion = 0,
   })  : status = status ??
             ((completed ?? false) ? TaskStatus.completed : TaskStatus.waiting),
         createdAt = (createdAt ?? DateTime.now()).toUtc(),
@@ -117,6 +121,8 @@ class TaskItem {
       'completedDates': jsonEncode(completedDates),
       'isDeleted': isDeleted ? 1 : 0,
       'deletedAt': deletedAt?.toUtc().toIso8601String(),
+      'version': version,
+      'lastSyncedVersion': lastSyncedVersion,
     };
   }
 
@@ -179,11 +185,14 @@ class TaskItem {
       completedDates: rawCompletedDates,
       isDeleted: map['isDeleted'] == 1 || map['isDeleted'] == true,
       deletedAt: map['deletedAt'] != null ? DateTime.tryParse(map['deletedAt'] as String)?.toUtc() : null,
+      version: (map['version'] ?? 1) as int,
+      lastSyncedVersion: (map['lastSyncedVersion'] ?? 0) as int,
     );
   }
 
   TaskItem copyWith({
     String? id,
+    String? userId,
     String? title,
     String? description,
     String? folderId,
@@ -197,21 +206,25 @@ class TaskItem {
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? completedAt,
+    bool clearCompletedAt = false,
     bool? reminderEnabled,
     ReminderMode? reminderMode,
     DateTime? reminderTime,
+    bool clearReminderTime = false,
     int? notificationId,
     RepeatRule? repeatRule,
     bool? isRecurring,
     RecurrenceRule? recurrence,
+    bool clearRecurrence = false,
     String? recurringSeriesId,
     String? timezone,
     List<String>? completedDates,
     bool? isDeleted,
     DateTime? deletedAt,
     bool clearDeletedAt = false,
+    int? version,
+    int? lastSyncedVersion,
   }) {
-    // If completed is passed explicitly, map it to status if status is not provided
     TaskStatus? resolvedStatus = status;
     if (resolvedStatus == null && completed != null) {
       resolvedStatus = completed ? TaskStatus.completed : TaskStatus.waiting;
@@ -224,6 +237,7 @@ class TaskItem {
 
     return TaskItem(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       title: title ?? this.title,
       description: description ?? this.description,
       folderId: folderId ?? this.folderId,
@@ -235,19 +249,21 @@ class TaskItem {
       status: resolvedStatus ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      completedAt: completedAt ?? this.completedAt,
+      completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
       reminderEnabled: resolvedRemMode != ReminderMode.off,
       reminderMode: resolvedRemMode,
-      reminderTime: reminderTime ?? this.reminderTime,
+      reminderTime: clearReminderTime ? null : (reminderTime ?? this.reminderTime),
       notificationId: notificationId ?? this.notificationId,
       repeatRule: repeatRule ?? this.repeatRule,
       isRecurring: isRecurring ?? this.isRecurring,
-      recurrence: recurrence ?? this.recurrence,
+      recurrence: clearRecurrence ? null : (recurrence ?? this.recurrence),
       recurringSeriesId: recurringSeriesId ?? this.recurringSeriesId,
       timezone: timezone ?? this.timezone,
       completedDates: completedDates ?? this.completedDates,
       isDeleted: isDeleted ?? this.isDeleted,
       deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
+      version: version ?? this.version,
+      lastSyncedVersion: lastSyncedVersion ?? this.lastSyncedVersion,
     );
   }
 }

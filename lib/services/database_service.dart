@@ -35,10 +35,10 @@ class DatabaseService {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'quick_notes.db');
 
-    // Open/Create the database (version 17)
+    // Open/Create the database (version 18)
     return await openDatabase(
       path,
-      version: 17,
+      version: 18,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -78,7 +78,9 @@ class DatabaseService {
         deletedAt TEXT,
         trashedByFolderId TEXT,
         previewText TEXT,
-        paperSettings TEXT
+        paperSettings TEXT,
+        version INTEGER NOT NULL DEFAULT 1,
+        lastSyncedVersion INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -94,7 +96,9 @@ class DatabaseService {
         sticker TEXT,
         isDeleted INTEGER DEFAULT 0,
         deletedAt TEXT,
-        trashedByFolderId TEXT
+        trashedByFolderId TEXT,
+        version INTEGER NOT NULL DEFAULT 1,
+        lastSyncedVersion INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -126,7 +130,29 @@ class DatabaseService {
         timezone TEXT,
         completedDates TEXT,
         isDeleted INTEGER DEFAULT 0,
-        deletedAt TEXT
+        deletedAt TEXT,
+        version INTEGER NOT NULL DEFAULT 1,
+        lastSyncedVersion INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS sync_outbox(
+        localSequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT NOT NULL UNIQUE,
+        operationId TEXT NOT NULL UNIQUE,
+        userId TEXT NOT NULL,
+        entityType TEXT NOT NULL,
+        entityId TEXT NOT NULL,
+        operation TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        localVersion INTEGER NOT NULL,
+        createdAt TEXT NOT NULL,
+        attemptCount INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'pending',
+        lastAttemptAt TEXT,
+        nextAttemptAt TEXT,
+        lastError TEXT
       )
     ''');
 
@@ -560,6 +586,56 @@ class DatabaseService {
       await db.execute(
           'CREATE INDEX IF NOT EXISTS idx_tasks_isDeleted ON tasks(isDeleted)');
     }
+    if (oldVersion < 18) {
+      final notesCols = await _getTableColumns(db, 'notes');
+      if (!notesCols.contains('version')) {
+        await db.execute('ALTER TABLE notes ADD COLUMN version INTEGER NOT NULL DEFAULT 1');
+      }
+      if (!notesCols.contains('lastSyncedVersion')) {
+        await db.execute('ALTER TABLE notes ADD COLUMN lastSyncedVersion INTEGER NOT NULL DEFAULT 0');
+      }
+
+      final foldersCols = await _getTableColumns(db, 'folders');
+      if (!foldersCols.contains('version')) {
+        await db.execute('ALTER TABLE folders ADD COLUMN version INTEGER NOT NULL DEFAULT 1');
+      }
+      if (!foldersCols.contains('lastSyncedVersion')) {
+        await db.execute('ALTER TABLE folders ADD COLUMN lastSyncedVersion INTEGER NOT NULL DEFAULT 0');
+      }
+
+      final tasksCols = await _getTableColumns(db, 'tasks');
+      if (!tasksCols.contains('version')) {
+        await db.execute('ALTER TABLE tasks ADD COLUMN version INTEGER NOT NULL DEFAULT 1');
+      }
+      if (!tasksCols.contains('lastSyncedVersion')) {
+        await db.execute('ALTER TABLE tasks ADD COLUMN lastSyncedVersion INTEGER NOT NULL DEFAULT 0');
+      }
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS sync_outbox(
+          localSequence INTEGER PRIMARY KEY AUTOINCREMENT,
+          id TEXT NOT NULL UNIQUE,
+          operationId TEXT NOT NULL UNIQUE,
+          userId TEXT NOT NULL,
+          entityType TEXT NOT NULL,
+          entityId TEXT NOT NULL,
+          operation TEXT NOT NULL,
+          payload TEXT NOT NULL,
+          localVersion INTEGER NOT NULL,
+          createdAt TEXT NOT NULL,
+          attemptCount INTEGER NOT NULL DEFAULT 0,
+          status TEXT NOT NULL DEFAULT 'pending',
+          lastAttemptAt TEXT,
+          nextAttemptAt TEXT,
+          lastError TEXT
+        )
+      ''');
+
+      await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_outbox_userId_status ON sync_outbox(userId, status)');
+      await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_outbox_entity ON sync_outbox(entityType, entityId)');
+    }
   }
 
   // --- Performance Timing Helper ---
@@ -608,7 +684,7 @@ class DatabaseService {
         );
       });
     } catch (e, stackTrace) {
-      if (e is DatabaseServiceException) {
+      if (e is DatabaseServiceException || e is OwnershipException) {
         rethrow;
       }
       throw DatabaseTransactionException(

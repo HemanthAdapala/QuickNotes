@@ -10,6 +10,8 @@ class Folder {
   final bool isDeleted;
   final DateTime? deletedAt;
   final String? trashedByFolderId;
+  final int version;
+  final int lastSyncedVersion;
 
   Folder({
     required this.id,
@@ -23,6 +25,8 @@ class Folder {
     this.isDeleted = false,
     this.deletedAt,
     this.trashedByFolderId,
+    this.version = 1,
+    this.lastSyncedVersion = 0,
   }) : updatedAt = updatedAt ?? createdAt;
 
   Map<String, dynamic> toMap() {
@@ -38,6 +42,8 @@ class Folder {
       'isDeleted': isDeleted ? 1 : 0,
       'deletedAt': deletedAt?.toIso8601String(),
       'trashedByFolderId': trashedByFolderId,
+      'version': version,
+      'lastSyncedVersion': lastSyncedVersion,
     };
   }
 
@@ -55,6 +61,8 @@ class Folder {
       isDeleted: map['isDeleted'] == 1 || map['isDeleted'] == true,
       deletedAt: map['deletedAt'] != null ? DateTime.parse(map['deletedAt'] as String) : null,
       trashedByFolderId: map['trashedByFolderId'] as String?,
+      version: (map['version'] ?? 1) as int,
+      lastSyncedVersion: (map['lastSyncedVersion'] ?? 0) as int,
     );
   }
 
@@ -72,6 +80,8 @@ class Folder {
     bool clearDeletedAt = false,
     String? trashedByFolderId,
     bool clearTrashedByFolderId = false,
+    int? version,
+    int? lastSyncedVersion,
   }) {
     return Folder(
       id: id,
@@ -85,6 +95,8 @@ class Folder {
       isDeleted: isDeleted ?? this.isDeleted,
       deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
       trashedByFolderId: clearTrashedByFolderId ? null : (trashedByFolderId ?? this.trashedByFolderId),
+      version: version ?? this.version,
+      lastSyncedVersion: lastSyncedVersion ?? this.lastSyncedVersion,
     );
   }
 }

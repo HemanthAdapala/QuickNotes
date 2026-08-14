@@ -2,6 +2,68 @@
 
 ---
 
+## v1.6.0
+
+### Date
+2026-08-14
+
+### Author
+Anti Gravity
+
+### Type
+- Feature
+- Database
+- Architecture
+
+---
+
+### Summary
+
+Engineered the Phase 1.6 Database Schema v18 Upgrade for `DatabaseService` (`lib/services/database_service.dart`). Introduced `version INTEGER NOT NULL DEFAULT 1` and `lastSyncedVersion INTEGER NOT NULL DEFAULT 0` columns to `notes`, `folders`, and `tasks` tables. Created the `sync_outbox` table with single SQLite rowid autoincrement primary key (`localSequence INTEGER PRIMARY KEY AUTOINCREMENT`) and unique constraints on `id` and `operationId`. Added performance indexes `idx_outbox_userId_status` and `idx_outbox_entity`.
+
+---
+
+### Detailed Changes
+
+- **Schema Version Upgrade (v17 -> v18)**:
+  - Added `version` and `lastSyncedVersion` columns to `notes`, `folders`, `tasks` via DDL `ALTER TABLE ... ADD COLUMN` in `_onUpgrade` and directly in `_onCreate`.
+- **`sync_outbox` Table DDL**:
+  - `localSequence INTEGER PRIMARY KEY AUTOINCREMENT`
+  - `id TEXT NOT NULL UNIQUE`
+  - `operationId TEXT NOT NULL UNIQUE`
+  - `userId TEXT NOT NULL`, `entityType TEXT NOT NULL`, `entityId TEXT NOT NULL`, `operation TEXT NOT NULL`, `payload TEXT NOT NULL`, `localVersion INTEGER NOT NULL`, `createdAt TEXT NOT NULL`, `attemptCount INTEGER NOT NULL DEFAULT 0`, `status TEXT NOT NULL DEFAULT 'pending'`, `lastAttemptAt TEXT`, `nextAttemptAt TEXT`, `lastError TEXT`.
+- **Outbox Performance Indexes**:
+  - `CREATE INDEX IF NOT EXISTS idx_outbox_userId_status ON sync_outbox(userId, status)`
+  - `CREATE INDEX IF NOT EXISTS idx_outbox_entity ON sync_outbox(entityType, entityId)`
+- **Exception Passthrough**:
+  - Updated `runInTransaction()` catch handler to rethrow `OwnershipException` directly without wrapping inside `DatabaseTransactionException`.
+
+---
+
+### Why was this change made?
+
+To establish entity versioning counters and local mutation sequencing infrastructure required for offline-first operation and cloud synchronization (Phase 1.6).
+
+---
+
+### Architecture Impact
+
+- **Database Layer**: SQLite schema v18 now stores local version counters on all content entities and hosts the append-only `sync_outbox` mutation queue.
+
+---
+
+### Breaking Changes
+
+None. Non-destructive `ALTER TABLE` upgrades existing v17 databases to v18 automatically.
+
+---
+
+### Testing Status
+
+- **Automated Tests**: 100% GREEN across workspace unit/integration test suite (158/158 tests passed).
+
+---
+
 ## v1.5.0
 
 ### Date
