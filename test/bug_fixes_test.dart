@@ -26,15 +26,23 @@ import 'package:quick_notes/views/widgets/task_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quick_notes/views/screens/profile_screen.dart';
 import 'package:quick_notes/core/layout/paragraph_block_behavior.dart';
+import 'package:quick_notes/views/widgets/app_header_bar.dart';
+import 'package:quick_notes/services/session_manager.dart';
+import 'package:quick_notes/models/session_type.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() {
+  setUpAll(() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
     GoogleFonts.config.allowRuntimeFetching = false;
     NoteEditorScreen.useSingleDocumentEditor = false;
+
+    SharedPreferences.setMockInitialValues({});
+    final session = SessionManager();
+    await session.init();
+    await session.saveSession(userId: 'usr_test_bugfixes', sessionType: SessionType.offline);
 
     late final MessageHandler handler;
     handler = (ByteData? message) async {
@@ -959,6 +967,8 @@ void main() {
       bool backTapped = false;
       bool themeToggled = false;
 
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -986,13 +996,13 @@ void main() {
       expect(find.text('Settings'), findsOneWidget);
 
       // Verify setting items
-      expect(find.text('Pause Notifications'), findsOneWidget);
+      expect(find.text('Account'), findsOneWidget);
       expect(find.text('General Settings'), findsOneWidget);
       expect(find.text('Dark Mode'), findsOneWidget);
-      expect(find.text('Language'), findsOneWidget);
+      expect(find.text('Storage and Data'), findsOneWidget);
       expect(find.text('FAQ'), findsOneWidget);
       expect(find.text('Terms of service'), findsOneWidget);
-      expect(find.text('User Policy'), findsOneWidget);
+      expect(find.text('Privacy Policy'), findsOneWidget);
 
       // Tap on General Settings to trigger info dialog
       await tester.tap(find.text('General Settings'));
@@ -1013,8 +1023,8 @@ void main() {
 
       // Tap back button
       final backButtonFinder = find.descendant(
-        of: find.byType(TactileButton),
-        matching: find.byType(SvgPicture),
+        of: find.byType(AppHeaderBar),
+        matching: find.byType(TactileButton),
       ).first;
       expect(backButtonFinder, findsOneWidget);
       await tester.tap(backButtonFinder);
@@ -1022,6 +1032,7 @@ void main() {
       expect(backTapped, isTrue);
 
       await tester.pump(const Duration(seconds: 11));
+      await tester.binding.setSurfaceSize(null);
     });
 
     testWidgets('WYSIWYG: Bulleted and Numbered list blocks rendering, formatting, and propagation', (WidgetTester tester) async {
@@ -2766,7 +2777,9 @@ void main() {
     });
 
     testWidgets('Sprint 12: ProfileScreen UI rendering and persistence check', (WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profile_username', 'jthorne');
+
       await tester.binding.setSurfaceSize(const Size(800, 1200));
 
       await tester.pumpWidget(
@@ -2777,21 +2790,20 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Verify header title "Edit Profile"
-      expect(find.text("Edit Profile"), findsOneWidget);
+      // Verify microcopy header
+      expect(find.text("Choose your Profile Character"), findsOneWidget);
 
-      // Verify fields exist: "Full name", "Email", "Username"
+      // Verify fields exist: Username, Email
       final textFields = find.byType(TextField);
-      expect(textFields, findsNWidgets(3));
+      expect(textFields, findsNWidgets(2));
 
-      // Type into Full name, Email, Username
+      // Type into Username, Email
       await tester.enterText(textFields.at(0), 'Julian Thorne');
       await tester.enterText(textFields.at(1), 'julian@example.com');
-      await tester.enterText(textFields.at(2), 'jthorne');
       await tester.pump();
 
-      // Tap "Save changes"
-      final saveBtn = find.text('Save changes');
+      // Tap "Save"
+      final saveBtn = find.text('Save');
       expect(saveBtn, findsOneWidget);
       await tester.tap(saveBtn);
       await tester.pump();
@@ -2804,10 +2816,11 @@ void main() {
     });
 
     testWidgets('Sprint 13: SettingsScreen UI rendering, saved data, and toggle switch check', (WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({
-        'profile_full_name': 'Hemanth Adapala',
-        'profile_username': 'byhmnth',
-      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profile_full_name', 'Hemanth Adapala');
+      await prefs.setString('profile_username', 'byhmnth');
+      await prefs.setString('profile_email', '');
+
       await tester.binding.setSurfaceSize(const Size(800, 1200));
 
       await tester.pumpWidget(
@@ -2830,13 +2843,13 @@ void main() {
       expect(find.text('@byhmnth'), findsOneWidget);
 
       // Verify Setting Item Labels
-      expect(find.text('Pause Notifications'), findsOneWidget);
+      expect(find.text('Account'), findsOneWidget);
       expect(find.text('General Settings'), findsOneWidget);
       expect(find.text('Dark Mode'), findsOneWidget);
-      expect(find.text('Language'), findsOneWidget);
+      expect(find.text('Storage and Data'), findsOneWidget);
       expect(find.text('FAQ'), findsOneWidget);
       expect(find.text('Terms of service'), findsOneWidget);
-      expect(find.text('User Policy'), findsOneWidget);
+      expect(find.text('Privacy Policy'), findsOneWidget);
 
       // Verify Toggle Switch exists and is interactive
       final toggleSwitch = find.byType(ToggleSwitch);

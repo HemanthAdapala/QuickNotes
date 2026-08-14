@@ -10,10 +10,15 @@ import 'package:quick_notes/repositories/folders_repository.dart';
 import 'package:quick_notes/providers/tasks_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'package:quick_notes/services/session_manager.dart';
+import 'package:quick_notes/models/session_type.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() {
+  setUpAll(() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
 
@@ -25,6 +30,11 @@ void main() {
       }
       return null;
     });
+
+    SharedPreferences.setMockInitialValues({});
+    final session = SessionManager();
+    await session.init();
+    await session.saveSession(userId: 'usr_test_save_arch', sessionType: SessionType.offline);
   });
 
   group('Saving Data Architecture Tests', () {

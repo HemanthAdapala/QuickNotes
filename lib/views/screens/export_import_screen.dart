@@ -10,7 +10,7 @@ import '../widgets/app_header_bar.dart';
 import '../../themes/quick_notes_theme.dart';
 import '../../providers/notes_provider.dart';
 import '../../models/note.dart';
-import '../../services/database_service.dart';
+import '../../repositories/notes_repository.dart';
 
 class ExportImportScreen extends StatelessWidget {
   const ExportImportScreen({super.key});
@@ -18,7 +18,7 @@ class ExportImportScreen extends StatelessWidget {
   // Export entire workspace as a stringified JSON file
   Future<void> _exportWorkspace(BuildContext context, NotesProvider provider) async {
     try {
-      final allNotes = await DatabaseService.instance.queryAll();
+      final allNotes = await SqliteNotesRepository().getNotes();
       final List<Map<String, dynamic>> notesMap = allNotes.map((n) => n.toMap()).toList();
       final backupString = jsonEncode(notesMap);
       

@@ -3,13 +3,10 @@ import 'package:quick_notes/models/task_item.dart';
 import 'package:quick_notes/models/notification_action.dart';
 import 'package:quick_notes/models/task_status.dart';
 import 'package:quick_notes/repositories/tasks_repository.dart';
-import 'package:quick_notes/services/database_service.dart';
 import 'package:quick_notes/services/clock_service.dart';
 import 'package:quick_notes/services/notification_action_handler.dart';
 import 'package:quick_notes/services/reminder_scheduler.dart';
 import 'package:quick_notes/services/task_engine.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite/sqflite.dart';
 
 class TestTasksRepository implements TasksRepository {
   final List<TaskItem> db = [];
@@ -39,8 +36,35 @@ class TestTasksRepository implements TasksRepository {
   }
 
   @override
+  Future<List<TaskItem>> getTrashTasks() async => db.where((t) => t.isDeleted).toList();
+
+  @override
+  Future<int> trashTask(String id) async {
+    final idx = db.indexWhere((t) => t.id == id);
+    if (idx != -1) {
+      db[idx] = db[idx].copyWith(isDeleted: true, deletedAt: DateTime.now());
+    }
+    return 1;
+  }
+
+  @override
+  Future<int> restoreTask(String id) async {
+    final idx = db.indexWhere((t) => t.id == id);
+    if (idx != -1) {
+      db[idx] = db[idx].copyWith(isDeleted: false, clearDeletedAt: true);
+    }
+    return 1;
+  }
+
+  @override
   Future<int> deleteTask(String id) async {
     db.removeWhere((t) => t.id == id);
+    return 1;
+  }
+
+  @override
+  Future<int> emptyTrash() async {
+    db.removeWhere((t) => t.isDeleted);
     return 1;
   }
 

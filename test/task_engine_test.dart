@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quick_notes/models/task_item.dart';
 import 'package:quick_notes/models/task_status.dart';
-import 'package:quick_notes/models/repeat_rule.dart';
 import 'package:quick_notes/models/task_engine_state.dart';
 import 'package:quick_notes/models/task_event.dart';
 import 'package:quick_notes/services/task_engine.dart';
@@ -37,8 +36,35 @@ class MockTasksRepository implements TasksRepository {
   }
 
   @override
+  Future<List<TaskItem>> getTrashTasks() async => db.where((t) => t.isDeleted).toList();
+
+  @override
+  Future<int> trashTask(String id) async {
+    final idx = db.indexWhere((t) => t.id == id);
+    if (idx != -1) {
+      db[idx] = db[idx].copyWith(isDeleted: true, deletedAt: DateTime.now());
+    }
+    return 1;
+  }
+
+  @override
+  Future<int> restoreTask(String id) async {
+    final idx = db.indexWhere((t) => t.id == id);
+    if (idx != -1) {
+      db[idx] = db[idx].copyWith(isDeleted: false, clearDeletedAt: true);
+    }
+    return 1;
+  }
+
+  @override
   Future<int> deleteTask(String id) async {
     db.removeWhere((t) => t.id == id);
+    return 1;
+  }
+
+  @override
+  Future<int> emptyTrash() async {
+    db.removeWhere((t) => t.isDeleted);
     return 1;
   }
 

@@ -6,6 +6,7 @@ import 'reminder_mode.dart';
 
 class TaskItem {
   final String id;
+  final String? userId;
   final String title;
   final String description;
   final String? folderId;
@@ -28,9 +29,12 @@ class TaskItem {
   final String? recurringSeriesId;
   final String timezone;
   final List<String> completedDates;
+  final bool isDeleted;
+  final DateTime? deletedAt;
 
   TaskItem({
     required this.id,
+    this.userId,
     required this.title,
     this.description = '',
     this.folderId,
@@ -54,6 +58,8 @@ class TaskItem {
     this.recurringSeriesId,
     String? timezone,
     this.completedDates = const [],
+    this.isDeleted = false,
+    this.deletedAt,
   })  : status = status ??
             ((completed ?? false) ? TaskStatus.completed : TaskStatus.waiting),
         createdAt = (createdAt ?? DateTime.now()).toUtc(),
@@ -85,6 +91,7 @@ class TaskItem {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'userId': userId,
       'title': title,
       'description': description,
       'folderId': folderId,
@@ -108,6 +115,8 @@ class TaskItem {
       'recurringSeriesId': recurringSeriesId,
       'timezone': timezone,
       'completedDates': jsonEncode(completedDates),
+      'isDeleted': isDeleted ? 1 : 0,
+      'deletedAt': deletedAt?.toUtc().toIso8601String(),
     };
   }
 
@@ -145,6 +154,7 @@ class TaskItem {
 
     return TaskItem(
       id: map['id'] as String,
+      userId: map['userId'] as String?,
       title: map['title'] as String? ?? '',
       description: map['description'] as String? ?? '',
       folderId: map['folderId'] as String?,
@@ -167,6 +177,8 @@ class TaskItem {
       recurringSeriesId: map['recurringSeriesId'] as String?,
       timezone: map['timezone'] as String? ?? DateTime.now().timeZoneName,
       completedDates: rawCompletedDates,
+      isDeleted: map['isDeleted'] == 1 || map['isDeleted'] == true,
+      deletedAt: map['deletedAt'] != null ? DateTime.tryParse(map['deletedAt'] as String)?.toUtc() : null,
     );
   }
 
@@ -195,6 +207,9 @@ class TaskItem {
     String? recurringSeriesId,
     String? timezone,
     List<String>? completedDates,
+    bool? isDeleted,
+    DateTime? deletedAt,
+    bool clearDeletedAt = false,
   }) {
     // If completed is passed explicitly, map it to status if status is not provided
     TaskStatus? resolvedStatus = status;
@@ -231,6 +246,8 @@ class TaskItem {
       recurringSeriesId: recurringSeriesId ?? this.recurringSeriesId,
       timezone: timezone ?? this.timezone,
       completedDates: completedDates ?? this.completedDates,
+      isDeleted: isDeleted ?? this.isDeleted,
+      deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
     );
   }
 }

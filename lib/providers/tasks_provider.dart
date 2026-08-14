@@ -36,6 +36,11 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     notifyListeners();
   }
 
+  void clearLocalState() {
+    _engine.clearLocalState();
+    notifyListeners();
+  }
+
   TaskEngine get engine => _engine;
   List<TaskItem> get tasks => _engine.tasks;
   List<TaskItem> get activeTasks => _engine.tasks.where((t) => !t.completed).toList();

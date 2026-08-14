@@ -12,7 +12,7 @@ class LocalProfileService {
 
   /// Create a local offline user profile
   Future<CurrentUser> createOfflineProfile() async {
-    final localId = 'local_${_uuid.v4()}';
+    final localId = 'usr_local_${_uuid.v4()}';
     return CurrentUser(
       id: localId,
       email: 'offline@local.quicknotes',

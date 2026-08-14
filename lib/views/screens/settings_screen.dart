@@ -56,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      final name = prefs.getString('profile_username') ?? prefs.getString('profile_full_name');
+      final name = prefs.getString('profile_full_name') ?? prefs.getString('profile_username');
       final uname = prefs.getString('profile_username');
       final mail = prefs.getString('profile_email') ?? prefs.getString('user_email');
       if (name != null && name.trim().isNotEmpty) {
@@ -65,7 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (uname != null && uname.trim().isNotEmpty) {
         _username = uname.trim().replaceAll('@', '');
       }
-      if (mail != null && mail.trim().isNotEmpty) {
+      if (mail != null) {
         _email = mail.trim();
       }
       _imagePath = prefs.getString('profile_avatar_path') ?? prefs.getString('profile_image_path');

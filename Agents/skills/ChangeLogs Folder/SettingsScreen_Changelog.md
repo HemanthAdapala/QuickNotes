@@ -47,3 +47,51 @@ Redesigned the Settings Screen (`lib/views/screens/settings_screen.dart`) matchi
 
 - Keeps developer test utilities isolated in Section 4 while presenting a polished, production-ready Settings experience.
 - Uses modular `GroupedListContainer` for 100% consistent card spacing, rounded corners, and hairline dividers across all 4 sections.
+
+---
+
+## v2.9.1
+
+### Date
+2026-08-14
+
+### Author
+Anti Gravity
+
+### Type
+- Refactor
+- Bug Fix
+
+---
+
+### Summary
+
+Refactored `SettingsScreen` user data loading to prefer `profile_full_name` over `profile_username`, allowed empty email displays without fallback text, and updated test suite back button finder for `AppHeaderBar`.
+
+---
+
+### Detailed Changes
+
+- **User Data Display**: Prefer `profile_full_name` over `profile_username` in `_loadUserData()`.
+- **Empty Email**: Allowed displaying empty email string when user profile email is unset.
+- **Widget Test Fix**: Targeted left `AppHeaderBar` `TactileButton` in `test/bug_fixes_test.dart` to avoid avatar button hit test collision.
+
+---
+
+### Architecture Impact
+
+No architectural impact.
+
+---
+
+### Files Modified
+
+- `lib/views/screens/settings_screen.dart`
+- `test/bug_fixes_test.dart`
+
+---
+
+### Testing Status
+
+- Automated widget tests passed (100% GREEN).
+

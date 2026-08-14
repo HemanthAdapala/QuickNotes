@@ -1,0 +1,86 @@
+Quick Notes Backend Architecture Specification v1.0.
+
+That document should define, before any implementation:
+
+Part A — Architecture
+exact layer boundaries
+dependency rules
+repository rules
+provider rules
+domain rules
+Part B — Data model
+Note
+Folder
+Task
+Profile
+Attachment
+User
+Device
+Part C — SQLite redesign
+new schema
+ownership
+revisions
+tombstones
+indexes
+transactions
+migrations
+Part D — Attachment system
+local storage
+stable IDs
+checksums
+Markdown references
+lifecycle
+future cloud storage
+Part E — Identity
+offline user
+Google user
+device identity
+account switching
+offline → Google migration
+Part F — Sync
+outbox
+operation IDs
+sync states
+pull/push
+retry
+idempotency
+conflict handling
+Part G — Backup
+backup format
+manifest
+validation
+restore
+version migration
+Part H — Failure recovery
+crash during save
+crash during migration
+storage full
+corrupted DB
+interrupted sync
+interrupted attachment upload
+Part I — Implementation roadmap
+
+Something like:
+
+8.1 Data Safety Foundation
+       ↓
+8.2 Ownership & Identity
+       ↓
+8.3 Repository Cleanup
+       ↓
+8.4 Attachment Engine
+       ↓
+8.5 Change Tracking
+       ↓
+8.6 Sync Engine
+       ↓
+8.7 Cloud Provider
+       ↓
+8.8 Backup
+       ↓
+8.9 Multi-device testing
+And one important conclusion
+
+I would not scrap the current backend.
+
+I would rebuild the foundation underneath it while preserving the working features above it.

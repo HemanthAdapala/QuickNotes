@@ -3,10 +3,15 @@ import 'package:quick_notes/providers/notes_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter/services.dart';
 
+import 'package:quick_notes/services/session_manager.dart';
+import 'package:quick_notes/models/session_type.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() {
+  setUpAll(() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
 
@@ -30,6 +35,11 @@ void main() {
         .setMockMethodCallHandler(homeWidgetChannel, (MethodCall methodCall) async {
       return true;
     });
+
+    SharedPreferences.setMockInitialValues({});
+    final session = SessionManager();
+    await session.init();
+    await session.saveSession(userId: 'usr_test_folder', sessionType: SessionType.offline);
   });
 
   test('NotesProvider deleteFolder database logic test', () async {

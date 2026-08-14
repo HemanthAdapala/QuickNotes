@@ -47,6 +47,37 @@ class MockTasksRepository implements TasksRepository {
   Future<int> generateUniqueNotificationId() async {
     return _idCounter++;
   }
+
+  @override
+  Future<List<TaskItem>> getTrashTasks() async {
+    return _db.values.where((t) => t.isDeleted).toList();
+  }
+
+  @override
+  Future<int> trashTask(String id) async {
+    final task = _db[id];
+    if (task != null) {
+      _db[id] = task.copyWith(isDeleted: true, deletedAt: DateTime.now());
+      return 1;
+    }
+    return 0;
+  }
+
+  @override
+  Future<int> restoreTask(String id) async {
+    final task = _db[id];
+    if (task != null) {
+      _db[id] = task.copyWith(isDeleted: false, clearDeletedAt: true);
+      return 1;
+    }
+    return 0;
+  }
+
+  @override
+  Future<int> emptyTrash() async {
+    _db.removeWhere((id, task) => task.isDeleted);
+    return 1;
+  }
 }
 
 class MockReminderScheduler implements ReminderScheduler {

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 class Note {
   final String id;
+  final String? userId;
   final String title;
   final String content;
   final bool isPinned;
@@ -17,6 +18,8 @@ class Note {
   final DateTime updatedAt;
   final int colorValue;
   final bool isDeleted;
+  final DateTime? deletedAt;
+  final String? trashedByFolderId;
   final String previewText;
   
   // Folder & Habits Expansion
@@ -35,6 +38,7 @@ class Note {
 
   Note({
     required this.id,
+    this.userId,
     required this.title,
     required this.content,
     this.isPinned = false,
@@ -50,6 +54,8 @@ class Note {
     required this.updatedAt,
     required this.colorValue,
     this.isDeleted = false,
+    this.deletedAt,
+    this.trashedByFolderId,
     this.folderId,
     this.isHabit = false,
     this.habitRecurrence = 'none',
@@ -136,6 +142,7 @@ class Note {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'userId': userId,
       'title': title,
       'content': content,
       'isPinned': isPinned ? 1 : 0,
@@ -151,6 +158,8 @@ class Note {
       'updatedAt': updatedAt.toIso8601String(),
       'colorValue': colorValue,
       'isDeleted': isDeleted ? 1 : 0,
+      'deletedAt': deletedAt?.toIso8601String(),
+      'trashedByFolderId': trashedByFolderId,
       'folderId': folderId,
       'isHabit': isHabit ? 1 : 0,
       'habitRecurrence': habitRecurrence,
@@ -210,6 +219,7 @@ class Note {
 
     return Note(
       id: map['id'] as String,
+      userId: map['userId'] as String?,
       title: map['title'] as String,
       content: (map['content'] ?? "") as String,
       isPinned: (map['isPinned'] as int) == 1,
@@ -225,6 +235,8 @@ class Note {
       updatedAt: DateTime.parse(map['updatedAt'] as String),
       colorValue: map['colorValue'] as int,
       isDeleted: (map['isDeleted'] ?? 0) as int == 1,
+      deletedAt: map['deletedAt'] != null ? DateTime.tryParse(map['deletedAt'] as String) : null,
+      trashedByFolderId: map['trashedByFolderId'] as String?,
       folderId: map['folderId'] as String?,
       isHabit: ((map['isHabit'] ?? 0) as int) == 1,
       habitRecurrence: (map['habitRecurrence'] ?? 'none') as String,
@@ -242,6 +254,7 @@ class Note {
   // Create a copy of Note with overrides
   Note copyWith({
     String? id,
+    String? userId,
     String? title,
     String? content,
     bool? isPinned,
@@ -258,6 +271,10 @@ class Note {
     DateTime? updatedAt,
     int? colorValue,
     bool? isDeleted,
+    DateTime? deletedAt,
+    bool clearDeletedAt = false,
+    String? trashedByFolderId,
+    bool clearTrashedByFolderId = false,
     String? folderId,
     bool clearFolder = false,
     bool? isHabit,
@@ -274,6 +291,7 @@ class Note {
   }) {
     return Note(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       title: title ?? this.title,
       content: content ?? this.content,
       isPinned: isPinned ?? this.isPinned,
@@ -289,12 +307,14 @@ class Note {
       updatedAt: updatedAt ?? this.updatedAt,
       colorValue: colorValue ?? this.colorValue,
       isDeleted: isDeleted ?? this.isDeleted,
+      deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
+      trashedByFolderId: clearTrashedByFolderId ? null : (trashedByFolderId ?? this.trashedByFolderId),
       folderId: clearFolder ? null : (folderId ?? this.folderId),
       isHabit: isHabit ?? this.isHabit,
       habitRecurrence: habitRecurrence ?? this.habitRecurrence,
       habitStreak: habitStreak ?? this.habitStreak,
       habitLastCompleted: clearHabitLastCompleted ? null : (habitLastCompleted ?? this.habitLastCompleted),
-      previewText: previewText ?? ((content != null || noteType != null) ? null : this.previewText),
+      previewText: previewText ?? this.previewText,
       paperGuideType: paperGuideType ?? this.paperGuideType,
       paperGuideVisible: paperGuideVisible ?? this.paperGuideVisible,
       paperGuideHeight: paperGuideHeight ?? this.paperGuideHeight,

@@ -1,6 +1,8 @@
 import '../models/user_profile.dart';
 import '../repositories/profile_repository.dart';
 import '../services/database_service.dart';
+import '../services/session_manager.dart';
+import '../services/database_exceptions.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// SQLite implementation of [ProfileRepository].
@@ -31,6 +33,10 @@ class SqliteProfileRepository implements ProfileRepository {
 
   @override
   Future<void> saveProfile(UserProfile profile) async {
+    final activeId = SessionManager().activeUserId;
+    if (activeId != null && activeId.isNotEmpty && profile.userId != activeId) {
+      throw OwnershipException('Ownership violation: Cannot save profile for user ${profile.userId} while active user is $activeId');
+    }
     final db = await _db;
     await db.insert(
       'user_profiles',
@@ -41,6 +47,10 @@ class SqliteProfileRepository implements ProfileRepository {
 
   @override
   Future<void> deleteProfile(String userId) async {
+    final activeId = SessionManager().activeUserId;
+    if (activeId != null && activeId.isNotEmpty && userId != activeId) {
+      throw OwnershipException('Ownership violation: Cannot delete profile for user $userId while active user is $activeId');
+    }
     final db = await _db;
     await db.delete(
       'user_profiles',

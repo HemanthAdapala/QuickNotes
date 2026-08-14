@@ -1,0 +1,461 @@
+🔥 QUICK NOTES — BACKEND AUDIT
+Question 1 — Current Backend Architecture
+
+Paste this into Antigravity:
+
+Quick Notes Backend Architecture Audit — Part 1
+
+Do NOT modify any production code.
+
+I want a factual audit of the current backend/data architecture of the Quick Notes project as it exists right now.
+
+Inspect the actual project files, not previous plans or assumptions.
+
+Please identify:
+
+Current project folder structure relevant to backend/data.
+All folders/files responsible for:
+Models
+Database
+Repositories
+Services
+Providers/controllers/state
+Authentication/session
+Local storage
+File/attachment storage
+Which files are currently production code vs placeholder/dead/legacy code.
+Current database technology and exact database initialization flow.
+Current database schema/tables and important columns.
+Current repository architecture and responsibilities.
+Current service architecture and responsibilities.
+Current provider/controller architecture and responsibilities.
+Current dependency direction between these layers.
+Identify any architectural violations such as:
+UI directly accessing database
+Providers containing persistence logic
+Repositories containing UI logic
+Services bypassing repositories
+circular dependencies
+duplicated sources of truth
+duplicated business logic
+
+For every important finding, provide the exact file path and relevant class/function name.
+
+Do not recommend changes yet.
+
+I only want a factual snapshot of what exists today.
+
+Question 2 — Database Deep Audit
+
+After it answers Q1, give it this:
+
+Quick Notes Backend Audit — Part 2: Database
+
+Do NOT modify production code.
+
+Perform a deep audit of the current SQLite/database implementation.
+
+Inspect the actual database code and migrations.
+
+Report:
+
+Database initialization sequence from app startup.
+Database version currently in use.
+Every table currently created.
+Every column for every table.
+Primary keys.
+Foreign keys.
+Unique constraints.
+Indexes.
+Default values.
+Nullable vs non-nullable fields.
+Current migration history from the earliest version to the current version.
+Whether migrations are destructive or non-destructive.
+How database transactions are currently handled.
+Whether writes across multiple tables are atomic.
+How database errors are handled.
+Whether there are any concurrency protections.
+Whether there are any database-level timestamps/revisions.
+Whether deletion is hard delete or soft delete.
+Whether the schema is currently capable of supporting:
+offline-first behavior
+synchronization
+conflict detection
+tombstones
+attachment metadata
+multiple devices
+
+For each finding, provide exact file paths and code references.
+
+Do not propose solutions yet.
+
+Finish with a section called:
+
+"Database Readiness for Future Sync: 0–10"
+
+Explain the score objectively.
+
+Question 3 — Notes Data Flow
+
+This one is very important because Quick Notes revolves around Notes.
+
+Quick Notes Backend Audit — Part 3: Notes Data Flow
+
+Do NOT modify production code.
+
+Trace the complete lifecycle of a Note through the current application.
+
+Start at:
+
+User creates a Note
+
+and trace every step until the Note is persisted.
+
+Then trace:
+
+User edits a Note
+
+and:
+
+User deletes a Note
+
+For each flow, identify:
+
+UI entry point.
+Controller/provider/state layer.
+Business logic.
+Repository.
+Database service.
+Database query.
+Tables affected.
+Transactions involved.
+Cache/state updates.
+Any events/listeners triggered.
+
+Also determine:
+
+What is the canonical source of truth for a Note?
+Can the same Note exist in multiple representations?
+Is there any duplicated Note state?
+What uniquely identifies a Note?
+Is the Note ID stable?
+Is updatedAt currently used?
+Is there a revision/version number?
+Is deletion recoverable?
+Are writes guaranteed to persist before the UI reports success?
+
+Include exact file paths and class/function names.
+
+Do not recommend changes yet.
+
+Question 4 — Folders, Categories & Tasks
+
+We need to know whether these can eventually sync cleanly.
+
+Quick Notes Backend Audit — Part 4: Related Data
+
+Do NOT modify production code.
+
+Audit the current data architecture for:
+
+Folders
+Categories
+Tasks
+User Profile
+
+For each entity determine:
+
+Model class.
+Database table.
+Repository.
+Provider/controller.
+Service/business logic.
+Primary key.
+Relationships with other entities.
+Creation flow.
+Update flow.
+Delete flow.
+Timestamps.
+Stable identifiers.
+Whether it is currently local-only.
+Whether it is suitable for future cloud synchronization.
+
+Pay special attention to relationships such as:
+
+Note → Folder
+
+Note → Category
+
+Task → Note
+
+Task → Category
+
+User → Notes
+
+Identify any foreign-key or ownership assumptions that could become problematic when multiple devices synchronize.
+
+Do not recommend changes yet.
+
+Question 5 — Authentication & User Identity
+
+This is critical for Backup & Sync.
+
+Quick Notes Backend Audit — Part 5: Authentication & User Identity
+
+Do NOT modify production code.
+
+Audit the entire authentication/session architecture.
+
+Trace:
+
+Google Sign-In → authentication → session creation → profile creation/loading → Home.
+
+Determine:
+
+Authentication provider.
+Current authenticated user identifier.
+Where the user ID is stored.
+Whether the user ID is stable.
+Where authentication state is stored.
+How session restoration works on app startup.
+How logout works.
+How account deletion currently works.
+Whether local data is associated with a user ID.
+Whether anonymous/offline users have an identity.
+Whether an offline user can later sign into an account.
+What happens to existing local notes when an offline user authenticates.
+Whether multiple accounts can exist on the same device.
+Whether credentials/tokens are stored securely.
+
+Also identify whether the current architecture can support:
+
+One user → multiple devices → shared cloud data
+
+without rewriting the entire local architecture.
+
+Give exact file paths and class/function names.
+
+Do not recommend changes yet.
+
+Question 6 — Attachments & Images
+
+This one is extra important for Quick Notes because your notes aren't just plain text.
+
+Quick Notes Backend Audit — Part 6: Attachments & Rich Content
+
+Do NOT modify production code.
+
+Audit how Quick Notes currently handles:
+
+Images
+Audio/voice recordings
+Rich text
+Embedded media
+Image metadata
+Local file paths
+Image stacks
+Any other binary content
+
+For each attachment type determine:
+
+Where the binary file is stored.
+How the database references it.
+Whether the path is absolute or relative.
+Whether the file has a stable ID.
+Whether file metadata is stored.
+Whether deletion removes both metadata and binary data.
+Whether orphaned files can exist.
+Whether there is any checksum/hash.
+Whether there is any compression.
+Whether attachments are tied to a specific Note ID.
+Whether attachment references survive Note edits.
+
+Then answer:
+
+"What would break if the same Note were opened on a completely different device?"
+
+Do not recommend solutions yet.
+
+Question 7 — Editor → Database Boundary
+
+This one is specifically because of the SDE complexity we've been dealing with.
+
+Quick Notes Backend Audit — Part 7: Editor/Data Boundary
+
+Do NOT modify production code.
+
+Audit the boundary between the Single Document Editor and the persistence layer.
+
+Determine exactly:
+
+What object/model the editor edits.
+What object/model is saved to the database.
+How editor content is serialized.
+How rich formatting is serialized.
+How images are represented.
+How checklists are represented.
+How headings/quotes/lists are represented.
+Whether Markdown is used.
+Whether JSON is used.
+Whether multiple serialization formats exist.
+Whether the database stores editor-specific structures.
+Whether loading a Note reconstructs editor state directly.
+
+Most importantly:
+
+Determine whether the current persistence format is a stable canonical document format or merely a representation of the current editor implementation.
+
+Explain the risks for future cloud synchronization.
+
+Do not recommend changes yet.
+
+Question 8 — Current "Backend" Reality Check
+
+This is the one I REALLY want.
+
+Quick Notes Backend Audit — Part 8: Reality Check
+
+Do NOT modify production code.
+
+Based ONLY on the actual current codebase, answer these questions:
+
+Does Quick Notes currently have a real backend?
+Does it currently have any cloud database?
+Does it currently have cloud authentication?
+Does it currently have cloud file storage?
+Does it currently perform any synchronization?
+Does it currently perform automatic backup?
+Does it currently support multiple devices?
+Does it currently support offline-first operation?
+Does it currently have a sync queue?
+Does it currently track changes?
+Does it currently support conflict detection?
+Does it currently support conflict resolution?
+Does it currently have soft deletes/tombstones?
+Does it currently have stable device identity?
+Does it currently have a canonical remote representation of Notes?
+
+For every answer use exactly:
+
+YES / PARTIAL / NO
+
+followed by:
+
+Evidence
+File path
+Class/function
+
+Do not make assumptions based on project documentation.
+
+I want the actual codebase reality.
+
+Question 9 — Dependency Audit
+
+This will tell me where the architecture is already getting tangled.
+
+Quick Notes Backend Audit — Part 9: Dependency Graph
+
+Do NOT modify production code.
+
+Analyze the dependency direction of the current backend/data architecture.
+
+Identify:
+
+UI → Provider → Controller → Service → Repository → Database
+
+or whatever the actual architecture is.
+
+Find:
+
+circular dependencies
+repositories importing UI code
+providers accessing SQLite directly
+services bypassing repositories
+repositories calling each other unnecessarily
+business logic inside widgets
+database models being used directly by UI
+duplicate models representing the same entity
+duplicated persistence logic
+global mutable state
+
+Produce:
+
+Current dependency diagram.
+Violations.
+Most dangerous architectural coupling.
+Files with highest architectural risk.
+
+Do not recommend fixes yet.
+
+Question 10 — Data Loss & Failure Audit
+
+This is where we find the scary stuff.
+
+Quick Notes Backend Audit — Part 10: Data Safety
+
+Do NOT modify production code.
+
+Audit Quick Notes specifically for possible data loss.
+
+Investigate what happens if:
+
+App crashes while saving a Note.
+App crashes during an image insertion.
+App crashes during database migration.
+Device loses power during a database write.
+Database write succeeds but UI update fails.
+UI update succeeds but database write fails.
+An attachment is deleted but database deletion fails.
+Database row is deleted but attachment deletion fails.
+User logs out.
+User deletes their account.
+App is reinstalled.
+Device storage becomes full.
+Database becomes corrupted.
+Two processes attempt to write simultaneously.
+
+For each scenario:
+
+Current behavior
+Risk level: LOW / MEDIUM / HIGH / CRITICAL
+Exact code involved
+
+Do not recommend solutions yet.
+
+Question 11 — Give Antigravity One Final Job
+
+After you have pasted all the answers from Questions 1–10 here, don't ask Antigravity to design the backend yet.
+
+I'll do that part.
+
+But there is one final question I'd ask it:
+
+Quick Notes Backend Audit — Part 11: Technical Inventory
+
+Do NOT modify production code.
+
+Create a complete inventory of every production file involved in:
+
+Authentication
+Session
+User profile
+Notes
+Folders
+Categories
+Tasks
+SQLite
+Database migrations
+Repositories
+Providers/controllers
+Services
+Attachments
+File storage
+Editor persistence
+
+For each file provide:
+
+File Path | Class/Function | Responsibility | Depends On | Used By | Production/Legacy/Unused
+
+Do not summarize.
+
+I need the exact inventory of the current codebase so another engineer can design a new backend architecture without guessing.

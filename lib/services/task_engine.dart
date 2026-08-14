@@ -54,6 +54,11 @@ class TaskEngine {
   Stream<TaskEvent> get eventStream => _eventController.stream;
   List<TaskItem> get tasks => List.unmodifiable(_tasks);
 
+  void clearLocalState() {
+    _tasks.clear();
+    _state = TaskEngineState.idle;
+  }
+
   TaskItem? getTaskById(String id) {
     for (final task in _tasks) {
       if (task.id == id) return task;

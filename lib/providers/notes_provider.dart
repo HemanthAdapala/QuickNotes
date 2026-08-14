@@ -34,6 +34,17 @@ class NotesProvider with ChangeNotifier {
   bool get hasMoreNotes => _hasMoreNotes;
   bool get isPageLoading => _isPageLoading;
   List<NoteSummary> get notesSummary => _notesSummary;
+
+  void clearLocalState() {
+    _notes.clear();
+    _folders.clear();
+    _pageCache.clear();
+    _notesSummary.clear();
+    _currentPage = 0;
+    _hasMoreNotes = true;
+    _selectedFolderId = null;
+    notifyListeners();
+  }
   String _searchQuery = "";
   Timer? _searchDebouncer;
   SortOption _currentSort = SortOption.newest;
@@ -141,7 +152,6 @@ class NotesProvider with ChangeNotifier {
   }
 
   final _uuid = const Uuid();
-  final DatabaseService _dbService = DatabaseService.instance;
   final NotesRepository _notesRepository;
   final FoldersRepository _foldersRepository;
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -372,7 +382,7 @@ class NotesProvider with ChangeNotifier {
         final isArchived = _currentView == NotesViewType.archive;
         final isFavorite = _currentView == NotesViewType.favorites;
         
-        final maps = await _dbService.queryNotesSummaryPaged(
+        final maps = await _notesRepository.queryNotesSummaryPaged(
           folderId: _selectedFolderId,
           category: (_selectedFolderId == null && _selectedCategory != "All" && _currentView == NotesViewType.feed) ? _selectedCategory : null,
           isFavorite: isFavorite ? true : null,
@@ -432,7 +442,7 @@ class NotesProvider with ChangeNotifier {
 
   Future<Note?> getNoteById(String id) async {
     try {
-      final note = await _dbService.queryById(id);
+      final note = await _notesRepository.getNoteById(id);
       if (note == null) return null;
       if (note.isLocked) {
         if (_isVaultUnlocked) {
@@ -464,12 +474,12 @@ class NotesProvider with ChangeNotifier {
 
       List<Note> rawNotes = [];
       if (_searchQuery.trim().isEmpty) {
-        rawNotes = await _dbService.queryAll();
+        rawNotes = await _notesRepository.getNotes();
       } else {
         if (_isVaultUnlocked) {
-          rawNotes = await _dbService.queryAll();
+          rawNotes = await _notesRepository.getNotes();
         } else {
-          rawNotes = await _dbService.search(_searchQuery);
+          rawNotes = await _notesRepository.searchNotes(_searchQuery);
         }
       }
 
@@ -739,13 +749,9 @@ class NotesProvider with ChangeNotifier {
   // Soft delete a note (Move to Trash)
   Future<void> trashNote(String id) async {
     try {
-      final rawNote = await getNoteById(id);
-      if (rawNote != null) {
-        final updatedNote = rawNote.copyWith(isDeleted: true);
-        await _notesRepository.updateNote(updatedNote);
-        await _cancelReminder(id);
-        await loadNotes();
-      }
+      await _notesRepository.trashNote(id);
+      await _cancelReminder(id);
+      await loadNotes();
     } catch (e) {
       debugPrint("Error trashing note: $e");
     }
@@ -754,15 +760,12 @@ class NotesProvider with ChangeNotifier {
   // Restore a note from Trash
   Future<void> restoreFromTrash(String id) async {
     try {
-      final rawNote = await _dbService.queryById(id);
-      if (rawNote != null) {
-        final updatedNote = rawNote.copyWith(isDeleted: false);
-        await _dbService.update(updatedNote);
-        if (updatedNote.reminderTime != null) {
-          await _scheduleReminder(updatedNote);
-        }
-        await loadNotes();
+      await _notesRepository.restoreNote(id);
+      final rawNote = await getNoteById(id);
+      if (rawNote != null && rawNote.reminderTime != null) {
+        await _scheduleReminder(rawNote);
       }
+      await loadNotes();
     } catch (e) {
       debugPrint("Error restoring note from trash: $e");
     }
@@ -777,7 +780,7 @@ class NotesProvider with ChangeNotifier {
   Future<void> deleteNote(String id) async {
     try {
       await _cancelReminder(id);
-      await _dbService.delete(id);
+      await _notesRepository.deleteNote(id);
       await loadNotes();
     } catch (e) {
       debugPrint("Error deleting note: $e");
@@ -787,10 +790,7 @@ class NotesProvider with ChangeNotifier {
   // Empty all notes in the Trash
   Future<void> emptyTrash() async {
     try {
-      final trashNotes = _notes.where((n) => n.isDeleted).toList();
-      for (var note in trashNotes) {
-        await _dbService.delete(note.id);
-      }
+      await _notesRepository.emptyTrash();
       await loadNotes();
     } catch (e) {
       debugPrint("Error emptying trash: $e");
@@ -800,12 +800,8 @@ class NotesProvider with ChangeNotifier {
   // Toggle Pinned Status
   Future<void> togglePin(String id) async {
     try {
-      final rawNote = await _dbService.queryById(id);
-      if (rawNote != null) {
-        final updatedNote = rawNote.copyWith(isPinned: !rawNote.isPinned);
-        await _dbService.update(updatedNote);
-        await loadNotes();
-      }
+      await _notesRepository.togglePin(id);
+      await loadNotes();
     } catch (e) {
       debugPrint("Error toggling pin: $e");
     }
@@ -814,12 +810,8 @@ class NotesProvider with ChangeNotifier {
   // Toggle Favorite Status
   Future<void> toggleFavorite(String id) async {
     try {
-      final rawNote = await _dbService.queryById(id);
-      if (rawNote != null) {
-        final updatedNote = rawNote.copyWith(isFavorite: !rawNote.isFavorite);
-        await _dbService.update(updatedNote);
-        await loadNotes();
-      }
+      await _notesRepository.toggleFavorite(id);
+      await loadNotes();
     } catch (e) {
       debugPrint("Error toggling favorite: $e");
     }
@@ -828,12 +820,8 @@ class NotesProvider with ChangeNotifier {
   // Toggle Archive Status
   Future<void> toggleArchive(String id) async {
     try {
-      final rawNote = await _dbService.queryById(id);
-      if (rawNote != null) {
-        final updatedNote = rawNote.copyWith(isArchived: !rawNote.isArchived);
-        await _dbService.update(updatedNote);
-        await loadNotes();
-      }
+      await _notesRepository.toggleArchive(id);
+      await loadNotes();
     } catch (e) {
       debugPrint("Error toggling archive: $e");
     }
@@ -934,7 +922,7 @@ class NotesProvider with ChangeNotifier {
 
   // --- Habit Checklists Reset Engine ---
   Future<void> _checkAndResetHabits() async {
-    final rawNotes = await _dbService.queryHabits();
+    final rawNotes = await _notesRepository.queryHabits();
     for (int i = 0; i < rawNotes.length; i++) {
       final note = rawNotes[i];
       if (note.isHabit && note.noteType == 'checklist' && note.habitRecurrence != 'none') {
@@ -1006,9 +994,10 @@ class NotesProvider with ChangeNotifier {
             content: updatedContent,
             habitStreak: newStreak,
             habitLastCompleted: now,
+            updatedAt: now,
           );
 
-          await _dbService.update(updatedNote);
+          await _notesRepository.updateNote(updatedNote);
         }
       }
     }
