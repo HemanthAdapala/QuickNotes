@@ -9,6 +9,20 @@ abstract class OutboxRepository {
   Future<List<SyncOutboxItem>> getPendingOutboxItems(String userId);
   Future<int> markOutboxItemSynced(String id, int syncedVersion);
   Future<int> deleteOutboxItemsForEntity(DatabaseExecutor executor, String entityId);
+  Future<void> acknowledgeOutboxItem({
+    required String outboxId,
+    required String entityType,
+    required String entityId,
+    required int localVersion,
+  });
+  Future<int> updateOutboxItemRetryStatus({
+    required String id,
+    required int attemptCount,
+    required String status,
+    DateTime? lastAttemptAt,
+    DateTime? nextAttemptAt,
+    String? lastError,
+  });
 }
 
 class SqliteOutboxRepository implements OutboxRepository {
@@ -23,6 +37,19 @@ class SqliteOutboxRepository implements OutboxRepository {
       throw const OwnershipException('No active canonical user exists for this repository operation.');
     }
     return activeId;
+  }
+
+  String? _resolveTableName(String entityType) {
+    switch (entityType) {
+      case 'note':
+        return 'notes';
+      case 'folder':
+        return 'folders';
+      case 'task':
+        return 'tasks';
+      default:
+        return null;
+    }
   }
 
   @override
@@ -75,5 +102,57 @@ class SqliteOutboxRepository implements OutboxRepository {
       where: 'entityId = ? AND userId = ?',
       whereArgs: [entityId, uid],
     );
+  }
+
+  @override
+  Future<void> acknowledgeOutboxItem({
+    required String outboxId,
+    required String entityType,
+    required String entityId,
+    required int localVersion,
+  }) async {
+    final uid = _resolveActiveUserId();
+    final tableName = _resolveTableName(entityType);
+    await _dbService.runInTransaction((executor) async {
+      if (tableName != null) {
+        await executor.update(
+          tableName,
+          {'lastSyncedVersion': localVersion},
+          where: 'id = ? AND userId = ?',
+          whereArgs: [entityId, uid],
+        );
+      }
+      await executor.delete(
+        'sync_outbox',
+        where: 'id = ? AND userId = ?',
+        whereArgs: [outboxId, uid],
+      );
+    });
+  }
+
+  @override
+  Future<int> updateOutboxItemRetryStatus({
+    required String id,
+    required int attemptCount,
+    required String status,
+    DateTime? lastAttemptAt,
+    DateTime? nextAttemptAt,
+    String? lastError,
+  }) async {
+    final uid = _resolveActiveUserId();
+    return await _dbService.runInTransaction((executor) async {
+      return await executor.update(
+        'sync_outbox',
+        {
+          'attemptCount': attemptCount,
+          'status': status,
+          'lastAttemptAt': lastAttemptAt?.toIso8601String(),
+          'nextAttemptAt': nextAttemptAt?.toIso8601String(),
+          'lastError': lastError,
+        },
+        where: 'id = ? AND userId = ?',
+        whereArgs: [id, uid],
+      );
+    });
   }
 }
