@@ -15,7 +15,6 @@ import '../../services/backup/backup_engine.dart';
 import '../../services/backup/google_drive_backup_service.dart';
 import '../../services/backup/restore_engine.dart';
 import '../../services/session_manager.dart';
-import '../widgets/app_header_bar.dart';
 import '../widgets/cloud_delete_confirmation_dialog.dart';
 import '../widgets/grouped_list_container.dart';
 import '../widgets/restore_confirmation_dialog.dart';
@@ -77,40 +76,81 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         final isCreatingLocal = opState == BackupOperationState.creatingLocalBackup;
         final lastLocalBackup = _controller.lastLocalBackupResult;
 
-        return Scaffold(
-          backgroundColor: Colors.white,
-          body: Stack(
-            children: [
-              // 1. Top Background Banner
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 160,
-                child: SvgPicture.asset(
-                  'assets/Settings Screen/Background.svg',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                ),
-              ),
+        const backgroundColor = Color(0xFFF2F2F7);
 
-              // 2. Main Scrollable Container with White Rounded Sheet
-              Column(
-                children: [
-                  const SizedBox(height: 90),
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        return Scaffold(
+          backgroundColor: backgroundColor,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Top Navigation Bar (Matching Account Section)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                  child: Row(
+                    children: [
+                      TactileButton(
+                        useAppleSpring: true,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const ShapeDecoration(
+                            color: Colors.white,
+                            shape: OvalBorder(),
+                            shadows: [
+                              BoxShadow(
+                                color: Color(0x0F000000),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'assets/icons/angle_left.svg',
+                              width: 18,
+                              height: 18,
+                              colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                            ),
+                          ),
+                        ),
                       ),
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 24.0, bottom: 100.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                      Expanded(
+                        child: Text(
+                          "Backup & Sync",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            color: primaryTextColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.43,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 40),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 8.0),
+
+                // Content Area (White Rounded Sheet)
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                             // Restoration Progress Stage Banner
                             if (_controller.operationState == BackupOperationState.restoring &&
                                 _controller.currentRestoreStage != null) ...[
@@ -165,8 +205,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                               const SizedBox(height: 16.0),
                             ],
 
-                            // SECTION 2A: Google Drive Status
-                            _buildSectionHeader('2A. GOOGLE DRIVE STATUS'),
+                            // SECTION: Google Drive Status
+                            _buildSectionHeader('GOOGLE DRIVE'),
                             const SizedBox(height: 8.0),
                             GroupedListContainer(
                               children: [
@@ -194,8 +234,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
                             const SizedBox(height: 20.0),
 
-                            // SECTION 2B: Local Backup
-                            _buildSectionHeader('2B. CREATE LOCAL BACKUP'),
+                            // SECTION: Local Backup
+                            _buildSectionHeader('CREATE LOCAL BACKUP'),
                             const SizedBox(height: 8.0),
                             GroupedListContainer(
                               children: [
@@ -307,8 +347,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
                             const SizedBox(height: 20.0),
 
-                            // SECTION 2C: Cloud Backup
-                            _buildSectionHeader('2C. CLOUD BACKUP'),
+                            // SECTION: Cloud Backup
+                            _buildSectionHeader('CLOUD BACKUP'),
                             const SizedBox(height: 8.0),
                             GroupedListContainer(
                               children: [
@@ -571,8 +611,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
                             const SizedBox(height: 20.0),
 
-                            // SECTION 2D: Restore Data
-                            _buildSectionHeader('2D. RESTORE DATA', isWarning: true),
+                            // SECTION: Restore Data
+                            _buildSectionHeader('RESTORE DATA', isWarning: true),
                             const SizedBox(height: 8.0),
                             GroupedListContainer(
                               children: [
@@ -764,50 +804,11 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                   ),
                 ],
               ),
-
-              // 3. Floating AppHeaderBar
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                    child: AppHeaderBar(
-                      leftHeroTag: 'hero_settings_back',
-                      leftWidth: 44.0,
-                      onLeftTap: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.of(context).pop();
-                      },
-                      leftChild: SvgPicture.asset(
-                        'assets/icons/angle_left.svg',
-                        width: 22,
-                        height: 22,
-                        colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
-                      ),
-                      titleWidget: Text(
-                        "Backup & Sync",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          color: primaryTextColor,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          height: 0.70,
-                          letterSpacing: -0.43,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+          );
+        },
+      );
+    }
 
   // ── Helper UI Builders ───────────────────────────────────────────────────
   Widget _buildSectionHeader(String title, {bool isWarning = false}) {
