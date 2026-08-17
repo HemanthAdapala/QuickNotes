@@ -6,7 +6,7 @@ import '../../widgets/tactile_button.dart';
 import '../../widgets/grouped_list_container.dart';
 import '../../../core/animations/page_transitions.dart';
 import 'account_profile_screen.dart';
-import 'backup_and_sync_screen.dart';
+import '../backup_restore_screen.dart';
 import 'delete_account_screen.dart';
 
 class AccountSettingsScreen extends StatelessWidget {
@@ -107,7 +107,7 @@ class AccountSettingsScreen extends StatelessWidget {
                             HapticFeedback.lightImpact();
                             Navigator.push(
                               context,
-                              buildPageRoute(const BackupAndSyncScreen()),
+                              buildPageRoute(const BackupRestoreScreen()),
                             );
                           },
                         ),

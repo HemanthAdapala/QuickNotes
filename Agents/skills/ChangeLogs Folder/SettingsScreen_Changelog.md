@@ -95,3 +95,53 @@ No architectural impact.
 
 - Automated widget tests passed (100% GREEN).
 
+---
+
+## v3.0.0
+
+### Date
+2026-08-17
+
+### Author
+Anti Gravity
+
+### Type
+- Feature
+- UI
+- Refactor
+
+---
+
+### Summary
+
+Restructured the Settings Screen (`lib/views/screens/settings_screen.dart`) tiles to match the exact order defined in `SettingsScreenUI` (1. Account, 2. Backup & Sync, 3. Dark Mode, 4. Storage & Data, 5. FAQ, 6. Terms of service, 7. Privacy Policy, 8. About). Preserved space and SVG icons for all item tiles.
+
+---
+
+### Detailed Changes
+
+- **Tile Re-ordering**: Moved `Backup & Sync` to Section 1 directly under `Account`. Moved `Dark Mode` and `Storage & Data` to Section 2. Kept `FAQ`, `Terms of service`, `Privacy Policy`, and `About` in Section 3.
+- **Icon Preservation**: Ensured all tiles maintain their leading SVG icons (`bottom_navigation/settings.svg`, `refresh.svg`, `night-day.svg`, `settings-sliders.svg`, `interrogation.svg`, `terms-info.svg`, `insurance.svg`).
+- **Account Navigation**: Updated `AccountSettingsScreen` tile to push `BackupRestoreScreen`.
+
+---
+
+### Architecture Impact
+
+No breaking architectural changes. Improves UX alignment with the application specification.
+
+---
+
+### Files Modified
+
+- `lib/views/screens/settings_screen.dart`
+- `lib/views/screens/account/account_settings_screen.dart`
+- `Agents/skills/ChangeLogs Folder/SettingsScreen_Changelog.md`
+
+---
+
+### Testing Status
+
+- Static analysis verified via `flutter analyze`.
+
+

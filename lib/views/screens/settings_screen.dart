@@ -12,6 +12,7 @@ import '../../core/animations/page_transitions.dart';
 import 'profile_screen.dart';
 import 'glassmorphism_sandbox_screen.dart';
 import 'account/account_settings_screen.dart';
+import 'backup_restore_screen.dart';
 
 import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
@@ -273,7 +274,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 100.0),
                     child: Column(
                       children: [
-                        // Section 1 Card (Account, General Settings)
+                        // Section 1 Card (Account, Backup & Sync)
                         GroupedListContainer(
                           children: [
                             GroupedTile.navigation(
@@ -288,13 +289,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               },
                             ),
                             GroupedTile.navigation(
-                              iconPath: 'assets/icons/settings-sliders.svg',
-                              title: 'General Settings',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "General Settings",
-                                "General application preferences configured.",
-                              ),
+                              iconPath: 'assets/icons/refresh.svg',
+                              title: 'Backup & Sync',
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                Navigator.push(
+                                  context,
+                                  buildPageRoute(const BackupRestoreScreen()),
+                                );
+                              },
                             ),
                           ],
                         ),
