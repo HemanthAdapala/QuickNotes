@@ -56,8 +56,14 @@ class AuthenticationService {
   AuthenticationService._internal();
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
+    scopes: [
+      'email',
+      'profile',
+      'https://www.googleapis.com/auth/drive.file',
+    ],
   );
+
+  GoogleSignIn get googleSignIn => _googleSignIn;
 
   /// Authenticate user via Google Sign-In
   Future<AuthResult> signInWithGoogle() async {

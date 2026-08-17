@@ -1,0 +1,256 @@
+☁️ Proposed Quick Notes Backup & Restore Roadmap
+PHASE 1.9 — Backup Foundation & Data Contract
+        ↓
+PHASE 1.9.1 — Backup File Format & Serializer
+        ↓
+PHASE 1.9.2 — Backup Validation & Versioning
+        ↓
+PHASE 1.9.3 — Local Backup Creation
+        ↓
+PHASE 1.9.4 — Google Drive Integration
+        ↓
+PHASE 1.9.5 — Upload & Backup Management
+        ↓
+PHASE 1.9.6 — Restore Engine
+        ↓
+PHASE 1.9.7 — Restore Safety & Recovery
+        ↓
+PHASE 1.9.8 — Automatic Backup Discovery
+        ↓
+PHASE 1.9.9 — Backup/Restore UI
+        ↓
+PHASE 1.9.10 — Final Integration & Hardening
+The important part: audit → implementation → post-audit
+
+We should continue using the same discipline you've been using:
+
+PRE-IMPLEMENTATION AUDIT
+        ↓
+Architectural decisions
+        ↓
+GREEN GO
+        ↓
+IMPLEMENTATION
+        ↓
+POST-IMPLEMENTATION AUDIT
+        ↓
+Tests + Analyze
+        ↓
+Commit
+
+So we don't let Antigravity go:
+
+"I think this is probably fine, let's modify 17 files." 😭
+
+Instead, every phase has a contract.
+
+🧱 Phase 1.9 — Foundation
+
+First we'd inspect your current application and answer:
+
+What data actually needs to be backed up?
+Notes?
+Folders?
+Tasks?
+Categories?
+Images?
+Rich-text formatting?
+Attachments?
+Deleted items?
+Metadata?
+User/account information?
+Anything editor-specific?
+
+And importantly:
+
+What must NOT go into the backup?
+
+For example, things like:
+
+sync_outbox
+operationId
+retry counters
+network state
+auth tokens
+session state
+
+should almost certainly not become part of a user backup.
+
+📦 Phase 1.9.1 — Backup File Format
+
+We design the actual file.
+
+Something conceptually like:
+
+QuickNotes_Backup.qnb
+│
+├── manifest
+│    ├── formatVersion
+│    ├── appVersion
+│    ├── createdAt
+│    └── backupId
+│
+├── notes
+├── folders
+├── tasks
+├── categories
+└── attachments
+
+We'd decide whether that's:
+
+JSON → ZIP → .qnb
+
+or another structure.
+
+This phase is important because the backup format becomes a long-term contract.
+
+🛡️ Phase 1.9.2 — Validation
+
+Before restoring anything:
+
+Backup file
+    ↓
+Is it actually a Quick Notes backup?
+    ↓
+Is the format supported?
+    ↓
+Is the file corrupted?
+    ↓
+Are required fields present?
+    ↓
+Are relationships valid?
+    ↓
+Only then → Restore
+
+A backup system should behave more like an airlock than an open door. 😄
+
+💾 Phase 1.9.3 — Local Backup
+
+Before involving Google Drive, we should make this work 100% locally.
+
+SQLite
+   ↓
+Backup Serializer
+   ↓
+.qnb
+   ↓
+Restore
+   ↓
+SQLite
+
+That gives us a beautiful testable foundation.
+
+If this works perfectly, Google Drive becomes mostly a transport/storage layer.
+
+☁️ Then Google Drive
+
+Only after the backup engine itself is solid:
+
+Quick Notes
+     │
+     ▼
+Backup Engine
+     │
+     ▼
+.qnb
+     │
+     ▼
+Google Drive
+
+This separation is really important.
+
+If Google Drive breaks, your backup format doesn't break.
+
+♻️ Restore deserves its own phases
+
+Because restore is potentially destructive.
+
+We need to think about things like:
+
+"What if the user already has notes on this phone?"
+
+Possible choices:
+
+Restore
+│
+├── Replace existing data
+├── Merge with existing data
+└── Cancel
+
+And I'd strongly recommend a pre-restore safety backup before replacing anything.
+
+So:
+
+Current SQLite
+      ↓
+Safety Snapshot
+      ↓
+Restore Backup
+      ↓
+Validate
+      ↓
+Atomic transaction
+      ↓
+Success
+
+If something goes wrong:
+
+ROLLBACK
+
+No half-restored notebook. 👍
+
+📱 And finally the beautiful UX
+
+Once the engine is reliable, we can build:
+
+Welcome back 👋
+
+
+We found a Quick Notes backup
+from August 14, 2026.
+
+
+📦 248 notes
+📁 12 folders
+✅ 31 tasks
+
+
+[ Restore Backup ]
+
+
+[ Start Fresh ]
+
+That's the experience you're ultimately after.
+
+One thing I'd change from our previous approach
+
+I wouldn't immediately call this Phase 1.9.1 implementation.
+
+First, let's do:
+
+PHASE 1.9 — PRE-IMPLEMENTATION ARCHITECTURAL AUDIT
+
+Read-only.
+
+Exactly like we did for Phase 1.8:
+
+NO production changes
+NO test changes
+NO migrations
+NO dependency additions
+NO implementation
+
+
+Only inspect → reason → document → identify decisions.
+
+Then we can let Antigravity produce the architectural report.
+
+If it's GREEN, we lock the implementation specification and start Phase 1.9.1.
+
+If it's YELLOW, we resolve the decisions first.
+
+If it's RED, we stop and redesign.
+
+That's the safest way to build this. 🧱☁️
+
+And yes — from this point forward, I'd keep using this phase → audit → implementation → post-audit → commit rhythm for the Backup & Restore system.

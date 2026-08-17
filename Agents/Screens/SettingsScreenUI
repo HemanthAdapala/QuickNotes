@@ -1,0 +1,51 @@
+Settings Screen UI 
+
+1. Account         >
+2. Backup & Sync   >
+
+3. Dark Mode 
+4. Storage & Data  >
+
+5. FAQ             >
+6. Terms of service>
+7. Privacy Policy  >
+8. Avout           >
+
+
+
+1. Account
+
+1A. Profile
+1B. Delete your data and Account
+
+1A. Profile
+
+1AA. User Name
+1AB. Email Address
+
+1B. Delete your data and Account
+
+1BA. (Information)
+
+
+2. Backup & Sync
+
+2A. Google Drive (Connected or Not Connected)
+
+2B. Create Local Backup
+    (Info)
+    (Button)
+
+2C. Cloud Backup
+    Google Drive Cloud Backup
+    (Info)
+    (Button - Backup to drive)
+    (View Cloud Backups)
+
+2D. Restore Data
+    (Info)
+    (Button - Restore Local File)
+    (Button - Restore From Drive)
+
+
+
