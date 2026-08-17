@@ -117,8 +117,11 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 36.0),
-                child: Column(
+                clipBehavior: Clip.antiAlias,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 36.0),
+                  child: Column(
                   children: [
                     Text(
                       "Closing your account means you won't be able to get your Notes and Tasks back. All of your QuickNotes data will be delete",
@@ -233,6 +236,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 ),
               ),
             ),
+          ),
           ],
         ),
       ),

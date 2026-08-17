@@ -109,24 +109,28 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                child: Column(
-                  children: [
-                    GroupedListContainer(
-                      children: [
-                        GroupedTile.keyValue(
-                          iconPath: 'assets/icons/bottom_navigation/settings.svg',
-                          title: 'User Name',
-                          value: _username,
-                        ),
-                        GroupedTile.keyValue(
-                          iconPath: 'assets/icons/terms-info.svg',
-                          title: 'Email Address',
-                          value: _email,
-                        ),
-                      ],
-                    ),
-                  ],
+                clipBehavior: Clip.antiAlias,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                  child: Column(
+                    children: [
+                      GroupedListContainer(
+                        children: [
+                          GroupedTile.keyValue(
+                            iconPath: 'assets/icons/bottom_navigation/settings.svg',
+                            title: 'User Name',
+                            value: _username,
+                          ),
+                          GroupedTile.keyValue(
+                            iconPath: 'assets/icons/terms-info.svg',
+                            title: 'Email Address',
+                            value: _email,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

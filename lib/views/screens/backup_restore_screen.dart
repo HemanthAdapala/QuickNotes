@@ -145,9 +145,10 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                    clipBehavior: Clip.antiAlias,
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 24.0, bottom: 40.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -212,7 +213,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                               children: [
                                 GroupedTile.navigation(
                                   iconPath: 'assets/icons/settings-sliders.svg',
-                                  title: 'Google Drive Account',
+                                  title: 'Google Drive',
                                   trailing: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
@@ -437,14 +438,18 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                                           ),
                                                         )
-                                                      : Text(
-                                                          'Back Up to Drive',
-                                                          style: GoogleFonts.inter(
-                                                            fontSize: 13,
-                                                            fontWeight: FontWeight.w600,
-                                                            color: (isBusy || !isGoogleAuthenticated)
-                                                                ? const Color(0xFF8E8E93)
-                                                                : Colors.white,
+                                                      : FittedBox(
+                                                          fit: BoxFit.scaleDown,
+                                                          child: Text(
+                                                            'Back Up to Drive',
+                                                            maxLines: 1,
+                                                            style: GoogleFonts.inter(
+                                                              fontSize: 13,
+                                                              fontWeight: FontWeight.w600,
+                                                              color: (isBusy || !isGoogleAuthenticated)
+                                                                  ? const Color(0xFF8E8E93)
+                                                                  : Colors.white,
+                                                            ),
                                                           ),
                                                         ),
                                                 ),
@@ -711,12 +716,19 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                   borderRadius: BorderRadius.circular(12),
                                                 ),
                                                 child: Center(
-                                                  child: Text(
-                                                    'Restore Local File',
-                                                    style: GoogleFonts.inter(
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: isBusy ? const Color(0xFF8E8E93) : Colors.white,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                                    child: FittedBox(
+                                                      fit: BoxFit.scaleDown,
+                                                      child: Text(
+                                                        'Restore Local File',
+                                                        maxLines: 1,
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.w600,
+                                                          color: isBusy ? const Color(0xFF8E8E93) : Colors.white,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),

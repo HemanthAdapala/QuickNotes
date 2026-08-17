@@ -83,8 +83,11 @@ class AccountSettingsScreen extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                child: Column(
+                clipBehavior: Clip.antiAlias,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                  child: Column(
                   children: [
                     GroupedListContainer(
                       children: [
@@ -116,6 +119,7 @@ class AccountSettingsScreen extends StatelessWidget {
                 ),
               ),
             ),
+          ),
           ],
         ),
       ),
