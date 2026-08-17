@@ -84,7 +84,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
     final bool idsChanged = oldIds.length != newIds.length ||
         !newIds.every((id) => oldIds.contains(id));
 
-    if (idsChanged) {
+    if (idsChanged || _currentNotesList.length != widget.notes.length) {
       setState(() {
         _currentNotesList = List.from(widget.notes);
       });

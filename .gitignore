@@ -50,4 +50,6 @@ ios/Firebase/FirebaseCrashlytics.js
 conversations_history/
 DesignCode/
 flutter_01.png
+backups/
+*.qnb
 

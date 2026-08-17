@@ -12,6 +12,7 @@ import '../models/note.dart';
 import '../models/folder.dart';
 import '../models/note_summary.dart';
 import '../services/database_service.dart';
+import '../services/session_manager.dart';
 import '../services/vault_service.dart';
 import '../repositories/notes_repository.dart';
 import '../repositories/folders_repository.dart';
@@ -163,8 +164,13 @@ class NotesProvider with ChangeNotifier {
         _foldersRepository = foldersRepository ?? SqliteFoldersRepository() {
     _isDarkMode = false;
     _initNotifications();
-    loadFolders();
-    loadNotes();
+    _initAndLoadData();
+  }
+
+  Future<void> _initAndLoadData() async {
+    await SessionManager().init();
+    await loadFolders();
+    await loadNotes();
   }
 
   @override
@@ -462,6 +468,17 @@ class NotesProvider with ChangeNotifier {
 
   // Load notes from Database
   Future<void> loadNotes() async {
+    final sessionManager = SessionManager();
+    if (sessionManager.activeUserId == null || sessionManager.activeUserId!.isEmpty) {
+      await sessionManager.init();
+    }
+    if (sessionManager.activeUserId == null || sessionManager.activeUserId!.isEmpty) {
+      debugPrint("loadNotes skipped: No active canonical user session exists.");
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     _isLoading = true;
     notifyListeners();
 
@@ -873,6 +890,15 @@ class NotesProvider with ChangeNotifier {
   }
 
   Future<void> loadFolders() async {
+    final sessionManager = SessionManager();
+    if (sessionManager.activeUserId == null || sessionManager.activeUserId!.isEmpty) {
+      await sessionManager.init();
+    }
+    if (sessionManager.activeUserId == null || sessionManager.activeUserId!.isEmpty) {
+      debugPrint("loadFolders skipped: No active canonical user session exists.");
+      return;
+    }
+
     try {
       _folders = await _foldersRepository.getFolders();
       notifyListeners();

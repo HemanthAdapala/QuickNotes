@@ -81,8 +81,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadUserData();
-    final initialIndex = Provider.of<NotesProvider>(context, listen: false).selectedBgIndex;
+    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+    final initialIndex = notesProvider.selectedBgIndex;
     _updatePresetsForBackground(initialIndex);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        notesProvider.loadFolders();
+        notesProvider.loadNotes();
+      }
+    });
 
     final initialPayload = NotificationActionHandler.consumeLastLaunchedPayload();
     if (initialPayload != null) {
@@ -159,17 +167,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Note> get _filteredNotes {
-    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+    final notesProvider = Provider.of<NotesProvider>(context);
     final filtered = AppStatisticsService.filterNotesByDateRange(notesProvider.notes, _activeFilter);
     return AppStatisticsService.sortNotes(filtered, ascending: _isSortAscending);
   }
 
   int _countForFilter(String filter) {
     if (_isNotesActive) {
-      final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+      final notesProvider = Provider.of<NotesProvider>(context);
       return AppStatisticsService.filterNotesByDateRange(notesProvider.notes, filter).length;
     } else {
-      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+      final tasksProvider = Provider.of<TasksProvider>(context);
       return tasksProvider.getUncompletedTasksForFilter(filter).length;
     }
   }
