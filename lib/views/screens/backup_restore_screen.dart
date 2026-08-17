@@ -438,17 +438,23 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                                           ),
                                                         )
-                                                      : FittedBox(
-                                                          fit: BoxFit.scaleDown,
-                                                          child: Text(
-                                                            'Back Up to Drive',
-                                                            maxLines: 1,
-                                                            style: GoogleFonts.inter(
-                                                              fontSize: 13,
-                                                              fontWeight: FontWeight.w600,
-                                                              color: (isBusy || !isGoogleAuthenticated)
-                                                                  ? const Color(0xFF8E8E93)
-                                                                  : Colors.white,
+                                                      : Padding(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                                                          child: FittedBox(
+                                                            fit: BoxFit.scaleDown,
+                                                            alignment: Alignment.center,
+                                                            child: Text(
+                                                              'Back Up to Drive',
+                                                              maxLines: 1,
+                                                              softWrap: false,
+                                                              overflow: TextOverflow.clip,
+                                                              style: GoogleFonts.inter(
+                                                                fontSize: 13,
+                                                                fontWeight: FontWeight.w600,
+                                                                color: (isBusy || !isGoogleAuthenticated)
+                                                                    ? const Color(0xFF8E8E93)
+                                                                    : Colors.white,
+                                                              ),
                                                             ),
                                                           ),
                                                         ),
@@ -717,12 +723,15 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                 ),
                                                 child: Center(
                                                   child: Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6.0),
                                                     child: FittedBox(
                                                       fit: BoxFit.scaleDown,
+                                                      alignment: Alignment.center,
                                                       child: Text(
                                                         'Restore Local File',
                                                         maxLines: 1,
+                                                        softWrap: false,
+                                                        overflow: TextOverflow.clip,
                                                         style: GoogleFonts.inter(
                                                           fontSize: 13,
                                                           fontWeight: FontWeight.w600,
