@@ -146,7 +146,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     const SizedBox(height: 20.0),
 
                     Text(
-                      "${_username}, if you're ready to leave forever, we'll send an email with the final step to:",
+                      "$_username, if you're ready to leave forever, we'll send an email with the final step to:",
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         color: secondaryTextColor,
@@ -175,14 +175,17 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       useAppleSpring: true,
                       onTap: () async {
                         HapticFeedback.mediumImpact();
+                        final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+                        final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                        final messenger = ScaffoldMessenger.of(context);
+                        final navigator = Navigator.of(context);
+
                         final confirm = await showDeleteNoteDialog(
                           context,
                           title: 'Delete Account Data',
                           message: 'Are you sure you want to delete your account and all data? This action cannot be undone.',
                         );
                         if (confirm == true && mounted) {
-                          final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-                          final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
                           for (final note in List<Note>.from(notesProvider.notes)) {
                             await notesProvider.deleteNote(note.id);
                           }
@@ -192,12 +195,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                           for (final folder in List<Folder>.from(notesProvider.folders)) {
                             await notesProvider.deleteFolder(folder.id);
                           }
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Account data deleted successfully.')),
-                            );
-                            Navigator.pop(context);
-                          }
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('Account data deleted successfully.')),
+                          );
+                          navigator.pop();
                         }
                       },
                       child: Container(

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -485,14 +484,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   expandedChild: MoreOptionsPopup(
                     onDeleteData: () async {
                       setState(() => _isMoreOptionsOpen = false);
+                      final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+                      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                      final messenger = ScaffoldMessenger.of(context);
                       final confirm = await showDeleteNoteDialog(
                         context,
                         title: 'Delete Data',
                         message: 'Are you sure you want to delete\nall notes and tasks? This action\ncannot be undone',
                       );
                       if (confirm == true && mounted) {
-                        final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-                        final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
                         for (final note in List<Note>.from(notesProvider.notes)) {
                           await notesProvider.deleteNote(note.id);
                         }
@@ -502,25 +502,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         for (final folder in List<Folder>.from(notesProvider.folders)) {
                           await notesProvider.deleteFolder(folder.id);
                         }
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('All data deleted successfully.')),
-                          );
-                        }
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('All data deleted successfully.')),
+                        );
                       }
                     },
                     onRefresh: () async {
                       setState(() => _isMoreOptionsOpen = false);
                       final notesProvider = Provider.of<NotesProvider>(context, listen: false);
                       final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                      final messenger = ScaffoldMessenger.of(context);
                       await notesProvider.loadFolders();
                       await notesProvider.loadNotes();
                       await tasksProvider.loadTasks();
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Data refreshed.')),
-                        );
-                      }
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Data refreshed.')),
+                      );
                     },
                   ),
                   rightChild: TactileButton(
