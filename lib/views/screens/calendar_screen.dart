@@ -112,12 +112,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
-  // ── Computed: days where EVERY task is completed (drives blue check cells) ─
-  Set<int> get _daysAllComplete {
-    final result = <int>{};
+  // ── Computed: task progress per day (drives orbital rings) ─
+  Map<int, double> get _dayTaskProgress {
+    final result = <int, double>{};
     for (final entry in _monthTasks.entries) {
-      if (entry.value.isNotEmpty && entry.value.every((t) => t.isCompleted)) {
-        result.add(entry.key);
+      if (entry.value.isNotEmpty) {
+        final total = entry.value.length;
+        final completed = entry.value.where((t) => t.isCompleted).length;
+        result[entry.key] = completed / total;
       }
     }
     return result;
@@ -403,7 +405,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                   child: CalendarGridWidget(
                     currentMonth: _currentMonth,
-                    daysWithTasks: _daysAllComplete,
+                    taskProgress: _dayTaskProgress,
                     selectedDay: _selectedDay,
                     onDayTap: (day) => setState(() => _selectedDay = day),
                   ),

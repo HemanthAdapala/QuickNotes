@@ -18,8 +18,8 @@ import 'calendar_day_cell.dart';
 class CalendarGridWidget extends StatelessWidget {
   final DateTime currentMonth;
 
-  /// Set of day-of-month integers (1–31) that have notes / tasks.
-  final Set<int> daysWithTasks;
+  /// Map of day-of-month integers (1–31) to their task completion progress (0.0 to 1.0).
+  final Map<int, double> taskProgress;
 
   /// The currently selected day of month (null = nothing selected).
   final int? selectedDay;
@@ -30,7 +30,7 @@ class CalendarGridWidget extends StatelessWidget {
   const CalendarGridWidget({
     super.key,
     required this.currentMonth,
-    this.daysWithTasks = const {},
+    this.taskProgress = const {},
     this.selectedDay,
     this.onDayTap,
   });
@@ -50,20 +50,20 @@ class CalendarGridWidget extends StatelessWidget {
     final List<Widget> cells = [];
 
     for (int i = 0; i < offset; i++) {
-      cells.add(const SizedBox(width: 32, height: 48));
+      cells.add(const SizedBox(width: 40, height: 40));
     }
 
     for (int day = 1; day <= daysInMonth; day++) {
       cells.add(CalendarDayCell(
         day: day,
-        hasTask: daysWithTasks.contains(day),
+        progress: taskProgress[day],
         isSelected: selectedDay == day,
         onTap: () => onDayTap?.call(day),
       ));
     }
 
     while (cells.length % 7 != 0) {
-      cells.add(const SizedBox(width: 32, height: 48));
+      cells.add(const SizedBox(width: 40, height: 40));
     }
 
     // Group into rows of 7
