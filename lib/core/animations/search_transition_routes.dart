@@ -13,7 +13,8 @@ class PixelAlignedSearchRoute<T> extends PageRouteBuilder<T> {
 
   PixelAlignedSearchRoute({required this.builder})
       : super(
-          pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              builder(context),
           transitionDuration: const Duration(milliseconds: 300),
           reverseTransitionDuration: const Duration(milliseconds: 220),
           opaque: false,

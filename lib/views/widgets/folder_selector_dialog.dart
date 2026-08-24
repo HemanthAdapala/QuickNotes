@@ -28,56 +28,56 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
       builder: (context) {
         final theme = Theme.of(context);
         final provider = Provider.of<NotesProvider>(context, listen: false);
-        final hierarchical = FolderUtils.getHierarchicalFolders(provider.folders);
+        final hierarchical =
+            FolderUtils.getHierarchicalFolders(provider.folders);
 
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: theme.colorScheme.surface,
-              title: Text(
-                "New Folder",
-                style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _folderNameController,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: "Folder Name",
-                      border: OutlineInputBorder(),
-                    ),
+        return StatefulBuilder(builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: theme.colorScheme.surface,
+            title: Text(
+              "New Folder",
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _folderNameController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: "Folder Name",
+                    border: OutlineInputBorder(),
                   ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    _folderNameController.clear();
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Cancel"),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final name = _folderNameController.text.trim();
-                    if (name.isNotEmpty) {
-                      Provider.of<NotesProvider>(context, listen: false).createFolder(
-                        name,
-                        parentId: null,
-                      );
-                      _folderNameController.clear();
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text("Create"),
                 ),
               ],
-            );
-          }
-        );
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _folderNameController.clear();
+                  Navigator.pop(context);
+                },
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final name = _folderNameController.text.trim();
+                  if (name.isNotEmpty) {
+                    Provider.of<NotesProvider>(context, listen: false)
+                        .createFolder(
+                      name,
+                      parentId: null,
+                    );
+                    _folderNameController.clear();
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text("Create"),
+              ),
+            ],
+          );
+        });
       },
     );
   }
@@ -109,7 +109,8 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.create_new_folder_outlined, color: theme.colorScheme.primary),
+                  icon: Icon(Icons.create_new_folder_outlined,
+                      color: theme.colorScheme.primary),
                   onPressed: _showCreateFolderDialog,
                   tooltip: "Create New Folder",
                 ),
@@ -141,9 +142,11 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
                         ),
                       ),
                       trailing: widget.currentFolderId == null
-                          ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary)
+                          ? Icon(Icons.check_circle_rounded,
+                              color: theme.colorScheme.primary)
                           : null,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       onTap: () {
                         widget.onFolderSelected(null);
                         Navigator.pop(context);
@@ -162,7 +165,8 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
                         ),
                       )
                     else
-                      ...FolderUtils.getHierarchicalFolders(folders).map((item) {
+                      ...FolderUtils.getHierarchicalFolders(folders)
+                          .map((item) {
                         final folder = item.folder;
                         final depth = item.depth;
                         final isSelected = folder.id == widget.currentFolderId;
@@ -171,7 +175,9 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
                           child: ListTile(
                             dense: true,
                             leading: Icon(
-                              depth > 0 ? Icons.subdirectory_arrow_right_rounded : Icons.folder_open_rounded,
+                              depth > 0
+                                  ? Icons.subdirectory_arrow_right_rounded
+                                  : Icons.folder_open_rounded,
                               color: isSelected
                                   ? theme.colorScheme.primary
                                   : theme.colorScheme.onSurfaceVariant,
@@ -179,16 +185,20 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
                             title: Text(
                               folder.name,
                               style: GoogleFonts.inter(
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
                                 color: isSelected
                                     ? theme.colorScheme.primary
                                     : theme.colorScheme.onSurface,
                               ),
                             ),
                             trailing: isSelected
-                                ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary)
+                                ? Icon(Icons.check_circle_rounded,
+                                    color: theme.colorScheme.primary)
                                 : null,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             onTap: () {
                               widget.onFolderSelected(folder.id);
                               Navigator.pop(context);
@@ -196,7 +206,6 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
                           ),
                         );
                       }),
-
                   ],
                 ),
               ),

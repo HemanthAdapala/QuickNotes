@@ -21,7 +21,6 @@ import '../../core/animations/page_transitions.dart';
 import 'search_screen.dart';
 import '../../core/animations/search_transition_routes.dart';
 
-
 class FolderManagementScreen extends StatefulWidget {
   final VoidCallback onMenuTap;
   final ValueChanged<int>? onNavigateToTab;
@@ -97,7 +96,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
       child: StatefulBuilder(
         builder: (context, setDialogState) {
           final provider = Provider.of<NotesProvider>(context, listen: false);
-          final hierarchical = FolderUtils.getHierarchicalFolders(provider.folders);
+          final hierarchical =
+              FolderUtils.getHierarchicalFolders(provider.folders);
 
           final bottomInset = MediaQuery.of(context).viewInsets.bottom;
           return AnimatedPadding(
@@ -166,9 +166,11 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                                 decoration: InputDecoration(
                                   border: InputBorder.none,
                                   isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 10.0),
                                   hintText: "Folder Name",
-                                  hintStyle: GoogleFonts.inter(color: const Color(0xFFAEAEB2)),
+                                  hintStyle: GoogleFonts.inter(
+                                      color: const Color(0xFFAEAEB2)),
                                 ),
                                 onChanged: (_) => setDialogState(() {}),
                               ),
@@ -225,7 +227,9 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                             onTap: () {
                               final name = _folderController.text.trim();
                               if (name.isNotEmpty) {
-                                Provider.of<NotesProvider>(context, listen: false).createFolder(
+                                Provider.of<NotesProvider>(context,
+                                        listen: false)
+                                    .createFolder(
                                   name,
                                   parentId: null,
                                 );
@@ -268,7 +272,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
           final theme = Theme.of(dialogContext);
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: Text(
               "Delete Folder?",
               style: GoogleFonts.inter(
@@ -278,7 +283,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
             ),
             content: Text(
               "Are you sure you want to delete '${folder.name}'? Internal notes will be moved to the root level. They will NOT be deleted.",
-              style: GoogleFonts.inter(color: const Color(0xFF1C1C1E).withValues(alpha: 0.8)),
+              style: GoogleFonts.inter(
+                  color: const Color(0xFF1C1C1E).withValues(alpha: 0.8)),
             ),
             actions: [
               TextButton(
@@ -294,20 +300,23 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
               TextButton(
                 onPressed: () async {
                   Navigator.pop(dialogContext);
-                  final success = await Provider.of<NotesProvider>(screenContext, listen: false).deleteFolder(folder.id);
+                  final success = await Provider.of<NotesProvider>(
+                          screenContext,
+                          listen: false)
+                      .deleteFolder(folder.id);
                   if (screenContext.mounted) {
                     ScaffoldMessenger.of(screenContext).showSnackBar(
                       SnackBar(
-                        content: Text(success 
-                          ? "Folder '${folder.name}' deleted successfully" 
-                          : "Failed to delete folder: Database error"
-                        ),
+                        content: Text(success
+                            ? "Folder '${folder.name}' deleted successfully"
+                            : "Failed to delete folder: Database error"),
                         duration: const Duration(seconds: 2),
                       ),
                     );
                   }
                 },
-                style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error),
                 child: Text(
                   "Delete",
                   style: GoogleFonts.inter(
@@ -322,9 +331,11 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
     );
   }
 
-  void _showFolderContextMenu(BuildContext context, Folder folder, Offset position) async {
-    final RenderBox overlay = Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
-    
+  void _showFolderContextMenu(
+      BuildContext context, Folder folder, Offset position) async {
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+
     final RelativeRect positionRect = RelativeRect.fromRect(
       Rect.fromLTWH(position.dx, position.dy, 40, 40),
       Offset.zero & overlay.size,
@@ -343,7 +354,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
           value: 'customize',
           child: Row(
             children: [
-              const Icon(Icons.color_lens_outlined, color: Color(0xFF1C1C1E), size: 20),
+              const Icon(Icons.color_lens_outlined,
+                  color: Color(0xFF1C1C1E), size: 20),
               const SizedBox(width: 10),
               Text(
                 "Customize",
@@ -356,7 +368,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
           value: 'delete',
           child: Row(
             children: [
-              const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+              const Icon(Icons.delete_outline_rounded,
+                  color: Colors.red, size: 20),
               const SizedBox(width: 10),
               Text(
                 "Delete",
@@ -381,7 +394,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
       child: FolderCustomizationSheet(
         folder: folder,
         onApply: (updatedFolder) {
-          Provider.of<NotesProvider>(context, listen: false).updateFolder(updatedFolder);
+          Provider.of<NotesProvider>(context, listen: false)
+              .updateFolder(updatedFolder);
         },
       ),
     );
@@ -435,7 +449,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                           'assets/icons/angle_left.svg',
                           width: 22,
                           height: 22,
-                          colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                          colorFilter: const ColorFilter.mode(
+                              Color(0xFF1C1C1E), BlendMode.srcIn),
                         ),
                       ),
                     ),
@@ -462,7 +477,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                               color: const Color(0xFF8C8987),
                             ),
                             isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 10.0),
                           ),
                           onChanged: (val) {
                             setState(() {
@@ -527,7 +543,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                             'assets/icons/angle_left.svg',
                             width: 22,
                             height: 22,
-                            colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                            colorFilter: const ColorFilter.mode(
+                                Color(0xFF1C1C1E), BlendMode.srcIn),
                           ),
                         ),
                       ),
@@ -554,7 +571,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                             Navigator.push(
                               context,
                               buildSearchTransitionRoute(
-                                builder: (_) => const SearchScreen(initialScope: 'notes'),
+                                builder: (_) =>
+                                    const SearchScreen(initialScope: 'notes'),
                               ),
                             );
                           },
@@ -713,7 +731,9 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
 
     final filteredFolders = orderedFolders.where((item) {
       if (_searchQuery.trim().isEmpty) return true;
-      return item.folder.name.toLowerCase().contains(_searchQuery.trim().toLowerCase());
+      return item.folder.name
+          .toLowerCase()
+          .contains(_searchQuery.trim().toLowerCase());
     }).toList();
 
     return Scaffold(
@@ -760,20 +780,23 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(20)),
                   child: folders.isEmpty
                       ? _buildEmptyState()
                       : filteredFolders.isEmpty
                           ? Center(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 40.0),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 40.0),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
                                       Icons.folder_open_rounded,
                                       size: 48,
-                                      color: const Color(0xFF1C1C1E).withValues(alpha: 0.3),
+                                      color: const Color(0xFF1C1C1E)
+                                          .withValues(alpha: 0.3),
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
@@ -781,7 +804,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                                       style: GoogleFonts.inter(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF1C1C1E).withValues(alpha: 0.5),
+                                        color: const Color(0xFF1C1C1E)
+                                            .withValues(alpha: 0.5),
                                       ),
                                     ),
                                   ],
@@ -790,8 +814,10 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                             )
                           : GridView.builder(
                               physics: const BouncingScrollPhysics(),
-                              padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 80.0 + MediaQuery.paddingOf(context).bottom),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0,
+                                  80.0 + MediaQuery.paddingOf(context).bottom),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
                                 crossAxisSpacing: 8.0,
                                 mainAxisSpacing: 0.0,
@@ -801,7 +827,9 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                               itemBuilder: (context, index) {
                                 final item = filteredFolders[index];
                                 final folder = item.folder;
-                                final noteCount = activeNotes.where((n) => n.folderId == folder.id).length;
+                                final noteCount = activeNotes
+                                    .where((n) => n.folderId == folder.id)
+                                    .length;
                                 final key = _getKeyForFolder(folder.id);
 
                                 return AnimatedListEntrance(
@@ -813,7 +841,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                                     noteCount: noteCount,
                                     onTap: () => _handleFolderTap(folder),
                                     onLongPressStart: (details) {
-                                      _showFolderContextMenu(context, folder, details.globalPosition);
+                                      _showFolderContextMenu(context, folder,
+                                          details.globalPosition);
                                     },
                                     onCustomizeTap: () {
                                       _showCustomizationBottomSheet(folder);
@@ -836,7 +865,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                   child: SizedBox(
                     width: screenWidth.clamp(0.0, 402.0),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0, vertical: 12.0),
                       child: _buildHeaderBar(),
                     ),
                   ),
@@ -918,7 +948,6 @@ class FolderGridCard extends StatelessWidget {
                         painter: FolderBgPainter(color: bgColorDark),
                       ),
                     ),
-
                     Positioned(
                       left: 13.9,
                       top: 9.5,
@@ -928,7 +957,6 @@ class FolderGridCard extends StatelessWidget {
                         child: const DecorativeNoteCard(),
                       ),
                     ),
-
                     Positioned(
                       left: 73.5,
                       top: -1.5,
@@ -938,7 +966,6 @@ class FolderGridCard extends StatelessWidget {
                         child: const DecorativeNoteCard(),
                       ),
                     ),
-
                     Positioned(
                       top: 20.916,
                       left: 0,
@@ -948,7 +975,6 @@ class FolderGridCard extends StatelessWidget {
                         painter: FolderFgPainter(color: bgColor),
                       ),
                     ),
-
                     Positioned(
                       right: 8.0,
                       bottom: 8.0,
@@ -1010,7 +1036,8 @@ class FolderGridCard extends StatelessWidget {
               ),
               const SizedBox(width: 6.0),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
                 decoration: BoxDecoration(
                   color: const Color(0x1A787880),
                   borderRadius: BorderRadius.circular(10.0),
@@ -1187,7 +1214,8 @@ class FolderFgPainter extends CustomPainter {
     final matrix = Matrix4.identity()..scale(sx, sy, 1.0);
     final scaledPath = svgPath.transform(matrix.storage);
 
-    canvas.drawShadow(scaledPath, Colors.black.withValues(alpha: 0.18), 3.0, true);
+    canvas.drawShadow(
+        scaledPath, Colors.black.withValues(alpha: 0.18), 3.0, true);
 
     final paint = Paint()
       ..color = color
@@ -1228,7 +1256,8 @@ class FolderCustomizationSheet extends StatefulWidget {
   });
 
   @override
-  State<FolderCustomizationSheet> createState() => _FolderCustomizationSheetState();
+  State<FolderCustomizationSheet> createState() =>
+      _FolderCustomizationSheetState();
 }
 
 class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
@@ -1252,7 +1281,8 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
         initialColor: initialColor,
         onColorSelected: (color) {
           setState(() {
-            _selectedColorHex = "0x${color.value.toRadixString(16).toUpperCase()}";
+            _selectedColorHex =
+                "0x${color.value.toRadixString(16).toUpperCase()}";
           });
         },
       ),
@@ -1281,7 +1311,8 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
 
     // Issue #1 Fix: dynamically prepend or append the selected custom color if it's not one of default presets
     final List<String> displayColorHexes = List<String>.from(defaultColorHexes);
-    if (_selectedColorHex != null && !defaultColorHexes.contains(_selectedColorHex)) {
+    if (_selectedColorHex != null &&
+        !defaultColorHexes.contains(_selectedColorHex)) {
       displayColorHexes.add(_selectedColorHex!);
     }
 
@@ -1344,7 +1375,9 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
                       children: [
                         ...displayColorHexes.map((hex) {
                           final color = Color(int.parse(hex));
-                          final isSelected = _selectedColorHex == hex || (_selectedColorHex == null && hex == "0xFFB0B0A8");
+                          final isSelected = _selectedColorHex == hex ||
+                              (_selectedColorHex == null &&
+                                  hex == "0xFFB0B0A8");
                           return Padding(
                             padding: const EdgeInsets.only(right: 12.0),
                             child: TactileButton(
@@ -1361,12 +1394,15 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
                                   color: color,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFF1C1C1E) : const Color(0x1F000000),
+                                    color: isSelected
+                                        ? const Color(0xFF1C1C1E)
+                                        : const Color(0x1F000000),
                                     width: isSelected ? 2.5 : 1.0,
                                   ),
                                 ),
                                 child: isSelected
-                                    ? const Icon(Icons.check, color: Color(0xFF1C1C1E), size: 18)
+                                    ? const Icon(Icons.check,
+                                        color: Color(0xFF1C1C1E), size: 18)
                                     : null,
                               ),
                             ),
@@ -1409,7 +1445,8 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 4,
                       crossAxisSpacing: 12.0,
                       mainAxisSpacing: 12.0,
@@ -1431,7 +1468,9 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
                               color: const Color(0xFFEFEFF4),
                               borderRadius: BorderRadius.circular(16.0),
                               border: Border.all(
-                                color: isSelected ? const Color(0xFF1C1C1E) : Colors.transparent,
+                                color: isSelected
+                                    ? const Color(0xFF1C1C1E)
+                                    : Colors.transparent,
                                 width: 2.0,
                               ),
                             ),
@@ -1457,7 +1496,9 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16.0),
                             border: Border.all(
-                              color: isSelected ? const Color(0xFF1C1C1E) : Colors.transparent,
+                              color: isSelected
+                                  ? const Color(0xFF1C1C1E)
+                                  : Colors.transparent,
                               width: 2.0,
                             ),
                             boxShadow: const [
@@ -1543,40 +1584,58 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
 
   static final List<Color> _gridColors = [
     // Grayscale
-    Colors.white, const Color(0xFFE5E5EA), const Color(0xFFD1D1D6), const Color(0xFFC7C7CC),
-    const Color(0xFFAEAEB2), const Color(0xFF8E8E93), const Color(0xFF636366), const Color(0xFF48484A),
+    Colors.white, const Color(0xFFE5E5EA), const Color(0xFFD1D1D6),
+    const Color(0xFFC7C7CC),
+    const Color(0xFFAEAEB2), const Color(0xFF8E8E93), const Color(0xFF636366),
+    const Color(0xFF48484A),
     const Color(0xFF323235), Colors.black,
     // Reds
-    const Color(0xFFFFD6D6), const Color(0xFFFFADAD), const Color(0xFFFF7A7A), const Color(0xFFFF4D4D),
-    const Color(0xFFFF2E2E), const Color(0xFFE60000), const Color(0xFFB30000), const Color(0xFF800000),
+    const Color(0xFFFFD6D6), const Color(0xFFFFADAD), const Color(0xFFFF7A7A),
+    const Color(0xFFFF4D4D),
+    const Color(0xFFFF2E2E), const Color(0xFFE60000), const Color(0xFFB30000),
+    const Color(0xFF800000),
     const Color(0xFF4D0000), const Color(0xFF260000),
     // Oranges
-    const Color(0xFFFFE3D6), const Color(0xFFFFC4A3), const Color(0xFFFF9E66), const Color(0xFFFF7B33),
-    const Color(0xFFFF5500), const Color(0xFFD64700), const Color(0xFFA33600), const Color(0xFF702500),
+    const Color(0xFFFFE3D6), const Color(0xFFFFC4A3), const Color(0xFFFF9E66),
+    const Color(0xFFFF7B33),
+    const Color(0xFFFF5500), const Color(0xFFD64700), const Color(0xFFA33600),
+    const Color(0xFF702500),
     const Color(0xFF471700), const Color(0xFF260C00),
     // Yellows
-    const Color(0xFFFFF9D6), const Color(0xFFFFF2A3), const Color(0xFFFFE966), const Color(0xFFFFE033),
-    const Color(0xFFFFD700), const Color(0xFFD6B400), const Color(0xFFA38900), const Color(0xFF705E00),
+    const Color(0xFFFFF9D6), const Color(0xFFFFF2A3), const Color(0xFFFFE966),
+    const Color(0xFFFFE033),
+    const Color(0xFFFFD700), const Color(0xFFD6B400), const Color(0xFFA38900),
+    const Color(0xFF705E00),
     const Color(0xFF473C00), const Color(0xFF262000),
     // Greens
-    const Color(0xFFD6FAD6), const Color(0xFFADF5AD), const Color(0xFF7AF07A), const Color(0xFF4DEB4D),
-    const Color(0xFF2EE62E), const Color(0xFF00CC00), const Color(0xFF009900), const Color(0xFF006600),
+    const Color(0xFFD6FAD6), const Color(0xFFADF5AD), const Color(0xFF7AF07A),
+    const Color(0xFF4DEB4D),
+    const Color(0xFF2EE62E), const Color(0xFF00CC00), const Color(0xFF009900),
+    const Color(0xFF006600),
     const Color(0xFF004000), const Color(0xFF002000),
     // Teals
-    const Color(0xFFD6FAF6), const Color(0xFFADF5EC), const Color(0xFF7AF0DF), const Color(0xFF4DEBD0),
-    const Color(0xFF2EE6C0), const Color(0xFF00CC9C), const Color(0xFF009975), const Color(0xFF00664E),
+    const Color(0xFFD6FAF6), const Color(0xFFADF5EC), const Color(0xFF7AF0DF),
+    const Color(0xFF4DEBD0),
+    const Color(0xFF2EE6C0), const Color(0xFF00CC9C), const Color(0xFF009975),
+    const Color(0xFF00664E),
     const Color(0xFF004031), const Color(0xFF002018),
     // Blues
-    const Color(0xFFD6E4FA), const Color(0xFFADC4F5), const Color(0xFF7A9EF0), const Color(0xFF4D7BEB),
-    const Color(0xFF2E5EE6), const Color(0xFF0038CC), const Color(0xFF002A99), const Color(0xFF001C66),
+    const Color(0xFFD6E4FA), const Color(0xFFADC4F5), const Color(0xFF7A9EF0),
+    const Color(0xFF4D7BEB),
+    const Color(0xFF2E5EE6), const Color(0xFF0038CC), const Color(0xFF002A99),
+    const Color(0xFF001C66),
     const Color(0xFF001240), const Color(0xFF000920),
     // Purples
-    const Color(0xFFEAD6FA), const Color(0xFFD0ADF5), const Color(0xFFB37AF0), const Color(0xFF974DEB),
-    const Color(0xFF7B2EE6), const Color(0xFF5C00CC), const Color(0xFF450099), const Color(0xFF2E0066),
+    const Color(0xFFEAD6FA), const Color(0xFFD0ADF5), const Color(0xFFB37AF0),
+    const Color(0xFF974DEB),
+    const Color(0xFF7B2EE6), const Color(0xFF5C00CC), const Color(0xFF450099),
+    const Color(0xFF2E0066),
     const Color(0xFF1D0040), const Color(0xFF0F0020),
     // Pinks
-    const Color(0xFFFAD6EA), const Color(0xFFF5ADD0), const Color(0xFFF07AB3), const Color(0xFFEB4D97),
-    const Color(0xFFE62E7B), const Color(0xFFCC005C), const Color(0xFF990045), const Color(0xFF66002E),
+    const Color(0xFFFAD6EA), const Color(0xFFF5ADD0), const Color(0xFFF07AB3),
+    const Color(0xFFEB4D97),
+    const Color(0xFFE62E7B), const Color(0xFFCC005C), const Color(0xFF990045),
+    const Color(0xFF66002E),
     const Color(0xFF40001D), const Color(0xFF20000F),
   ];
 
@@ -1612,7 +1671,8 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(28.0),
       ),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+      insetPadding:
+          const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
       child: Container(
         width: 320.0,
         padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 20.0),
@@ -1650,7 +1710,6 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
               ],
             ),
             const SizedBox(height: 16.0),
-
             Container(
               decoration: BoxDecoration(
                 color: const Color(0xFFEFEFF4),
@@ -1666,7 +1725,6 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
               ),
             ),
             const SizedBox(height: 20.0),
-
             SizedBox(
               height: 200.0,
               child: AnimatedSwitcher(
@@ -1675,7 +1733,6 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
               ),
             ),
             const SizedBox(height: 16.0),
-
             Text(
               "OPACITY",
               style: GoogleFonts.inter(
@@ -1695,13 +1752,15 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
                       builder: (context, constraints) {
                         return GestureDetector(
                           onPanDown: (details) {
-                            final double x = details.localPosition.dx.clamp(0.0, constraints.maxWidth);
+                            final double x = details.localPosition.dx
+                                .clamp(0.0, constraints.maxWidth);
                             setState(() {
                               _currentOpacity = x / constraints.maxWidth;
                             });
                           },
                           onPanUpdate: (details) {
-                            final double x = details.localPosition.dx.clamp(0.0, constraints.maxWidth);
+                            final double x = details.localPosition.dx
+                                .clamp(0.0, constraints.maxWidth);
                             setState(() {
                               _currentOpacity = x / constraints.maxWidth;
                             });
@@ -1724,8 +1783,10 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
                                           decoration: BoxDecoration(
                                             gradient: LinearGradient(
                                               colors: [
-                                                _currentColor.withValues(alpha: 0.0),
-                                                _currentColor.withValues(alpha: 1.0),
+                                                _currentColor.withValues(
+                                                    alpha: 0.0),
+                                                _currentColor.withValues(
+                                                    alpha: 1.0),
                                               ],
                                             ),
                                           ),
@@ -1736,7 +1797,9 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
                                 ),
                               ),
                               Positioned(
-                                left: (_currentOpacity * (constraints.maxWidth - 20.0)).clamp(0.0, constraints.maxWidth - 20.0),
+                                left: (_currentOpacity *
+                                        (constraints.maxWidth - 20.0))
+                                    .clamp(0.0, constraints.maxWidth - 20.0),
                                 child: Container(
                                   width: 20.0,
                                   height: 20.0,
@@ -1768,7 +1831,8 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8.0),
-                    border: Border.all(color: const Color(0xFFEFEFF4), width: 1.0),
+                    border:
+                        Border.all(color: const Color(0xFFEFEFF4), width: 1.0),
                   ),
                   child: Text(
                     "${(_currentOpacity * 100).round()}%",
@@ -1784,7 +1848,6 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
             const SizedBox(height: 20.0),
             const Divider(height: 1, color: Color(0xFFE5E5EA)),
             const SizedBox(height: 16.0),
-
             Row(
               children: [
                 Container(
@@ -1793,7 +1856,8 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
                   decoration: BoxDecoration(
                     color: _currentColor.withValues(alpha: _currentOpacity),
                     borderRadius: BorderRadius.circular(10.0),
-                    border: Border.all(color: const Color(0xFFE5E5EA), width: 1.5),
+                    border:
+                        Border.all(color: const Color(0xFFE5E5EA), width: 1.5),
                   ),
                 ),
                 const SizedBox(width: 12.0),
@@ -1819,7 +1883,9 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
                                   color: color,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFF1C1C1E) : const Color(0x1F000000),
+                                    color: isSelected
+                                        ? const Color(0xFF1C1C1E)
+                                        : const Color(0x1F000000),
                                     width: isSelected ? 2.0 : 1.0,
                                   ),
                                 ),
@@ -1829,7 +1895,8 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
                         }),
                         TactileButton(
                           onTap: () {
-                            if (!_userPresets.any((c) => c.value == _currentColor.value)) {
+                            if (!_userPresets
+                                .any((c) => c.value == _currentColor.value)) {
                               setState(() {
                                 _userPresets.add(_currentColor);
                               });
@@ -1857,7 +1924,6 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
               ],
             ),
             const SizedBox(height: 20.0),
-
             BottomBarGlassSurface(
               width: double.infinity,
               height: 48.0,
@@ -1867,7 +1933,8 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
                 useAppleSpring: true,
                 compressionScale: 0.95,
                 onTap: () {
-                  widget.onColorSelected(_currentColor.withValues(alpha: _currentOpacity));
+                  widget.onColorSelected(
+                      _currentColor.withValues(alpha: _currentOpacity));
                   Navigator.pop(context);
                 },
                 child: Container(
@@ -1986,8 +2053,10 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
       key: const ValueKey('spectrum_tab'),
       builder: (context, constraints) {
         return GestureDetector(
-          onPanDown: (details) => _handleSpectrumTouch(details.localPosition, Size(constraints.maxWidth, constraints.maxHeight)),
-          onPanUpdate: (details) => _handleSpectrumTouch(details.localPosition, Size(constraints.maxWidth, constraints.maxHeight)),
+          onPanDown: (details) => _handleSpectrumTouch(details.localPosition,
+              Size(constraints.maxWidth, constraints.maxHeight)),
+          onPanUpdate: (details) => _handleSpectrumTouch(details.localPosition,
+              Size(constraints.maxWidth, constraints.maxHeight)),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12.0),
             child: SizedBox(
@@ -2017,19 +2086,23 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildSliderRow("R", _currentColor.red, Colors.red, (val) {
-          _updateColor(Color.fromARGB(_currentColor.alpha, val.round(), _currentColor.green, _currentColor.blue));
+          _updateColor(Color.fromARGB(_currentColor.alpha, val.round(),
+              _currentColor.green, _currentColor.blue));
         }),
         _buildSliderRow("G", _currentColor.green, Colors.green, (val) {
-          _updateColor(Color.fromARGB(_currentColor.alpha, _currentColor.red, val.round(), _currentColor.blue));
+          _updateColor(Color.fromARGB(_currentColor.alpha, _currentColor.red,
+              val.round(), _currentColor.blue));
         }),
         _buildSliderRow("B", _currentColor.blue, Colors.blue, (val) {
-          _updateColor(Color.fromARGB(_currentColor.alpha, _currentColor.red, _currentColor.green, val.round()));
+          _updateColor(Color.fromARGB(_currentColor.alpha, _currentColor.red,
+              _currentColor.green, val.round()));
         }),
       ],
     );
   }
 
-  Widget _buildSliderRow(String label, int value, Color activeColor, ValueChanged<double> onChanged) {
+  Widget _buildSliderRow(String label, int value, Color activeColor,
+      ValueChanged<double> onChanged) {
     return Row(
       children: [
         SizedBox(
@@ -2050,7 +2123,8 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
               inactiveTrackColor: const Color(0xFFE5E5EA),
               thumbColor: Colors.white,
               overlayColor: Colors.transparent,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10.0, elevation: 2.0),
+              thumbShape: const RoundSliderThumbShape(
+                  enabledThumbRadius: 10.0, elevation: 2.0),
             ),
             child: Slider(
               value: value.toDouble(),
@@ -2145,4 +2219,3 @@ class SpectrumPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant SpectrumPainter oldDelegate) => false;
 }
-

@@ -190,8 +190,10 @@ class VaultScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(99)),
                 elevation: 0,
               ),
               child: Text(
@@ -206,15 +208,17 @@ class VaultScreen extends StatelessWidget {
             const SizedBox(height: 48),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(3, (index) => Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: theme.dividerColor,
-                ),
-              )),
+              children: List.generate(
+                  3,
+                  (index) => Container(
+                        width: 8,
+                        height: 8,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.dividerColor,
+                        ),
+                      )),
             ),
           ],
         ),
@@ -223,7 +227,8 @@ class VaultScreen extends StatelessWidget {
   }
 
   // Unlocked state content canvas
-  Widget _buildUnlockedContent(BuildContext context, NotesProvider provider, List<Note> notes) {
+  Widget _buildUnlockedContent(
+      BuildContext context, NotesProvider provider, List<Note> notes) {
     final theme = Theme.of(context);
     final width = MediaQuery.of(context).size.width;
     final gridCount = width > 600 ? 2 : 1;
@@ -244,7 +249,9 @@ class VaultScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 64.0),
                     child: Column(
                       children: [
-                        Icon(Icons.shield_outlined, size: 48, color: theme.colorScheme.onSurface.withAlpha(50)),
+                        Icon(Icons.shield_outlined,
+                            size: 48,
+                            color: theme.colorScheme.onSurface.withAlpha(50)),
                         const SizedBox(height: 16),
                         Text(
                           "No Secured Notes Yet",
@@ -299,9 +306,11 @@ class VaultScreen extends StatelessWidget {
   }
 
   // Bento Card representing a decrypted secure note
-  Widget _buildVaultBentoCard(BuildContext context, Note note, NotesProvider provider) {
+  Widget _buildVaultBentoCard(
+      BuildContext context, Note note, NotesProvider provider) {
     final theme = Theme.of(context);
-    final dateStr = DateFormat('MMMM d, yyyy').format(note.updatedAt).toUpperCase();
+    final dateStr =
+        DateFormat('MMMM d, yyyy').format(note.updatedAt).toUpperCase();
 
     return GestureDetector(
       onTap: () {
@@ -358,7 +367,9 @@ class VaultScreen extends StatelessWidget {
                     child: Text(
                       note.content.startsWith('[')
                           ? "[Checklist items]"
-                          : (note.content.isNotEmpty ? note.content : "Empty content"),
+                          : (note.content.isNotEmpty
+                              ? note.content
+                              : "Empty content"),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         color: theme.colorScheme.onSurface.withAlpha(160),
@@ -374,22 +385,26 @@ class VaultScreen extends StatelessWidget {
             if (note.tags.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(
-                children: note.tags.take(2).map((tag) => Container(
-                  margin: const EdgeInsets.only(right: 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.scaffoldBackgroundColor,
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: theme.dividerColor),
-                  ),
-                  child: Text(
-                    tag,
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 10,
-                      color: theme.colorScheme.onSurface.withAlpha(150),
-                    ),
-                  ),
-                )).toList(),
+                children: note.tags
+                    .take(2)
+                    .map((tag) => Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: theme.scaffoldBackgroundColor,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: theme.dividerColor),
+                          ),
+                          child: Text(
+                            tag,
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 10,
+                              color: theme.colorScheme.onSurface.withAlpha(150),
+                            ),
+                          ),
+                        ))
+                    .toList(),
               ),
             ],
           ],

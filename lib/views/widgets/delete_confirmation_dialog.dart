@@ -21,7 +21,8 @@ class DeleteConfirmationDialog extends StatelessWidget {
   const DeleteConfirmationDialog({
     super.key,
     this.title = 'Delete Note',
-    this.message = 'Are you sure you want to delete\nthis note? This action cannot be\nundone',
+    this.message =
+        'Are you sure you want to delete\nthis note? This action cannot be\nundone',
     this.cancelText = 'Cancel',
     this.deleteText = 'Delete',
   });
@@ -30,7 +31,8 @@ class DeleteConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+      insetPadding:
+          const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
       elevation: 0,
       child: Center(
         child: Container(
@@ -56,7 +58,8 @@ class DeleteConfirmationDialog extends StatelessWidget {
             children: [
               // Title & Message Content Area
               Padding(
-                padding: const EdgeInsets.only(top: 15.0, left: 16.0, right: 16.0),
+                padding:
+                    const EdgeInsets.only(top: 15.0, left: 16.0, right: 16.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -86,7 +89,8 @@ class DeleteConfirmationDialog extends StatelessWidget {
 
               // Action Buttons Row (Cancel & Delete)
               Padding(
-                padding: const EdgeInsets.only(bottom: 15.0, left: 18.0, right: 18.0),
+                padding: const EdgeInsets.only(
+                    bottom: 15.0, left: 18.0, right: 18.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -168,7 +172,8 @@ Future<bool?> showDeleteNoteDialog(
     barrierColor: Colors.black.withValues(alpha: 0.40),
     builder: (ctx) => DeleteConfirmationDialog(
       title: title ?? 'Delete Note',
-      message: message ?? 'Are you sure you want to delete\nthis note? This action cannot be\nundone',
+      message: message ??
+          'Are you sure you want to delete\nthis note? This action cannot be\nundone',
       cancelText: cancelText ?? 'Cancel',
       deleteText: deleteText ?? 'Delete',
     ),

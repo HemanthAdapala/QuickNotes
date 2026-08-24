@@ -58,13 +58,15 @@ class RecurrenceRule {
   }
 
   factory RecurrenceRule.fromMap(Map<String, dynamic> map) {
-    final typeVal = RecurrenceTypeExtension.fromDbString(map['type'] as String?);
+    final typeVal =
+        RecurrenceTypeExtension.fromDbString(map['type'] as String?);
     final rawEndDate = map['endDate'] as String?;
     return RecurrenceRule(
       version: map['version'] as int? ?? 1,
       type: typeVal,
       interval: map['interval'] as int? ?? 1,
-      endDate: rawEndDate != null ? DateTime.tryParse(rawEndDate)?.toUtc() : null,
+      endDate:
+          rawEndDate != null ? DateTime.tryParse(rawEndDate)?.toUtc() : null,
       maxOccurrences: map['maxOccurrences'] as int?,
     );
   }

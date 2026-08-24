@@ -348,6 +348,52 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                     return Column(
                                       children: [
+                                        // ── Circular Back Button ───────────────────────
+                                        TactileButton(
+                                          useAppleSpring: true,
+                                          onTap: (isGoogleLoading ||
+                                                  isOfflineLoading)
+                                              ? () {}
+                                              : _handleBackToWelcome,
+                                          child: Container(
+                                            width: 48,
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                              boxShadow: const [
+                                                BoxShadow(
+                                                  color: Color(0x14000000),
+                                                  blurRadius: 12,
+                                                  offset: Offset(0, 4),
+                                                ),
+                                                BoxShadow(
+                                                  color: Color(0x0A000000),
+                                                  blurRadius: 4,
+                                                  offset: Offset(0, 1),
+                                                ),
+                                              ],
+                                              border: Border.all(
+                                                color: const Color(0xFFE2E2DF),
+                                                width: 1.0,
+                                              ),
+                                            ),
+                                            child: Center(
+                                              child: SvgPicture.asset(
+                                                'assets/icons/angle_left.svg',
+                                                width: 20,
+                                                height: 20,
+                                                colorFilter:
+                                                    const ColorFilter.mode(
+                                                  Color(0xFF333333),
+                                                  BlendMode.srcIn,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 24),
+
                                         // ── Google Sign-In Button ─────────────────────
                                         ElevatedButton(
                                           onPressed: (isGoogleLoading ||
@@ -485,39 +531,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   );
                 },
-              ),
-            ),
-
-            // ── Liquid Glass Back Button (40x40 circle) ────────────────
-            Positioned(
-              top: 0,
-              left: 0,
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0, vertical: 12.0),
-                  child: TactileButton(
-                    useAppleSpring: true,
-                    onTap: _handleBackToWelcome,
-                    child: BottomBarGlassSurface(
-                      width: 40,
-                      height: 40,
-                      borderRadius: BorderRadius.circular(20),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/icons/angle_left.svg',
-                          width: 20,
-                          height: 20,
-                          colorFilter: const ColorFilter.mode(
-                            Color(0xFF333333),
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ),
             ),
           ],

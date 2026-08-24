@@ -44,7 +44,16 @@ class BackupValidator {
   static const int maxTotalUncompressedSize = 524288000; // 500 MB
 
   static const List<String> dangerousExtensions = [
-    '.exe', '.sh', '.apk', '.bat', '.cmd', '.dll', '.bin', '.so', '.js', '.vbs'
+    '.exe',
+    '.sh',
+    '.apk',
+    '.bat',
+    '.cmd',
+    '.dll',
+    '.bin',
+    '.so',
+    '.js',
+    '.vbs'
   ];
 
   /// Executes the complete 8-stage validation pipeline on an untrusted backup archive.
@@ -61,7 +70,8 @@ class BackupValidator {
     if (archiveInput.entries.length > maxEntryCount) {
       errors.add(const BackupValidationError(
         type: BackupValidationErrorType.resourceLimitExceeded,
-        message: 'Archive contains too many entries (exceeds 5,000 maximum entry limit)',
+        message:
+            'Archive contains too many entries (exceeds 5,000 maximum entry limit)',
       ));
     }
 
@@ -139,7 +149,8 @@ class BackupValidator {
     // ── STAGE 3: Manifest Parsing & Format Version Inspection ──────────────
     late BackupManifest manifest;
     try {
-      final manifestJsonStr = archiveInput.getFileString(BackupFormat.manifestFileName)!;
+      final manifestJsonStr =
+          archiveInput.getFileString(BackupFormat.manifestFileName)!;
       manifest = BackupManifest.fromJsonString(manifestJsonStr);
     } catch (e) {
       errors.add(BackupValidationError(
@@ -154,7 +165,8 @@ class BackupValidator {
     if (!BackupFormat.isSupportedFormatVersion(manifest.formatVersion)) {
       errors.add(BackupValidationError(
         type: BackupValidationErrorType.unsupportedFormatVersion,
-        message: 'Unsupported formatVersion ${manifest.formatVersion} (expected ${BackupFormat.formatVersion})',
+        message:
+            'Unsupported formatVersion ${manifest.formatVersion} (expected ${BackupFormat.formatVersion})',
         targetPath: BackupFormat.manifestFileName,
       ));
     }
@@ -164,12 +176,14 @@ class BackupValidator {
     if (manifest.databaseSchemaVersion == BackupFormat.databaseSchemaVersion) {
       schemaStatus = BackupSchemaStatus.exactMatch;
     } else {
-      schemaStatus = manifest.databaseSchemaVersion < BackupFormat.databaseSchemaVersion
-          ? BackupSchemaStatus.compatibleOlderSchema
-          : BackupSchemaStatus.unsupportedNewerSchema;
+      schemaStatus =
+          manifest.databaseSchemaVersion < BackupFormat.databaseSchemaVersion
+              ? BackupSchemaStatus.compatibleOlderSchema
+              : BackupSchemaStatus.unsupportedNewerSchema;
       errors.add(BackupValidationError(
         type: BackupValidationErrorType.unsupportedSchemaVersion,
-        message: 'Backup database schema v${manifest.databaseSchemaVersion} is unsupported (expected exact v${BackupFormat.databaseSchemaVersion})',
+        message:
+            'Backup database schema v${manifest.databaseSchemaVersion} is unsupported (expected exact v${BackupFormat.databaseSchemaVersion})',
         targetPath: BackupFormat.manifestFileName,
       ));
     }
@@ -188,22 +202,26 @@ class BackupValidator {
 
     // ── STAGE 4: Identity Inspection ─────────────────────────────────────────
     var identityStatus = BackupIdentityStatus.unknown;
-    if (expectedProviderUserIdHash != null && expectedProviderUserIdHash.isNotEmpty) {
+    if (expectedProviderUserIdHash != null &&
+        expectedProviderUserIdHash.isNotEmpty) {
       if (manifest.identity.provider == 'google') {
-        if (manifest.identity.providerUserIdHash == expectedProviderUserIdHash) {
+        if (manifest.identity.providerUserIdHash ==
+            expectedProviderUserIdHash) {
           identityStatus = BackupIdentityStatus.match;
         } else {
           identityStatus = BackupIdentityStatus.mismatch;
           errors.add(const BackupValidationError(
             type: BackupValidationErrorType.identityMismatch,
-            message: 'Backup identity does not match the active authenticated account',
+            message:
+                'Backup identity does not match the active authenticated account',
           ));
         }
       } else {
         identityStatus = BackupIdentityStatus.offlineOverrideNeeded;
         warnings.add(const BackupValidationWarning(
           type: BackupValidationWarningType.offlineIdentityOverride,
-          message: 'Backup created by offline identity; manual restoration confirmation required',
+          message:
+              'Backup created by offline identity; manual restoration confirmation required',
         ));
       }
     }
@@ -258,7 +276,9 @@ class BackupValidator {
 
     // 5c. Verify Attachment Checksums
     final attachmentFiles = archiveInput.entries.keys
-        .where((k) => k.startsWith('${BackupFormat.attachmentsDirectory}/') && k.length > BackupFormat.attachmentsDirectory.length + 1)
+        .where((k) =>
+            k.startsWith('${BackupFormat.attachmentsDirectory}/') &&
+            k.length > BackupFormat.attachmentsDirectory.length + 1)
         .toList();
 
     for (final attFile in attachmentFiles) {
@@ -266,7 +286,8 @@ class BackupValidator {
       if (declaredHash == null) {
         errors.add(BackupValidationError(
           type: BackupValidationErrorType.missingChecksum,
-          message: 'Attachment file present in archive without corresponding manifest checksum',
+          message:
+              'Attachment file present in archive without corresponding manifest checksum',
           targetPath: attFile,
         ));
       } else {
@@ -306,7 +327,8 @@ class BackupValidator {
 
     // Parse Folders
     try {
-      rawFolders = jsonDecode(archiveInput.getFileString(BackupFormat.foldersDataFileName)!);
+      rawFolders = jsonDecode(
+          archiveInput.getFileString(BackupFormat.foldersDataFileName)!);
       for (final item in rawFolders) {
         final map = Map<String, dynamic>.from(item as Map);
         final folder = BackupSerializer.deserializeFolder(map);
@@ -329,7 +351,8 @@ class BackupValidator {
 
     // Parse Notes
     try {
-      rawNotes = jsonDecode(archiveInput.getFileString(BackupFormat.notesDataFileName)!);
+      rawNotes = jsonDecode(
+          archiveInput.getFileString(BackupFormat.notesDataFileName)!);
       for (final item in rawNotes) {
         final map = Map<String, dynamic>.from(item as Map);
         final note = BackupSerializer.deserializeNote(map);
@@ -352,7 +375,8 @@ class BackupValidator {
 
     // Parse Tasks
     try {
-      rawTasks = jsonDecode(archiveInput.getFileString(BackupFormat.tasksDataFileName)!);
+      rawTasks = jsonDecode(
+          archiveInput.getFileString(BackupFormat.tasksDataFileName)!);
       for (final item in rawTasks) {
         final map = Map<String, dynamic>.from(item as Map);
         final task = BackupSerializer.deserializeTask(map);
@@ -391,10 +415,13 @@ class BackupValidator {
     for (final item in rawFolders) {
       final map = Map<String, dynamic>.from(item as Map);
       final parentId = map['parentId'] as String?;
-      if (parentId != null && parentId.isNotEmpty && !folderIds.contains(parentId)) {
+      if (parentId != null &&
+          parentId.isNotEmpty &&
+          !folderIds.contains(parentId)) {
         errors.add(BackupValidationError(
           type: BackupValidationErrorType.invalidRelationship,
-          message: 'Folder parentId "$parentId" does not exist in backup dataset',
+          message:
+              'Folder parentId "$parentId" does not exist in backup dataset',
           targetPath: BackupFormat.foldersDataFileName,
         ));
       }
@@ -404,7 +431,9 @@ class BackupValidator {
     for (final item in rawNotes) {
       final map = Map<String, dynamic>.from(item as Map);
       final folderId = map['folderId'] as String?;
-      if (folderId != null && folderId.isNotEmpty && !folderIds.contains(folderId)) {
+      if (folderId != null &&
+          folderId.isNotEmpty &&
+          !folderIds.contains(folderId)) {
         errors.add(BackupValidationError(
           type: BackupValidationErrorType.invalidRelationship,
           message: 'Note folderId "$folderId" does not exist in backup dataset',
@@ -424,19 +453,23 @@ class BackupValidator {
 
       for (final attMap in rawAtts) {
         if (attMap is Map) {
-          final pathStr = attMap['path'] as String? ?? attMap['url'] as String? ?? '';
+          final pathStr =
+              attMap['path'] as String? ?? attMap['url'] as String? ?? '';
           if (pathStr.startsWith(BackupFormat.attachmentSchemePrefix)) {
-            referencedFilenames.add(pathStr.substring(BackupFormat.attachmentSchemePrefix.length));
+            referencedFilenames.add(
+                pathStr.substring(BackupFormat.attachmentSchemePrefix.length));
           }
         }
       }
 
       for (final filename in referencedFilenames) {
-        final expectedArchivePath = '${BackupFormat.attachmentsDirectory}/$filename';
+        final expectedArchivePath =
+            '${BackupFormat.attachmentsDirectory}/$filename';
         if (!archiveInput.hasFile(expectedArchivePath)) {
           errors.add(BackupValidationError(
             type: BackupValidationErrorType.invalidAttachmentReference,
-            message: 'Dangling attachment reference "$filename" missing in archive',
+            message:
+                'Dangling attachment reference "$filename" missing in archive',
             targetPath: expectedArchivePath,
           ));
         }
@@ -447,7 +480,9 @@ class BackupValidator {
     for (final item in rawTasks) {
       final map = Map<String, dynamic>.from(item as Map);
       final folderId = map['folderId'] as String?;
-      if (folderId != null && folderId.isNotEmpty && !folderIds.contains(folderId)) {
+      if (folderId != null &&
+          folderId.isNotEmpty &&
+          !folderIds.contains(folderId)) {
         errors.add(BackupValidationError(
           type: BackupValidationErrorType.invalidRelationship,
           message: 'Task folderId "$folderId" does not exist in backup dataset',
@@ -460,28 +495,32 @@ class BackupValidator {
     if (manifest.contents.folders != rawFolders.length) {
       errors.add(BackupValidationError(
         type: BackupValidationErrorType.contentCountMismatch,
-        message: 'Manifest folders count (${manifest.contents.folders}) does not match actual folder records (${rawFolders.length})',
+        message:
+            'Manifest folders count (${manifest.contents.folders}) does not match actual folder records (${rawFolders.length})',
       ));
     }
 
     if (manifest.contents.notes != rawNotes.length) {
       errors.add(BackupValidationError(
         type: BackupValidationErrorType.contentCountMismatch,
-        message: 'Manifest notes count (${manifest.contents.notes}) does not match actual note records (${rawNotes.length})',
+        message:
+            'Manifest notes count (${manifest.contents.notes}) does not match actual note records (${rawNotes.length})',
       ));
     }
 
     if (manifest.contents.tasks != rawTasks.length) {
       errors.add(BackupValidationError(
         type: BackupValidationErrorType.contentCountMismatch,
-        message: 'Manifest tasks count (${manifest.contents.tasks}) does not match actual task records (${rawTasks.length})',
+        message:
+            'Manifest tasks count (${manifest.contents.tasks}) does not match actual task records (${rawTasks.length})',
       ));
     }
 
     if (manifest.contents.attachments != attachmentFiles.length) {
       errors.add(BackupValidationError(
         type: BackupValidationErrorType.contentCountMismatch,
-        message: 'Manifest attachments count (${manifest.contents.attachments}) does not match actual attachment assets (${attachmentFiles.length})',
+        message:
+            'Manifest attachments count (${manifest.contents.attachments}) does not match actual attachment assets (${attachmentFiles.length})',
       ));
     }
 

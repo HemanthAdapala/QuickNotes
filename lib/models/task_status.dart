@@ -39,7 +39,8 @@ extension TaskStatusExtension on TaskStatus {
 
       case TaskStatus.completed:
         // Cannot transition from completed to waiting unless explicitly restored
-        return newStatus == TaskStatus.waiting || newStatus == TaskStatus.archived;
+        return newStatus == TaskStatus.waiting ||
+            newStatus == TaskStatus.archived;
 
       case TaskStatus.missed:
         // Transition from missed to waiting is valid only when edited/rescheduled
@@ -48,7 +49,8 @@ extension TaskStatusExtension on TaskStatus {
             newStatus == TaskStatus.archived;
 
       case TaskStatus.cancelled:
-        return newStatus == TaskStatus.waiting || newStatus == TaskStatus.archived;
+        return newStatus == TaskStatus.waiting ||
+            newStatus == TaskStatus.archived;
 
       case TaskStatus.archived:
         return newStatus == TaskStatus.waiting;

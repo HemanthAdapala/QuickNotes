@@ -27,7 +27,8 @@ class PullSyncEngine {
   Future<void> pull({required String activeUserId}) async {
     final token = await _sessionManager.getIdToken();
     if (token == null || token.isEmpty) {
-      debugPrint('PullSyncEngine: Aborting pull because auth token is null/empty');
+      debugPrint(
+          'PullSyncEngine: Aborting pull because auth token is null/empty');
       return;
     }
 
@@ -41,7 +42,8 @@ class PullSyncEngine {
 
       // Session boundary check before every page request
       if (_sessionManager.activeUserId != activeUserId) {
-        debugPrint('PullSyncEngine: Session changed during pull loop; aborting');
+        debugPrint(
+            'PullSyncEngine: Session changed during pull loop; aborting');
         return;
       }
 
@@ -56,7 +58,8 @@ class PullSyncEngine {
         );
       } on SyncNetworkException catch (e) {
         if (e.type == SyncNetworkErrorType.malformedResponse) {
-          debugPrint('PullSyncEngine: Invalid cursor or malformed response; resetting cursor');
+          debugPrint(
+              'PullSyncEngine: Invalid cursor or malformed response; resetting cursor');
           await clearCursor(activeUserId);
         }
         rethrow;
@@ -67,7 +70,8 @@ class PullSyncEngine {
 
       // Session check prior to database transaction
       if (_sessionManager.activeUserId != activeUserId) {
-        debugPrint('PullSyncEngine: Session changed prior to DB commit; aborting');
+        debugPrint(
+            'PullSyncEngine: Session changed prior to DB commit; aborting');
         return;
       }
 
@@ -87,7 +91,8 @@ class PullSyncEngine {
         await prefs.remove(_cursorKey(activeUserId));
       }
 
-      hasMore = response.hasMore && (currentCursor != null && currentCursor.isNotEmpty);
+      hasMore = response.hasMore &&
+          (currentCursor != null && currentCursor.isNotEmpty);
     }
   }
 

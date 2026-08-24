@@ -29,8 +29,9 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
   Future<void> _loadSettings() async {
     final density = await _secureStorage.read(key: 'layout_density') ?? 'grid';
     final scaleStr = await _secureStorage.read(key: 'font_scale') ?? '1.0';
-    final accent = await _secureStorage.read(key: 'accent_preference') ?? 'yellow';
-    
+    final accent =
+        await _secureStorage.read(key: 'accent_preference') ?? 'yellow';
+
     setState(() {
       _layoutDensity = density;
       _fontSizeScale = double.tryParse(scaleStr) ?? 1.0;
@@ -53,7 +54,8 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
               child: AppHeaderBar(
                 leftWidth: 44.0,
                 onLeftTap: () {
@@ -64,7 +66,8 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   'assets/icons/angle_left.svg',
                   width: 22,
                   height: 22,
-                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                  colorFilter:
+                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                 ),
                 title: "Appearance",
                 titleColor: Colors.white,
@@ -75,20 +78,23 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 8.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildSectionTitle("THEME STYLE"),
                       const SizedBox(height: 12),
-                      
+
                       // Obsidian Dark display tile (Non-toggleable premium default)
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: QuickNotesTheme.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: QuickNotesTheme.accent.withAlpha(50), width: 1.5),
+                          border: Border.all(
+                              color: QuickNotesTheme.accent.withAlpha(50),
+                              width: 1.5),
                         ),
                         child: Row(
                           children: [
@@ -100,7 +106,8 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                                 shape: BoxShape.circle,
                               ),
                               child: const Center(
-                                child: Icon(Icons.circle, color: QuickNotesTheme.accent, size: 12),
+                                child: Icon(Icons.circle,
+                                    color: QuickNotesTheme.accent, size: 12),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -110,16 +117,21 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                                 children: [
                                   Text(
                                     "Obsidian Night (Default)",
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: QuickNotesTheme.textPrimary),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: QuickNotesTheme.textPrimary),
                                   ),
                                   Text(
                                     "Luxury machined dark aluminum canvas",
-                                    style: TextStyle(fontSize: 12, color: QuickNotesTheme.textSecondary),
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: QuickNotesTheme.textSecondary),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.check_circle_rounded, color: QuickNotesTheme.accent),
+                            const Icon(Icons.check_circle_rounded,
+                                color: QuickNotesTheme.accent),
                           ],
                         ),
                       ),
@@ -167,7 +179,8 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                       const SizedBox(height: 12),
 
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: QuickNotesTheme.surface,
                           borderRadius: BorderRadius.circular(12),
@@ -190,13 +203,20 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                               },
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12.0),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text("Compact", style: theme.textTheme.bodySmall),
-                                  Text("Regular", style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold)),
-                                  Text("Large", style: theme.textTheme.bodySmall),
+                                  Text("Compact",
+                                      style: theme.textTheme.bodySmall),
+                                  Text("Regular",
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold)),
+                                  Text("Large",
+                                      style: theme.textTheme.bodySmall),
                                 ],
                               ),
                             ),
@@ -212,7 +232,8 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildAccentOption("yellow", QuickNotesTheme.accent, "Chartreuse"),
+                          _buildAccentOption(
+                              "yellow", QuickNotesTheme.accent, "Chartreuse"),
                           _buildAccentOption("white", Colors.white, "White"),
                           _buildAccentOption("gray", Colors.grey, "Muted"),
                         ],
@@ -265,7 +286,9 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
           children: [
             Icon(
               icon,
-              color: selected ? QuickNotesTheme.accent : QuickNotesTheme.textSecondary,
+              color: selected
+                  ? QuickNotesTheme.accent
+                  : QuickNotesTheme.textSecondary,
               size: 24,
             ),
             const SizedBox(height: 16),
@@ -329,7 +352,8 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: QuickNotesTheme.textPrimary),
+            style: const TextStyle(
+                fontSize: 12, color: QuickNotesTheme.textPrimary),
           ),
         ],
       ),

@@ -55,7 +55,8 @@ class BackupValidationError {
   });
 
   @override
-  String toString() => '[$type] $message${targetPath != null ? " (target: $targetPath)" : ""}';
+  String toString() =>
+      '[$type] $message${targetPath != null ? " (target: $targetPath)" : ""}';
 }
 
 /// Single structured validation warning item.
@@ -71,7 +72,8 @@ class BackupValidationWarning {
   });
 
   @override
-  String toString() => '[$type] $message${targetPath != null ? " (target: $targetPath)" : ""}';
+  String toString() =>
+      '[$type] $message${targetPath != null ? " (target: $targetPath)" : ""}';
 }
 
 /// Complete, structured evaluation report emitted by BackupValidator.

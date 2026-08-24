@@ -21,10 +21,10 @@ import '../../models/task_item.dart';
 import '../../models/repeat_rule.dart';
 import '../widgets/tactile_button.dart';
 
-const Color _kAccentsBlue    = Color(0xFF0088FF);
-const Color _kAccentsRed     = Color(0xFFFF383C);
-const Color _kInk            = Color(0xFF333333);
-const Color _kBgSecondary    = Color(0xFFF2F2F7);
+const Color _kAccentsBlue = Color(0xFF0088FF);
+const Color _kAccentsRed = Color(0xFFFF383C);
+const Color _kInk = Color(0xFF333333);
+const Color _kBgSecondary = Color(0xFFF2F2F7);
 
 class SearchTaskCard extends StatelessWidget {
   final TaskItem task;
@@ -41,7 +41,8 @@ class SearchTaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayDate = task.reminderTime ?? task.dueDate;
-    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(displayDate.toLocal());
+    final formattedDate =
+        DateFormat('EEE, d MMMM yyyy').format(displayDate.toLocal());
     final formattedTime = DateFormat('hh:mm a').format(displayDate.toLocal());
 
     final titleText = task.title.isEmpty ? 'Untitled Task' : task.title;
@@ -58,7 +59,8 @@ class SearchTaskCard extends StatelessWidget {
     );
 
     final showPriority = task.priority != 'None' && task.priority.isNotEmpty;
-    final showRecurrence = task.repeatRule != RepeatRule.none || task.isRecurring;
+    final showRecurrence =
+        task.repeatRule != RepeatRule.none || task.isRecurring;
     final recurrenceLabel = _repeatRuleLabel(task.repeatRule);
 
     return Container(
@@ -169,13 +171,16 @@ class SearchTaskCard extends StatelessWidget {
                             children: [
                               if (showPriority) ...[
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: _kBgSecondary,
                                     borderRadius: BorderRadius.circular(40),
                                   ),
                                   child: Text(
-                                    task.priority == 'High' ? '🚩 High' : task.priority,
+                                    task.priority == 'High'
+                                        ? '🚩 High'
+                                        : task.priority,
                                     style: GoogleFonts.inter(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
@@ -188,7 +193,8 @@ class SearchTaskCard extends StatelessWidget {
                               ],
                               if (showRecurrence) ...[
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: _kBgSecondary,
                                     borderRadius: BorderRadius.circular(40),
@@ -221,11 +227,16 @@ class SearchTaskCard extends StatelessWidget {
 
   String _repeatRuleLabel(RepeatRule rule) {
     switch (rule) {
-      case RepeatRule.daily:   return 'Daily';
-      case RepeatRule.weekly:  return 'Weekly';
-      case RepeatRule.monthly: return 'Monthly';
-      case RepeatRule.yearly:  return 'Yearly';
-      default:                 return 'Recurring';
+      case RepeatRule.daily:
+        return 'Daily';
+      case RepeatRule.weekly:
+        return 'Weekly';
+      case RepeatRule.monthly:
+        return 'Monthly';
+      case RepeatRule.yearly:
+        return 'Yearly';
+      default:
+        return 'Recurring';
     }
   }
 

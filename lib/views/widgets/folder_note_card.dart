@@ -191,10 +191,13 @@ class FolderNoteCard extends StatelessWidget {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF1C1C1E) : Colors.black.withValues(alpha: 0.1),
+                      color: isSelected
+                          ? const Color(0xFF1C1C1E)
+                          : Colors.black.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? const Color(0xFF1C1C1E) : Colors.white,
+                        color:
+                            isSelected ? const Color(0xFF1C1C1E) : Colors.white,
                         width: 1.5,
                       ),
                     ),

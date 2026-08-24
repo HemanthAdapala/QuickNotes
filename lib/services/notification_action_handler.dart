@@ -15,14 +15,17 @@ import 'task_engine.dart';
 
 /// Top-level background isolate entry point required by flutter_local_notifications
 @pragma('vm:entry-point')
-void notificationTapBackground(NotificationResponse notificationResponse) async {
+void notificationTapBackground(
+    NotificationResponse notificationResponse) async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationActionHandler.handleBackgroundResponse(notificationResponse);
+  await NotificationActionHandler.handleBackgroundResponse(
+      notificationResponse);
 }
 
 /// Standalone handler managing notification actions and background execution adapters
 class NotificationActionHandler {
-  static final StreamController<NotificationPayload> _foregroundActionController =
+  static final StreamController<NotificationPayload>
+      _foregroundActionController =
       StreamController<NotificationPayload>.broadcast();
 
   static NotificationPayload? _lastLaunchedPayload;
@@ -42,7 +45,7 @@ class NotificationActionHandler {
   static void handleForegroundResponse(NotificationResponse response) {
     final rawPayload = response.payload;
     final actionFromId = NotificationAction.fromString(response.actionId);
-    
+
     var payload = NotificationPayload.tryDecode(rawPayload);
     if (payload != null && actionFromId != null) {
       payload = NotificationPayload(
@@ -51,7 +54,9 @@ class NotificationActionHandler {
         taskId: payload.taskId,
         action: actionFromId,
       );
-    } else if (payload == null && response.actionId != null && response.actionId!.isNotEmpty) {
+    } else if (payload == null &&
+        response.actionId != null &&
+        response.actionId!.isNotEmpty) {
       payload = NotificationPayload(
         taskId: response.actionId!,
         action: actionFromId ?? NotificationAction.open,
@@ -69,7 +74,8 @@ class NotificationActionHandler {
   }
 
   /// Handles background notification action callbacks (runs in isolate when app is terminated/backgrounded)
-  static Future<void> handleBackgroundResponse(NotificationResponse response) async {
+  static Future<void> handleBackgroundResponse(
+      NotificationResponse response) async {
     WidgetsFlutterBinding.ensureInitialized();
 
     final rawPayload = response.payload;
@@ -87,7 +93,8 @@ class NotificationActionHandler {
 
     if (payload == null || payload.taskId.isEmpty) {
       if (kDebugMode) {
-        debugPrint('NOTIFICATION ACTION [Background]: Missing or invalid payload. Ignoring.');
+        debugPrint(
+            'NOTIFICATION ACTION [Background]: Missing or invalid payload. Ignoring.');
       }
       return;
     }
@@ -105,7 +112,9 @@ class NotificationActionHandler {
     }
 
     try {
-      if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.windows || defaultTargetPlatform == TargetPlatform.linux)) {
+      if (!kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.windows ||
+              defaultTargetPlatform == TargetPlatform.linux)) {
         sqfliteFfiInit();
         databaseFactory = databaseFactoryFfi;
       }
@@ -165,7 +174,9 @@ class NotificationActionHandler {
 
       case NotificationAction.snooze:
         // Pure State-Based Guard: If task is completed or archived, skip snooze!
-        if (task.completed || task.status == TaskStatus.archived || task.status == TaskStatus.cancelled) {
+        if (task.completed ||
+            task.status == TaskStatus.archived ||
+            task.status == TaskStatus.cancelled) {
           if (kDebugMode) {
             debugPrint(
                 'NOTIFICATION ACTION [Idempotency Guard]: Task $taskId cannot be snoozed in state ${task.status}. Skipping.');

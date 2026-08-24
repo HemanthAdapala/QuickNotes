@@ -16,12 +16,14 @@ class ExportImportScreen extends StatelessWidget {
   const ExportImportScreen({super.key});
 
   // Export entire workspace as a stringified JSON file
-  Future<void> _exportWorkspace(BuildContext context, NotesProvider provider) async {
+  Future<void> _exportWorkspace(
+      BuildContext context, NotesProvider provider) async {
     try {
       final allNotes = await SqliteNotesRepository().getNotes();
-      final List<Map<String, dynamic>> notesMap = allNotes.map((n) => n.toMap()).toList();
+      final List<Map<String, dynamic>> notesMap =
+          allNotes.map((n) => n.toMap()).toList();
       final backupString = jsonEncode(notesMap);
-      
+
       // Share backup file directly using Share API
       await SharePlus.instance.share(
         ShareParams(
@@ -51,13 +53,15 @@ class ExportImportScreen extends StatelessWidget {
           children: [
             const Text(
               "Paste the raw JSON backup string from your exported QuickNotes file below:",
-              style: TextStyle(fontSize: 13, color: QuickNotesTheme.textSecondary),
+              style:
+                  TextStyle(fontSize: 13, color: QuickNotesTheme.textSecondary),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: controller,
               maxLines: 6,
-              style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 12),
+              style:
+                  const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 12),
               decoration: const InputDecoration(
                 hintText: "[{...}, {...}]",
               ),
@@ -67,7 +71,8 @@ class ExportImportScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("CANCEL", style: TextStyle(color: QuickNotesTheme.textPrimary)),
+            child: const Text("CANCEL",
+                style: TextStyle(color: QuickNotesTheme.textPrimary)),
           ),
           TextButton(
             onPressed: () async {
@@ -75,7 +80,8 @@ class ExportImportScreen extends StatelessWidget {
                 final rawJson = controller.text.trim();
                 if (rawJson.isEmpty) return;
 
-                final List<dynamic> decoded = jsonDecode(rawJson) as List<dynamic>;
+                final List<dynamic> decoded =
+                    jsonDecode(rawJson) as List<dynamic>;
                 int importCount = 0;
                 for (var map in decoded) {
                   final noteMap = Map<String, dynamic>.from(map as Map);
@@ -86,7 +92,9 @@ class ExportImportScreen extends StatelessWidget {
 
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Successfully imported $importCount notes")),
+                  SnackBar(
+                      content:
+                          Text("Successfully imported $importCount notes")),
                 );
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -94,7 +102,8 @@ class ExportImportScreen extends StatelessWidget {
                 );
               }
             },
-            child: const Text("IMPORT", style: TextStyle(color: QuickNotesTheme.accent)),
+            child: const Text("IMPORT",
+                style: TextStyle(color: QuickNotesTheme.accent)),
           ),
         ],
       ),
@@ -113,7 +122,8 @@ class ExportImportScreen extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
               child: AppHeaderBar(
                 leftWidth: 44.0,
                 onLeftTap: () {
@@ -124,7 +134,8 @@ class ExportImportScreen extends StatelessWidget {
                   'assets/icons/angle_left.svg',
                   width: 22,
                   height: 22,
-                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                  colorFilter:
+                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                 ),
                 title: "Backup & Sharing",
                 titleColor: Colors.white,
@@ -135,17 +146,19 @@ class ExportImportScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 8.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildSectionTitle("EXPORT WORKSPACE"),
                       const SizedBox(height: 12),
-                      
+
                       _buildActionCard(
                         context,
                         title: "Share Workspace Backup",
-                        description: "Export all notes, folders, and attachments as a JSON string file that you can share or save to drive.",
+                        description:
+                            "Export all notes, folders, and attachments as a JSON string file that you can share or save to drive.",
                         icon: Icons.backup_outlined,
                         onTap: () => _exportWorkspace(context, provider),
                       ),
@@ -157,7 +170,8 @@ class ExportImportScreen extends StatelessWidget {
                       _buildActionCard(
                         context,
                         title: "Restore Backup JSON",
-                        description: "Import notes from a previously shared JSON workspace file to restore your database.",
+                        description:
+                            "Import notes from a previously shared JSON workspace file to restore your database.",
                         icon: Icons.restore_page_outlined,
                         onTap: () => _importWorkspaceDialog(context, provider),
                       ),
@@ -174,7 +188,8 @@ class ExportImportScreen extends StatelessWidget {
                         child: const Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.info_outline_rounded, color: QuickNotesTheme.accent, size: 20),
+                            Icon(Icons.info_outline_rounded,
+                                color: QuickNotesTheme.accent, size: 20),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -268,7 +283,8 @@ class ExportImportScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: QuickNotesTheme.textSecondary),
+            const Icon(Icons.chevron_right_rounded,
+                color: QuickNotesTheme.textSecondary),
           ],
         ),
       ),

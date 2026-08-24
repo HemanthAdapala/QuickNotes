@@ -28,7 +28,8 @@ class TactileButton extends StatefulWidget {
   State<TactileButton> createState() => _TactileButtonState();
 }
 
-class _TactileButtonState extends State<TactileButton> with TickerProviderStateMixin {
+class _TactileButtonState extends State<TactileButton>
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -41,11 +42,13 @@ class _TactileButtonState extends State<TactileButton> with TickerProviderStateM
 
   void _setupAnimation() {
     if (widget.useAppleSpring) {
-      _scaleAnimation = Tween<double>(begin: 1.0, end: widget.compressionScale).animate(
+      _scaleAnimation =
+          Tween<double>(begin: 1.0, end: widget.compressionScale).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeIn),
       );
     } else {
-      _scaleAnimation = Tween<double>(begin: 1.0, end: widget.compressionScale).animate(
+      _scaleAnimation =
+          Tween<double>(begin: 1.0, end: widget.compressionScale).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
       );
     }
@@ -80,7 +83,8 @@ class _TactileButtonState extends State<TactileButton> with TickerProviderStateM
     if (widget.useAppleSpring) {
       _controller.duration = widget.settleDuration;
       setState(() {
-        _scaleAnimation = Tween<double>(begin: widget.compressionScale, end: 1.0).animate(
+        _scaleAnimation =
+            Tween<double>(begin: widget.compressionScale, end: 1.0).animate(
           CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
         );
       });
@@ -97,7 +101,8 @@ class _TactileButtonState extends State<TactileButton> with TickerProviderStateM
     if (widget.useAppleSpring) {
       _controller.duration = widget.settleDuration;
       setState(() {
-        _scaleAnimation = Tween<double>(begin: widget.compressionScale, end: 1.0).animate(
+        _scaleAnimation =
+            Tween<double>(begin: widget.compressionScale, end: 1.0).animate(
           CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
         );
       });

@@ -61,7 +61,6 @@ class FolderOptionsPopup extends StatelessWidget {
                   ),
                 ),
               ),
-
             Positioned(
               left: 14,
               top: 17,
@@ -72,7 +71,6 @@ class FolderOptionsPopup extends StatelessWidget {
                 colorFilter: const ColorFilter.mode(textColor, BlendMode.srcIn),
               ),
             ),
-
             Positioned(
               left: 39,
               top: 10,
@@ -94,7 +92,6 @@ class FolderOptionsPopup extends StatelessWidget {
                 ),
               ),
             ),
-
             if (trailingWidget != null)
               Positioned(
                 right: 14,

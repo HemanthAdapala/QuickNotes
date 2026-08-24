@@ -128,7 +128,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             height: 1.4,
           ),
         ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        actionsPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         actions: [
           TextButton(
             onPressed: () {
@@ -148,7 +149,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             onPressed: () async {
               HapticFeedback.mediumImpact();
               Navigator.pop(ctx);
-              final switched = await _controller.switchAccountToConflictingUser();
+              final switched =
+                  await _controller.switchAccountToConflictingUser();
               if (mounted && switched) {
                 setState(() {});
               }
@@ -188,7 +190,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
           children: [
             // Top Navigation Bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Row(
                 children: [
                   TactileButton(
@@ -206,7 +209,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           'assets/icons/angle_left.svg',
                           width: 18,
                           height: 18,
-                          colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                          colorFilter: const ColorFilter.mode(
+                              primaryTextColor, BlendMode.srcIn),
                         ),
                       ),
                     ),
@@ -241,7 +245,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                 clipBehavior: Clip.antiAlias,
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 24.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -254,7 +259,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           decoration: BoxDecoration(
                             color: const Color(0xFFF9F9FB),
                             borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
+                            border: Border.all(
+                                color: const Color(0xFFE5E5EA), width: 1),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,12 +307,14 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
-                                  onPressed: isSigningIn ? null : _handleGoogleSignIn,
+                                  onPressed:
+                                      isSigningIn ? null : _handleGoogleSignIn,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF1E1E1E),
                                     foregroundColor: Colors.white,
                                     elevation: 0,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
                                     ),
@@ -317,11 +325,14 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                           width: 20,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.white),
                                           ),
                                         )
                                       : Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             SvgPicture.string(
                                               _googleLogoSvg,
@@ -351,7 +362,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           decoration: BoxDecoration(
                             color: const Color(0xFFF9F9FB),
                             borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
+                            border: Border.all(
+                                color: const Color(0xFFE5E5EA), width: 1),
                           ),
                           child: Row(
                             children: [
@@ -361,14 +373,17 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFE5E5EA),
                                   shape: BoxShape.circle,
-                                  image: _controller.photoUrl != null && _controller.photoUrl!.isNotEmpty
+                                  image: _controller.photoUrl != null &&
+                                          _controller.photoUrl!.isNotEmpty
                                       ? DecorationImage(
-                                          image: NetworkImage(_controller.photoUrl!),
+                                          image: NetworkImage(
+                                              _controller.photoUrl!),
                                           fit: BoxFit.cover,
                                         )
                                       : null,
                                 ),
-                                child: _controller.photoUrl == null || _controller.photoUrl!.isEmpty
+                                child: _controller.photoUrl == null ||
+                                        _controller.photoUrl!.isEmpty
                                     ? const Center(
                                         child: Icon(
                                           Icons.person_rounded,
@@ -416,7 +431,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFE8F5E9),
                                         borderRadius: BorderRadius.circular(8),
@@ -424,7 +440,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          SvgPicture.string(_googleLogoSvg, width: 12, height: 12),
+                                          SvgPicture.string(_googleLogoSvg,
+                                              width: 12, height: 12),
                                           const SizedBox(width: 6),
                                           Text(
                                             "Google Account Connected",
@@ -451,7 +468,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                       GroupedListContainer(
                         children: [
                           GroupedTile.navigation(
-                            iconPath: 'assets/icons/bottom_navigation/settings.svg',
+                            iconPath:
+                                'assets/icons/bottom_navigation/settings.svg',
                             title: 'Profile',
                             onTap: () {
                               HapticFeedback.lightImpact();

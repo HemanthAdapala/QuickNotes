@@ -243,7 +243,7 @@ class DatabaseService {
     );
     await db.execute(
       '''INSERT INTO user_profiles (userId, displayName, email, usesGooglePhoto, profileVersion, createdAt, updatedAt)
-         VALUES (?, 'Offline User', 'offline@local.quicknotes', 0, 1, ?, ?)''',
+         VALUES (?, 'Guest', 'offline@local.quicknotes', 0, 1, ?, ?)''',
       [defaultUserId, nowIso, nowIso],
     );
   }
@@ -519,7 +519,7 @@ class DatabaseService {
         );
         await db.execute(
           '''INSERT INTO user_profiles (userId, displayName, email, usesGooglePhoto, profileVersion, createdAt, updatedAt)
-             VALUES (?, 'Offline User', 'offline@local.quicknotes', 0, 1, ?, ?)''',
+             VALUES (?, 'Guest', 'offline@local.quicknotes', 0, 1, ?, ?)''',
           [defaultUserId, nowIso, nowIso],
         );
       }
@@ -589,26 +589,32 @@ class DatabaseService {
     if (oldVersion < 18) {
       final notesCols = await _getTableColumns(db, 'notes');
       if (!notesCols.contains('version')) {
-        await db.execute('ALTER TABLE notes ADD COLUMN version INTEGER NOT NULL DEFAULT 1');
+        await db.execute(
+            'ALTER TABLE notes ADD COLUMN version INTEGER NOT NULL DEFAULT 1');
       }
       if (!notesCols.contains('lastSyncedVersion')) {
-        await db.execute('ALTER TABLE notes ADD COLUMN lastSyncedVersion INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+            'ALTER TABLE notes ADD COLUMN lastSyncedVersion INTEGER NOT NULL DEFAULT 0');
       }
 
       final foldersCols = await _getTableColumns(db, 'folders');
       if (!foldersCols.contains('version')) {
-        await db.execute('ALTER TABLE folders ADD COLUMN version INTEGER NOT NULL DEFAULT 1');
+        await db.execute(
+            'ALTER TABLE folders ADD COLUMN version INTEGER NOT NULL DEFAULT 1');
       }
       if (!foldersCols.contains('lastSyncedVersion')) {
-        await db.execute('ALTER TABLE folders ADD COLUMN lastSyncedVersion INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+            'ALTER TABLE folders ADD COLUMN lastSyncedVersion INTEGER NOT NULL DEFAULT 0');
       }
 
       final tasksCols = await _getTableColumns(db, 'tasks');
       if (!tasksCols.contains('version')) {
-        await db.execute('ALTER TABLE tasks ADD COLUMN version INTEGER NOT NULL DEFAULT 1');
+        await db.execute(
+            'ALTER TABLE tasks ADD COLUMN version INTEGER NOT NULL DEFAULT 1');
       }
       if (!tasksCols.contains('lastSyncedVersion')) {
-        await db.execute('ALTER TABLE tasks ADD COLUMN lastSyncedVersion INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+            'ALTER TABLE tasks ADD COLUMN lastSyncedVersion INTEGER NOT NULL DEFAULT 0');
       }
 
       await db.execute('''

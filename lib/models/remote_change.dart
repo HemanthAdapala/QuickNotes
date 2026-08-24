@@ -37,7 +37,9 @@ class RemoteChange {
       userId: map['userId'] as String,
       operation: map['operation'] as String,
       remoteVersion: (map['remoteVersion'] as num).toInt(),
-      payload: map['payload'] != null ? Map<String, dynamic>.from(map['payload'] as Map) : null,
+      payload: map['payload'] != null
+          ? Map<String, dynamic>.from(map['payload'] as Map)
+          : null,
       serverTimestamp: DateTime.parse(map['serverTimestamp'] as String),
     );
   }

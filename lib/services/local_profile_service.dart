@@ -16,7 +16,7 @@ class LocalProfileService {
     return CurrentUser(
       id: localId,
       email: 'offline@local.quicknotes',
-      displayName: 'Offline User',
+      displayName: 'Guest',
       photoUrl: null,
       sessionType: SessionType.offline,
       isOffline: true,

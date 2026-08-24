@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'providers/notes_provider.dart';
 import 'providers/tasks_provider.dart';
 import 'services/task_engine.dart';
@@ -13,15 +14,19 @@ import 'views/screens/splash_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Disable runtime fetching of Google Fonts to prevent crashes when offline
+  GoogleFonts.config.allowRuntimeFetching = false;
+
   // Set preferred orientations and system styling overlays
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  final ReminderScheduler scheduler = (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
-      ? AndroidReminderScheduler()
-      : LoggingReminderScheduler();
+  final ReminderScheduler scheduler =
+      (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+          ? AndroidReminderScheduler()
+          : LoggingReminderScheduler();
 
   final taskEngine = TaskEngine(scheduler: scheduler);
 
@@ -29,7 +34,8 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NotesProvider()),
-        ChangeNotifierProvider(create: (_) => TasksProvider(engine: taskEngine)),
+        ChangeNotifierProvider(
+            create: (_) => TasksProvider(engine: taskEngine)),
       ],
       child: const QuickNotesApp(),
     ),
@@ -76,7 +82,7 @@ class QuickNotesApp extends StatelessWidget {
     return MaterialApp(
       title: 'QuickNotes',
       debugShowCheckedModeBanner: false,
-      
+
       // Light Theme configuration
       theme: ThemeData(
         useMaterial3: true,
@@ -91,15 +97,24 @@ class QuickNotesApp extends StatelessWidget {
         ),
         textTheme: GoogleFonts.interTextTheme(
           lightBaseTextTheme.copyWith(
-            displayLarge: GoogleFonts.inter(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
-            displayMedium: GoogleFonts.inter(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
-            displaySmall: GoogleFonts.inter(fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
-            headlineLarge: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
-            headlineMedium: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
-            headlineSmall: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
-            titleLarge: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
-            titleMedium: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
-            titleSmall: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            displayLarge: GoogleFonts.inter(
+                fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
+            displayMedium: GoogleFonts.inter(
+                fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
+            displaySmall: GoogleFonts.inter(
+                fontWeight: FontWeight.w800, color: const Color(0xFF1E1B4B)),
+            headlineLarge: GoogleFonts.inter(
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            headlineMedium: GoogleFonts.inter(
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            headlineSmall: GoogleFonts.inter(
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            titleLarge: GoogleFonts.inter(
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            titleMedium: GoogleFonts.inter(
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
+            titleSmall: GoogleFonts.inter(
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E1B4B)),
           ),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -138,15 +153,24 @@ class QuickNotesApp extends StatelessWidget {
         ),
         textTheme: GoogleFonts.plusJakartaSansTextTheme(
           darkBaseTextTheme.copyWith(
-            displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFFFAF8F5)),
-            displayMedium: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFFFAF8F5)),
-            displaySmall: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: const Color(0xFFFAF8F5)),
-            headlineLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
-            headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
-            headlineSmall: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
-            titleLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
-            titleMedium: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
-            titleSmall: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            displayLarge: GoogleFonts.outfit(
+                fontWeight: FontWeight.w800, color: const Color(0xFFFAF8F5)),
+            displayMedium: GoogleFonts.outfit(
+                fontWeight: FontWeight.w800, color: const Color(0xFFFAF8F5)),
+            displaySmall: GoogleFonts.outfit(
+                fontWeight: FontWeight.w800, color: const Color(0xFFFAF8F5)),
+            headlineLarge: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            headlineMedium: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            headlineSmall: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            titleLarge: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            titleMedium: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
+            titleSmall: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold, color: const Color(0xFFFAF8F5)),
           ),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -184,7 +208,9 @@ class QuickNotesApp extends StatelessWidget {
                   width: 402,
                   height: 874,
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF0B0D17) : const Color(0xFFFFFDF9),
+                    color: isDarkMode
+                        ? const Color(0xFF0B0D17)
+                        : const Color(0xFFFFFDF9),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
@@ -194,7 +220,9 @@ class QuickNotesApp extends StatelessWidget {
                       ),
                     ],
                     border: Border.all(
-                      color: isDarkMode ? const Color(0xFF312E81) : const Color(0xFFE2E8F0),
+                      color: isDarkMode
+                          ? const Color(0xFF312E81)
+                          : const Color(0xFFE2E8F0),
                       width: 2,
                     ),
                   ),

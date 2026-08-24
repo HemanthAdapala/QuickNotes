@@ -16,7 +16,6 @@ import '../../core/animations/bottom_sheet_transition.dart';
 import '../../core/animations/animated_list_entrance.dart';
 import '../../core/animations/animation_constants.dart';
 
-
 class NotesListScreen extends StatefulWidget {
   final NotesViewType viewType;
   final VoidCallback onMenuTap;
@@ -42,11 +41,13 @@ class _NotesListScreenState extends State<NotesListScreen> {
   late ScrollController _scrollController;
 
   void _navigateToCreateNote(String type, NotesProvider provider) {
-    final RenderBox? box = _fabKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? box =
+        _fabKey.currentContext?.findRenderObject() as RenderBox?;
     Rect fabBounds = Rect.zero;
     if (box != null) {
       final position = box.localToGlobal(Offset.zero);
-      fabBounds = Rect.fromLTWH(position.dx, position.dy, box.size.width, box.size.height);
+      fabBounds = Rect.fromLTWH(
+          position.dx, position.dy, box.size.width, box.size.height);
     } else {
       final size = MediaQuery.of(context).size;
       fabBounds = Rect.fromLTWH(size.width - 80, size.height - 80, 56, 56);
@@ -109,15 +110,20 @@ class _NotesListScreenState extends State<NotesListScreen> {
     super.dispose();
   }
 
-  void _onNoteCardTapped(BuildContext context, NoteSummary note, NotesProvider provider) async {
+  void _onNoteCardTapped(
+      BuildContext context, NoteSummary note, NotesProvider provider) async {
     if (widget.viewType == NotesViewType.trash) {
       showAnimatedDialog(
         context: context,
         child: AlertDialog(
-          title: Text("Restore Note?", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-          content: const Text("This note is in the Trash. You need to restore it to view or edit it."),
+          title: Text("Restore Note?",
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          content: const Text(
+              "This note is in the Trash. You need to restore it to view or edit it."),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel")),
             FilledButton(
               onPressed: () {
                 Navigator.pop(context);
@@ -235,10 +241,14 @@ class _NotesListScreenState extends State<NotesListScreen> {
               showAnimatedDialog(
                 context: context,
                 child: AlertDialog(
-                  title: Text("Empty Trash?", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-                  content: const Text("All notes in Trash will be permanently deleted. This action cannot be undone."),
+                  title: Text("Empty Trash?",
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                  content: const Text(
+                      "All notes in Trash will be permanently deleted. This action cannot be undone."),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                    TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Cancel")),
                     FilledButton(
                       onPressed: () {
                         Navigator.pop(context);
@@ -256,7 +266,9 @@ class _NotesListScreenState extends State<NotesListScreen> {
             },
           ),
           IconButton(
-            icon: Icon(_isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded),
+            icon: Icon(_isGridView
+                ? Icons.view_list_rounded
+                : Icons.grid_view_rounded),
             tooltip: _isGridView ? "List View" : "Grid View",
             onPressed: () {
               setState(() {
@@ -302,7 +314,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
             children: [
               if (_isSearchActive)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 8.0),
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 720),
                     child: TextField(
@@ -317,7 +330,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
                         ),
                         filled: true,
                         fillColor: theme.cardColor,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 14),
                       ),
                       onChanged: (val) {
                         provider.setSearchQuery(val);
@@ -325,24 +339,25 @@ class _NotesListScreenState extends State<NotesListScreen> {
                     ),
                   ),
                 ),
-  
               if (widget.viewType == NotesViewType.feed)
                 _buildCategoryPills(context, provider),
-  
               Expanded(
                 child: provider.isLoading && allNotes.isEmpty
                     ? CustomScrollView(
                         physics: const BouncingScrollPhysics(),
                         slivers: [
                           SliverPadding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 24.0),
                             sliver: SliverToBoxAdapter(
                               child: _buildSectionTitle("LOADING NOTES..."),
                             ),
                           ),
                           SliverPadding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                            sliver: _buildSliverSkeletonLayout(context, isDesktop),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 24.0),
+                            sliver:
+                                _buildSliverSkeletonLayout(context, isDesktop),
                           ),
                         ],
                       )
@@ -362,32 +377,42 @@ class _NotesListScreenState extends State<NotesListScreen> {
                             slivers: [
                               if (pinnedNotes.isNotEmpty) ...[
                                 SliverPadding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24.0),
                                   sliver: SliverToBoxAdapter(
                                     child: _buildSectionTitle("PINNED"),
                                   ),
                                 ),
                                 SliverPadding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                                  sliver: _buildSliverNotesLayout(pinnedNotes, provider, isDesktop),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24.0),
+                                  sliver: _buildSliverNotesLayout(
+                                      pinnedNotes, provider, isDesktop),
                                 ),
                               ],
                               if (recentNotes.isNotEmpty) ...[
                                 SliverPadding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24.0),
                                   sliver: SliverToBoxAdapter(
-                                    child: _buildSectionTitle(pinnedNotes.isNotEmpty ? "RECENT" : "ALL NOTES"),
+                                    child: _buildSectionTitle(
+                                        pinnedNotes.isNotEmpty
+                                            ? "RECENT"
+                                            : "ALL NOTES"),
                                   ),
                                 ),
                                 SliverPadding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                                  sliver: _buildSliverNotesLayout(recentNotes, provider, isDesktop),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24.0),
+                                  sliver: _buildSliverNotesLayout(
+                                      recentNotes, provider, isDesktop),
                                 ),
                               ],
                               if (provider.isPageLoading)
                                 SliverToBoxAdapter(
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 24.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 24.0),
                                     child: Center(
                                       child: SizedBox(
                                         width: 24,
@@ -427,7 +452,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
                       context: context,
                       backgroundColor: theme.scaffoldBackgroundColor,
                       shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(24.0)),
                       ),
                       child: SafeArea(
                         child: Column(
@@ -447,7 +473,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
                             ),
                             const SizedBox(height: 24),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 24.0),
                               child: Text(
                                 "Create New",
                                 style: GoogleFonts.outfit(
@@ -458,10 +485,11 @@ class _NotesListScreenState extends State<NotesListScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            
+
                             // Quick Note (Prioritized Default Action)
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24.0, vertical: 6.0),
                               child: InkWell(
                                 onTap: () {
                                   Navigator.pop(context);
@@ -474,8 +502,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                     color: theme.colorScheme.primary,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: theme.brightness == Brightness.dark 
-                                          ? const Color(0xFFFAF8F5) 
+                                      color: theme.brightness == Brightness.dark
+                                          ? const Color(0xFFFAF8F5)
                                           : const Color(0xFF1E1B4B),
                                       width: 1.5,
                                     ),
@@ -490,21 +518,26 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                       const SizedBox(width: 16),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               "Quick Note",
                                               style: GoogleFonts.outfit(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16,
-                                                color: theme.colorScheme.onPrimary,
+                                                color:
+                                                    theme.colorScheme.onPrimary,
                                               ),
                                             ),
                                             Text(
                                               "Jot down your thoughts instantly",
-                                              style: GoogleFonts.plusJakartaSans(
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
                                                 fontSize: 12,
-                                                color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                                                color: theme
+                                                    .colorScheme.onPrimary
+                                                    .withOpacity(0.8),
                                               ),
                                             ),
                                           ],
@@ -519,10 +552,11 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                 ),
                               ),
                             ),
-                            
+
                             // Checklist (Secondary Action)
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24.0, vertical: 6.0),
                               child: InkWell(
                                 onTap: () {
                                   Navigator.pop(context);
@@ -535,9 +569,11 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                     color: theme.cardColor,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: theme.brightness == Brightness.dark 
-                                          ? const Color(0xFFFAF8F5).withOpacity(0.3) 
-                                          : const Color(0xFF1E1B4B).withOpacity(0.3),
+                                      color: theme.brightness == Brightness.dark
+                                          ? const Color(0xFFFAF8F5)
+                                              .withOpacity(0.3)
+                                          : const Color(0xFF1E1B4B)
+                                              .withOpacity(0.3),
                                       width: 1.5,
                                     ),
                                   ),
@@ -551,21 +587,26 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                       const SizedBox(width: 16),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               "Checklist",
                                               style: GoogleFonts.outfit(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16,
-                                                color: theme.colorScheme.onSurface,
+                                                color:
+                                                    theme.colorScheme.onSurface,
                                               ),
                                             ),
                                             Text(
                                               "Track tasks, habits, and to-dos",
-                                              style: GoogleFonts.plusJakartaSans(
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
                                                 fontSize: 12,
-                                                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                                color: theme
+                                                    .colorScheme.onSurface
+                                                    .withOpacity(0.6),
                                               ),
                                             ),
                                           ],
@@ -573,7 +614,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                       ),
                                       Icon(
                                         Icons.chevron_right_rounded,
-                                        color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                        color: theme.colorScheme.onSurface
+                                            .withOpacity(0.4),
                                       ),
                                     ],
                                   ),
@@ -589,7 +631,9 @@ class _NotesListScreenState extends State<NotesListScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(
-                      color: theme.brightness == Brightness.dark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B),
+                      color: theme.brightness == Brightness.dark
+                          ? const Color(0xFFFAF8F5)
+                          : const Color(0xFF1E1B4B),
                       width: 1.5,
                     ),
                   ),
@@ -604,12 +648,13 @@ class _NotesListScreenState extends State<NotesListScreen> {
   Widget _buildSwipeBackground(bool isLeftSwipe, Color baseCardColor) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final strokeColor = isDark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B);
+    final strokeColor =
+        isDark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B);
 
     return Container(
       decoration: BoxDecoration(
-        color: isLeftSwipe 
-            ? theme.colorScheme.primaryContainer.withAlpha(80) 
+        color: isLeftSwipe
+            ? theme.colorScheme.primaryContainer.withAlpha(80)
             : theme.colorScheme.secondaryContainer.withAlpha(80),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: strokeColor, width: 1.5),
@@ -624,7 +669,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
     );
   }
 
-  void _showSwipeOptionsSheet(BuildContext context, NoteSummary note, NotesProvider provider) {
+  void _showSwipeOptionsSheet(
+      BuildContext context, NoteSummary note, NotesProvider provider) {
     showAnimatedBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -638,40 +684,58 @@ class _NotesListScreenState extends State<NotesListScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 16.0, horizontal: 24.0),
                   child: Text(
                     note.title.isNotEmpty ? note.title : "Untitled Note",
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16, color: theme.colorScheme.primary),
+                    style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: theme.colorScheme.primary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: Icon(note.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, color: Colors.amber),
-                  title: Text(note.isFavorite ? "Remove from Favorites" : "Add to Favorites"),
+                  leading: Icon(
+                      note.isFavorite
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      color: Colors.amber),
+                  title: Text(note.isFavorite
+                      ? "Remove from Favorites"
+                      : "Add to Favorites"),
                   onTap: () {
                     Navigator.pop(context);
                     provider.toggleFavorite(note.id);
                   },
                 ),
                 ListTile(
-                  leading: Icon(note.isArchived ? Icons.unarchive_outlined : Icons.archive_outlined, color: theme.colorScheme.primary),
-                  title: Text(note.isArchived ? "Unarchive Note" : "Archive Note"),
+                  leading: Icon(
+                      note.isArchived
+                          ? Icons.unarchive_outlined
+                          : Icons.archive_outlined,
+                      color: theme.colorScheme.primary),
+                  title:
+                      Text(note.isArchived ? "Unarchive Note" : "Archive Note"),
                   onTap: () {
                     Navigator.pop(context);
                     provider.toggleArchive(note.id);
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(note.isArchived ? "Note unarchived" : "Note archived"),
+                        content: Text(note.isArchived
+                            ? "Note unarchived"
+                            : "Note archived"),
                         duration: const Duration(seconds: 1),
                       ),
                     );
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                  leading: const Icon(Icons.delete_outline_rounded,
+                      color: Colors.red),
                   title: const Text("Delete (Move to Trash)"),
                   onTap: () {
                     Navigator.pop(context);
@@ -696,7 +760,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
     );
   }
 
-  Widget _buildSliverNotesLayout(List<NoteSummary> notesList, NotesProvider provider, bool isDesktop) {
+  Widget _buildSliverNotesLayout(
+      List<NoteSummary> notesList, NotesProvider provider, bool isDesktop) {
     Widget wrapWithDismissible(NoteSummary note) {
       if (widget.viewType == NotesViewType.trash) {
         return NoteCard(
@@ -710,8 +775,10 @@ class _NotesListScreenState extends State<NotesListScreen> {
       return Dismissible(
         key: Key('note_dismissible_${note.id}'),
         direction: DismissDirection.horizontal,
-        background: _buildSwipeBackground(false, NotesProvider.getNoteColor(note.colorValue, context)),
-        secondaryBackground: _buildSwipeBackground(true, NotesProvider.getNoteColor(note.colorValue, context)),
+        background: _buildSwipeBackground(
+            false, NotesProvider.getNoteColor(note.colorValue, context)),
+        secondaryBackground: _buildSwipeBackground(
+            true, NotesProvider.getNoteColor(note.colorValue, context)),
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.startToEnd) {
             provider.togglePin(note.id);
@@ -786,7 +853,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
 
   Widget _buildSliverSkeletonLayout(BuildContext context, bool isDesktop) {
     final count = isDesktop ? 6 : 4;
-    
+
     if (_isGridView) {
       return SliverMasonryGrid.count(
         crossAxisCount: isDesktop ? 3 : 2,
@@ -832,13 +899,13 @@ class _NotesListScreenState extends State<NotesListScreen> {
   Widget _buildSkeletonCard(BuildContext context, int index) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // Shimmer colors matching the app's aesthetics
-    final baseColor = isDark 
-        ? const Color(0xFF1E1C2E).withOpacity(0.5) 
+    final baseColor = isDark
+        ? const Color(0xFF1E1C2E).withOpacity(0.5)
         : const Color(0xFFE2E8F0);
-    final highlightColor = isDark 
-        ? const Color(0xFF312E81).withOpacity(0.3) 
+    final highlightColor = isDark
+        ? const Color(0xFF312E81).withOpacity(0.3)
         : const Color(0xFFFFFDF9);
 
     // Stagger content lines to mock staggered grid card heights
@@ -853,7 +920,9 @@ class _NotesListScreenState extends State<NotesListScreen> {
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.12) : Colors.white.withOpacity(0.4),
+            color: isDark
+                ? Colors.white.withOpacity(0.12)
+                : Colors.white.withOpacity(0.4),
             width: 1.0,
           ),
         ),
@@ -886,7 +955,9 @@ class _NotesListScreenState extends State<NotesListScreen> {
             // Skeleton Content lines
             for (int i = 0; i < contentLines; i++) ...[
               Container(
-                width: i == contentLines - 1 ? 120.0 + (index % 2) * 40.0 : double.infinity,
+                width: i == contentLines - 1
+                    ? 120.0 + (index % 2) * 40.0
+                    : double.infinity,
                 height: 10,
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -949,7 +1020,9 @@ class _NotesListScreenState extends State<NotesListScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              isTrash ? Icons.delete_outline_rounded : Icons.description_outlined,
+              isTrash
+                  ? Icons.delete_outline_rounded
+                  : Icons.description_outlined,
               size: 64,
               color: theme.colorScheme.onSurface.withAlpha(50),
             ),
@@ -964,7 +1037,9 @@ class _NotesListScreenState extends State<NotesListScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              isTrash ? "Notes you delete will appear here." : "Your next great idea starts here.",
+              isTrash
+                  ? "Notes you delete will appear here."
+                  : "Your next great idea starts here.",
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 color: theme.colorScheme.onSurface.withAlpha(100),
@@ -981,7 +1056,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final allCategories = ["All", ...NotesProvider.categories];
-    final strokeColor = isDark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B);
+    final strokeColor =
+        isDark ? const Color(0xFFFAF8F5) : const Color(0xFF1E1B4B);
 
     return Container(
       height: 48,
@@ -993,7 +1069,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
         physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           final cat = allCategories[index];
-          final isSelected = provider.selectedCategory == cat && provider.selectedTag.isEmpty;
+          final isSelected =
+              provider.selectedCategory == cat && provider.selectedTag.isEmpty;
 
           return Padding(
             padding: const EdgeInsets.only(right: 10.0),
@@ -1003,7 +1080,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
               labelStyle: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: isSelected 
+                color: isSelected
                     ? (isDark ? const Color(0xFF0B0D17) : Colors.white)
                     : theme.colorScheme.onSurface.withAlpha(180),
               ),

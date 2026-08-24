@@ -268,60 +268,60 @@ class _BottomBarGlassSurfaceState extends State<BottomBarGlassSurface>
         );
       },
       child: DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: widget.borderRadius,
-        boxShadow: GlassmorphismPresets.shadows,
-      ),
-      child: ClipRRect(
-        borderRadius: widget.borderRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: GlassmorphismPresets.blurSigma,
-            sigmaY: GlassmorphismPresets.blurSigma,
-          ),
-          child: CustomPaint(
-            foregroundPainter: _InnerGlassBorderPainter(
-              borderRadius: widget.borderRadius,
+        decoration: BoxDecoration(
+          borderRadius: widget.borderRadius,
+          boxShadow: GlassmorphismPresets.shadows,
+        ),
+        child: ClipRRect(
+          borderRadius: widget.borderRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: GlassmorphismPresets.blurSigma,
+              sigmaY: GlassmorphismPresets.blurSigma,
             ),
-            child: SizedBox(
-              width: widget.width,
-              height: widget.height,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: GlassmorphismPresets.fillColor,
-                  borderRadius: widget.borderRadius,
-                  boxShadow: GlassmorphismPresets.innerShadows,
-                  border: Border.all(
-                    color: Colors.white.withValues(
-                      alpha: widget.useFrost ? 0.65 : 0.45,
+            child: CustomPaint(
+              foregroundPainter: _InnerGlassBorderPainter(
+                borderRadius: widget.borderRadius,
+              ),
+              child: SizedBox(
+                width: widget.width,
+                height: widget.height,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: GlassmorphismPresets.fillColor,
+                    borderRadius: widget.borderRadius,
+                    boxShadow: GlassmorphismPresets.innerShadows,
+                    border: Border.all(
+                      color: Colors.white.withValues(
+                        alpha: widget.useFrost ? 0.65 : 0.45,
+                      ),
+                      width: 0.8,
                     ),
-                    width: 0.8,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(
+                          alpha: widget.useFrost ? 0.85 : 0.72,
+                        ),
+                        Colors.white.withValues(
+                          alpha: widget.useFrost ? 0.45 : 0.0,
+                        ),
+                        scheme.surfaceTint.withValues(alpha: 0.08),
+                        Colors.black.withValues(alpha: 0.035),
+                      ],
+                      stops: const [0, 0.42, 0.78, 1],
+                    ),
                   ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(
-                        alpha: widget.useFrost ? 0.85 : 0.72,
-                      ),
-                      Colors.white.withValues(
-                        alpha: widget.useFrost ? 0.45 : 0.0,
-                      ),
-                      scheme.surfaceTint.withValues(alpha: 0.08),
-                      Colors.black.withValues(alpha: 0.035),
-                    ],
-                    stops: const [0, 0.42, 0.78, 1],
-                  ),
+                  child: widget.child,
                 ),
-                child: widget.child,
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _NavigationButton extends StatefulWidget {

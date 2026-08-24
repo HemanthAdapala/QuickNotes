@@ -45,7 +45,8 @@ class ZipDecoder {
         final dataOffset = nameOffset + nameLen + extraLen;
 
         if (dataOffset + compSize > bytes.length) {
-          throw FormatException('Zip header declares data beyond byte length at offset $offset');
+          throw FormatException(
+              'Zip header declares data beyond byte length at offset $offset');
         }
 
         final nameBytes = bytes.sublist(nameOffset, nameOffset + nameLen);

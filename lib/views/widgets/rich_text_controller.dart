@@ -172,11 +172,10 @@ class InteractiveCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
-    final uncheckedBorderColor = isDark 
-        ? Colors.white.withOpacity(0.4) 
-        : Colors.black.withOpacity(0.3);
-        
+
+    final uncheckedBorderColor =
+        isDark ? Colors.white.withOpacity(0.4) : Colors.black.withOpacity(0.3);
+
     final checkedBgColor = const Color(0xFFFFCC00);
     final checkIconColor = const Color(0xFF333333);
 
@@ -188,7 +187,8 @@ class InteractiveCheckbox extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        margin: margin ?? const EdgeInsets.only(top: 8.0, right: 8.0, left: 4.0),
+        margin:
+            margin ?? const EdgeInsets.only(top: 8.0, right: 8.0, left: 4.0),
         width: 16,
         height: 16,
         decoration: checked
@@ -208,7 +208,8 @@ class InteractiveCheckbox extends StatelessWidget {
                   'assets/icons/vector_check.svg',
                   width: 10,
                   height: 10,
-                  colorFilter: ColorFilter.mode(checkIconColor, BlendMode.srcIn),
+                  colorFilter:
+                      ColorFilter.mode(checkIconColor, BlendMode.srcIn),
                 ),
               )
             : null,
@@ -316,7 +317,7 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
     final double currentWidth = widget.isStacked
         ? double.infinity
         : (_width ?? maxWidth).clamp(150.0, maxWidth);
-        
+
     setState(() {
       if (direction == -1) {
         _width = (currentWidth - deltaX).clamp(150.0, maxWidth);
@@ -324,7 +325,7 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
         _width = (currentWidth + deltaX).clamp(150.0, maxWidth);
       }
     });
-    
+
     widget.onUpdate(
       _width!,
       _captionController.text.trim().isEmpty
@@ -394,7 +395,8 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
   Widget build(BuildContext context) {
     if (kImageDebug) {
       debugPrint("[Stage 9] Started - ResizableImageWidget.build()");
-      debugPrint("Relevant state: image path=${widget.imagePath}, index=${widget.index}, stackImageIndex=${widget.stackImageIndex}");
+      debugPrint(
+          "Relevant state: image path=${widget.imagePath}, index=${widget.index}, stackImageIndex=${widget.stackImageIndex}");
     }
     final theme = Theme.of(context);
     final isFile = !widget.imagePath.startsWith('http://') &&
@@ -454,7 +456,8 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
           behavior: HitTestBehavior.opaque,
           onPointerDown: (event) {
             if (kImageDebug) {
-              debugPrint("[Stage 9 - PointerDown] Image Listener onPointerDown. Event position: ${event.position}");
+              debugPrint(
+                  "[Stage 9 - PointerDown] Image Listener onPointerDown. Event position: ${event.position}");
             }
             final now = DateTime.now().millisecondsSinceEpoch;
             if (now - _lastPointerDownTime < 300) {
@@ -516,7 +519,8 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
                       frameBuilder:
                           (context, child, frame, wasSynchronouslyLoaded) {
                         if (kImageDebug) {
-                          debugPrint("[Stage 10] Image frameBuilder. Frame: $frame, SyncLoaded: $wasSynchronouslyLoaded");
+                          debugPrint(
+                              "[Stage 10] Image frameBuilder. Frame: $frame, SyncLoaded: $wasSynchronouslyLoaded");
                         }
                         if (wasSynchronouslyLoaded) {
                           return child;
@@ -546,7 +550,8 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
                       },
                       errorBuilder: (context, error, stackTrace) {
                         if (kImageDebug) {
-                          debugPrint("[Stage 10 - ERROR] Image loading failed. Error: $error");
+                          debugPrint(
+                              "[Stage 10 - ERROR] Image loading failed. Error: $error");
                         }
                         return Container(
                           width: widget.isStacked ? double.infinity : 200,
@@ -707,7 +712,8 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
 
     if (kImageDebug) {
       debugPrint("[Stage 9] Completed");
-      debugPrint("Relevant state: currentWidth=$currentWidth, currentHeight=$currentHeight");
+      debugPrint(
+          "Relevant state: currentWidth=$currentWidth, currentHeight=$currentHeight");
     }
 
     return AnimatedBuilder(
@@ -834,6 +840,7 @@ class RichTextEditingController extends TextEditingController {
     final cacheKey = '$url-$index';
     return _imageKeyCache.putIfAbsent(cacheKey, () => GlobalKey());
   }
+
   String searchQuery = '';
   TextRange? activeMatchRange;
   Style currentActiveStyle = const Style();
@@ -926,10 +933,17 @@ class RichTextEditingController extends TextEditingController {
     if (_isUndoOrRedoAction) return;
 
     final now = DateTime.now();
-    final isWordBoundary = newText.endsWith(' ') || newText.endsWith('\n') || newText.endsWith('\t');
-    final timePassed = _lastTypeTime == null ? true : now.difference(_lastTypeTime!) > const Duration(milliseconds: 1500);
+    final isWordBoundary = newText.endsWith(' ') ||
+        newText.endsWith('\n') ||
+        newText.endsWith('\t');
+    final timePassed = _lastTypeTime == null
+        ? true
+        : now.difference(_lastTypeTime!) > const Duration(milliseconds: 1500);
 
-    if (isWordBoundary || timePassed || _lastText == null || (_lastText!.length - newText.length).abs() > 5) {
+    if (isWordBoundary ||
+        timePassed ||
+        _lastText == null ||
+        (_lastText!.length - newText.length).abs() > 5) {
       saveUndoState();
     }
 
@@ -990,10 +1004,14 @@ class RichTextEditingController extends TextEditingController {
 
     List<StyledChar> pastedChars;
     if (hasMarkdown) {
-      pastedChars = parseMarkdownToStyledChars(textVal, baseStyle: currentActiveStyle);
+      pastedChars =
+          parseMarkdownToStyledChars(textVal, baseStyle: currentActiveStyle);
     } else {
       final normalized = textVal.replaceAll(RegExp(r'\n{3,}'), '\n\n');
-      pastedChars = normalized.split('').map((c) => StyledChar(char: c, style: currentActiveStyle)).toList();
+      pastedChars = normalized
+          .split('')
+          .map((c) => StyledChar(char: c, style: currentActiveStyle))
+          .toList();
     }
 
     if (end > start) {
@@ -1231,8 +1249,10 @@ class RichTextEditingController extends TextEditingController {
     bool applyTargetStyle = true;
     if (styleName.startsWith('align-')) {
       TextAlign targetAlign = TextAlign.left;
-      if (styleName == 'align-center') targetAlign = TextAlign.center;
-      else if (styleName == 'align-right') targetAlign = TextAlign.right;
+      if (styleName == 'align-center')
+        targetAlign = TextAlign.center;
+      else if (styleName == 'align-right')
+        targetAlign = TextAlign.right;
       else if (styleName == 'align-justify') targetAlign = TextAlign.justify;
 
       bool allMatch = true;
@@ -1283,14 +1303,17 @@ class RichTextEditingController extends TextEditingController {
       final behavior = ParagraphBlockRegistry.getBehaviorForListType(styleName);
       if (behavior != null) {
         // Query the behavior of the existing line listType to remove its prefix
-        final existingBehavior = ParagraphBlockRegistry.getBehaviorForListType(existingStyle.listType);
+        final existingBehavior = ParagraphBlockRegistry.getBehaviorForListType(
+            existingStyle.listType);
         if (existingBehavior != null) {
           final bool hasPrefix = lineStart < newChars.length &&
               existingBehavior.hasPrefix(newChars[lineStart].char);
           if (hasPrefix) {
             newChars.removeAt(lineStart);
-            if (oldSel.start > lineStart) selectionStartShift -= existingBehavior.prefixLen;
-            if (oldSel.end > lineStart) selectionEndShift -= existingBehavior.prefixLen;
+            if (oldSel.start > lineStart)
+              selectionStartShift -= existingBehavior.prefixLen;
+            if (oldSel.end > lineStart)
+              selectionEndShift -= existingBehavior.prefixLen;
           }
         }
 
@@ -1307,7 +1330,8 @@ class RichTextEditingController extends TextEditingController {
 
         if (prefixChar != null) {
           newChars.insert(lineStart, prefixChar);
-          if (oldSel.start >= lineStart) selectionStartShift += behavior.prefixLen;
+          if (oldSel.start >= lineStart)
+            selectionStartShift += behavior.prefixLen;
           if (oldSel.end >= lineStart) selectionEndShift += behavior.prefixLen;
         }
 
@@ -1323,11 +1347,11 @@ class RichTextEditingController extends TextEditingController {
             newChars[j] = StyledChar(
               char: newChars[j].char,
               style: newChars[j].style.copyWith(
-                  listType: newListType,
-                  checked: false,
-                  strikethrough: false,
-                  heading: targetHeading,
-              ),
+                    listType: newListType,
+                    checked: false,
+                    strikethrough: false,
+                    heading: targetHeading,
+                  ),
             );
           }
         }
@@ -1337,14 +1361,18 @@ class RichTextEditingController extends TextEditingController {
         // Headings are mutually exclusive with lists. If applying heading, clear list formatting and strip list prefix.
         String newListType = existingStyle.listType;
         if (applyTargetStyle && existingStyle.listType != 'normal') {
-          final existingBehavior = ParagraphBlockRegistry.getBehaviorForListType(existingStyle.listType);
+          final existingBehavior =
+              ParagraphBlockRegistry.getBehaviorForListType(
+                  existingStyle.listType);
           if (existingBehavior != null) {
             final bool hasPrefix = lineStart < newChars.length &&
                 existingBehavior.hasPrefix(newChars[lineStart].char);
             if (hasPrefix) {
               newChars.removeAt(lineStart);
-              if (oldSel.start > lineStart) selectionStartShift -= existingBehavior.prefixLen;
-              if (oldSel.end > lineStart) selectionEndShift -= existingBehavior.prefixLen;
+              if (oldSel.start > lineStart)
+                selectionStartShift -= existingBehavior.prefixLen;
+              if (oldSel.end > lineStart)
+                selectionEndShift -= existingBehavior.prefixLen;
             }
           }
           newListType = 'normal';
@@ -1361,11 +1389,11 @@ class RichTextEditingController extends TextEditingController {
             newChars[j] = StyledChar(
               char: newChars[j].char,
               style: newChars[j].style.copyWith(
-                heading: targetHeading,
-                listType: newListType,
-                checked: false,
-                strikethrough: false,
-              ),
+                    heading: targetHeading,
+                    listType: newListType,
+                    checked: false,
+                    strikethrough: false,
+                  ),
             );
           }
         }
@@ -1445,7 +1473,8 @@ class RichTextEditingController extends TextEditingController {
   void insertImage(String path) {
     if (kImageDebug) {
       debugPrint("[Stage 5] Started");
-      debugPrint("Relevant state: image path=$path, selection=$selection, styledChars length=${styledChars.length}");
+      debugPrint(
+          "Relevant state: image path=$path, selection=$selection, styledChars length=${styledChars.length}");
     }
     saveUndoState();
     final sel = selection;
@@ -1479,7 +1508,8 @@ class RichTextEditingController extends TextEditingController {
     notifyListeners();
     if (kImageDebug) {
       debugPrint("[Stage 5] Completed");
-      debugPrint("Relevant state: new text length=${text.length}, new selection=$selection, new styledChars length=${styledChars.length}");
+      debugPrint(
+          "Relevant state: new text length=${text.length}, new selection=$selection, new styledChars length=${styledChars.length}");
     }
   }
 
@@ -1569,7 +1599,8 @@ class RichTextEditingController extends TextEditingController {
   set value(TextEditingValue newValue) {
     if (kImageDebug) {
       debugPrint("[Stage 6] Started");
-      debugPrint("Relevant state: newValue text length=${newValue.text.length}, newValue selection=${newValue.selection}, styledChars length=${styledChars.length}");
+      debugPrint(
+          "Relevant state: newValue text length=${newValue.text.length}, newValue selection=${newValue.selection}, styledChars length=${styledChars.length}");
     }
     var finalValue = newValue;
     final oldText = text;
@@ -1612,7 +1643,8 @@ class RichTextEditingController extends TextEditingController {
       if (diffEndOld - diffStart == 1 && oldText[diffStart] == '\n') {
         if (diffStart > 0 && oldText[diffStart - 1] == '\uFFFC') {
           imageIndexToDelete = diffStart - 1;
-        } else if (diffStart + 1 < oldText.length && oldText[diffStart + 1] == '\uFFFC') {
+        } else if (diffStart + 1 < oldText.length &&
+            oldText[diffStart + 1] == '\uFFFC') {
           imageIndexToDelete = diffStart + 1;
         }
       }
@@ -1621,23 +1653,29 @@ class RichTextEditingController extends TextEditingController {
         if (imageIndexToDelete < diffStart) {
           // Image is before newline (deleting trailing newline of image)
           // Also check if there is a leading newline before the image to clean it up too
-          bool hasLeadingNewline = (imageIndexToDelete > 0 && oldText[imageIndexToDelete - 1] == '\n');
-          
+          bool hasLeadingNewline = (imageIndexToDelete > 0 &&
+              oldText[imageIndexToDelete - 1] == '\n');
+
           newChars.removeAt(diffStart); // removes trailing newline
           newChars.removeAt(imageIndexToDelete); // removes image
           if (hasLeadingNewline) {
-            newChars.removeAt(imageIndexToDelete - 1); // removes leading newline
-            newText = '${newText.substring(0, imageIndexToDelete - 1)}${newText.substring(diffStart)}';
+            newChars
+                .removeAt(imageIndexToDelete - 1); // removes leading newline
+            newText =
+                '${newText.substring(0, imageIndexToDelete - 1)}${newText.substring(diffStart)}';
             finalValue = TextEditingValue(
               text: newText,
-              selection: TextSelection.collapsed(offset: (imageIndexToDelete - 1).clamp(0, newText.length)),
+              selection: TextSelection.collapsed(
+                  offset: (imageIndexToDelete - 1).clamp(0, newText.length)),
             );
             diffStart = imageIndexToDelete - 1;
           } else {
-            newText = '${newText.substring(0, imageIndexToDelete)}${newText.substring(diffStart)}';
+            newText =
+                '${newText.substring(0, imageIndexToDelete)}${newText.substring(diffStart)}';
             finalValue = TextEditingValue(
               text: newText,
-              selection: TextSelection.collapsed(offset: imageIndexToDelete.clamp(0, newText.length)),
+              selection: TextSelection.collapsed(
+                  offset: imageIndexToDelete.clamp(0, newText.length)),
             );
             diffStart = imageIndexToDelete;
           }
@@ -1645,10 +1683,12 @@ class RichTextEditingController extends TextEditingController {
           // Image is after newline
           newChars.removeAt(imageIndexToDelete); // removes image
           newChars.removeAt(diffStart); // removes newline
-          newText = '${newText.substring(0, diffStart)}${newText.substring(imageIndexToDelete)}';
+          newText =
+              '${newText.substring(0, diffStart)}${newText.substring(imageIndexToDelete)}';
           finalValue = TextEditingValue(
             text: newText,
-            selection: TextSelection.collapsed(offset: diffStart.clamp(0, newText.length)),
+            selection: TextSelection.collapsed(
+                offset: diffStart.clamp(0, newText.length)),
           );
         }
         diffEndNew = diffStart;
@@ -1675,7 +1715,7 @@ class RichTextEditingController extends TextEditingController {
           scan++;
         }
         currentActiveStyle = currentActiveStyle.copyWith(heading: 'normal');
-        
+
         finalValue = TextEditingValue(
           text: oldText,
           selection: TextSelection.collapsed(offset: diffStart + 1),
@@ -1700,10 +1740,13 @@ class RichTextEditingController extends TextEditingController {
       if (dividerDeleted) {
         if (diffStart > 0 && newChars[diffStart - 1].char == '\n') {
           newChars.removeAt(diffStart - 1);
-          newText = '${newText.substring(0, diffStart - 1)}${newText.substring(diffStart)}';
+          newText =
+              '${newText.substring(0, diffStart - 1)}${newText.substring(diffStart)}';
           finalValue = TextEditingValue(
             text: newText,
-            selection: TextSelection.collapsed(offset: (newValue.selection.baseOffset - 1).clamp(0, newText.length)),
+            selection: TextSelection.collapsed(
+                offset: (newValue.selection.baseOffset - 1)
+                    .clamp(0, newText.length)),
           );
           diffStart--;
         }
@@ -1730,7 +1773,9 @@ class RichTextEditingController extends TextEditingController {
           final char = newChars[scan].char;
           newChars[scan] = StyledChar(
             char: char,
-            style: newChars[scan].style.copyWith(listType: 'normal', checked: false),
+            style: newChars[scan]
+                .style
+                .copyWith(listType: 'normal', checked: false),
           );
           if (char == '\n') {
             break;
@@ -1762,9 +1807,11 @@ class RichTextEditingController extends TextEditingController {
 
         if (isLineEmptyList) {
           newChars.removeAt(lineStart);
-          final normalStyle = baseStyle.copyWith(listType: 'normal', checked: false);
+          final normalStyle =
+              baseStyle.copyWith(listType: 'normal', checked: false);
           insertedStyledChars.add(StyledChar(char: '\n', style: normalStyle));
-          newText = '${newText.substring(0, lineStart)}${newText.substring(diffStart)}';
+          newText =
+              '${newText.substring(0, lineStart)}${newText.substring(diffStart)}';
           finalValue = TextEditingValue(
             text: newText,
             selection: TextSelection.collapsed(offset: lineStart + 1),
@@ -1790,7 +1837,8 @@ class RichTextEditingController extends TextEditingController {
             insertedStyledChars.add(StyledChar(char: '\n', style: baseStyle));
           }
 
-          final behavior = ParagraphBlockRegistry.getBehaviorForListType(baseStyle.listType);
+          final behavior =
+              ParagraphBlockRegistry.getBehaviorForListType(baseStyle.listType);
           if (behavior != null) {
             final prefixChar = behavior.getPrefixChar(baseStyle);
             insertedStyledChars.add(prefixChar);
@@ -1823,13 +1871,17 @@ class RichTextEditingController extends TextEditingController {
             pastedChars = parseMarkdownToStyledChars(pastedText);
           } else {
             final normalized = pastedText.replaceAll(RegExp(r'\n{3,}'), '\n\n');
-            pastedChars = normalized.split('').map((c) => StyledChar(char: c, style: baseStyle)).toList();
+            pastedChars = normalized
+                .split('')
+                .map((c) => StyledChar(char: c, style: baseStyle))
+                .toList();
           }
 
           insertedStyledChars.addAll(pastedChars);
 
           final insertTextStr = pastedChars.map((sc) => sc.char).join();
-          newText = '${newText.substring(0, diffStart)}$insertTextStr${newText.substring(diffEndNew)}';
+          newText =
+              '${newText.substring(0, diffStart)}$insertTextStr${newText.substring(diffEndNew)}';
           diffEndNew = diffStart + insertTextStr.length;
 
           finalValue = TextEditingValue(
@@ -1854,7 +1906,8 @@ class RichTextEditingController extends TextEditingController {
     super.value = finalValue;
     if (kImageDebug) {
       debugPrint("[Stage 6] Completed");
-      debugPrint("Relevant state: final text length=${text.length}, final selection=$selection, final styledChars length=${styledChars.length}");
+      debugPrint(
+          "Relevant state: final text length=${text.length}, final selection=$selection, final styledChars length=${styledChars.length}");
     }
 
     if (selection.isValid && selection.start >= 0) {
@@ -1876,7 +1929,8 @@ class RichTextEditingController extends TextEditingController {
           } else {
             currentActiveStyle = style;
           }
-        } else if (selection.start >= 0 && selection.start < styledChars.length) {
+        } else if (selection.start >= 0 &&
+            selection.start < styledChars.length) {
           currentActiveStyle = styledChars[selection.start].style;
         } else {
           currentActiveStyle = const Style();
@@ -1962,7 +2016,8 @@ class RichTextEditingController extends TextEditingController {
             alignment: Alignment.center,
             child: Container(
               height: 1.5,
-              color: baseStyle.color?.withOpacity(0.2) ?? Colors.grey.withOpacity(0.2),
+              color: baseStyle.color?.withOpacity(0.2) ??
+                  Colors.grey.withOpacity(0.2),
             ),
           ),
         ));
@@ -1976,8 +2031,10 @@ class RichTextEditingController extends TextEditingController {
         imageKeys[index] = key;
 
         if (kImageDebug) {
-          debugPrint("[Stage 8] Started - Mapping styledChar $index to ResizableImageWidget");
-          debugPrint("Relevant state: image path=$url, imageWidth=$width, caption=$caption");
+          debugPrint(
+              "[Stage 8] Started - Mapping styledChar $index to ResizableImageWidget");
+          debugPrint(
+              "Relevant state: image path=$url, imageWidth=$width, caption=$caption");
         }
 
         children.add(WidgetSpan(
@@ -2040,7 +2097,8 @@ class RichTextEditingController extends TextEditingController {
         int scan = index - 1;
         while (scan >= 0) {
           if (styledChars[scan].char == '\n') {
-            if (scan + 1 < styledChars.length && styledChars[scan + 1].char == '\u2008') {
+            if (scan + 1 < styledChars.length &&
+                styledChars[scan + 1].char == '\u2008') {
               numberIndex++;
             } else {
               break;
@@ -2060,7 +2118,8 @@ class RichTextEditingController extends TextEditingController {
         children.add(TextSpan(
           text: '│ ',
           style: baseStyle.copyWith(
-            color: (baseStyle.color ?? const Color(0xFF6B7280)).withOpacity(0.5),
+            color:
+                (baseStyle.color ?? const Color(0xFF6B7280)).withOpacity(0.5),
             fontWeight: FontWeight.w300,
           ),
         ));
@@ -2084,8 +2143,12 @@ class RichTextEditingController extends TextEditingController {
 
         TextStyle runStyle = baseStyle.copyWith(
           fontWeight: currentStyle.bold ? FontWeight.bold : FontWeight.normal,
-          fontStyle: currentStyle.listType == 'quote' ? FontStyle.italic : (currentStyle.italic ? FontStyle.italic : FontStyle.normal),
-          color: currentStyle.listType == 'quote' ? (currentStyle.color ?? baseStyle.color)?.withOpacity(0.7) : (currentStyle.color ?? baseStyle.color),
+          fontStyle: currentStyle.listType == 'quote'
+              ? FontStyle.italic
+              : (currentStyle.italic ? FontStyle.italic : FontStyle.normal),
+          color: currentStyle.listType == 'quote'
+              ? (currentStyle.color ?? baseStyle.color)?.withOpacity(0.7)
+              : (currentStyle.color ?? baseStyle.color),
           backgroundColor: currentStyle.highlight,
         );
 
@@ -2129,16 +2192,23 @@ class RichTextEditingController extends TextEditingController {
               handleUrlLaunch(currentStyle.linkUrl!);
             };
           _recognizers.add(recognizer);
-          _addSearchHighlightedSpans(children, textRun, start, linkStyle, recognizer);
+          _addSearchHighlightedSpans(
+              children, textRun, start, linkStyle, recognizer);
         } else {
           final urlMatches = findUrlMatches(textRun);
           if (urlMatches.isEmpty) {
-            _addSearchHighlightedSpans(children, textRun, start, runStyle, null);
+            _addSearchHighlightedSpans(
+                children, textRun, start, runStyle, null);
           } else {
             int lastIndex = 0;
             for (final match in urlMatches) {
               if (match.start > lastIndex) {
-                _addSearchHighlightedSpans(children, textRun.substring(lastIndex, match.start), start + lastIndex, runStyle, null);
+                _addSearchHighlightedSpans(
+                    children,
+                    textRun.substring(lastIndex, match.start),
+                    start + lastIndex,
+                    runStyle,
+                    null);
               }
               final url = match.group(0)!;
               final linkStyle = runStyle.copyWith(
@@ -2150,11 +2220,13 @@ class RichTextEditingController extends TextEditingController {
                   handleUrlLaunch(url);
                 };
               _recognizers.add(recognizer);
-              _addSearchHighlightedSpans(children, url, start + match.start, linkStyle, recognizer);
+              _addSearchHighlightedSpans(
+                  children, url, start + match.start, linkStyle, recognizer);
               lastIndex = match.end;
             }
             if (lastIndex < textRun.length) {
-              _addSearchHighlightedSpans(children, textRun.substring(lastIndex), start + lastIndex, runStyle, null);
+              _addSearchHighlightedSpans(children, textRun.substring(lastIndex),
+                  start + lastIndex, runStyle, null);
             }
           }
         }
@@ -2173,7 +2245,8 @@ class RichTextEditingController extends TextEditingController {
   ) {
     final query = searchQuery.trim().toLowerCase();
     if (query.isEmpty || textRun.isEmpty) {
-      children.add(TextSpan(text: textRun, style: runStyle, recognizer: recognizer));
+      children.add(
+          TextSpan(text: textRun, style: runStyle, recognizer: recognizer));
       return;
     }
 
@@ -2199,7 +2272,8 @@ class RichTextEditingController extends TextEditingController {
           activeMatchRange!.end == globalMatchEnd;
 
       final highlightStyle = runStyle.copyWith(
-        backgroundColor: isActive ? const Color(0xFFFFB74D) : const Color(0xFFFFF59D),
+        backgroundColor:
+            isActive ? const Color(0xFFFFB74D) : const Color(0xFFFFF59D),
         color: isActive ? Colors.black : const Color(0xFF1C1C1E),
         fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
       );
@@ -2281,8 +2355,6 @@ class RangeTextEditingController extends TextEditingController {
     return ParagraphBlockRegistry.hasAnyPrefix(t);
   }
 
-
-
   void _syncBackingValue() {
     int base = _localSelection.baseOffset;
     int extent = _localSelection.extentOffset;
@@ -2318,23 +2390,28 @@ class RangeTextEditingController extends TextEditingController {
     _lastKnownText = text;
 
     if (kImageDebug) {
-      debugPrint("RangeTextEditingController[_onParentChanged] segmentIndex=$segmentIndex, parentSel=${parent.selection}, oldSel=$oldSelection, newSel=$_localSelection");
+      debugPrint(
+          "RangeTextEditingController[_onParentChanged] segmentIndex=$segmentIndex, parentSel=${parent.selection}, oldSel=$oldSelection, newSel=$_localSelection");
     }
 
     _syncBackingValue();
 
     if (_localSelection != oldSelection || _lastKnownText != oldText) {
       if (kImageDebug) {
-        debugPrint("  Notifying listeners for segmentIndex=$segmentIndex due to selection/text change");
+        debugPrint(
+            "  Notifying listeners for segmentIndex=$segmentIndex due to selection/text change");
       }
       notifyListeners();
     }
   }
 
   void updateOffsets(int start, int end) {
-    if (startOffset != start || endOffset != end || _lastParentText != parent.text) {
+    if (startOffset != start ||
+        endOffset != end ||
+        _lastParentText != parent.text) {
       if (kImageDebug) {
-        debugPrint("RangeTextEditingController[updateOffsets] segmentIndex=$segmentIndex, start=$start, end=$end, parentTextLength=${parent.text.length}");
+        debugPrint(
+            "RangeTextEditingController[updateOffsets] segmentIndex=$segmentIndex, start=$start, end=$end, parentTextLength=${parent.text.length}");
       }
       final oldSelection = _localSelection;
       final oldText = _lastKnownText;
@@ -2350,7 +2427,8 @@ class RangeTextEditingController extends TextEditingController {
 
       if (_lastKnownText != oldText || _localSelection != oldSelection) {
         if (kImageDebug) {
-          debugPrint("  Notifying listeners for segmentIndex=$segmentIndex inside updateOffsets");
+          debugPrint(
+              "  Notifying listeners for segmentIndex=$segmentIndex inside updateOffsets");
         }
         notifyListeners();
       }
@@ -2377,14 +2455,18 @@ class RangeTextEditingController extends TextEditingController {
         if (parentSel.baseOffset >= start && parentSel.baseOffset <= end) {
           final localOffset = parentSel.baseOffset - start;
           final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
-          final clamped = localOffset < prefixOffset ? prefixOffset : localOffset;
-          _localSelection = TextSelection.collapsed(offset: clamped.clamp(0, text.length));
+          final clamped =
+              localOffset < prefixOffset ? prefixOffset : localOffset;
+          _localSelection =
+              TextSelection.collapsed(offset: clamped.clamp(0, text.length));
         } else if (parentSel.baseOffset > end) {
           final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
-          _localSelection = TextSelection.collapsed(offset: text.length.clamp(prefixOffset, text.length));
+          _localSelection = TextSelection.collapsed(
+              offset: text.length.clamp(prefixOffset, text.length));
         } else {
           final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
-          _localSelection = TextSelection.collapsed(offset: prefixOffset.clamp(0, text.length));
+          _localSelection = TextSelection.collapsed(
+              offset: prefixOffset.clamp(0, text.length));
         }
       } else {
         final selStart = parentSel.start;
@@ -2399,15 +2481,20 @@ class RangeTextEditingController extends TextEditingController {
           final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
 
           _localSelection = TextSelection(
-            baseOffset: (localBase < prefixOffset ? prefixOffset : localBase).clamp(0, text.length),
-            extentOffset: (localExtent < prefixOffset ? prefixOffset : localExtent).clamp(0, text.length),
+            baseOffset: (localBase < prefixOffset ? prefixOffset : localBase)
+                .clamp(0, text.length),
+            extentOffset:
+                (localExtent < prefixOffset ? prefixOffset : localExtent)
+                    .clamp(0, text.length),
           );
         } else if (parentSel.baseOffset > end) {
           final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
-          _localSelection = TextSelection.collapsed(offset: text.length.clamp(prefixOffset, text.length));
+          _localSelection = TextSelection.collapsed(
+              offset: text.length.clamp(prefixOffset, text.length));
         } else {
           final prefixOffset = _hasCheckboxPrefix(text) ? 1 : 0;
-          _localSelection = TextSelection.collapsed(offset: prefixOffset.clamp(0, text.length));
+          _localSelection = TextSelection.collapsed(
+              offset: prefixOffset.clamp(0, text.length));
         }
       }
     } else {
@@ -2429,7 +2516,10 @@ class RangeTextEditingController extends TextEditingController {
   @override
   String get text {
     final range = getRange();
-    if (!range.isValid || range.isCollapsed || range.start < 0 || range.end > parent.styledChars.length) return "";
+    if (!range.isValid ||
+        range.isCollapsed ||
+        range.start < 0 ||
+        range.end > parent.styledChars.length) return "";
     final chars = parent.styledChars.sublist(range.start, range.end);
     return chars.map((sc) => sc.char).join();
   }
@@ -2467,8 +2557,10 @@ class RangeTextEditingController extends TextEditingController {
     // Sanitize composing range to prevent out-of-bounds selection/rendering issues
     TextRange clampedComposing = _composing;
     if (clampedComposing.isValid) {
-      if (clampedComposing.start < 0 || clampedComposing.start > currentText.length ||
-          clampedComposing.end < 0 || clampedComposing.end > currentText.length) {
+      if (clampedComposing.start < 0 ||
+          clampedComposing.start > currentText.length ||
+          clampedComposing.end < 0 ||
+          clampedComposing.end > currentText.length) {
         clampedComposing = TextRange.empty;
       }
     } else {
@@ -2487,8 +2579,10 @@ class RangeTextEditingController extends TextEditingController {
     // Sanitize composing range on setting as well
     TextRange newComposing = newValue.composing;
     if (newComposing.isValid) {
-      if (newComposing.start < 0 || newComposing.start > newValue.text.length ||
-          newComposing.end < 0 || newComposing.end > newValue.text.length) {
+      if (newComposing.start < 0 ||
+          newComposing.start > newValue.text.length ||
+          newComposing.end < 0 ||
+          newComposing.end > newValue.text.length) {
         newComposing = TextRange.empty;
       }
     } else {
@@ -2558,7 +2652,9 @@ class RangeTextEditingController extends TextEditingController {
       _localSelection = clampedSel;
 
       final range = getRange();
-      if (!range.isValid || range.start < 0 || range.end > parent.styledChars.length) return;
+      if (!range.isValid ||
+          range.start < 0 ||
+          range.end > parent.styledChars.length) return;
 
       final start = range.start;
       final end = range.end;
@@ -2593,7 +2689,8 @@ class RangeTextEditingController extends TextEditingController {
       int suffixLen = 0;
       while (suffixLen < oldText.length - prefixLen &&
           suffixLen < newText.length - prefixLen &&
-          oldText[oldText.length - 1 - suffixLen] == newText[newText.length - 1 - suffixLen]) {
+          oldText[oldText.length - 1 - suffixLen] ==
+              newText[newText.length - 1 - suffixLen]) {
         suffixLen++;
       }
 
@@ -2609,7 +2706,7 @@ class RangeTextEditingController extends TextEditingController {
       // path fires correctly.
       final bool isNewlineInsert = insertedText.endsWith('\n');
       final int adjustedInsertStart = isNewlineInsert && insertedText.length > 1
-          ? insertEnd - 1   // point insertStart at the '\n' only
+          ? insertEnd - 1 // point insertStart at the '\n' only
           : insertStart;
 
       if (isNewlineInsert) {
@@ -2620,7 +2717,8 @@ class RangeTextEditingController extends TextEditingController {
         final int adjustedPrefixLen;
         if (adjustedInsertStart > insertStart) {
           // There are pre-newline chars to commit (e.g. the auto-space).
-          final preNewlineText = newText.substring(insertStart, adjustedInsertStart);
+          final preNewlineText =
+              newText.substring(insertStart, adjustedInsertStart);
           final Style baseStyle = parent.currentActiveStyle;
           final List<StyledChar> preChars = preNewlineText
               .split('')
@@ -2638,8 +2736,13 @@ class RangeTextEditingController extends TextEditingController {
         final baseOffset = clampedSel.baseOffset;
         final extentOffset = clampedSel.extentOffset;
         final cleanSelection = TextSelection(
-          baseOffset: (baseOffset > adjustedInsertStart ? baseOffset - 1 : baseOffset).clamp(0, cleanText.length),
-          extentOffset: (extentOffset > adjustedInsertStart ? extentOffset - 1 : extentOffset).clamp(0, cleanText.length),
+          baseOffset:
+              (baseOffset > adjustedInsertStart ? baseOffset - 1 : baseOffset)
+                  .clamp(0, cleanText.length),
+          extentOffset: (extentOffset > adjustedInsertStart
+                  ? extentOffset - 1
+                  : extentOffset)
+              .clamp(0, cleanText.length),
         );
 
         final List<StyledChar> tempChars = [];
@@ -2654,13 +2757,16 @@ class RangeTextEditingController extends TextEditingController {
 
         // Perform structural parent document layout shift in a post-frame callback
         // to avoid EditableText state reconciliation conflicts.
-        debugPrint("[PostFrame] Scheduling layout shift callback for segmentIndex=$segmentIndex");
+        debugPrint(
+            "[PostFrame] Scheduling layout shift callback for segmentIndex=$segmentIndex");
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          debugPrint("[PostFrame] Running layout shift callback for segmentIndex=$segmentIndex, parent.hasListeners=${parent.hasListeners}");
+          debugPrint(
+              "[PostFrame] Running layout shift callback for segmentIndex=$segmentIndex, parent.hasListeners=${parent.hasListeners}");
           if (!parent.hasListeners) return;
 
           if (start < 0 || end > parent.styledChars.length || start > end) {
-            debugPrint("RangeTextEditingController[PostFrame] ABORTED due to out-of-bounds start=$start, end=$end, parent.length=${parent.styledChars.length}");
+            debugPrint(
+                "RangeTextEditingController[PostFrame] ABORTED due to out-of-bounds start=$start, end=$end, parent.length=${parent.styledChars.length}");
             return;
           }
 
@@ -2668,7 +2774,8 @@ class RangeTextEditingController extends TextEditingController {
           newSegmentChars.addAll(effectiveSegmentChars.take(adjustedPrefixLen));
 
           Style baseStyle = parent.currentActiveStyle;
-          if (adjustedPrefixLen > 0 && adjustedPrefixLen - 1 < effectiveSegmentChars.length) {
+          if (adjustedPrefixLen > 0 &&
+              adjustedPrefixLen - 1 < effectiveSegmentChars.length) {
             baseStyle = effectiveSegmentChars[adjustedPrefixLen - 1].style;
           } else if (effectiveSegmentChars.isNotEmpty) {
             baseStyle = effectiveSegmentChars.first.style;
@@ -2678,11 +2785,13 @@ class RangeTextEditingController extends TextEditingController {
             baseStyle = baseStyle.copyWith(heading: 'normal');
           }
           if (baseStyle.listType == 'checkbox') {
-            baseStyle = baseStyle.copyWith(checked: false, strikethrough: false);
+            baseStyle =
+                baseStyle.copyWith(checked: false, strikethrough: false);
           }
 
           bool isLineEmptyList = false;
-          final oldBehavior = ParagraphBlockRegistry.getBehaviorForText(oldText);
+          final oldBehavior =
+              ParagraphBlockRegistry.getBehaviorForText(oldText);
           if (oldBehavior != null && oldText.length == oldBehavior.prefixLen) {
             isLineEmptyList = true;
           }
@@ -2690,17 +2799,21 @@ class RangeTextEditingController extends TextEditingController {
           if (isLineEmptyList) {
             newSegmentChars.clear();
           } else {
-            final listStyle = baseStyle.copyWith(checked: false, strikethrough: false);
+            final listStyle =
+                baseStyle.copyWith(checked: false, strikethrough: false);
             newSegmentChars.add(StyledChar(char: '\n', style: listStyle));
-            final behavior = ParagraphBlockRegistry.getBehaviorForListType(baseStyle.listType);
+            final behavior = ParagraphBlockRegistry.getBehaviorForListType(
+                baseStyle.listType);
             if (behavior != null) {
               newSegmentChars.add(behavior.getPrefixChar(listStyle));
             }
           }
 
-          newSegmentChars.addAll(effectiveSegmentChars.skip(effectiveSegmentChars.length - suffixLen));
+          newSegmentChars.addAll(effectiveSegmentChars
+              .skip(effectiveSegmentChars.length - suffixLen));
 
-          final List<StyledChar> updatedParentChars = List.from(parent.styledChars);
+          final List<StyledChar> updatedParentChars =
+              List.from(parent.styledChars);
           updatedParentChars.removeRange(start, end);
           updatedParentChars.insertAll(start, newSegmentChars);
 
@@ -2709,7 +2822,8 @@ class RangeTextEditingController extends TextEditingController {
             final int oldPrefixLen = oldBehavior?.prefixLen ?? 1;
             selectionShift = -(oldPrefixLen + 1);
           } else {
-            final behavior = ParagraphBlockRegistry.getBehaviorForListType(baseStyle.listType);
+            final behavior = ParagraphBlockRegistry.getBehaviorForListType(
+                baseStyle.listType);
             if (behavior != null) {
               selectionShift = behavior.prefixLen;
             }
@@ -2717,7 +2831,8 @@ class RangeTextEditingController extends TextEditingController {
 
           final TextSelection parentSel = TextSelection(
             baseOffset: start + newValue.selection.baseOffset + selectionShift,
-            extentOffset: start + newValue.selection.extentOffset + selectionShift,
+            extentOffset:
+                start + newValue.selection.extentOffset + selectionShift,
           );
 
           parent.styledChars = updatedParentChars;
@@ -2742,12 +2857,14 @@ class RangeTextEditingController extends TextEditingController {
         newSegmentChars.addAll(oldSegmentChars.take(prefixLen));
 
         Style baseStyle = parent.currentActiveStyle;
-        if (oldSegmentChars.isNotEmpty && !oldSegmentChars.first.style.checked) {
+        if (oldSegmentChars.isNotEmpty &&
+            !oldSegmentChars.first.style.checked) {
           baseStyle = baseStyle.copyWith(checked: false, strikethrough: false);
         }
 
         if (insertedText.length > 1) {
-          final parsed = parseMarkdownToStyledChars(insertedText, baseStyle: baseStyle);
+          final parsed =
+              parseMarkdownToStyledChars(insertedText, baseStyle: baseStyle);
           newSegmentChars.addAll(parsed);
         } else {
           for (int i = insertStart; i < insertEnd; i++) {
@@ -2755,13 +2872,15 @@ class RangeTextEditingController extends TextEditingController {
           }
         }
 
-        newSegmentChars.addAll(oldSegmentChars.skip(oldSegmentChars.length - suffixLen));
+        newSegmentChars
+            .addAll(oldSegmentChars.skip(oldSegmentChars.length - suffixLen));
         _transientStyledChars = newSegmentChars;
 
         // Non-structural edit: Update local super.value synchronously
         super.value = newValue;
 
-        final List<StyledChar> updatedParentChars = List.from(parent.styledChars);
+        final List<StyledChar> updatedParentChars =
+            List.from(parent.styledChars);
         updatedParentChars.removeRange(start, end);
         updatedParentChars.insertAll(start, newSegmentChars);
 
@@ -2793,7 +2912,10 @@ class RangeTextEditingController extends TextEditingController {
       segmentChars = _transientStyledChars!;
       segmentText = super.value.text;
     } else {
-      if (!range.isValid || range.isCollapsed || range.start < 0 || range.end > parent.styledChars.length) {
+      if (!range.isValid ||
+          range.isCollapsed ||
+          range.start < 0 ||
+          range.end > parent.styledChars.length) {
         return TextSpan(text: '', style: style);
       }
       segmentChars = parent.styledChars.sublist(range.start, range.end);
@@ -2803,7 +2925,8 @@ class RangeTextEditingController extends TextEditingController {
     final baseStyle = style ?? const TextStyle();
     final List<InlineSpan> children = [];
 
-    final isCheckedCheckbox = segmentChars.isNotEmpty && segmentChars.first.char == '\u2611';
+    final isCheckedCheckbox =
+        segmentChars.isNotEmpty && segmentChars.first.char == '\u2611';
 
     int i = 0;
     while (i < segmentChars.length) {
@@ -2848,8 +2971,12 @@ class RangeTextEditingController extends TextEditingController {
 
       TextStyle runStyle = baseStyle.copyWith(
         fontWeight: currentStyle.bold ? FontWeight.bold : FontWeight.normal,
-        fontStyle: currentStyle.listType == 'quote' ? FontStyle.italic : (currentStyle.italic ? FontStyle.italic : FontStyle.normal),
-        color: currentStyle.listType == 'quote' ? (currentStyle.color ?? baseStyle.color)?.withOpacity(0.7) : displayColor,
+        fontStyle: currentStyle.listType == 'quote'
+            ? FontStyle.italic
+            : (currentStyle.italic ? FontStyle.italic : FontStyle.normal),
+        color: currentStyle.listType == 'quote'
+            ? (currentStyle.color ?? baseStyle.color)?.withOpacity(0.7)
+            : displayColor,
         backgroundColor: currentStyle.highlight,
       );
 
@@ -2893,16 +3020,23 @@ class RangeTextEditingController extends TextEditingController {
           ..onTap = () {
             parent.handleUrlLaunch(currentStyle.linkUrl!);
           };
-        parent._addSearchHighlightedSpans(children, textRun, range.start + start, linkStyle, recognizer);
+        parent._addSearchHighlightedSpans(
+            children, textRun, range.start + start, linkStyle, recognizer);
       } else {
         final urlMatches = parent.findUrlMatches(textRun);
         if (urlMatches.isEmpty) {
-          parent._addSearchHighlightedSpans(children, textRun, range.start + start, runStyle, null);
+          parent._addSearchHighlightedSpans(
+              children, textRun, range.start + start, runStyle, null);
         } else {
           int lastIndex = 0;
           for (final match in urlMatches) {
             if (match.start > lastIndex) {
-              parent._addSearchHighlightedSpans(children, textRun.substring(lastIndex, match.start), range.start + start + lastIndex, runStyle, null);
+              parent._addSearchHighlightedSpans(
+                  children,
+                  textRun.substring(lastIndex, match.start),
+                  range.start + start + lastIndex,
+                  runStyle,
+                  null);
             }
             final url = match.group(0)!;
             final linkStyle = runStyle.copyWith(
@@ -2913,11 +3047,17 @@ class RangeTextEditingController extends TextEditingController {
               ..onTap = () {
                 parent.handleUrlLaunch(url);
               };
-            parent._addSearchHighlightedSpans(children, url, range.start + start + match.start, linkStyle, recognizer);
+            parent._addSearchHighlightedSpans(children, url,
+                range.start + start + match.start, linkStyle, recognizer);
             lastIndex = match.end;
           }
           if (lastIndex < textRun.length) {
-            parent._addSearchHighlightedSpans(children, textRun.substring(lastIndex), range.start + start + lastIndex, runStyle, null);
+            parent._addSearchHighlightedSpans(
+                children,
+                textRun.substring(lastIndex),
+                range.start + start + lastIndex,
+                runStyle,
+                null);
           }
         }
       }
@@ -2926,7 +3066,9 @@ class RangeTextEditingController extends TextEditingController {
     return TextSpan(children: children, style: baseStyle);
   }
 }
-List<StyledChar> parseMarkdownToStyledChars(String markdown, {Style? baseStyle}) {
+
+List<StyledChar> parseMarkdownToStyledChars(String markdown,
+    {Style? baseStyle}) {
   final List<StyledChar> result = [];
   final lines = markdown.split('\n');
   final fallbackStyle = baseStyle ?? const Style();
@@ -2936,7 +3078,8 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown, {Style? baseStyle})
 
     int indent = (i == 0) ? fallbackStyle.indent : 0;
     int spaces = 0;
-    while (spaces < line.length && (line[spaces] == ' ' || line[spaces] == '\t')) {
+    while (
+        spaces < line.length && (line[spaces] == ' ' || line[spaces] == '\t')) {
       if (line[spaces] == '\t') {
         indent += 1;
         spaces++;
@@ -3046,12 +3189,14 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown, {Style? baseStyle})
         int closeTag = line.indexOf('>', idx + 5);
         if (closeTag != -1) {
           final tagContent = line.substring(idx, closeTag);
-          final colorMatch = RegExp(r'color="0x([0-9a-fA-F]+)"').firstMatch(tagContent);
+          final colorMatch =
+              RegExp(r'color="0x([0-9a-fA-F]+)"').firstMatch(tagContent);
           if (colorMatch != null) {
             final colorHex = colorMatch.group(1)!;
             color = Color(int.parse(colorHex, radix: 16));
           }
-          final highlightMatch = RegExp(r'highlight="0x([0-9a-fA-F]+)"').firstMatch(tagContent);
+          final highlightMatch =
+              RegExp(r'highlight="0x([0-9a-fA-F]+)"').firstMatch(tagContent);
           if (highlightMatch != null) {
             final highlightHex = highlightMatch.group(1)!;
             highlight = Color(int.parse(highlightHex, radix: 16));
@@ -3070,7 +3215,8 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown, {Style? baseStyle})
       }
 
       if (line[idx] == '!' && idx + 1 < line.length && line[idx + 1] == '[') {
-        int closeBracket = (idx + 2 <= line.length) ? line.indexOf(']', idx + 2) : -1;
+        int closeBracket =
+            (idx + 2 <= line.length) ? line.indexOf(']', idx + 2) : -1;
         if (closeBracket != -1 &&
             closeBracket + 1 < line.length &&
             line[closeBracket + 1] == '(') {
@@ -3186,7 +3332,9 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown, {Style? baseStyle})
             bold: bold || fallbackStyle.bold,
             italic: italic || fallbackStyle.italic,
             underline: underline || fallbackStyle.underline,
-            strikethrough: listType == 'checkbox' ? (checked || strikethrough) : (strikethrough || fallbackStyle.strikethrough),
+            strikethrough: listType == 'checkbox'
+                ? (checked || strikethrough)
+                : (strikethrough || fallbackStyle.strikethrough),
             heading: heading,
             align: align,
             listType: listType,
@@ -3260,16 +3408,19 @@ String generateInlineMarkdown(List<StyledChar> lineChars) {
       }
 
       int runEnd = i;
-      while (runEnd < lineChars.length && lineChars[runEnd].style.linkUrl == linkUrl) {
+      while (runEnd < lineChars.length &&
+          lineChars[runEnd].style.linkUrl == linkUrl) {
         runEnd++;
       }
       final linkChars = lineChars.sublist(i, runEnd);
       i = runEnd - 1;
 
-      final clearedLinkChars = linkChars.map((sc) => StyledChar(
-        char: sc.char,
-        style: sc.style.copyWith(clearLink: true),
-      )).toList();
+      final clearedLinkChars = linkChars
+          .map((sc) => StyledChar(
+                char: sc.char,
+                style: sc.style.copyWith(clearLink: true),
+              ))
+          .toList();
 
       final linkText = generateInlineMarkdown(clearedLinkChars);
       sb.write('[$linkText]($linkUrl)');
@@ -3324,8 +3475,10 @@ String generateInlineMarkdown(List<StyledChar> lineChars) {
       highlight = style.highlight;
       if (color != null || highlight != null) {
         sb.write('<span');
-        if (color != null) sb.write(' color="0x${color.value.toRadixString(16)}"');
-        if (highlight != null) sb.write(' highlight="0x${highlight.value.toRadixString(16)}"');
+        if (color != null)
+          sb.write(' color="0x${color.value.toRadixString(16)}"');
+        if (highlight != null)
+          sb.write(' highlight="0x${highlight.value.toRadixString(16)}"');
         sb.write('>');
       }
     }
@@ -3381,7 +3534,8 @@ String generateMarkdownFromStyledChars(List<StyledChar> styledChars) {
   for (int i = 0; i < lines.length; i++) {
     final lineChars = lines[i];
     final style = lineChars.isNotEmpty ? lineChars.first.style : const Style();
-    final bool isChecked = style.checked || (lineChars.isNotEmpty && lineChars.first.char == '\u2611');
+    final bool isChecked = style.checked ||
+        (lineChars.isNotEmpty && lineChars.first.char == '\u2611');
 
     String lineContent = "";
     if (style.isDivider) {
@@ -3400,8 +3554,13 @@ String generateMarkdownFromStyledChars(List<StyledChar> styledChars) {
     }
 
     final String indentSpaces = '  ' * style.indent;
-    if (style.listType == 'checkbox' || (lineChars.isNotEmpty && (lineChars.first.char == '\u2610' || lineChars.first.char == '\u2611'))) {
-      lineContent = isChecked ? '${indentSpaces}- [x] $lineContent' : '${indentSpaces}- [ ] $lineContent';
+    if (style.listType == 'checkbox' ||
+        (lineChars.isNotEmpty &&
+            (lineChars.first.char == '\u2610' ||
+                lineChars.first.char == '\u2611'))) {
+      lineContent = isChecked
+          ? '${indentSpaces}- [x] $lineContent'
+          : '${indentSpaces}- [ ] $lineContent';
     } else if (style.listType == 'bullet') {
       lineContent = '${indentSpaces}- $lineContent';
     } else if (style.listType == 'quote') {

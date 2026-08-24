@@ -46,11 +46,13 @@ class FirstRunRecoveryDetector {
     SessionType? overrideSessionType,
   }) async {
     final activeUserId = overrideUserId ?? _sessionManager.activeUserId;
-    final activeSessionType = overrideSessionType ?? _sessionManager.activeSessionType;
+    final activeSessionType =
+        overrideSessionType ?? _sessionManager.activeSessionType;
 
     // 1. Session Type Gate: Offline sessions immediately bypass recovery
     if (activeSessionType == SessionType.offline) {
-      final localSummary = await _localDataDetector.detectLocalData(userId: activeUserId);
+      final localSummary =
+          await _localDataDetector.detectLocalData(userId: activeUserId);
       return FirstRunRecoveryResult.noRecoveryRequired(
         localSummary: localSummary,
         recoveryStatus: RecoveryCompletionStatus.notCompleted,
@@ -62,12 +64,14 @@ class FirstRunRecoveryDetector {
     }
 
     // 2. Resolve Provider User ID Hash for active identity
-    final providerUserIdHash = overrideProviderUserIdHash ?? await _resolveProviderUserIdHash(activeUserId);
+    final providerUserIdHash = overrideProviderUserIdHash ??
+        await _resolveProviderUserIdHash(activeUserId);
 
     // 3. Persistent Status Gate: If recovery was already completed/skipped, bypass network check
     final currentStatus = await _completionStore.getStatus(providerUserIdHash);
     if (currentStatus != RecoveryCompletionStatus.notCompleted) {
-      final localSummary = await _localDataDetector.detectLocalData(userId: activeUserId);
+      final localSummary =
+          await _localDataDetector.detectLocalData(userId: activeUserId);
       return FirstRunRecoveryResult.noRecoveryRequired(
         localSummary: localSummary,
         recoveryStatus: currentStatus,

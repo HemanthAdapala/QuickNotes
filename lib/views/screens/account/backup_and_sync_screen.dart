@@ -14,8 +14,8 @@ class BackupAndSyncScreen extends StatefulWidget {
 }
 
 class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
-  String _username = 'hemanth_adapala';
-  String _email = 'hemanth1.adapala';
+  String _username = 'Guest';
+  String _email = 'Not connected';
 
   @override
   void initState() {
@@ -26,8 +26,10 @@ class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
   Future<void> _loadProfileData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      final uname = prefs.getString('profile_username') ?? prefs.getString('profile_full_name');
-      final mail = prefs.getString('profile_email') ?? prefs.getString('user_email');
+      final uname = prefs.getString('profile_username') ??
+          prefs.getString('profile_full_name');
+      final mail =
+          prefs.getString('profile_email') ?? prefs.getString('user_email');
       if (uname != null && uname.trim().isNotEmpty) {
         _username = uname.trim().replaceAll('@', '');
       }
@@ -49,7 +51,8 @@ class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
           children: [
             // Top Navigation Bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Row(
                 children: [
                   TactileButton(
@@ -77,7 +80,8 @@ class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
                           'assets/icons/angle_left.svg',
                           width: 18,
                           height: 18,
-                          colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                          colorFilter: const ColorFilter.mode(
+                              primaryTextColor, BlendMode.srcIn),
                         ),
                       ),
                     ),
@@ -109,13 +113,15 @@ class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0, vertical: 24.0),
                 child: Column(
                   children: [
                     GroupedListContainer(
                       children: [
                         GroupedTile.keyValue(
-                          iconPath: 'assets/icons/bottom_navigation/settings.svg',
+                          iconPath:
+                              'assets/icons/bottom_navigation/settings.svg',
                           title: 'User Name',
                           value: _username,
                         ),
@@ -131,7 +137,8 @@ class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
 
                     // Bottom Caption Text
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32.0, vertical: 16.0),
                       child: Text(
                         "Back up your notes and tasks to the Gmail so you don't lose them when you get a new Android phone.",
                         textAlign: TextAlign.center,

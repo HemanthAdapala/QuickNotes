@@ -29,7 +29,8 @@ class SqliteTasksRepository implements TasksRepository {
   String _resolveActiveUserId() {
     final activeId = SessionManager().activeUserId;
     if (activeId == null || activeId.isEmpty) {
-      throw const OwnershipException('No active canonical user exists for this repository operation.');
+      throw const OwnershipException(
+          'No active canonical user exists for this repository operation.');
     }
     return activeId;
   }
@@ -148,10 +149,13 @@ class SqliteTasksRepository implements TasksRepository {
       if (existingMap.isNotEmpty) {
         final ownerId = existingMap.first['userId'] as String?;
         if (ownerId != null && ownerId != uid) {
-          throw OwnershipException('Ownership violation: User $uid cannot update task belonging to User $ownerId');
+          throw OwnershipException(
+              'Ownership violation: User $uid cannot update task belonging to User $ownerId');
         }
       }
-      final currentVersion = existingMap.isNotEmpty ? (existingMap.first['version'] as int? ?? 1) : 1;
+      final currentVersion = existingMap.isNotEmpty
+          ? (existingMap.first['version'] as int? ?? 1)
+          : 1;
       final newVersion = currentVersion + 1;
       final now = DateTime.now();
 
@@ -217,7 +221,8 @@ class SqliteTasksRepository implements TasksRepository {
       if (existingMap.isEmpty) return 0;
       final ownerId = existingMap.first['userId'] as String?;
       if (ownerId != null && ownerId != uid) {
-        throw OwnershipException('Ownership violation: User $uid cannot trash task belonging to User $ownerId');
+        throw OwnershipException(
+            'Ownership violation: User $uid cannot trash task belonging to User $ownerId');
       }
       final existing = TaskItem.fromMap(existingMap.first);
       if (existing.isDeleted) return 1; // Idempotent
@@ -259,7 +264,8 @@ class SqliteTasksRepository implements TasksRepository {
       if (existingMap.isEmpty) return 0;
       final ownerId = existingMap.first['userId'] as String?;
       if (ownerId != null && ownerId != uid) {
-        throw OwnershipException('Ownership violation: User $uid cannot restore task belonging to User $ownerId');
+        throw OwnershipException(
+            'Ownership violation: User $uid cannot restore task belonging to User $ownerId');
       }
       final existing = TaskItem.fromMap(existingMap.first);
       if (!existing.isDeleted) return 1; // Idempotent
@@ -301,7 +307,8 @@ class SqliteTasksRepository implements TasksRepository {
       if (existingMap.isEmpty) return 0;
       final ownerId = existingMap.first['userId'] as String?;
       if (ownerId != null && ownerId != uid) {
-        throw OwnershipException('Ownership violation: User $uid cannot delete task belonging to User $ownerId');
+        throw OwnershipException(
+            'Ownership violation: User $uid cannot delete task belonging to User $ownerId');
       }
       final existing = TaskItem.fromMap(existingMap.first);
 
@@ -376,4 +383,3 @@ class SqliteTasksRepository implements TasksRepository {
     return await _dbService.generateUniqueNotificationId();
   }
 }
-

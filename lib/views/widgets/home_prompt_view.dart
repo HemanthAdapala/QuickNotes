@@ -26,10 +26,10 @@ const List<String> _kWittyMessages = [
 ];
 
 // ── Illustration palette (from existing note card colors) ─────────────────────
-const Color _kSoftPink   = Color(0xFFFFB3BA);
+const Color _kSoftPink = Color(0xFFFFB3BA);
 const Color _kSoftYellow = Color(0xFFFFE4A0);
-const Color _kSoftBlue   = Color(0xFFB3D9FF);
-const Color _kSoftGreen  = Color(0xFFB3F5C4);
+const Color _kSoftBlue = Color(0xFFB3D9FF);
+const Color _kSoftGreen = Color(0xFFB3F5C4);
 const Color _kSoftPurple = Color(0xFFD4B3FF);
 
 // ── Streak helper (Change 2) ──────────────────────────────────────────────────
@@ -72,6 +72,7 @@ class HomePromptView extends StatefulWidget {
   final VoidCallback? onProfileTap;
   final VoidCallback? onMoreOptionsTap;
   final String? greetingOverride;
+  final String displayName;
   final bool isNotesActive;
   final bool isMoreOptionsOpen;
   final Widget? moreOptionsPopupWidget;
@@ -91,6 +92,7 @@ class HomePromptView extends StatefulWidget {
     this.onProfileTap,
     this.onMoreOptionsTap,
     this.greetingOverride,
+    required this.displayName,
     this.isNotesActive = true,
     this.isMoreOptionsOpen = false,
     this.moreOptionsPopupWidget,
@@ -155,27 +157,13 @@ class HomePromptView extends StatefulWidget {
 
 class _HomePromptViewState extends State<HomePromptView> {
   late final String _placeholderPrompt;
-  String _displayName = 'HA';
-
   @override
   void initState() {
     super.initState();
-    _loadUserDisplayName();
     if (Platform.environment.containsKey('FLUTTER_TEST')) {
       _placeholderPrompt = "Start writing...";
     } else {
       _placeholderPrompt = HomePromptView._getRandomPrompt();
-    }
-  }
-
-  Future<void> _loadUserDisplayName() async {
-    final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString('profile_username') ?? prefs.getString('profile_full_name');
-    if (name != null && name.trim().isNotEmpty && mounted) {
-      setState(() {
-        final parts = name.trim().split(' ');
-        _displayName = parts.isNotEmpty ? parts.first : name.trim();
-      });
     }
   }
 
@@ -238,7 +226,9 @@ class _HomePromptViewState extends State<HomePromptView> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
-                  color: widget.isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
+                  color: widget.isNotesActive
+                      ? const Color(0xFFFFCC00)
+                      : const Color(0xFF0088FF),
                 ),
               ),
               TextSpan(
@@ -295,11 +285,13 @@ class _HomePromptViewState extends State<HomePromptView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Hi ${_displayName},",
+                  "Hi ${widget.displayName},",
                   style: GoogleFonts.inter(
                     fontSize: 36.0,
                     fontWeight: FontWeight.bold,
-                    color: widget.isDarkBackground ? Colors.white : const Color(0xFF1C1C1E),
+                    color: widget.isDarkBackground
+                        ? Colors.white
+                        : const Color(0xFF1C1C1E),
                     height: 1.1,
                   ),
                 ),
@@ -326,8 +318,9 @@ class _HomePromptViewState extends State<HomePromptView> {
                 const SizedBox(height: 45.0),
                 TweenAnimationBuilder<double>(
                   tween: Tween<double>(begin: 0.0, end: 1.0),
-                  duration:
-                      isTest ? Duration.zero : const Duration(milliseconds: 800),
+                  duration: isTest
+                      ? Duration.zero
+                      : const Duration(milliseconds: 800),
                   curve: Curves.easeOutCubic,
                   builder: (context, value, child) => Opacity(
                     opacity: value,
@@ -353,7 +346,9 @@ class _HomePromptViewState extends State<HomePromptView> {
                         style: GoogleFonts.inter(
                           fontSize: 36,
                           fontWeight: FontWeight.w700,
-                          color: widget.isDarkBackground ? Colors.white : const Color(0xFF222222),
+                          color: widget.isDarkBackground
+                              ? Colors.white
+                              : const Color(0xFF222222),
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -383,7 +378,9 @@ class _HomePromptViewState extends State<HomePromptView> {
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: widget.isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
+                              color: widget.isNotesActive
+                                  ? const Color(0xFFFFCC00)
+                                  : const Color(0xFF0088FF),
                               letterSpacing: 0.8,
                             ),
                           ),
@@ -488,7 +485,9 @@ class _HomePromptViewState extends State<HomePromptView> {
                                 padding: EdgeInsets.only(top: 3.0),
                                 child: _BlinkingCaret(
                                   height: 22.0,
-                                  color: widget.isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
+                                  color: widget.isNotesActive
+                                      ? const Color(0xFFFFCC00)
+                                      : const Color(0xFF0088FF),
                                 ),
                               ),
                               const SizedBox(width: 8.0),
@@ -523,7 +522,8 @@ class _HomePromptViewState extends State<HomePromptView> {
                                         fontSize: 20.0,
                                         color: widget.isDarkBackground
                                             ? Colors.white.withOpacity(0.4)
-                                            : const Color(0xFF333333).withOpacity(0.3),
+                                            : const Color(0xFF333333)
+                                                .withOpacity(0.3),
                                         height: 1.4,
                                       ),
                                     ),
@@ -580,8 +580,7 @@ class _EmptyStateColumn extends StatelessWidget {
           GestureDetector(
             onTap: onWriteNote,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
               decoration: BoxDecoration(
                 color: const Color(0xFFF5A623),
                 borderRadius: BorderRadius.circular(24),
@@ -693,11 +692,39 @@ class _NoteStackPainter extends CustomPainter {
   final List<double> shapeProgress;
 
   static const List<_ShapeData> _shapes = [
-    _ShapeData(dx: -22, dy: -20, w: 88, h: 66, rotation: -0.30, color: _kSoftPink,   isRect: true),
-    _ShapeData(dx:  18, dy: -28, w: 76, h: 58, rotation:  0.16, color: _kSoftYellow, isRect: true),
-    _ShapeData(dx:  26, dy:  16,                radius: 36,       color: _kSoftBlue,   isRect: false),
-    _ShapeData(dx: -28, dy:  22, w: 82, h: 62, rotation: -0.10, color: _kSoftGreen,  isRect: true),
-    _ShapeData(dx:   8, dy:  32, w: 72, h: 54, rotation:  0.24, color: _kSoftPurple, isRect: true),
+    _ShapeData(
+        dx: -22,
+        dy: -20,
+        w: 88,
+        h: 66,
+        rotation: -0.30,
+        color: _kSoftPink,
+        isRect: true),
+    _ShapeData(
+        dx: 18,
+        dy: -28,
+        w: 76,
+        h: 58,
+        rotation: 0.16,
+        color: _kSoftYellow,
+        isRect: true),
+    _ShapeData(dx: 26, dy: 16, radius: 36, color: _kSoftBlue, isRect: false),
+    _ShapeData(
+        dx: -28,
+        dy: 22,
+        w: 82,
+        h: 62,
+        rotation: -0.10,
+        color: _kSoftGreen,
+        isRect: true),
+    _ShapeData(
+        dx: 8,
+        dy: 32,
+        w: 72,
+        h: 54,
+        rotation: 0.24,
+        color: _kSoftPurple,
+        isRect: true),
   ];
 
   const _NoteStackPainter({required this.shapeProgress});
@@ -800,8 +827,7 @@ class _WittyMessageRotatorState extends State<_WittyMessageRotator> {
             position: Tween<Offset>(
               begin: const Offset(0, 0.5),
               end: Offset.zero,
-            ).animate(
-                CurvedAnimation(parent: animation, curve: kCurveEnter)),
+            ).animate(CurvedAnimation(parent: animation, curve: kCurveEnter)),
             child: child,
           ),
         ),

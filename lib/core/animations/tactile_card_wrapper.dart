@@ -17,7 +17,8 @@ class TactileCardWrapper extends StatefulWidget {
   State<TactileCardWrapper> createState() => _TactileCardWrapperState();
 }
 
-class _TactileCardWrapperState extends State<TactileCardWrapper> with SingleTickerProviderStateMixin {
+class _TactileCardWrapperState extends State<TactileCardWrapper>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -47,14 +48,17 @@ class _TactileCardWrapperState extends State<TactileCardWrapper> with SingleTick
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: (_) {
-        _controller.animateTo(1.0, duration: kDurationCardPress, curve: kCurveExit);
+        _controller.animateTo(1.0,
+            duration: kDurationCardPress, curve: kCurveExit);
       },
       onTapUp: (_) {
-        _controller.animateTo(0.0, duration: kDurationCardRelease, curve: kCurveEnter);
+        _controller.animateTo(0.0,
+            duration: kDurationCardRelease, curve: kCurveEnter);
         widget.onTap();
       },
       onTapCancel: () {
-        _controller.animateTo(0.0, duration: kDurationCardRelease, curve: kCurveEnter);
+        _controller.animateTo(0.0,
+            duration: kDurationCardRelease, curve: kCurveEnter);
       },
       onLongPress: widget.onLongPress,
       child: ScaleTransition(

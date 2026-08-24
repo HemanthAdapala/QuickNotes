@@ -8,7 +8,7 @@ class NoteSummary {
   final int colorValue;
   final String? folderId;
   final String? folderName;
-  final String? categoryId;  
+  final String? categoryId;
   final String? categoryName;
   final int? categoryColor;
   final DateTime createdAt;
@@ -48,10 +48,11 @@ class NoteSummary {
     required this.checklistProgress,
   });
 
-  factory NoteSummary.fromMap(Map<String, dynamic> map, {String? folderName, int? categoryColor}) {
+  factory NoteSummary.fromMap(Map<String, dynamic> map,
+      {String? folderName, int? categoryColor}) {
     final noteType = 'text';
     final content = map['content'] as String? ?? '';
-    
+
     String progress = '';
     String previewTextVal = map['previewText'] as String? ?? '';
     if (previewTextVal.isEmpty) {
@@ -60,7 +61,9 @@ class NoteSummary {
 
     // truncate preview to first 120 characters
     final cleanPreview = previewTextVal.trim().replaceAll('\n', ' ');
-    final preview = cleanPreview.length > 120 ? '${cleanPreview.substring(0, 120)}...' : cleanPreview;
+    final preview = cleanPreview.length > 120
+        ? '${cleanPreview.substring(0, 120)}...'
+        : cleanPreview;
 
     final cat = map['category'] as String? ?? 'Uncategorized';
 
@@ -71,7 +74,7 @@ class NoteSummary {
     final isLocked = map['isLocked'] == 1 || map['isLocked'] == true;
     final isHabit = map['isHabit'] == 1 || map['isHabit'] == true;
     final habitStreak = map['habitStreak'] as int? ?? 0;
-    
+
     DateTime? reminder;
     if (map['reminderTime'] != null) {
       reminder = DateTime.tryParse(map['reminderTime'] as String);
@@ -102,10 +105,13 @@ class NoteSummary {
     );
   }
 
-  factory NoteSummary.fromNote(Note note, {String? folderName, int? categoryColor}) {
+  factory NoteSummary.fromNote(Note note,
+      {String? folderName, int? categoryColor}) {
     String progress = '';
     final cleanPreview = note.previewText.trim().replaceAll('\n', ' ');
-    final preview = cleanPreview.length > 120 ? '${cleanPreview.substring(0, 120)}...' : cleanPreview;
+    final preview = cleanPreview.length > 120
+        ? '${cleanPreview.substring(0, 120)}...'
+        : cleanPreview;
 
     return NoteSummary(
       id: note.id,

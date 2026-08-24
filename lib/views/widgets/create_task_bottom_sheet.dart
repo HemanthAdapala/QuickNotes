@@ -79,7 +79,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       _selectedDate = task.dueDate.toLocal();
       if (task.reminderTime != null) {
         final localReminder = task.reminderTime!.toLocal();
-        _startTime = TimeOfDay(hour: localReminder.hour, minute: localReminder.minute);
+        _startTime =
+            TimeOfDay(hour: localReminder.hour, minute: localReminder.minute);
       } else {
         final localDue = task.dueDate.toLocal();
         _startTime = TimeOfDay(hour: localDue.hour, minute: localDue.minute);
@@ -174,7 +175,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
     final recurrenceRule = _selectedRecurrence != null
         ? RecurrenceRule(type: _selectedRecurrence!, interval: 1)
         : null;
-    
+
     if (isEditing) {
       final updated = widget.taskToEdit!.copyWith(
         title: _titleController.text.trim(),
@@ -230,7 +231,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       SnackBar(
         content: Text(
           toastMsg,
-          style: const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500),
+          style:
+              const TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w500),
         ),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
@@ -381,9 +383,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                         controller: _titleController,
                         hint: 'Add a task title',
                       ),
-
                       const SizedBox(height: 16),
-
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -429,27 +429,20 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                           ),
                         ],
                       ),
-
                       if (_showPriorityPopup) ...[
                         const SizedBox(height: 8),
                         _priorityPopup(),
                       ],
-
                       const SizedBox(height: 16),
-
                       _sectionLabel('Task Description (Optional)'),
                       const SizedBox(height: 8),
                       _inputField(
                         controller: _descController,
                         hint: 'Add details',
                       ),
-
                       const SizedBox(height: 16),
-
                       _reminderSection(),
-
                       const SizedBox(height: 16),
-
                       _recurrenceSection(),
                     ],
                   ),
@@ -514,8 +507,10 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
             child: Row(
               children: [
                 _buildReminderModePill(ReminderMode.off, 'Off', null),
-                _buildReminderModePill(ReminderMode.notification, '🔔 Notification', const Color(0xFF0088FF)),
-                _buildReminderModePill(ReminderMode.alarm, '⏰ Alarm', const Color(0xFFFF9500)),
+                _buildReminderModePill(ReminderMode.notification,
+                    '🔔 Notification', const Color(0xFF0088FF)),
+                _buildReminderModePill(
+                    ReminderMode.alarm, '⏰ Alarm', const Color(0xFFFF9500)),
               ],
             ),
           ),
@@ -524,7 +519,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
     );
   }
 
-  Widget _buildReminderModePill(ReminderMode mode, String label, Color? activeColor) {
+  Widget _buildReminderModePill(
+      ReminderMode mode, String label, Color? activeColor) {
     final isSelected = _selectedReminderMode == mode;
     return Expanded(
       child: GestureDetector(
@@ -804,7 +800,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _priorityOption('High', const Color(0x7FFF383C), TaskPriority.red),
-          _priorityOption('Medium', const Color(0x7FFFCC00), TaskPriority.yellow),
+          _priorityOption(
+              'Medium', const Color(0x7FFFCC00), TaskPriority.yellow),
           _priorityOption('Low', const Color(0x7F34C759), TaskPriority.green),
         ],
       ),

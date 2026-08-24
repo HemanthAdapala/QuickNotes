@@ -65,7 +65,9 @@ class RemoteBackupMetadata {
       fileName: map['fileName'] as String,
       fileSizeBytes: (map['fileSizeBytes'] as num).toInt(),
       createdAt: DateTime.parse(map['createdAt'] as String).toUtc(),
-      modifiedAt: map['modifiedAt'] != null ? DateTime.parse(map['modifiedAt'] as String).toUtc() : null,
+      modifiedAt: map['modifiedAt'] != null
+          ? DateTime.parse(map['modifiedAt'] as String).toUtc()
+          : null,
       backupId: map['backupId'] as String,
       formatVersion: (map['formatVersion'] as num).toInt(),
       databaseSchemaVersion: (map['databaseSchemaVersion'] as num).toInt(),
@@ -82,7 +84,8 @@ class RemoteBackupMetadata {
   String toJsonString() => jsonEncode(toJson());
 
   factory RemoteBackupMetadata.fromJsonString(String jsonStr) {
-    return RemoteBackupMetadata.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+    return RemoteBackupMetadata.fromJson(
+        jsonDecode(jsonStr) as Map<String, dynamic>);
   }
 
   @override
@@ -95,7 +98,8 @@ class RemoteBackupMetadata {
           sha256Checksum == other.sha256Checksum;
 
   @override
-  int get hashCode => remoteFileId.hashCode ^ backupId.hashCode ^ sha256Checksum.hashCode;
+  int get hashCode =>
+      remoteFileId.hashCode ^ backupId.hashCode ^ sha256Checksum.hashCode;
 
   @override
   String toString() =>

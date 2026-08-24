@@ -27,7 +27,8 @@ class SqliteFoldersRepository implements FoldersRepository {
   String _resolveActiveUserId() {
     final activeId = SessionManager().activeUserId;
     if (activeId == null || activeId.isEmpty) {
-      throw const OwnershipException('No active canonical user exists for this repository operation.');
+      throw const OwnershipException(
+          'No active canonical user exists for this repository operation.');
     }
     return activeId;
   }
@@ -113,10 +114,13 @@ class SqliteFoldersRepository implements FoldersRepository {
       if (existingMap.isNotEmpty) {
         final ownerId = existingMap.first['userId'] as String?;
         if (ownerId != null && ownerId != uid) {
-          throw OwnershipException('Ownership violation: User $uid cannot update folder belonging to User $ownerId');
+          throw OwnershipException(
+              'Ownership violation: User $uid cannot update folder belonging to User $ownerId');
         }
       }
-      final currentVersion = existingMap.isNotEmpty ? (existingMap.first['version'] as int? ?? 1) : 1;
+      final currentVersion = existingMap.isNotEmpty
+          ? (existingMap.first['version'] as int? ?? 1)
+          : 1;
       final newVersion = currentVersion + 1;
       final now = DateTime.now();
 
@@ -147,7 +151,8 @@ class SqliteFoldersRepository implements FoldersRepository {
   }
 
   /// Arbitrary depth traversal to find all descendant folder IDs for a given parent
-  Future<List<String>> _getDescendantFolderIds(DatabaseExecutor executor, String uid, String parentId) async {
+  Future<List<String>> _getDescendantFolderIds(
+      DatabaseExecutor executor, String uid, String parentId) async {
     final List<String> result = [];
     final List<String> queue = [parentId];
 
@@ -183,7 +188,8 @@ class SqliteFoldersRepository implements FoldersRepository {
       final folderMap = existing.first;
       final ownerId = folderMap['userId'] as String?;
       if (ownerId != null && ownerId != uid) {
-        throw OwnershipException('Ownership violation: User $uid cannot trash folder belonging to User $ownerId');
+        throw OwnershipException(
+            'Ownership violation: User $uid cannot trash folder belonging to User $ownerId');
       }
 
       final isAlreadyDeleted = (folderMap['isDeleted'] as int? ?? 0) == 1;
@@ -202,7 +208,8 @@ class SqliteFoldersRepository implements FoldersRepository {
         );
         if (fMaps.isEmpty) continue;
         final fObj = Folder.fromMap(fMaps.first);
-        if (fId != id && fObj.isDeleted) continue; // Skip independently deleted subfolders
+        if (fId != id && fObj.isDeleted)
+          continue; // Skip independently deleted subfolders
 
         final newVersion = fObj.version + 1;
         final trashedFolder = fObj.copyWith(
@@ -281,7 +288,8 @@ class SqliteFoldersRepository implements FoldersRepository {
       final folderMap = existing.first;
       final ownerId = folderMap['userId'] as String?;
       if (ownerId != null && ownerId != uid) {
-        throw OwnershipException('Ownership violation: User $uid cannot restore folder belonging to User $ownerId');
+        throw OwnershipException(
+            'Ownership violation: User $uid cannot restore folder belonging to User $ownerId');
       }
 
       final isAlreadyDeleted = (folderMap['isDeleted'] as int? ?? 0) == 1;
@@ -398,7 +406,8 @@ class SqliteFoldersRepository implements FoldersRepository {
       final folderMap = existing.first;
       final ownerId = folderMap['userId'] as String?;
       if (ownerId != null && ownerId != uid) {
-        throw OwnershipException('Ownership violation: User $uid cannot delete folder belonging to User $ownerId');
+        throw OwnershipException(
+            'Ownership violation: User $uid cannot delete folder belonging to User $ownerId');
       }
 
       final descendants = await _getDescendantFolderIds(executor, uid, id);
@@ -473,4 +482,3 @@ class SqliteFoldersRepository implements FoldersRepository {
     });
   }
 }
-

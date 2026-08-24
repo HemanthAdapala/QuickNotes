@@ -35,7 +35,8 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+      insetPadding:
+          const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
       elevation: 0,
       child: Container(
         width: 320,

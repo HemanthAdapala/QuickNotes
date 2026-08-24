@@ -74,8 +74,10 @@ class FirstRunRecoveryController extends ChangeNotifier {
 
   FirstRunRecoveryResult get recoveryResult => _recoveryResult;
   LocalDataSummary get localSummary => _recoveryResult.localSummary;
-  RemoteBackupMetadata? get recommendedBackup => _recoveryResult.recommendedBackup;
-  List<RemoteBackupMetadata> get eligibleBackups => _recoveryResult.eligibleBackups;
+  RemoteBackupMetadata? get recommendedBackup =>
+      _recoveryResult.recommendedBackup;
+  List<RemoteBackupMetadata> get eligibleBackups =>
+      _recoveryResult.eligibleBackups;
   int get totalEligibleBackupsCount => _recoveryResult.eligibleBackups.length;
 
   bool get isReady => _state == FirstRunRecoveryUiState.ready;
@@ -90,7 +92,8 @@ class FirstRunRecoveryController extends ChangeNotifier {
 
   // ── Internal State Mutator ────────────────────────────────────────────────
 
-  void _setState(FirstRunRecoveryUiState newState, {String? error, String? progress}) {
+  void _setState(FirstRunRecoveryUiState newState,
+      {String? error, String? progress}) {
     if (_isDisposed) return;
     _state = newState;
     _errorMessage = error;

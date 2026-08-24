@@ -18,6 +18,7 @@ import '../repositories/notes_repository.dart';
 import '../repositories/folders_repository.dart';
 
 enum SortOption { newest, oldest, alphabetical }
+
 enum NotesViewType { feed, archive, favorites, trash }
 
 class NotesProvider with ChangeNotifier {
@@ -46,6 +47,7 @@ class NotesProvider with ChangeNotifier {
     _selectedFolderId = null;
     notifyListeners();
   }
+
   String _searchQuery = "";
   Timer? _searchDebouncer;
   SortOption _currentSort = SortOption.newest;
@@ -53,10 +55,10 @@ class NotesProvider with ChangeNotifier {
   String _selectedCategory = "All";
   String _selectedTag = ""; // Tag filter
   String? _selectedFolderId; // Selected folder filter
-  
+
   // Vault state
   bool _isVaultUnlocked = false;
-  
+
   // Theme and Zen settings state
   bool _isDarkMode = false;
   bool _isZenModeEnabled = false;
@@ -101,7 +103,9 @@ class NotesProvider with ChangeNotifier {
     } else if (_currentView == NotesViewType.archive) {
       list = _notes.where((n) => n.isArchived && !n.isDeleted).toList();
     } else if (_currentView == NotesViewType.favorites) {
-      list = _notes.where((n) => n.isFavorite && !n.isArchived && !n.isDeleted).toList();
+      list = _notes
+          .where((n) => n.isFavorite && !n.isArchived && !n.isDeleted)
+          .toList();
     } else if (_currentView == NotesViewType.trash) {
       list = _notes.where((n) => n.isDeleted).toList();
     }
@@ -109,7 +113,8 @@ class NotesProvider with ChangeNotifier {
     // 2. Filter by Folder
     if (_selectedFolderId != null) {
       list = list.where((n) => n.folderId == _selectedFolderId).toList();
-    } else if (_currentView == NotesViewType.feed && _selectedCategory != "All") {
+    } else if (_currentView == NotesViewType.feed &&
+        _selectedCategory != "All") {
       // 3. Filter by Category (only if no specific folder is selected to prevent conflicts)
       list = list.where((n) => n.category == _selectedCategory).toList();
     }
@@ -132,7 +137,8 @@ class NotesProvider with ChangeNotifier {
           listToSort.sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
           break;
         case SortOption.alphabetical:
-          listToSort.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+          listToSort.sort(
+              (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
           break;
       }
     }
@@ -155,7 +161,8 @@ class NotesProvider with ChangeNotifier {
   final _uuid = const Uuid();
   final NotesRepository _notesRepository;
   final FoldersRepository _foldersRepository;
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   NotesProvider({
     NotesRepository? notesRepository,
@@ -209,19 +216,21 @@ class NotesProvider with ChangeNotifier {
   // Initialize notifications helper
   Future<void> _initNotifications() async {
     if (Platform.environment.containsKey('FLUTTER_TEST')) {
-      debugPrint("Skipping local notifications initialization in testing environment.");
+      debugPrint(
+          "Skipping local notifications initialization in testing environment.");
       return;
     }
     try {
       tz.initializeTimeZones();
-      
+
       const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
       const initSettings = InitializationSettings(android: androidInit);
-      
+
       await _notificationsPlugin.initialize(
         settings: initSettings,
         onDidReceiveNotificationResponse: (details) {
-          debugPrint("Note notification tapped. Payload ID: ${details.payload}");
+          debugPrint(
+              "Note notification tapped. Payload ID: ${details.payload}");
         },
       );
     } catch (e) {
@@ -268,13 +277,20 @@ class NotesProvider with ChangeNotifier {
   // Resolve color index to light mode background color (Playful Pop pastels)
   static Color getLightColor(int index, BuildContext context) {
     switch (index) {
-      case 1: return const Color(0xFFFFAAA6); // Coral
-      case 2: return const Color(0xFFFFDAB6); // Peach
-      case 3: return const Color(0xFFFFF3A6); // Lemon
-      case 4: return const Color(0xFFD4ECDD); // Sage
-      case 5: return const Color(0xFFA8DADC); // Sky
-      case 6: return const Color(0xFFD6C8FF); // Lavender
-      case 7: return const Color(0xFFFFC6FF); // Blush
+      case 1:
+        return const Color(0xFFFFAAA6); // Coral
+      case 2:
+        return const Color(0xFFFFDAB6); // Peach
+      case 3:
+        return const Color(0xFFFFF3A6); // Lemon
+      case 4:
+        return const Color(0xFFD4ECDD); // Sage
+      case 5:
+        return const Color(0xFFA8DADC); // Sky
+      case 6:
+        return const Color(0xFFD6C8FF); // Lavender
+      case 7:
+        return const Color(0xFFFFC6FF); // Blush
       case 0:
       default:
         return Theme.of(context).cardColor;
@@ -284,13 +300,20 @@ class NotesProvider with ChangeNotifier {
   // Resolve color index to dark mode background color (High-contrast saturated dark pastels)
   static Color getDarkColor(int index, BuildContext context) {
     switch (index) {
-      case 1: return const Color(0xFF8C3232); // Coral
-      case 2: return const Color(0xFF965228); // Peach
-      case 3: return const Color(0xFF7D7D28); // Lemon
-      case 4: return const Color(0xFF23443B); // Sage
-      case 5: return const Color(0xFF162E4A); // Sky
-      case 6: return const Color(0xFF4C2791); // Lavender
-      case 7: return const Color(0xFF6A073D); // Blush
+      case 1:
+        return const Color(0xFF8C3232); // Coral
+      case 2:
+        return const Color(0xFF965228); // Peach
+      case 3:
+        return const Color(0xFF7D7D28); // Lemon
+      case 4:
+        return const Color(0xFF23443B); // Sage
+      case 5:
+        return const Color(0xFF162E4A); // Sky
+      case 6:
+        return const Color(0xFF4C2791); // Lavender
+      case 7:
+        return const Color(0xFF6A073D); // Blush
       case 0:
       default:
         return Theme.of(context).cardColor;
@@ -370,7 +393,7 @@ class NotesProvider with ChangeNotifier {
     if (refresh) {
       clearPageCache();
     }
-    
+
     _isPageLoading = true;
     notifyListeners();
 
@@ -383,29 +406,37 @@ class NotesProvider with ChangeNotifier {
         final folderMap = _folderNameMap;
         const limit = 20;
         final offset = _currentPage * limit;
-        
+
         final isDeleted = _currentView == NotesViewType.trash;
         final isArchived = _currentView == NotesViewType.archive;
         final isFavorite = _currentView == NotesViewType.favorites;
-        
+
         final maps = await _notesRepository.queryNotesSummaryPaged(
           folderId: _selectedFolderId,
-          category: (_selectedFolderId == null && _selectedCategory != "All" && _currentView == NotesViewType.feed) ? _selectedCategory : null,
+          category: (_selectedFolderId == null &&
+                  _selectedCategory != "All" &&
+                  _currentView == NotesViewType.feed)
+              ? _selectedCategory
+              : null,
           isFavorite: isFavorite ? true : null,
-          isArchived: isArchived ? true : (_currentView == NotesViewType.feed ? false : null),
+          isArchived: isArchived
+              ? true
+              : (_currentView == NotesViewType.feed ? false : null),
           isDeleted: isDeleted,
           limit: limit,
           offset: offset,
         );
-        
+
         final List<NoteSummary> summaries = [];
         for (final map in maps) {
           final isLocked = (map['isLocked'] as int? ?? 0) == 1;
           Map<String, dynamic> processedMap = Map.from(map);
           if (isLocked) {
             if (_isVaultUnlocked) {
-              final titleDec = await VaultService.instance.decryptText(map['title'] as String);
-              final contentDec = await VaultService.instance.decryptText(map['content'] as String? ?? '');
+              final titleDec = await VaultService.instance
+                  .decryptText(map['title'] as String);
+              final contentDec = await VaultService.instance
+                  .decryptText(map['content'] as String? ?? '');
               processedMap['title'] = titleDec;
               processedMap['content'] = contentDec;
             } else {
@@ -417,9 +448,10 @@ class NotesProvider with ChangeNotifier {
           final fName = fId != null ? folderMap[fId] : null;
           final cat = map['category'] as String? ?? 'Uncategorized';
           final catColor = _getCategoryColorValue(cat);
-          summaries.add(NoteSummary.fromMap(processedMap, folderName: fName, categoryColor: catColor));
+          summaries.add(NoteSummary.fromMap(processedMap,
+              folderName: fName, categoryColor: catColor));
         }
-        
+
         _pageCache[_currentPage] = summaries;
         _notesSummary.addAll(summaries);
         _hasMoreNotes = summaries.length == limit;
@@ -434,12 +466,18 @@ class NotesProvider with ChangeNotifier {
 
   int? _getCategoryColorValue(String category) {
     switch (category.toLowerCase()) {
-      case 'personal': return const Color(0xFF78C291).value;
-      case 'work': return const Color(0xFF4A90E2).value;
-      case 'study': return const Color(0xFFA388E8).value;
-      case 'ideas': return const Color(0xFFF5D44A).value;
-      case 'important': return const Color(0xFFE57373).value;
-      case 'unimportant': return const Color(0xFFFF7043).value;
+      case 'personal':
+        return const Color(0xFF78C291).value;
+      case 'work':
+        return const Color(0xFF4A90E2).value;
+      case 'study':
+        return const Color(0xFFA388E8).value;
+      case 'ideas':
+        return const Color(0xFFF5D44A).value;
+      case 'important':
+        return const Color(0xFFE57373).value;
+      case 'unimportant':
+        return const Color(0xFFFF7043).value;
       case 'uncategorized':
       default:
         return null;
@@ -453,10 +491,13 @@ class NotesProvider with ChangeNotifier {
       if (note.isLocked) {
         if (_isVaultUnlocked) {
           final titleDec = await VaultService.instance.decryptText(note.title);
-          final contentDec = await VaultService.instance.decryptText(note.content);
+          final contentDec =
+              await VaultService.instance.decryptText(note.content);
           return note.copyWith(title: titleDec, content: contentDec);
         } else {
-          return note.copyWith(title: "🔐 Locked Note", content: "[Unlocked with authentication]");
+          return note.copyWith(
+              title: "🔐 Locked Note",
+              content: "[Unlocked with authentication]");
         }
       }
       return note;
@@ -469,10 +510,12 @@ class NotesProvider with ChangeNotifier {
   // Load notes from Database
   Future<void> loadNotes() async {
     final sessionManager = SessionManager();
-    if (sessionManager.activeUserId == null || sessionManager.activeUserId!.isEmpty) {
+    if (sessionManager.activeUserId == null ||
+        sessionManager.activeUserId!.isEmpty) {
       await sessionManager.init();
     }
-    if (sessionManager.activeUserId == null || sessionManager.activeUserId!.isEmpty) {
+    if (sessionManager.activeUserId == null ||
+        sessionManager.activeUserId!.isEmpty) {
       debugPrint("loadNotes skipped: No active canonical user session exists.");
       _isLoading = false;
       notifyListeners();
@@ -504,11 +547,15 @@ class NotesProvider with ChangeNotifier {
       final List<Future<Note>> futures = rawNotes.map((note) async {
         if (note.isLocked) {
           if (_isVaultUnlocked) {
-            final titleDec = await VaultService.instance.decryptText(note.title);
-            final contentDec = await VaultService.instance.decryptText(note.content);
+            final titleDec =
+                await VaultService.instance.decryptText(note.title);
+            final contentDec =
+                await VaultService.instance.decryptText(note.content);
             return note.copyWith(title: titleDec, content: contentDec);
           } else {
-            return note.copyWith(title: "🔐 Locked Note", content: "[Unlocked with authentication]");
+            return note.copyWith(
+                title: "🔐 Locked Note",
+                content: "[Unlocked with authentication]");
           }
         } else {
           return note;
@@ -634,44 +681,61 @@ class NotesProvider with ChangeNotifier {
   Future<Note> seedLongTestNote() async {
     final StringBuffer buffer = StringBuffer();
 
-    buffer.writeln("# 🚀 QuickNotes Ultimate QA Performance Test Note (10,000+ Chars)");
+    buffer.writeln(
+        "# 🚀 QuickNotes Ultimate QA Performance Test Note (10,000+ Chars)");
     buffer.writeln();
-    buffer.writeln("> \"Performance is not an afterthought; it is a fundamental property of high-quality software engineering.\" — QuickNotes Engineering Principles");
+    buffer.writeln(
+        "> \"Performance is not an afterthought; it is a fundamental property of high-quality software engineering.\" — QuickNotes Engineering Principles");
     buffer.writeln();
     buffer.writeln("---");
     buffer.writeln();
     buffer.writeln("## 1. Feature Matrix & Content Hierarchy");
     buffer.writeln();
-    buffer.writeln("This test document is specifically generated to benchmark SingleDocumentDragOverlay gesture recognition, selection handle dragging, optical magnifier tracking, and viewport canvas painting on high-volume notes.");
+    buffer.writeln(
+        "This test document is specifically generated to benchmark SingleDocumentDragOverlay gesture recognition, selection handle dragging, optical magnifier tracking, and viewport canvas painting on high-volume notes.");
     buffer.writeln();
     buffer.writeln("### Key Metrics & Targets");
-    buffer.writeln("* Target Frame Time: **< 16.6ms** (60fps) / **< 8.3ms** (120fps)");
+    buffer.writeln(
+        "* Target Frame Time: **< 16.6ms** (60fps) / **< 8.3ms** (120fps)");
     buffer.writeln("* Character Offset Resolution: **< 2ms** per frame");
-    buffer.writeln("* Viewport Paint Execution: **< 3ms** (0 offscreen getBoxes calls)");
+    buffer.writeln(
+        "* Viewport Paint Execution: **< 3ms** (0 offscreen getBoxes calls)");
     buffer.writeln("* 'Select All' Execution: **< 30ms**");
     buffer.writeln();
     buffer.writeln("---");
     buffer.writeln();
     buffer.writeln("## 2. Interactive QA Task Checklists");
     buffer.writeln();
-    buffer.writeln("- [x] Verify word boundary expansion on long-press (Phase 1)");
-    buffer.writeln("- [x] Verify 60fps handle drag responsiveness across 500+ text lines (Phase 2)");
-    buffer.writeln("- [ ] Verify optical magnifier focal point tracking without main thread stutter (Phase 3)");
-    buffer.writeln("- [ ] Verify spatial segment lookup offset resolution O(log N) (Phase 4)");
-    buffer.writeln("- [ ] Verify visible viewport paint clipping optimization (Phase 5)");
-    buffer.writeln("- [ ] Verify dual focus gating and soft keyboard suppression (Phase 6)");
-    buffer.writeln("- [ ] Verify auto-scroll velocity scaling near top/bottom screen boundaries (Phase 7)");
-    buffer.writeln("- [ ] Benchmark 'Select All' operation across 10,000+ characters (Phase 8)");
-    buffer.writeln("- [ ] Test continuous selection drag spanning across inline image widgets (Phase 9)");
-    buffer.writeln("- [ ] Confirm instant selection clear on tap outside bounds (Phase 10)");
+    buffer.writeln(
+        "- [x] Verify word boundary expansion on long-press (Phase 1)");
+    buffer.writeln(
+        "- [x] Verify 60fps handle drag responsiveness across 500+ text lines (Phase 2)");
+    buffer.writeln(
+        "- [ ] Verify optical magnifier focal point tracking without main thread stutter (Phase 3)");
+    buffer.writeln(
+        "- [ ] Verify spatial segment lookup offset resolution O(log N) (Phase 4)");
+    buffer.writeln(
+        "- [ ] Verify visible viewport paint clipping optimization (Phase 5)");
+    buffer.writeln(
+        "- [ ] Verify dual focus gating and soft keyboard suppression (Phase 6)");
+    buffer.writeln(
+        "- [ ] Verify auto-scroll velocity scaling near top/bottom screen boundaries (Phase 7)");
+    buffer.writeln(
+        "- [ ] Benchmark 'Select All' operation across 10,000+ characters (Phase 8)");
+    buffer.writeln(
+        "- [ ] Test continuous selection drag spanning across inline image widgets (Phase 9)");
+    buffer.writeln(
+        "- [ ] Confirm instant selection clear on tap outside bounds (Phase 10)");
     buffer.writeln();
     buffer.writeln("---");
     buffer.writeln();
     buffer.writeln("## 3. Inline Image Attachments & Spanning Test");
     buffer.writeln();
-    buffer.writeln("Below is a sample inline image segment used to verify selection drag handle spanning across mixed text and media blocks:");
+    buffer.writeln(
+        "Below is a sample inline image segment used to verify selection drag handle spanning across mixed text and media blocks:");
     buffer.writeln();
-    buffer.writeln("![QuickNotes Architecture Diagram](https://picsum.photos/800/400)");
+    buffer.writeln(
+        "![QuickNotes Architecture Diagram](https://picsum.photos/800/400)");
     buffer.writeln();
     buffer.writeln("---");
     buffer.writeln();
@@ -693,7 +757,8 @@ class NotesProvider with ChangeNotifier {
 
     int sectionCounter = 5;
     for (int i = 0; i < 3; i++) {
-      buffer.writeln("## $sectionCounter. Extended Technical Analysis (Iteration ${i + 1})");
+      buffer.writeln(
+          "## $sectionCounter. Extended Technical Analysis (Iteration ${i + 1})");
       buffer.writeln();
       for (final p in technicalParagraphs) {
         buffer.writeln(p);
@@ -739,7 +804,8 @@ class NotesProvider with ChangeNotifier {
 
     if (updatedNote.isLocked) {
       finalTitle = await VaultService.instance.encryptText(updatedNote.title);
-      finalContent = await VaultService.instance.encryptText(updatedNote.content);
+      finalContent =
+          await VaultService.instance.encryptText(updatedNote.content);
     }
 
     final noteToSave = updatedNote.copyWith(
@@ -750,13 +816,13 @@ class NotesProvider with ChangeNotifier {
 
     try {
       await _notesRepository.updateNote(noteToSave);
-      
+
       // Update reminder notification
       await _cancelReminder(updatedNote.id);
       if (noteToSave.reminderTime != null) {
         await _scheduleReminder(noteToSave);
       }
-      
+
       await loadNotes();
     } catch (e) {
       debugPrint("Error updating note: $e");
@@ -891,11 +957,14 @@ class NotesProvider with ChangeNotifier {
 
   Future<void> loadFolders() async {
     final sessionManager = SessionManager();
-    if (sessionManager.activeUserId == null || sessionManager.activeUserId!.isEmpty) {
+    if (sessionManager.activeUserId == null ||
+        sessionManager.activeUserId!.isEmpty) {
       await sessionManager.init();
     }
-    if (sessionManager.activeUserId == null || sessionManager.activeUserId!.isEmpty) {
-      debugPrint("loadFolders skipped: No active canonical user session exists.");
+    if (sessionManager.activeUserId == null ||
+        sessionManager.activeUserId!.isEmpty) {
+      debugPrint(
+          "loadFolders skipped: No active canonical user session exists.");
       return;
     }
 
@@ -951,7 +1020,9 @@ class NotesProvider with ChangeNotifier {
     final rawNotes = await _notesRepository.queryHabits();
     for (int i = 0; i < rawNotes.length; i++) {
       final note = rawNotes[i];
-      if (note.isHabit && note.noteType == 'checklist' && note.habitRecurrence != 'none') {
+      if (note.isHabit &&
+          note.noteType == 'checklist' &&
+          note.habitRecurrence != 'none') {
         final lastCompleted = note.habitLastCompleted;
         final now = DateTime.now();
 
@@ -960,7 +1031,8 @@ class NotesProvider with ChangeNotifier {
           shouldReset = true;
         } else {
           if (note.habitRecurrence == 'daily') {
-            final lastDay = DateTime(lastCompleted.year, lastCompleted.month, lastCompleted.day);
+            final lastDay = DateTime(
+                lastCompleted.year, lastCompleted.month, lastCompleted.day);
             final today = DateTime(now.year, now.month, now.day);
             if (today.isAfter(lastDay)) {
               shouldReset = true;
@@ -977,7 +1049,8 @@ class NotesProvider with ChangeNotifier {
           // Decrypt content programmatically if locked to prevent data corruption
           String decryptedContent = note.content;
           if (note.isLocked) {
-            decryptedContent = await VaultService.instance.decryptText(note.content);
+            decryptedContent =
+                await VaultService.instance.decryptText(note.content);
           }
 
           bool allCompleted = false;
@@ -985,7 +1058,8 @@ class NotesProvider with ChangeNotifier {
           try {
             items = jsonDecode(decryptedContent) as List<dynamic>;
             if (items.isNotEmpty) {
-              allCompleted = items.every((item) => item['checked'] == true || item['done'] == true);
+              allCompleted = items.every(
+                  (item) => item['checked'] == true || item['done'] == true);
             }
           } catch (_) {}
 
@@ -1013,7 +1087,8 @@ class NotesProvider with ChangeNotifier {
 
           String updatedContent = jsonEncode(resetItems);
           if (note.isLocked) {
-            updatedContent = await VaultService.instance.encryptText(updatedContent);
+            updatedContent =
+                await VaultService.instance.encryptText(updatedContent);
           }
 
           final updatedNote = note.copyWith(
@@ -1033,7 +1108,8 @@ class NotesProvider with ChangeNotifier {
   Future<void> _updateWidgetData() async {
     try {
       final pinnedCount = _notes.where((n) => n.isPinned).length;
-      await home_widget.HomeWidget.saveWidgetData<String>('pinned_count', pinnedCount.toString());
+      await home_widget.HomeWidget.saveWidgetData<String>(
+          'pinned_count', pinnedCount.toString());
       await home_widget.HomeWidget.updateWidget(
         name: 'QuickCaptureWidget',
         androidName: 'QuickCaptureWidget',
@@ -1046,13 +1122,13 @@ class NotesProvider with ChangeNotifier {
   // --- Local Alarms Scheduled Notification Helpers ---
   Future<void> _scheduleReminder(Note note) async {
     if (note.reminderTime == null) return;
-    
+
     if (await Permission.notification.isDenied) {
       await Permission.notification.request();
     }
 
     final id = note.id.hashCode;
-    
+
     try {
       final reminderDate = note.reminderTime!;
       if (reminderDate.isBefore(DateTime.now())) return;
@@ -1064,14 +1140,16 @@ class NotesProvider with ChangeNotifier {
         importance: Importance.max,
         priority: Priority.high,
       );
-      
+
       const details = NotificationDetails(android: androidDetails);
       final tzDateTime = tz.TZDateTime.from(reminderDate, tz.local);
 
       await _notificationsPlugin.zonedSchedule(
         id: id,
         title: "Reminder: ${note.title.isNotEmpty ? note.title : 'Untitled'}",
-        body: note.content.length > 50 ? "${note.content.substring(0, 50)}..." : note.content,
+        body: note.content.length > 50
+            ? "${note.content.substring(0, 50)}..."
+            : note.content,
         scheduledDate: tzDateTime,
         notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

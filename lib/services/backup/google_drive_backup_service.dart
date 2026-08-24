@@ -33,7 +33,8 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
   final AccessTokenProvider? _customTokenProvider;
 
   static const String _driveApiHost = 'www.googleapis.com';
-  static const String _driveScope = 'https://www.googleapis.com/auth/drive.file';
+  static const String _driveScope =
+      'https://www.googleapis.com/auth/drive.file';
 
   GoogleDriveBackupService({
     GoogleSignIn? googleSignIn,
@@ -68,7 +69,8 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
     final actualSha256 = BackupIntegrity.sha256Bytes(localBytes);
 
     final folderId = await _resolveBackupsFolderId();
-    final fileName = 'quick_notes_backup_${_formatTimestamp(manifest.createdAt)}.qnb';
+    final fileName =
+        'quick_notes_backup_${_formatTimestamp(manifest.createdAt)}.qnb';
 
     final appProps = {
       'appVersion': manifest.appVersion,
@@ -91,19 +93,23 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
       'appProperties': appProps,
     });
 
-    final boundary = '--------------------------QuickNotesBoundary${DateTime.now().millisecondsSinceEpoch}';
+    final boundary =
+        '--------------------------QuickNotesBoundary${DateTime.now().millisecondsSinceEpoch}';
     final requestBodyBytes = <int>[];
 
     // Multipart Part 1: Metadata JSON
-    requestBodyBytes.addAll(utf8.encode('--$boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n$metadataJson\r\n'));
+    requestBodyBytes.addAll(utf8.encode(
+        '--$boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n$metadataJson\r\n'));
     // Multipart Part 2: Media Binary Data
-    requestBodyBytes.addAll(utf8.encode('--$boundary\r\nContent-Type: application/octet-stream\r\n\r\n'));
+    requestBodyBytes.addAll(utf8.encode(
+        '--$boundary\r\nContent-Type: application/octet-stream\r\n\r\n'));
     requestBodyBytes.addAll(localBytes);
     requestBodyBytes.addAll(utf8.encode('\r\n--$boundary--\r\n'));
 
     final responseMap = await _executeRequest(
       method: 'POST',
-      uri: Uri.https(_driveApiHost, '/upload/drive/v3/files', {'uploadType': 'multipart'}),
+      uri: Uri.https(
+          _driveApiHost, '/upload/drive/v3/files', {'uploadType': 'multipart'}),
       contentType: 'multipart/related; boundary=$boundary',
       bodyBytes: requestBodyBytes,
     );
@@ -163,7 +169,8 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
 
     final folderId = await _resolveBackupsFolderId();
 
-    final query = "'$folderId' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false";
+    final query =
+        "'$folderId' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false";
     final uri = Uri.https(_driveApiHost, '/drive/v3/files', {
       'q': query,
       'fields': 'files(id,name,size,createdTime,modifiedTime,appProperties)',
@@ -200,7 +207,8 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
       final fileId = fileMap['id'] as String? ?? '';
       final fileName = fileMap['name'] as String? ?? '';
       final size = int.tryParse(fileMap['size']?.toString() ?? '0') ?? 0;
-      final createdStr = fileMap['createdTime'] as String? ?? DateTime.now().toUtc().toIso8601String();
+      final createdStr = fileMap['createdTime'] as String? ??
+          DateTime.now().toUtc().toIso8601String();
       final modStr = fileMap['modifiedTime'] as String?;
 
       results.add(RemoteBackupMetadata(
@@ -211,13 +219,16 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
         modifiedAt: modStr != null ? DateTime.parse(modStr).toUtc() : null,
         backupId: appProps['backupId'] ?? '',
         formatVersion: int.tryParse(appProps['formatVersion'] ?? '1') ?? 1,
-        databaseSchemaVersion: int.tryParse(appProps['databaseSchemaVersion'] ?? '18') ?? 18,
+        databaseSchemaVersion:
+            int.tryParse(appProps['databaseSchemaVersion'] ?? '18') ?? 18,
         appVersion: appProps['appVersion'] ?? '1.1.0+2',
         noteCount: int.tryParse(appProps['noteCount'] ?? '0') ?? 0,
         folderCount: int.tryParse(appProps['folderCount'] ?? '0') ?? 0,
         taskCount: int.tryParse(appProps['taskCount'] ?? '0') ?? 0,
         attachmentCount: int.tryParse(appProps['attachmentCount'] ?? '0') ?? 0,
-        providerUserIdHash: fileUserIdHash.isNotEmpty ? fileUserIdHash : currentProviderUserIdHash,
+        providerUserIdHash: fileUserIdHash.isNotEmpty
+            ? fileUserIdHash
+            : currentProviderUserIdHash,
         sha256Checksum: appProps['sha256Checksum'] ?? '',
       ));
     }
@@ -242,18 +253,22 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
     // Fetch remote file metadata for expected SHA-256 checksum comparison
     String? expectedSha256;
     try {
-      final metaUri = Uri.https(_driveApiHost, '/drive/v3/files/$remoteFileId', {'fields': 'appProperties'});
+      final metaUri = Uri.https(_driveApiHost, '/drive/v3/files/$remoteFileId',
+          {'fields': 'appProperties'});
       final metaMap = await _executeRequest(method: 'GET', uri: metaUri);
-      final appProps = Map<String, String>.from(metaMap['appProperties'] as Map? ?? {});
+      final appProps =
+          Map<String, String>.from(metaMap['appProperties'] as Map? ?? {});
       expectedSha256 = appProps['sha256Checksum'];
     } catch (_) {}
 
     final tmpFile = File('${destinationLocalFile.path}.tmp');
     if (tmpFile.existsSync()) tmpFile.deleteSync();
-    if (!tmpFile.parent.existsSync()) tmpFile.parent.createSync(recursive: true);
+    if (!tmpFile.parent.existsSync())
+      tmpFile.parent.createSync(recursive: true);
 
     try {
-      final mediaUri = Uri.https(_driveApiHost, '/drive/v3/files/$remoteFileId', {'alt': 'media'});
+      final mediaUri = Uri.https(
+          _driveApiHost, '/drive/v3/files/$remoteFileId', {'alt': 'media'});
       final mediaBytes = await _executeRawRequest(method: 'GET', uri: mediaUri);
 
       tmpFile.writeAsBytesSync(mediaBytes, flush: true);
@@ -299,12 +314,16 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
 
   // ── 5. Folder Discovery & Creation Strategy ───────────────────────────────
   Future<String> _resolveBackupsFolderId() async {
-    final rootFolderId = await _findOrCreateFolder(folderName: 'Quick Notes', parentFolderId: 'root');
-    return await _findOrCreateFolder(folderName: 'Backups', parentFolderId: rootFolderId);
+    final rootFolderId = await _findOrCreateFolder(
+        folderName: 'Quick Notes', parentFolderId: 'root');
+    return await _findOrCreateFolder(
+        folderName: 'Backups', parentFolderId: rootFolderId);
   }
 
-  Future<String> _findOrCreateFolder({required String folderName, required String parentFolderId}) async {
-    final query = "name = '$folderName' and '$parentFolderId' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
+  Future<String> _findOrCreateFolder(
+      {required String folderName, required String parentFolderId}) async {
+    final query =
+        "name = '$folderName' and '$parentFolderId' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
     final searchUri = Uri.https(_driveApiHost, '/drive/v3/files', {
       'q': query,
       'fields': 'files(id,name)',
@@ -359,7 +378,8 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
       if (account == null) {
         throw const DriveStorageException(
           type: DriveStorageErrorType.unauthenticated,
-          message: 'User cancelled Google authentication or no account available',
+          message:
+              'User cancelled Google authentication or no account available',
         );
       }
 
@@ -427,7 +447,8 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        final token = await _getFreshAccessToken(forceRefresh: attemptedAuthRefresh);
+        final token =
+            await _getFreshAccessToken(forceRefresh: attemptedAuthRefresh);
 
         final request = await _httpClient.openUrl(method, uri);
         request.headers.set('Authorization', 'Bearer $token');
@@ -443,7 +464,8 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
         final response = await request.close();
         final statusCode = response.statusCode;
 
-        final responseData = await response.fold<List<int>>([], (p, e) => p..addAll(e));
+        final responseData =
+            await response.fold<List<int>>([], (p, e) => p..addAll(e));
 
         if (statusCode >= 200 && statusCode < 300) {
           return responseData;
@@ -466,7 +488,8 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
         }
 
         if (statusCode == 403) {
-          final errDetail = responseData.isNotEmpty ? utf8.decode(responseData) : '';
+          final errDetail =
+              responseData.isNotEmpty ? utf8.decode(responseData) : '';
           debugPrint('GOOGLE DRIVE REST API 403 RESPONSE: $errDetail');
           throw DriveStorageException(
             type: DriveStorageErrorType.permissionDenied,
@@ -484,7 +507,9 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
         }
 
         throw DriveStorageException(
-          type: statusCode == 401 ? DriveStorageErrorType.unauthenticated : DriveStorageErrorType.uploadFailed,
+          type: statusCode == 401
+              ? DriveStorageErrorType.unauthenticated
+              : DriveStorageErrorType.uploadFailed,
           message: 'Google Drive HTTP API error status: $statusCode',
         );
       } catch (e) {
@@ -495,14 +520,16 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
         }
         throw DriveStorageException(
           type: DriveStorageErrorType.networkUnavailable,
-          message: 'Network socket failure communicating with Google Drive: ${e.toString()}',
+          message:
+              'Network socket failure communicating with Google Drive: ${e.toString()}',
         );
       }
     }
 
     throw const DriveStorageException(
       type: DriveStorageErrorType.networkUnavailable,
-      message: 'Google Drive REST operation failed after maximum retry attempts',
+      message:
+          'Google Drive REST operation failed after maximum retry attempts',
     );
   }
 

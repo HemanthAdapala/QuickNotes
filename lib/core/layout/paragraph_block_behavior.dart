@@ -7,7 +7,7 @@ abstract class ParagraphBlockBehavior {
   bool hasPrefix(String text);
   int get prefixLen;
   StyledChar getPrefixChar(Style style);
-  
+
   KeyEventResult handleEnterKey({
     required int segmentIndex,
     required RangeTextEditingController controller,
@@ -22,26 +22,31 @@ abstract class ParagraphBlockBehavior {
 
     if (text.length == 1) {
       // Exit list / outdent
-      final baseStyle = editorState.widget.controller.styledChars[range.start].style;
+      final baseStyle =
+          editorState.widget.controller.styledChars[range.start].style;
       final currentIndent = baseStyle.indent;
       if (currentIndent > 0) {
         editorState.changeIndent(segmentIndex, outdent: true);
         return KeyEventResult.handled;
       }
 
-      final List<StyledChar> updated = List.from(editorState.widget.controller.styledChars);
+      final List<StyledChar> updated =
+          List.from(editorState.widget.controller.styledChars);
       updated.removeAt(range.start);
 
       if (range.start < updated.length) {
         updated[range.start] = StyledChar(
           char: updated[range.start].char,
-          style: updated[range.start].style.copyWith(listType: 'normal', indent: 0),
+          style: updated[range.start]
+              .style
+              .copyWith(listType: 'normal', indent: 0),
         );
       }
 
       editorState.widget.controller.saveUndoState();
       editorState.widget.controller.styledChars = updated;
-      editorState.widget.controller.currentActiveStyle = editorState.widget.controller.currentActiveStyle.copyWith(
+      editorState.widget.controller.currentActiveStyle =
+          editorState.widget.controller.currentActiveStyle.copyWith(
         listType: 'normal',
         checked: false,
         indent: 0,
@@ -61,9 +66,12 @@ abstract class ParagraphBlockBehavior {
     } else {
       // Continue list item
       final int insertIdx = range.start + caretOffset;
-      final List<StyledChar> updated = List.from(editorState.widget.controller.styledChars);
-      final baseStyle = editorState.widget.controller.styledChars[range.start].style;
-      final listStyle = baseStyle.copyWith(checked: false, strikethrough: false);
+      final List<StyledChar> updated =
+          List.from(editorState.widget.controller.styledChars);
+      final baseStyle =
+          editorState.widget.controller.styledChars[range.start].style;
+      final listStyle =
+          baseStyle.copyWith(checked: false, strikethrough: false);
 
       updated.insert(insertIdx, StyledChar(char: '\n', style: listStyle));
       updated.insert(insertIdx + 1, getPrefixChar(listStyle));
@@ -100,7 +108,8 @@ abstract class ParagraphBlockBehavior {
     if (!range.isValid) return KeyEventResult.ignored;
 
     if (text.length == 1) {
-      final List<StyledChar> updated = List.from(editorState.widget.controller.styledChars);
+      final List<StyledChar> updated =
+          List.from(editorState.widget.controller.styledChars);
       updated.removeAt(range.start);
 
       final newEnd = range.end - 1;
@@ -108,14 +117,19 @@ abstract class ParagraphBlockBehavior {
         if (i < updated.length) {
           updated[i] = StyledChar(
             char: updated[i].char,
-            style: updated[i].style.copyWith(listType: 'normal', indent: 0, checked: false, strikethrough: false),
+            style: updated[i].style.copyWith(
+                listType: 'normal',
+                indent: 0,
+                checked: false,
+                strikethrough: false),
           );
         }
       }
 
       editorState.widget.controller.saveUndoState();
       editorState.widget.controller.styledChars = updated;
-      editorState.widget.controller.currentActiveStyle = editorState.widget.controller.currentActiveStyle.copyWith(
+      editorState.widget.controller.currentActiveStyle =
+          editorState.widget.controller.currentActiveStyle.copyWith(
         listType: 'normal',
         checked: false,
         strikethrough: false,

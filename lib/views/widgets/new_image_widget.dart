@@ -39,11 +39,13 @@ class _NewImageWidgetState extends State<NewImageWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isFile = !widget.imagePath.startsWith('http://') && !widget.imagePath.startsWith('https://');
+    final isFile = !widget.imagePath.startsWith('http://') &&
+        !widget.imagePath.startsWith('https://');
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final double maxWidth = (screenWidth - 48.0).clamp(100.0, 720.0);
-    final double currentWidth = (widget.width ?? maxWidth).clamp(150.0, maxWidth);
+    final double currentWidth =
+        (widget.width ?? maxWidth).clamp(150.0, maxWidth);
 
     ImageProvider imageProvider;
     if (isFile) {
@@ -51,7 +53,9 @@ class _NewImageWidgetState extends State<NewImageWidget> {
       if (cleanPath.startsWith('file://')) {
         cleanPath = cleanPath.substring(7);
       }
-      if (cleanPath.startsWith('/') && cleanPath.length > 2 && cleanPath[2] == ':') {
+      if (cleanPath.startsWith('/') &&
+          cleanPath.length > 2 &&
+          cleanPath[2] == ':') {
         cleanPath = cleanPath.substring(1);
       }
       imageProvider = FileImage(File(cleanPath));
@@ -74,7 +78,9 @@ class _NewImageWidgetState extends State<NewImageWidget> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: widget.isSelected ? theme.primaryColor : Colors.black.withOpacity(0.08),
+                  color: widget.isSelected
+                      ? theme.primaryColor
+                      : Colors.black.withOpacity(0.08),
                   width: widget.isSelected ? 2.5 : 1.0,
                 ),
                 boxShadow: [
@@ -99,7 +105,8 @@ class _NewImageWidgetState extends State<NewImageWidget> {
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey),
+                          Icon(Icons.broken_image_outlined,
+                              size: 40, color: Colors.grey),
                           SizedBox(height: 4),
                           Text(
                             "Error loading image",
@@ -117,7 +124,9 @@ class _NewImageWidgetState extends State<NewImageWidget> {
             Padding(
               padding: const EdgeInsets.only(left: 4.0, top: 4.0, bottom: 8.0),
               child: Text(
-                widget.caption!.startsWith('📍') ? widget.caption! : '📍 ${widget.caption}',
+                widget.caption!.startsWith('📍')
+                    ? widget.caption!
+                    : '📍 ${widget.caption}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontStyle: FontStyle.italic,
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -168,7 +177,10 @@ class _NewImageWidgetState extends State<NewImageWidget> {
             ),
             Text(
               "${currentWidth.toInt()}px",
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface),
             ),
             const SizedBox(width: 8),
           ],
@@ -186,25 +198,31 @@ class _NewImageWidgetState extends State<NewImageWidget> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildActionButton(Icons.photo_size_select_large_outlined, "Resize", () {
+          _buildActionButton(Icons.photo_size_select_large_outlined, "Resize",
+              () {
             setState(() {
               _showSlider = true;
             });
           }),
           _buildActionDivider(),
-          _buildActionButton(Icons.delete_outline, "Delete", widget.onDelete, color: Colors.red),
+          _buildActionButton(Icons.delete_outline, "Delete", widget.onDelete,
+              color: Colors.red),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton(IconData icon, String tooltip, VoidCallback onPressed, {Color? color}) {
+  Widget _buildActionButton(
+      IconData icon, String tooltip, VoidCallback onPressed,
+      {Color? color}) {
     final theme = Theme.of(context);
     return IconButton(
       visualDensity: VisualDensity.compact,
       tooltip: tooltip,
       onPressed: onPressed,
-      icon: Icon(icon, size: 20, color: color ?? theme.colorScheme.onSurface.withOpacity(0.7)),
+      icon: Icon(icon,
+          size: 20,
+          color: color ?? theme.colorScheme.onSurface.withOpacity(0.7)),
     );
   }
 

@@ -27,7 +27,8 @@ class InvalidStateTransitionException implements Exception {
   InvalidStateTransitionException(this.from, this.to);
 
   @override
-  String toString() => 'InvalidStateTransitionException: Cannot transition from $from to $to';
+  String toString() =>
+      'InvalidStateTransitionException: Cannot transition from $from to $to';
 }
 
 class TaskEngine {
@@ -38,7 +39,8 @@ class TaskEngine {
 
   TaskEngineState _state = TaskEngineState.idle;
   List<TaskItem> _tasks = [];
-  final StreamController<TaskEvent> _eventController = StreamController<TaskEvent>.broadcast();
+  final StreamController<TaskEvent> _eventController =
+      StreamController<TaskEvent>.broadcast();
 
   TaskEngine({
     TasksRepository? repository,
@@ -68,13 +70,15 @@ class TaskEngine {
 
   void _checkReady() {
     if (_state != TaskEngineState.ready) {
-      throw EngineNotReadyException('TaskEngine state is $_state. Call initialize() first.');
+      throw EngineNotReadyException(
+          'TaskEngine state is $_state. Call initialize() first.');
     }
   }
 
   /// Single entry point for engine startup
   Future<void> initialize() async {
-    if (_state == TaskEngineState.initializing || _state == TaskEngineState.ready) {
+    if (_state == TaskEngineState.initializing ||
+        _state == TaskEngineState.ready) {
       return;
     }
 
@@ -97,7 +101,8 @@ class TaskEngine {
       // Reschedule active future reminders on startup/reboot
       for (final task in _tasks) {
         if (!task.completed &&
-            (task.status == TaskStatus.waiting || task.status == TaskStatus.scheduled) &&
+            (task.status == TaskStatus.waiting ||
+                task.status == TaskStatus.scheduled) &&
             task.reminderEnabled &&
             task.reminderTime != null &&
             task.reminderTime!.isAfter(now)) {
@@ -134,15 +139,19 @@ class TaskEngine {
     for (int i = 0; i < _tasks.length; i++) {
       final task = _tasks[i];
 
-      if (task.completed || task.status == TaskStatus.archived || task.status == TaskStatus.cancelled) {
+      if (task.completed ||
+          task.status == TaskStatus.archived ||
+          task.status == TaskStatus.cancelled) {
         continue;
       }
 
       // Check if task reminder or due date has passed without completion
-      final isReminderMissed = task.reminderTime != null && now.isAfter(task.reminderTime!);
+      final isReminderMissed =
+          task.reminderTime != null && now.isAfter(task.reminderTime!);
       final isDueDateMissed = now.isAfter(task.dueDate);
 
-      if ((isReminderMissed || isDueDateMissed) && task.status != TaskStatus.missed) {
+      if ((isReminderMissed || isDueDateMissed) &&
+          task.status != TaskStatus.missed) {
         final missedTask = task.copyWith(
           status: TaskStatus.missed,
           updatedAt: now,
@@ -151,7 +160,8 @@ class TaskEngine {
         await _repository.updateTask(missedTask);
         updatedList.add(missedTask);
         if (kDebugMode) {
-          debugPrint('TASK ENGINE [Reconcile]: Task "${missedTask.title}" (ID: ${missedTask.id}) transitioned to TaskStatus.missed.');
+          debugPrint(
+              'TASK ENGINE [Reconcile]: Task "${missedTask.title}" (ID: ${missedTask.id}) transitioned to TaskStatus.missed.');
         }
       }
     }
@@ -207,8 +217,11 @@ class TaskEngine {
         throw ArgumentError('createTask requires a TaskItem or title string.');
       }
       final notificationId = await _repository.generateUniqueNotificationId();
-      final isReminderActive = reminderEnabled && reminderMode != ReminderMode.off && reminderTime != null;
-      final initialStatus = isReminderActive ? TaskStatus.scheduled : TaskStatus.waiting;
+      final isReminderActive = reminderEnabled &&
+          reminderMode != ReminderMode.off &&
+          reminderTime != null;
+      final initialStatus =
+          isReminderActive ? TaskStatus.scheduled : TaskStatus.waiting;
       final seriesId = (isRecurring || recurrence != null)
           ? (recurringSeriesId ?? _uuid.v4())
           : recurringSeriesId;
@@ -241,7 +254,9 @@ class TaskEngine {
     _tasks.insert(0, newTask);
     await _repository.insertTask(newTask);
 
-    if (newTask.reminderEnabled && newTask.reminderTime != null && newTask.reminderTime!.isAfter(now)) {
+    if (newTask.reminderEnabled &&
+        newTask.reminderTime != null &&
+        newTask.reminderTime!.isAfter(now)) {
       await _scheduler.scheduleReminder(newTask);
     }
 
@@ -283,7 +298,9 @@ class TaskEngine {
 
     if (timeChanged) {
       await _scheduler.cancelReminder(oldTask.notificationId);
-      if (finalUpdatedTask.reminderEnabled && finalUpdatedTask.reminderTime != null && !finalUpdatedTask.completed) {
+      if (finalUpdatedTask.reminderEnabled &&
+          finalUpdatedTask.reminderTime != null &&
+          !finalUpdatedTask.completed) {
         await _scheduler.scheduleReminder(finalUpdatedTask);
       }
     }
@@ -309,10 +326,14 @@ class TaskEngine {
     final oldTask = _tasks[index];
     final now = _clock.now;
 
-    final TaskStatus newStatus = oldTask.completed ? TaskStatus.waiting : TaskStatus.completed;
-    final DateTime? newCompletedAt = newStatus == TaskStatus.completed ? now : null;
+    final TaskStatus newStatus =
+        oldTask.completed ? TaskStatus.waiting : TaskStatus.completed;
+    final DateTime? newCompletedAt =
+        newStatus == TaskStatus.completed ? now : null;
 
-    final seriesId = oldTask.isRecurring ? (oldTask.recurringSeriesId ?? _uuid.v4()) : oldTask.recurringSeriesId;
+    final seriesId = oldTask.isRecurring
+        ? (oldTask.recurringSeriesId ?? _uuid.v4())
+        : oldTask.recurringSeriesId;
 
     final updatedTask = oldTask.copyWith(
       status: newStatus,
@@ -326,7 +347,9 @@ class TaskEngine {
 
     if (updatedTask.completed) {
       await _scheduler.cancelReminder(updatedTask.notificationId);
-    } else if (updatedTask.reminderEnabled && updatedTask.reminderTime != null && updatedTask.reminderTime!.isAfter(now)) {
+    } else if (updatedTask.reminderEnabled &&
+        updatedTask.reminderTime != null &&
+        updatedTask.reminderTime!.isAfter(now)) {
       await _scheduler.scheduleReminder(updatedTask);
     }
 
@@ -340,7 +363,8 @@ class TaskEngine {
   }
 
   /// Generates the next occurrence for a recurring task if not already generated
-  Future<TaskItem?> _generateNextOccurrence(TaskItem completedTask, DateTime now) async {
+  Future<TaskItem?> _generateNextOccurrence(
+      TaskItem completedTask, DateTime now) async {
     if (!completedTask.isRecurring || completedTask.recurrence == null) {
       return null;
     }
@@ -357,7 +381,8 @@ class TaskEngine {
       return null;
     }
 
-    final seriesCount = _tasks.where((t) => t.recurringSeriesId == seriesId).length;
+    final seriesCount =
+        _tasks.where((t) => t.recurringSeriesId == seriesId).length;
 
     final nextDueDate = RecurrenceCalculator.nextOccurrence(
       completedTask.dueDate,
@@ -400,7 +425,9 @@ class TaskEngine {
     _tasks.insert(0, nextTask);
     await _repository.insertTask(nextTask);
 
-    if (nextTask.reminderEnabled && nextTask.reminderTime != null && nextTask.reminderTime!.isAfter(now)) {
+    if (nextTask.reminderEnabled &&
+        nextTask.reminderTime != null &&
+        nextTask.reminderTime!.isAfter(now)) {
       await _scheduler.scheduleReminder(nextTask);
     }
 

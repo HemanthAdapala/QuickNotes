@@ -19,15 +19,20 @@ class AppStatisticsService {
   }
 
   static int calculateNotesForCategory(List<Note> notes, String category) {
-    return notes.where((n) => !n.isDeleted && !n.isArchived && n.category == category).length;
+    return notes
+        .where((n) => !n.isDeleted && !n.isArchived && n.category == category)
+        .length;
   }
 
   static int calculateNotesForFolder(List<Note> notes, String folderId) {
-    return notes.where((n) => !n.isDeleted && !n.isArchived && n.folderId == folderId).length;
+    return notes
+        .where((n) => !n.isDeleted && !n.isArchived && n.folderId == folderId)
+        .length;
   }
 
   static List<Note> filterNotesByDateRange(List<Note> notes, String filter) {
-    final activeNotes = notes.where((n) => !n.isDeleted && !n.isArchived).toList();
+    final activeNotes =
+        notes.where((n) => !n.isDeleted && !n.isArchived).toList();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
@@ -37,23 +42,33 @@ class AppStatisticsService {
     switch (filter) {
       case 'Today':
         return activeNotes.where((n) {
-          final c = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
-          final u = DateTime(n.updatedAt.year, n.updatedAt.month, n.updatedAt.day);
+          final c =
+              DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
+          final u =
+              DateTime(n.updatedAt.year, n.updatedAt.month, n.updatedAt.day);
           return c.isAtSameMomentAs(today) || u.isAtSameMomentAs(today);
         }).toList();
       case 'Weekly':
         return activeNotes.where((n) {
-          final c = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
-          final u = DateTime(n.updatedAt.year, n.updatedAt.month, n.updatedAt.day);
-          return (c.isAfter(weekStart.subtract(const Duration(seconds: 1))) && c.isBefore(tomorrow)) ||
-                 (u.isAfter(weekStart.subtract(const Duration(seconds: 1))) && u.isBefore(tomorrow));
+          final c =
+              DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
+          final u =
+              DateTime(n.updatedAt.year, n.updatedAt.month, n.updatedAt.day);
+          return (c.isAfter(weekStart.subtract(const Duration(seconds: 1))) &&
+                  c.isBefore(tomorrow)) ||
+              (u.isAfter(weekStart.subtract(const Duration(seconds: 1))) &&
+                  u.isBefore(tomorrow));
         }).toList();
       case 'Monthly':
         return activeNotes.where((n) {
-          final c = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
-          final u = DateTime(n.updatedAt.year, n.updatedAt.month, n.updatedAt.day);
-          return (c.isAfter(monthStart.subtract(const Duration(seconds: 1))) && c.isBefore(tomorrow)) ||
-                 (u.isAfter(monthStart.subtract(const Duration(seconds: 1))) && u.isBefore(tomorrow));
+          final c =
+              DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
+          final u =
+              DateTime(n.updatedAt.year, n.updatedAt.month, n.updatedAt.day);
+          return (c.isAfter(monthStart.subtract(const Duration(seconds: 1))) &&
+                  c.isBefore(tomorrow)) ||
+              (u.isAfter(monthStart.subtract(const Duration(seconds: 1))) &&
+                  u.isBefore(tomorrow));
         }).toList();
       case 'All':
       default:
@@ -70,8 +85,10 @@ class AppStatisticsService {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
 
-      final timeA = a.updatedAt.isAfter(a.createdAt) ? a.updatedAt : a.createdAt;
-      final timeB = b.updatedAt.isAfter(b.createdAt) ? b.updatedAt : b.createdAt;
+      final timeA =
+          a.updatedAt.isAfter(a.createdAt) ? a.updatedAt : a.createdAt;
+      final timeB =
+          b.updatedAt.isAfter(b.createdAt) ? b.updatedAt : b.createdAt;
 
       final comp = timeB.compareTo(timeA);
       return ascending ? -comp : comp;
@@ -80,18 +97,21 @@ class AppStatisticsService {
   }
 
   /// Filters active (uncompleted) tasks strictly by Due Date windows.
-  static List<TaskItem> filterTasksByDateRange(List<TaskItem> tasks, String filter) {
+  static List<TaskItem> filterTasksByDateRange(
+      List<TaskItem> tasks, String filter) {
     final activeTasks = tasks.where((t) => !t.completed).toList();
     final now = DateTime.now();
     final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
-    
+
     // Current Week End: End of Sunday (or next 7 days)
     final daysUntilEndOfWeek = 7 - now.weekday;
-    final weekEnd = DateTime(now.year, now.month, now.day + daysUntilEndOfWeek, 23, 59, 59, 999);
+    final weekEnd = DateTime(
+        now.year, now.month, now.day + daysUntilEndOfWeek, 23, 59, 59, 999);
 
     // Current Month End: Last millisecond of current month
     final lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
-    final monthEnd = DateTime(now.year, now.month, lastDayOfMonth, 23, 59, 59, 999);
+    final monthEnd =
+        DateTime(now.year, now.month, lastDayOfMonth, 23, 59, 59, 999);
 
     switch (filter) {
       case 'Missed':
@@ -107,22 +127,27 @@ class AppStatisticsService {
         final todayStart = DateTime(now.year, now.month, now.day);
         return activeTasks.where((t) {
           final localDue = t.dueDate.toLocal();
-          return (localDue.isAfter(todayStart.subtract(const Duration(milliseconds: 1))) || localDue.isAtSameMomentAs(todayStart)) &&
-                 (localDue.isBefore(todayEnd) || localDue.isAtSameMomentAs(todayEnd));
+          return (localDue.isAfter(
+                      todayStart.subtract(const Duration(milliseconds: 1))) ||
+                  localDue.isAtSameMomentAs(todayStart)) &&
+              (localDue.isBefore(todayEnd) ||
+                  localDue.isAtSameMomentAs(todayEnd));
         }).toList();
 
       case 'Weekly':
         // Overdue + tasks due within current week (dueDate <= weekEnd)
         return activeTasks.where((t) {
           final localDue = t.dueDate.toLocal();
-          return localDue.isBefore(weekEnd) || localDue.isAtSameMomentAs(weekEnd);
+          return localDue.isBefore(weekEnd) ||
+              localDue.isAtSameMomentAs(weekEnd);
         }).toList();
 
       case 'Monthly':
         // Overdue + tasks due within current month (dueDate <= monthEnd)
         return activeTasks.where((t) {
           final localDue = t.dueDate.toLocal();
-          return localDue.isBefore(monthEnd) || localDue.isAtSameMomentAs(monthEnd);
+          return localDue.isBefore(monthEnd) ||
+              localDue.isAtSameMomentAs(monthEnd);
         }).toList();
 
       case 'All':
@@ -134,7 +159,8 @@ class AppStatisticsService {
   /// Task Sorting Engine:
   /// - For 'Today': Newest to Oldest (createdAt descending, then dueDate descending)
   /// - For 'All' / 'Weekly' / 'Monthly': 4-Tier Sorting Engine (Overdue > Today > Future, Due Time Ascending, Priority Descending)
-  static List<TaskItem> sortTasks(List<TaskItem> tasks, {String filter = 'All', bool ascending = false}) {
+  static List<TaskItem> sortTasks(List<TaskItem> tasks,
+      {String filter = 'All', bool ascending = false}) {
     final list = List<TaskItem>.from(tasks);
 
     if (filter == 'Today') {
@@ -154,7 +180,8 @@ class AppStatisticsService {
       final localDue = t.dueDate.toLocal();
       if (localDue.isBefore(todayStart)) {
         return 0; // Overdue
-      } else if (localDue.isBefore(todayEnd) || localDue.isAtSameMomentAs(todayEnd)) {
+      } else if (localDue.isBefore(todayEnd) ||
+          localDue.isAtSameMomentAs(todayEnd)) {
         return 1; // Today
       } else {
         return 2; // Future

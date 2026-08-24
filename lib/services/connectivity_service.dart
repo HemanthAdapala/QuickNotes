@@ -54,7 +54,9 @@ class ConnectivityService with WidgetsBindingObserver {
     if (prevStatus == newStatus) return;
 
     // Transition trigger check: ONLY transition INTO online triggers flush
-    if ((prevStatus == ConnectivityStatus.offline || prevStatus == ConnectivityStatus.unknown || prevStatus == null) &&
+    if ((prevStatus == ConnectivityStatus.offline ||
+            prevStatus == ConnectivityStatus.unknown ||
+            prevStatus == null) &&
         newStatus == ConnectivityStatus.online) {
       _triggerSync('Transition into online state ($prevStatus -> $newStatus)');
     }

@@ -25,8 +25,8 @@ class RecentSearchesService {
 
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getStringList(_kKey) ?? [];
-    current.remove(trimmed);          // deduplicate
-    current.insert(0, trimmed);       // most-recent first
+    current.remove(trimmed); // deduplicate
+    current.insert(0, trimmed); // most-recent first
     final capped = current.take(_kMaxItems).toList();
     await prefs.setStringList(_kKey, capped);
     return capped;

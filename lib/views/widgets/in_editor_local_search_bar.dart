@@ -61,7 +61,8 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
   }
 
   void _handleTextChange(String val) {
-    widget.searchController.performSearch(val, widget.titleText, widget.bodyText);
+    widget.searchController
+        .performSearch(val, widget.titleText, widget.bodyText);
     widget.onMatchChanged(widget.searchController.currentMatch);
   }
 
@@ -146,12 +147,14 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
                       listenable: widget.searchController,
                       builder: (context, _) {
                         final total = widget.searchController.totalMatches;
-                        final current = widget.searchController.currentMatchIndex;
+                        final current =
+                            widget.searchController.currentMatchIndex;
                         if (_textCtrl.text.trim().isEmpty) {
                           return const SizedBox.shrink();
                         }
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: const Color(0x1A787880),
                             borderRadius: BorderRadius.circular(10),
@@ -207,7 +210,8 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
                         ),
                       ),
                     ),
-                    Container(width: 1, height: 20, color: const Color(0x33000000)),
+                    Container(
+                        width: 1, height: 20, color: const Color(0x33000000)),
                     Expanded(
                       child: TactileButton(
                         useAppleSpring: true,

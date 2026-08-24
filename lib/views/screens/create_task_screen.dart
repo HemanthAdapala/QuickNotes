@@ -297,11 +297,11 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     // Format Header Date & Time Strings
-    final String dateHeaderStr = DateFormat('EEE, d MMMM yyyy').format(_selectedDate);
+    final String dateHeaderStr =
+        DateFormat('EEE, d MMMM yyyy').format(_selectedDate);
     final String timeHeaderStr = DateFormat('hh:mm a').format(
       DateTime(2026, 1, 1, _selectedTime.hour, _selectedTime.minute),
     );
@@ -309,14 +309,16 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        bottom: false, // top safe area handled by system — mirrors NoteEditorScreen
+        bottom:
+            false, // top safe area handled by system — mirrors NoteEditorScreen
         child: Stack(
           children: [
             // ── Card Area (identical structure to NoteEditorScreen, blue instead of amber) ──
             Positioned(
               left: 0.0,
               right: 0.0,
-              top: 74.0, // starts below the top bar buttons — exact same as NoteEditorScreen
+              top:
+                  74.0, // starts below the top bar buttons — exact same as NoteEditorScreen
               bottom: 0.0,
               child: Stack(
                 children: [
@@ -423,7 +425,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         fontWeight: FontWeight.w400,
                                         letterSpacing: -0.43,
                                       ),
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 20, vertical: 12),
                                       border: InputBorder.none,
                                     ),
                                   ),
@@ -441,12 +445,14 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         Expanded(
                                           flex: 3,
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 'Due Date',
                                                 style: GoogleFonts.inter(
-                                                  color: const Color(0xFF333333),
+                                                  color:
+                                                      const Color(0xFF333333),
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.w500,
                                                   letterSpacing: -0.43,
@@ -457,24 +463,36 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                 onTap: _selectDate,
                                                 child: Container(
                                                   height: 45,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(horizontal: 8),
                                                   decoration: ShapeDecoration(
-                                                    color: const Color(0x28787880),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(16),
+                                                    color:
+                                                        const Color(0x28787880),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              16),
                                                     ),
                                                   ),
                                                   child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
                                                     children: [
                                                       Expanded(
                                                         child: Text(
-                                                          _formatDateWithSuffix(_selectedDate),
-                                                          overflow: TextOverflow.ellipsis,
-                                                          style: GoogleFonts.inter(
-                                                            color: const Color(0x993C3C43),
+                                                          _formatDateWithSuffix(
+                                                              _selectedDate),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              GoogleFonts.inter(
+                                                            color: const Color(
+                                                                0x993C3C43),
                                                             fontSize: 12,
-                                                            fontWeight: FontWeight.w400,
+                                                            fontWeight:
+                                                                FontWeight.w400,
                                                           ),
                                                         ),
                                                       ),
@@ -483,7 +501,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                         'assets/icons/calendar_icon.svg',
                                                         width: 14,
                                                         height: 14,
-                                                        colorFilter: const ColorFilter.mode(
+                                                        colorFilter:
+                                                            const ColorFilter
+                                                                .mode(
                                                           Color(0x993C3C43),
                                                           BlendMode.srcIn,
                                                         ),
@@ -502,12 +522,14 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         Expanded(
                                           flex: 2,
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 'Time',
                                                 style: GoogleFonts.inter(
-                                                  color: const Color(0xFF333333),
+                                                  color:
+                                                      const Color(0xFF333333),
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.w500,
                                                   letterSpacing: -0.43,
@@ -518,24 +540,36 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                 onTap: _selectTime,
                                                 child: Container(
                                                   height: 45,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(horizontal: 6),
                                                   decoration: ShapeDecoration(
-                                                    color: const Color(0x28787880),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(16),
+                                                    color:
+                                                        const Color(0x28787880),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              16),
                                                     ),
                                                   ),
                                                   child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
                                                     children: [
                                                       Expanded(
                                                         child: Text(
-                                                          _selectedTime.format(context),
-                                                          overflow: TextOverflow.ellipsis,
-                                                          style: GoogleFonts.inter(
-                                                            color: const Color(0x993C3C43),
+                                                          _selectedTime
+                                                              .format(context),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              GoogleFonts.inter(
+                                                            color: const Color(
+                                                                0x993C3C43),
                                                             fontSize: 12,
-                                                            fontWeight: FontWeight.w400,
+                                                            fontWeight:
+                                                                FontWeight.w400,
                                                           ),
                                                         ),
                                                       ),
@@ -544,7 +578,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                         'assets/icons/alarm_clock.svg',
                                                         width: 14,
                                                         height: 14,
-                                                        colorFilter: const ColorFilter.mode(
+                                                        colorFilter:
+                                                            const ColorFilter
+                                                                .mode(
                                                           Color(0x993C3C43),
                                                           BlendMode.srcIn,
                                                         ),
@@ -563,12 +599,14 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         Expanded(
                                           flex: 2,
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 'Priority',
                                                 style: GoogleFonts.inter(
-                                                  color: const Color(0xFF333333),
+                                                  color:
+                                                      const Color(0xFF333333),
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.w500,
                                                   letterSpacing: -0.43,
@@ -579,31 +617,44 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                 onTap: () {
                                                   HapticFeedback.lightImpact();
                                                   setState(() {
-                                                    _showPriorityPicker = !_showPriorityPicker;
+                                                    _showPriorityPicker =
+                                                        !_showPriorityPicker;
                                                   });
                                                 },
                                                 child: Container(
                                                   height: 45,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(horizontal: 6),
                                                   decoration: ShapeDecoration(
-                                                    color: _getPriorityColor(_selectedPriority).withOpacity(0.12),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(16),
+                                                    color: _getPriorityColor(
+                                                            _selectedPriority)
+                                                        .withOpacity(0.12),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              16),
                                                       side: BorderSide(
-                                                        color: _getPriorityColor(_selectedPriority).withOpacity(0.4),
+                                                        color: _getPriorityColor(
+                                                                _selectedPriority)
+                                                            .withOpacity(0.4),
                                                         width: 1,
                                                       ),
                                                     ),
                                                   ),
                                                   child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
                                                     children: [
                                                       SvgPicture.asset(
                                                         'assets/icons/flag_alt.svg',
                                                         width: 13,
                                                         height: 13,
-                                                        colorFilter: ColorFilter.mode(
-                                                          _getPriorityColor(_selectedPriority),
+                                                        colorFilter:
+                                                            ColorFilter.mode(
+                                                          _getPriorityColor(
+                                                              _selectedPriority),
                                                           BlendMode.srcIn,
                                                         ),
                                                       ),
@@ -611,11 +662,15 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                       Flexible(
                                                         child: Text(
                                                           _selectedPriority,
-                                                          overflow: TextOverflow.ellipsis,
-                                                          style: GoogleFonts.inter(
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              GoogleFonts.inter(
                                                             fontSize: 12,
-                                                            fontWeight: FontWeight.w600,
-                                                            color: _getPriorityColor(_selectedPriority),
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: _getPriorityColor(
+                                                                _selectedPriority),
                                                           ),
                                                         ),
                                                       ),
@@ -628,17 +683,18 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         ),
                                       ],
                                     ),
-
                                     if (_showPriorityPicker) ...[
                                       const SizedBox(height: 12),
                                       Container(
                                         padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius:
+                                              BorderRadius.circular(16),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.black.withOpacity(0.08),
+                                              color: Colors.black
+                                                  .withOpacity(0.08),
                                               blurRadius: 10,
                                               offset: const Offset(0, 4),
                                             ),
@@ -648,10 +704,14 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                           spacing: 8,
                                           runSpacing: 8,
                                           children: [
-                                            _buildPriorityOption('High', const Color(0xFFFF453A)),
-                                            _buildPriorityOption('Medium', const Color(0xFFFF9F0A)),
-                                            _buildPriorityOption('Low', const Color(0xFF30D158)),
-                                            _buildPriorityOption('None', const Color(0x993C3C43)),
+                                            _buildPriorityOption('High',
+                                                const Color(0xFFFF453A)),
+                                            _buildPriorityOption('Medium',
+                                                const Color(0xFFFF9F0A)),
+                                            _buildPriorityOption(
+                                                'Low', const Color(0xFF30D158)),
+                                            _buildPriorityOption('None',
+                                                const Color(0x993C3C43)),
                                           ],
                                         ),
                                       ),
@@ -674,7 +734,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                 const SizedBox(height: 8),
                                 Container(
                                   height: 122,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
                                   decoration: ShapeDecoration(
                                     color: const Color(0x28787880),
                                     shape: RoundedRectangleBorder(
@@ -698,7 +759,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         fontWeight: FontWeight.w400,
                                         letterSpacing: -0.43,
                                       ),
-                                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              vertical: 10),
                                       border: InputBorder.none,
                                     ),
                                   ),
@@ -716,24 +779,35 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                     ),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Padding(
-                                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                                        padding: const EdgeInsets.only(
+                                            left: 4, bottom: 8),
                                         child: Row(
                                           children: [
                                             Icon(
-                                              _selectedReminderMode == ReminderMode.alarm
+                                              _selectedReminderMode ==
+                                                      ReminderMode.alarm
                                                   ? Icons.alarm_on_rounded
-                                                  : (_selectedReminderMode == ReminderMode.notification
-                                                      ? Icons.notifications_active_rounded
-                                                      : Icons.notifications_off_rounded),
+                                                  : (_selectedReminderMode ==
+                                                          ReminderMode
+                                                              .notification
+                                                      ? Icons
+                                                          .notifications_active_rounded
+                                                      : Icons
+                                                          .notifications_off_rounded),
                                               size: 18,
-                                              color: _selectedReminderMode == ReminderMode.alarm
+                                              color: _selectedReminderMode ==
+                                                      ReminderMode.alarm
                                                   ? const Color(0xFFFF9500)
-                                                  : (_selectedReminderMode == ReminderMode.notification
+                                                  : (_selectedReminderMode ==
+                                                          ReminderMode
+                                                              .notification
                                                       ? const Color(0xFF0088FF)
-                                                      : const Color(0x993C3C43)),
+                                                      : const Color(
+                                                          0x993C3C43)),
                                             ),
                                             const SizedBox(width: 8),
                                             Text(
@@ -753,13 +827,21 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         padding: const EdgeInsets.all(3),
                                         decoration: BoxDecoration(
                                           color: const Color(0x1F787880),
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius:
+                                              BorderRadius.circular(16),
                                         ),
                                         child: Row(
                                           children: [
-                                            _buildReminderModePill(ReminderMode.off, 'Off', null),
-                                            _buildReminderModePill(ReminderMode.notification, '🔔 Notification', const Color(0xFF0088FF)),
-                                            _buildReminderModePill(ReminderMode.alarm, '⏰ Alarm', const Color(0xFFFF9500)),
+                                            _buildReminderModePill(
+                                                ReminderMode.off, 'Off', null),
+                                            _buildReminderModePill(
+                                                ReminderMode.notification,
+                                                '🔔 Notification',
+                                                const Color(0xFF0088FF)),
+                                            _buildReminderModePill(
+                                                ReminderMode.alarm,
+                                                '⏰ Alarm',
+                                                const Color(0xFFFF9500)),
                                           ],
                                         ),
                                       ),
@@ -781,7 +863,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                 ),
                                 const SizedBox(height: 10),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
                                   child: SingleChildScrollView(
                                     scrollDirection: Axis.horizontal,
                                     clipBehavior: Clip.none,
@@ -790,11 +873,14 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                       children: [
                                         _buildRepeatPill(null, 'Never', 88),
                                         const SizedBox(width: 9),
-                                        _buildRepeatPill(RecurrenceType.daily, 'Daily', 88),
+                                        _buildRepeatPill(
+                                            RecurrenceType.daily, 'Daily', 88),
                                         const SizedBox(width: 9),
-                                        _buildRepeatPill(RecurrenceType.weekly, 'Weekly', 97),
+                                        _buildRepeatPill(RecurrenceType.weekly,
+                                            'Weekly', 97),
                                         const SizedBox(width: 9),
-                                        _buildRepeatPill(RecurrenceType.monthly, 'Monthly', 112),
+                                        _buildRepeatPill(RecurrenceType.monthly,
+                                            'Monthly', 112),
                                       ],
                                     ),
                                   ),
@@ -813,7 +899,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                           decoration: ShapeDecoration(
                                             color: const Color(0x28787880),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(20),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
                                             ),
                                           ),
                                           child: Center(
@@ -839,7 +926,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                           decoration: ShapeDecoration(
                                             color: const Color(0xFF0088FF),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(20),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
                                             ),
                                           ),
                                           child: Center(
@@ -877,13 +965,16 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                               topRight: Radius.circular(30.0),
                             ),
                             child: BackdropFilter(
-                              filter: ui.ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                              filter: ui.ImageFilter.blur(
+                                  sigmaX: 10.0, sigmaY: 10.0),
                               child: Container(
                                 color: const Color(0xFF0088FF).withOpacity(0.9),
-                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24.0),
                                 alignment: Alignment.center,
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       dateHeaderStr,
@@ -932,7 +1023,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                   'assets/icons/angle_left.svg',
                   width: 22,
                   height: 22,
-                  colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                  colorFilter: const ColorFilter.mode(
+                      Color(0xFF1C1C1E), BlendMode.srcIn),
                 ),
                 rightWidth: 44.0,
                 rightHeroTag: 'hero_task_editor_more',
@@ -953,7 +1045,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
 
   // Priority Option Helper
   Widget _buildPriorityOption(String level, Color color) {
-    final bool isSelected = _selectedPriority.toLowerCase() == level.toLowerCase();
+    final bool isSelected =
+        _selectedPriority.toLowerCase() == level.toLowerCase();
     return TactileButton(
       onTap: () {
         setState(() {
@@ -1032,7 +1125,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
   }
 
   // Reminder Mode Pill Helper Widget
-  Widget _buildReminderModePill(ReminderMode mode, String label, Color? activeColor) {
+  Widget _buildReminderModePill(
+      ReminderMode mode, String label, Color? activeColor) {
     final isSelected = _selectedReminderMode == mode;
     return Expanded(
       child: GestureDetector(

@@ -158,6 +158,7 @@ abstract class GroupedTile {
     TextInputType keyboardType = TextInputType.text,
     bool showVerifiedBadge = false,
     double height = 52.0,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     const primaryTextColor = Color(0xFF333333);
 
@@ -175,6 +176,7 @@ abstract class GroupedTile {
               readOnly: isReadOnly,
               enabled: isEnabled,
               keyboardType: keyboardType,
+              inputFormatters: inputFormatters,
               style: GoogleFonts.inter(
                 color: isReadOnly
                     ? primaryTextColor.withValues(alpha: 0.6)
@@ -285,7 +287,8 @@ abstract class GroupedTile {
     bool isDestructive = false,
     double height = 50.0,
   }) {
-    final textColor = isDestructive ? const Color(0xFFFF3B30) : const Color(0xFF333333);
+    final textColor =
+        isDestructive ? const Color(0xFFFF3B30) : const Color(0xFF333333);
 
     return TactileButton(
       key: key,
@@ -364,7 +367,8 @@ abstract class GroupedTile {
                 iconPath,
                 width: 18,
                 height: 18,
-                colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                colorFilter:
+                    const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
               ),
               const SizedBox(width: 12),
             ],

@@ -15,7 +15,8 @@ class SDEDragTestScreen extends StatefulWidget {
 class _SDEDragTestScreenState extends State<SDEDragTestScreen> {
   late final RichTextEditingController _controller;
   final FocusNode _contentFocusNode = FocusNode();
-  final GlobalKey<NewSingleDocumentEditorState> _sdeKey = GlobalKey<NewSingleDocumentEditorState>();
+  final GlobalKey<NewSingleDocumentEditorState> _sdeKey =
+      GlobalKey<NewSingleDocumentEditorState>();
   final ScrollController _scrollController = ScrollController();
   bool _isDraggingSelection = false;
   bool _isSelectionMode = true;
@@ -147,7 +148,8 @@ Dragging your finger across these paragraphs will highlight text across multiple
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? const Color(0xFFEEEEEE) : const Color(0xFF333333);
+    final textColor =
+        isDark ? const Color(0xFFEEEEEE) : const Color(0xFF333333);
     final hasSelection = _isSelectionMode &&
         _controller.selection.isValid &&
         !_controller.selection.isCollapsed;
@@ -216,7 +218,8 @@ Dragging your finger across these paragraphs will highlight text across multiple
                             _clearSelection();
                           } else {
                             FocusManager.instance.primaryFocus?.unfocus();
-                            SystemChannels.textInput.invokeMethod('TextInput.hide');
+                            SystemChannels.textInput
+                                .invokeMethod('TextInput.hide');
                           }
                         });
                       },

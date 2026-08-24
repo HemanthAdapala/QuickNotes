@@ -43,7 +43,6 @@ import '../widgets/app_header_bar.dart';
 import 'dart:math';
 import 'dart:ui';
 
-
 enum _ActiveCategory { none, aa, alignment, list, attachment, headings }
 
 const bool kImageDebug = true;
@@ -67,8 +66,6 @@ class NoteEditorScreen extends StatefulWidget {
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
 }
 
-
-
 class _TitleTextEditingController extends TextEditingController {
   String searchQuery = '';
   TextRange? activeMatchRange;
@@ -82,9 +79,11 @@ class _TitleTextEditingController extends TextEditingController {
     required bool withComposing,
   }) {
     final cleanStyle = style?.copyWith(
-      decoration: TextDecoration.none,
-      fontStyle: FontStyle.normal,
-    ) ?? const TextStyle(decoration: TextDecoration.none, fontStyle: FontStyle.normal);
+          decoration: TextDecoration.none,
+          fontStyle: FontStyle.normal,
+        ) ??
+        const TextStyle(
+            decoration: TextDecoration.none, fontStyle: FontStyle.normal);
 
     final query = searchQuery.trim().toLowerCase();
     if (query.isNotEmpty && text.isNotEmpty) {
@@ -95,7 +94,8 @@ class _TitleTextEditingController extends TextEditingController {
 
       while ((matchIdx = lowerText.indexOf(query, start)) != -1) {
         if (matchIdx > start) {
-          spans.add(TextSpan(text: text.substring(start, matchIdx), style: cleanStyle));
+          spans.add(TextSpan(
+              text: text.substring(start, matchIdx), style: cleanStyle));
         }
         final matchEnd = matchIdx + query.length;
         final isActive = activeMatchRange != null &&
@@ -103,12 +103,14 @@ class _TitleTextEditingController extends TextEditingController {
             activeMatchRange!.end == matchEnd;
 
         final highlightStyle = cleanStyle.copyWith(
-          backgroundColor: isActive ? const Color(0xFFFFB74D) : const Color(0xFFFFF59D),
+          backgroundColor:
+              isActive ? const Color(0xFFFFB74D) : const Color(0xFFFFF59D),
           color: isActive ? Colors.black : const Color(0xFF1C1C1E),
           fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
         );
 
-        spans.add(TextSpan(text: text.substring(matchIdx, matchEnd), style: highlightStyle));
+        spans.add(TextSpan(
+            text: text.substring(matchIdx, matchEnd), style: highlightStyle));
         start = matchEnd;
       }
 
@@ -137,7 +139,8 @@ class _TitleTextEditingController extends TextEditingController {
   }
 }
 
-class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBindingObserver {
+class _NoteEditorScreenState extends State<NoteEditorScreen>
+    with WidgetsBindingObserver {
   final _titleController = _TitleTextEditingController();
   final _titleFocusNode = FocusNode();
   final _scrollController = ScrollController();
@@ -155,7 +158,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   ResizableImageWidgetState? _activeDragImage;
   int _dragDirection = 0;
   Offset? _pointerDownPos;
-  final GlobalKey<NewSingleDocumentEditorState> _sdeKey = GlobalKey<NewSingleDocumentEditorState>();
+  final GlobalKey<NewSingleDocumentEditorState> _sdeKey =
+      GlobalKey<NewSingleDocumentEditorState>();
 
   String _generateId() {
     final random = Random();
@@ -175,7 +179,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
 
     final lines = markdown.split('\n');
-    
+
     bool isImageLine(String str) {
       final imageReg = RegExp(r'^!\[(.*?)\]\((.*?)\)$');
       return imageReg.hasMatch(str.trim());
@@ -186,7 +190,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       final match = imageReg.firstMatch(str.trim())!;
       final alt = match.group(1);
       final url = match.group(2) ?? '';
-      
+
       double? width;
       String cleanUrl = url;
       final uri = Uri.tryParse(url);
@@ -230,21 +234,24 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
       // Check if heading block
       if (trimmed.startsWith('# ')) {
-        final newBlock = HeadingBlock(id: _generateId(), level: 1, markdown: trimmed.substring(2));
+        final newBlock = HeadingBlock(
+            id: _generateId(), level: 1, markdown: trimmed.substring(2));
         _setupBlockFocusNode(newBlock.focusNode);
         _setupBlockController(newBlock);
         blocks.add(newBlock);
         i++;
         continue;
       } else if (trimmed.startsWith('## ')) {
-        final newBlock = HeadingBlock(id: _generateId(), level: 2, markdown: trimmed.substring(3));
+        final newBlock = HeadingBlock(
+            id: _generateId(), level: 2, markdown: trimmed.substring(3));
         _setupBlockFocusNode(newBlock.focusNode);
         _setupBlockController(newBlock);
         blocks.add(newBlock);
         i++;
         continue;
       } else if (trimmed.startsWith('### ')) {
-        final newBlock = HeadingBlock(id: _generateId(), level: 3, markdown: trimmed.substring(4));
+        final newBlock = HeadingBlock(
+            id: _generateId(), level: 3, markdown: trimmed.substring(4));
         _setupBlockFocusNode(newBlock.focusNode);
         _setupBlockController(newBlock);
         blocks.add(newBlock);
@@ -254,7 +261,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
       // Check if quote block
       if (trimmed.startsWith('> ')) {
-        final newBlock = QuoteBlock(id: _generateId(), markdown: trimmed.substring(2));
+        final newBlock =
+            QuoteBlock(id: _generateId(), markdown: trimmed.substring(2));
         _setupBlockFocusNode(newBlock.focusNode);
         _setupBlockController(newBlock);
         blocks.add(newBlock);
@@ -264,14 +272,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
       // Check if checklist block
       if (trimmed.startsWith('- [ ] ')) {
-        final newBlock = ChecklistBlock(id: _generateId(), isChecked: false, markdown: trimmed.substring(6));
+        final newBlock = ChecklistBlock(
+            id: _generateId(),
+            isChecked: false,
+            markdown: trimmed.substring(6));
         _setupBlockFocusNode(newBlock.focusNode);
         _setupBlockController(newBlock);
         blocks.add(newBlock);
         i++;
         continue;
       } else if (trimmed.startsWith('- [x] ') || trimmed.startsWith('- [X] ')) {
-        final newBlock = ChecklistBlock(id: _generateId(), isChecked: true, markdown: trimmed.substring(6));
+        final newBlock = ChecklistBlock(
+            id: _generateId(), isChecked: true, markdown: trimmed.substring(6));
         _setupBlockFocusNode(newBlock.focusNode);
         _setupBlockController(newBlock);
         blocks.add(newBlock);
@@ -280,8 +292,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       }
 
       // Check if bulleted list block
-      if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('+ ')) {
-        final newBlock = BulletedListBlock(id: _generateId(), markdown: trimmed.substring(2));
+      if (trimmed.startsWith('- ') ||
+          trimmed.startsWith('* ') ||
+          trimmed.startsWith('+ ')) {
+        final newBlock = BulletedListBlock(
+            id: _generateId(), markdown: trimmed.substring(2));
         _setupBlockFocusNode(newBlock.focusNode);
         _setupBlockController(newBlock);
         blocks.add(newBlock);
@@ -294,7 +309,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       if (numListRegex.hasMatch(trimmed)) {
         final match = numListRegex.firstMatch(trimmed)!;
         final content = match.group(2) ?? '';
-        final newBlock = NumberedListBlock(id: _generateId(), markdown: content);
+        final newBlock =
+            NumberedListBlock(id: _generateId(), markdown: content);
         _setupBlockFocusNode(newBlock.focusNode);
         _setupBlockController(newBlock);
         blocks.add(newBlock);
@@ -420,7 +436,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   void _onScroll() {
-    if (_scrollController.hasClients && _scrollController.offset < 5.0 && _isMetadataCollapsed) {
+    if (_scrollController.hasClients &&
+        _scrollController.offset < 5.0 &&
+        _isMetadataCollapsed) {
       setState(() {
         _isMetadataCollapsed = false;
       });
@@ -433,7 +451,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         _isMetadataCollapsed = true;
       });
     }
-    if (_activeCategory != _ActiveCategory.none && !Platform.environment.containsKey('FLUTTER_TEST')) {
+    if (_activeCategory != _ActiveCategory.none &&
+        !Platform.environment.containsKey('FLUTTER_TEST')) {
       setState(() {
         _activeCategory = _ActiveCategory.none;
       });
@@ -448,7 +467,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       if (index == -1) return;
 
       final lines = text.split('\n');
-      
+
       int currentOffset = 0;
       final List<List<StyledChar>> linesStyledChars = [];
       for (final line in lines) {
@@ -479,7 +498,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         } else {
           newBlock = ParagraphBlock(id: _generateId());
         }
-        
+
         _setupBlockFocusNode(_getFocusNodeOfBlock(newBlock)!);
         _setupBlockController(newBlock);
 
@@ -522,7 +541,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     final controller = _getControllerOfBlock(block);
     if (controller == null) return;
 
-    if ((block is ChecklistBlock || block is BulletedListBlock || block is NumberedListBlock) && controller.text.isEmpty) {
+    if ((block is ChecklistBlock ||
+            block is BulletedListBlock ||
+            block is NumberedListBlock) &&
+        controller.text.isEmpty) {
       _toggleBlockType(block, ParagraphBlock);
       return;
     }
@@ -583,7 +605,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
   void _handleBackspaceAtStart(NoteBlock block) {
     final ctrl = _getControllerOfBlock(block);
-    if ((block is ChecklistBlock || block is BulletedListBlock || block is NumberedListBlock) && ctrl != null && ctrl.text.isEmpty) {
+    if ((block is ChecklistBlock ||
+            block is BulletedListBlock ||
+            block is NumberedListBlock) &&
+        ctrl != null &&
+        ctrl.text.isEmpty) {
       _toggleBlockType(block, ParagraphBlock);
       return;
     }
@@ -593,7 +619,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
     final prevBlock = _blocks[index - 1];
 
-    if (prevBlock is ImageBlock || prevBlock is ImageStackBlock || prevBlock is DividerBlock) {
+    if (prevBlock is ImageBlock ||
+        prevBlock is ImageStackBlock ||
+        prevBlock is DividerBlock) {
       // Delete the image/divider/stack block
       setState(() {
         _blocks.removeAt(index - 1);
@@ -605,8 +633,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       final prevController = _getControllerOfBlock(prevBlock);
       if (currentController != null && prevController != null) {
         final prevLength = prevController.text.length;
-        final mergedStyledChars = List<StyledChar>.from(prevController.styledChars)
-          ..addAll(currentController.styledChars);
+        final mergedStyledChars =
+            List<StyledChar>.from(prevController.styledChars)
+              ..addAll(currentController.styledChars);
         final mergedText = prevController.text + currentController.text;
 
         setState(() {
@@ -620,7 +649,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           final prevFocusNode = _getFocusNodeOfBlock(prevBlock);
           if (prevFocusNode != null) {
             prevFocusNode.requestFocus();
-            prevController.selection = TextSelection.collapsed(offset: prevLength);
+            prevController.selection =
+                TextSelection.collapsed(offset: prevLength);
           }
         });
       }
@@ -684,7 +714,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
   }
 
-
   void _insertParagraphAt(int index) {
     if (index > 0 && index - 1 < _blocks.length) {
       final prevBlock = _blocks[index - 1];
@@ -704,7 +733,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     final newBlock = ParagraphBlock(id: _generateId());
     _setupBlockFocusNode(newBlock.focusNode);
     _setupBlockController(newBlock);
-    
+
     setState(() {
       _blocks.insert(index, newBlock);
       _hasChanges = true;
@@ -744,7 +773,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     return Color(_paperGuideColor);
   }
 
-  Widget _wrapWithBlockPaperGuide(Widget blockWidget, {NoteBlock? block, bool isBottomSpacer = false}) {
+  Widget _wrapWithBlockPaperGuide(Widget blockWidget,
+      {NoteBlock? block, bool isBottomSpacer = false}) {
     if (block == null && !isBottomSpacer) return blockWidget;
     if (block != null &&
         block is! ParagraphBlock &&
@@ -756,7 +786,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isLines = _paperGuideType.startsWith('lines') || _paperGuideType == 'custom';
+    final isLines =
+        _paperGuideType.startsWith('lines') || _paperGuideType == 'custom';
     final showLines = _paperGuideVisible && isLines;
 
     return Stack(
@@ -770,7 +801,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               },
               child: showLines
                   ? CustomPaint(
-                      key: ValueKey('${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
+                      key: ValueKey(
+                          '${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
                       painter: BlockPaperGuidePainter(
                         guideType: _paperGuideType,
                         lineHeight: 20.0 * _paperGuideHeight,
@@ -793,14 +825,17 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
     return DragTarget<Map<String, dynamic>>(
       onWillAcceptWithDetails: (details) {
-        print('DRAG_DEBUG: onWillAcceptWithDetails for target block = ${block.id} (type: ${block.runtimeType}), data = ${details.data}');
+        print(
+            'DRAG_DEBUG: onWillAcceptWithDetails for target block = ${block.id} (type: ${block.runtimeType}), data = ${details.data}');
         return details.data['imagePath'] != null;
       },
       onLeave: (data) {
-        print('DRAG_DEBUG: onLeave for target block = ${block.id} (type: ${block.runtimeType}), data = $data');
+        print(
+            'DRAG_DEBUG: onLeave for target block = ${block.id} (type: ${block.runtimeType}), data = $data');
       },
       onAcceptWithDetails: (details) {
-        print('DRAG_DEBUG: onAcceptWithDetails for target block = ${block.id} (type: ${block.runtimeType}), data = ${details.data}');
+        print(
+            'DRAG_DEBUG: onAcceptWithDetails for target block = ${block.id} (type: ${block.runtimeType}), data = ${details.data}');
         final data = details.data;
         final oldIndex = data['oldIndex'] as int;
         final stackImgIdx = data['stackImageIndex'] as int?;
@@ -848,7 +883,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       builder: (context, candidateData, rejectedData) {
         final isHovered = candidateData.isNotEmpty;
         final isImage = block is ImageBlock || block is ImageStackBlock;
-        
+
         if (isHovered && isImage) {
           return Stack(
             children: [
@@ -857,7 +892,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                 child: IgnorePointer(
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2.0),
+                      border: Border.all(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 2.0),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -871,12 +908,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     );
   }
 
-  Widget _buildRawBlockWidget(NoteBlock block, Color textColor, Color titleColor) {
+  Widget _buildRawBlockWidget(
+      NoteBlock block, Color textColor, Color titleColor) {
     if (block is ParagraphBlock) {
       return Focus(
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+            if (event.logicalKey == LogicalKeyboardKey.enter &&
+                !HardwareKeyboard.instance.isShiftPressed) {
               _handleEnterKey(block);
               return KeyEventResult.handled;
             }
@@ -896,7 +935,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             }
             if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
               final sel = block.controller.selection;
-              if (sel.isCollapsed && sel.start == block.controller.text.length) {
+              if (sel.isCollapsed &&
+                  sel.start == block.controller.text.length) {
                 _handleArrowDownAtEnd(block);
                 return KeyEventResult.handled;
               }
@@ -910,7 +950,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           maxLines: null,
           keyboardType: TextInputType.multiline,
           contextMenuBuilder: _buildContextMenu,
-          scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
+          scrollPadding:
+              EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
           textAlign: block.controller.styledChars.isNotEmpty
               ? block.controller.styledChars.first.style.align
               : block.controller.currentActiveStyle.align,
@@ -920,7 +961,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             height: 1.35,
           ),
           decoration: InputDecoration(
-            hintText: _blocks.indexOf(block) == 0 && _blocks.length == 1 ? "Start writing..." : "",
+            hintText: _blocks.indexOf(block) == 0 && _blocks.length == 1
+                ? "Start writing..."
+                : "",
             hintStyle: GoogleFonts.inter(
               fontSize: 16.0,
               color: textColor.withAlpha(80),
@@ -948,7 +991,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       return Focus(
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+            if (event.logicalKey == LogicalKeyboardKey.enter &&
+                !HardwareKeyboard.instance.isShiftPressed) {
               _handleEnterKey(block);
               return KeyEventResult.handled;
             }
@@ -968,7 +1012,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             }
             if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
               final sel = block.controller.selection;
-              if (sel.isCollapsed && sel.start == block.controller.text.length) {
+              if (sel.isCollapsed &&
+                  sel.start == block.controller.text.length) {
                 _handleArrowDownAtEnd(block);
                 return KeyEventResult.handled;
               }
@@ -982,7 +1027,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           maxLines: null,
           keyboardType: TextInputType.multiline,
           contextMenuBuilder: _buildContextMenu,
-          scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
+          scrollPadding:
+              EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
           style: GoogleFonts.outfit(
             fontSize: fontSize,
             fontWeight: FontWeight.bold,
@@ -1021,7 +1067,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         child: Focus(
           onKeyEvent: (node, event) {
             if (event is KeyDownEvent) {
-              if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+              if (event.logicalKey == LogicalKeyboardKey.enter &&
+                  !HardwareKeyboard.instance.isShiftPressed) {
                 _handleEnterKey(block);
                 return KeyEventResult.handled;
               }
@@ -1041,7 +1088,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               }
               if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
                 final sel = block.controller.selection;
-                if (sel.isCollapsed && sel.start == block.controller.text.length) {
+                if (sel.isCollapsed &&
+                    sel.start == block.controller.text.length) {
                   _handleArrowDownAtEnd(block);
                   return KeyEventResult.handled;
                 }
@@ -1055,7 +1103,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             maxLines: null,
             keyboardType: TextInputType.multiline,
             contextMenuBuilder: _buildContextMenu,
-            scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
+            scrollPadding:
+                EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
             style: GoogleFonts.inter(
               fontSize: 16.0,
               color: textColor.withAlpha(220),
@@ -1100,14 +1149,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                 height: 10,
                 decoration: block.isChecked
                     ? const BoxDecoration(color: Color(0xFF222222))
-                    : BoxDecoration(border: Border.all(color: Colors.black, width: 1.0)),
+                    : BoxDecoration(
+                        border: Border.all(color: Colors.black, width: 1.0)),
                 child: block.isChecked
                     ? Center(
                         child: SvgPicture.asset(
                           'assets/icons/vector_check.svg',
                           width: 6,
                           height: 6,
-                          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                          colorFilter: const ColorFilter.mode(
+                              Colors.white, BlendMode.srcIn),
                         ),
                       )
                     : null,
@@ -1117,7 +1168,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               child: Focus(
                 onKeyEvent: (node, event) {
                   if (event is KeyDownEvent) {
-                    if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+                    if (event.logicalKey == LogicalKeyboardKey.enter &&
+                        !HardwareKeyboard.instance.isShiftPressed) {
                       _handleEnterKey(block);
                       return KeyEventResult.handled;
                     }
@@ -1137,7 +1189,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                     }
                     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
                       final sel = block.controller.selection;
-                      if (sel.isCollapsed && sel.start == block.controller.text.length) {
+                      if (sel.isCollapsed &&
+                          sel.start == block.controller.text.length) {
                         _handleArrowDownAtEnd(block);
                         return KeyEventResult.handled;
                       }
@@ -1154,8 +1207,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   scrollPadding: const EdgeInsets.only(bottom: 90.0),
                   style: GoogleFonts.inter(
                     fontSize: 16.0,
-                    color: block.isChecked ? textColor.withAlpha(120) : textColor,
-                    decoration: block.isChecked ? TextDecoration.lineThrough : null,
+                    color:
+                        block.isChecked ? textColor.withAlpha(120) : textColor,
+                    decoration:
+                        block.isChecked ? TextDecoration.lineThrough : null,
                     height: 1.35,
                   ),
                   decoration: const InputDecoration(
@@ -1193,7 +1248,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               child: Focus(
                 onKeyEvent: (node, event) {
                   if (event is KeyDownEvent) {
-                    if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+                    if (event.logicalKey == LogicalKeyboardKey.enter &&
+                        !HardwareKeyboard.instance.isShiftPressed) {
                       _handleEnterKey(block);
                       return KeyEventResult.handled;
                     }
@@ -1213,7 +1269,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                     }
                     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
                       final sel = block.controller.selection;
-                      if (sel.isCollapsed && sel.start == block.controller.text.length) {
+                      if (sel.isCollapsed &&
+                          sel.start == block.controller.text.length) {
                         _handleArrowDownAtEnd(block);
                         return KeyEventResult.handled;
                       }
@@ -1274,7 +1331,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               child: Focus(
                 onKeyEvent: (node, event) {
                   if (event is KeyDownEvent) {
-                    if (event.logicalKey == LogicalKeyboardKey.enter && !HardwareKeyboard.instance.isShiftPressed) {
+                    if (event.logicalKey == LogicalKeyboardKey.enter &&
+                        !HardwareKeyboard.instance.isShiftPressed) {
                       _handleEnterKey(block);
                       return KeyEventResult.handled;
                     }
@@ -1294,7 +1352,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                     }
                     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
                       final sel = block.controller.selection;
-                      if (sel.isCollapsed && sel.start == block.controller.text.length) {
+                      if (sel.isCollapsed &&
+                          sel.start == block.controller.text.length) {
                         _handleArrowDownAtEnd(block);
                         return KeyEventResult.handled;
                       }
@@ -1421,7 +1480,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   final _pageController = PageController(initialPage: 1);
   int _currentPage = 1;
   bool _wasSelectionActive = false;
-  
+
   int _colorIndex = 0;
   bool _isPinned = false;
   bool _isFavorite = false;
@@ -1435,7 +1494,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   List<String> _tags = [];
   List<Map<String, dynamic>> _attachments = [];
   final List<Map<String, dynamic>> _checklistItems = const []; // legacy removed
-  final List<TextEditingController> _checklistControllers = const []; // legacy removed
+  final List<TextEditingController> _checklistControllers =
+      const []; // legacy removed
   final List<FocusNode> _checklistFocusNodes = const []; // legacy removed
 
   // Folders & Habits state
@@ -1506,7 +1566,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       _paperGuideHeight = widget.note!.paperGuideHeight;
       _paperGuideOpacity = widget.note!.paperGuideOpacity;
       _paperGuideColor = widget.note!.paperGuideColor;
-      
+
       _contentController = RichTextEditingController();
       if (NoteEditorScreen.useSingleDocumentEditor) {
         _contentController.onStyleChanged = () {
@@ -1566,7 +1626,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
     _titleController.addListener(_onTitleTextChanged);
     _contentController.addListener(_onContentTextChanged);
-    
+
     _titleFocusNode.addListener(() {
       if (_titleFocusNode.hasFocus) {
         if (!_isFormattingBarExpanded) {
@@ -1587,10 +1647,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         setState(() {});
       }
     });
-    
+
     _scrollController.addListener(_onScroll);
-    _autoScrollController = EditorAutoScrollController(scrollController: _scrollController);
-    
+    _autoScrollController =
+        EditorAutoScrollController(scrollController: _scrollController);
+
     _contentFocusNode.addListener(() {
       if (mounted) {
         setState(() {});
@@ -1614,7 +1675,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
       void _requestInitialFocus() {
         if (!mounted) return;
-        setState(() { _isPageSettled = true; });
+        setState(() {
+          _isPageSettled = true;
+        });
         if (widget.note == null) {
           _titleFocusNode.requestFocus();
         }
@@ -1630,6 +1693,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               _requestInitialFocus();
             }
           }
+
           route.animation!.addStatusListener(listener);
         }
       } else {
@@ -1686,7 +1750,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
-    final bottomInset = WidgetsBinding.instance.platformDispatcher.views.first.viewInsets.bottom;
+    final bottomInset = WidgetsBinding
+        .instance.platformDispatcher.views.first.viewInsets.bottom;
     final isKeyboardVisible = bottomInset > 0;
     if (isKeyboardVisible != _isKeyboardVisible) {
       _isKeyboardVisible = isKeyboardVisible;
@@ -1726,13 +1791,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     _calculateCounts();
     setState(() {
       _hasChanges = true;
-      if (_activeCategory != _ActiveCategory.none && !Platform.environment.containsKey('FLUTTER_TEST')) {
+      if (_activeCategory != _ActiveCategory.none &&
+          !Platform.environment.containsKey('FLUTTER_TEST')) {
         _activeCategory = _ActiveCategory.none;
       }
     });
   }
 
-  Widget _buildContextMenu(BuildContext context, EditableTextState editableTextState) {
+  Widget _buildContextMenu(
+      BuildContext context, EditableTextState editableTextState) {
     return const SizedBox.shrink();
   }
 
@@ -1742,7 +1809,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     _checkSelectionToolbarNavigation();
     setState(() {
       _hasChanges = true;
-      if (_activeCategory != _ActiveCategory.none && !Platform.environment.containsKey('FLUTTER_TEST')) {
+      if (_activeCategory != _ActiveCategory.none &&
+          !Platform.environment.containsKey('FLUTTER_TEST')) {
         _activeCategory = _ActiveCategory.none;
       }
     });
@@ -1832,7 +1900,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     _contentController.selection = TextSelection.collapsed(offset: selStart);
   }
 
-
   NoteBlock? get _focusedBlock {
     for (final block in _blocks) {
       final fn = _getFocusNodeOfBlock(block);
@@ -1861,7 +1928,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
   void _focusTitleArea() {
     FocusScope.of(context).requestFocus(_titleFocusNode);
-    _titleController.selection = TextSelection.collapsed(offset: _titleController.text.length);
+    _titleController.selection =
+        TextSelection.collapsed(offset: _titleController.text.length);
   }
 
   bool get _anyBlockHasFocus {
@@ -1877,31 +1945,29 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     return false;
   }
 
-
-
   void _calculateCounts() {
     String text = "";
     if (NoteEditorScreen.useSingleDocumentEditor) {
       text = _contentController.text;
     } else {
-      text = _blocks.map((b) {
-        if (b is ParagraphBlock) return b.controller.text;
-        if (b is HeadingBlock) return b.controller.text;
-        if (b is QuoteBlock) return b.controller.text;
-        if (b is ChecklistBlock) return b.controller.text;
-        if (b is BulletedListBlock) return b.controller.text;
-        if (b is NumberedListBlock) return b.controller.text;
-        return "";
-      }).join(" ").trim();
+      text = _blocks
+          .map((b) {
+            if (b is ParagraphBlock) return b.controller.text;
+            if (b is HeadingBlock) return b.controller.text;
+            if (b is QuoteBlock) return b.controller.text;
+            if (b is ChecklistBlock) return b.controller.text;
+            if (b is BulletedListBlock) return b.controller.text;
+            if (b is NumberedListBlock) return b.controller.text;
+            return "";
+          })
+          .join(" ")
+          .trim();
     }
     setState(() {
       _charCount = text.length;
       _wordCount = text.isEmpty ? 0 : text.split(RegExp(r'\s+')).length;
     });
   }
-
-
-
 
   Future<void> _showGalleryBottomSheet(BuildContext context) async {
     final theme = Theme.of(context);
@@ -1918,7 +1984,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
     if (kImageDebug) {
       debugPrint("[Stage 2] Started");
-      debugPrint("Relevant state: scrollOffset=${_scrollController.hasClients ? _scrollController.offset : 'null'}");
+      debugPrint(
+          "Relevant state: scrollOffset=${_scrollController.hasClients ? _scrollController.offset : 'null'}");
     }
     await showModalBottomSheet(
       context: context,
@@ -1950,7 +2017,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                             onPressed: () {
                               if (kImageDebug) {
                                 debugPrint("[Stage 3 - Preset] Started");
-                                debugPrint("Relevant state: image paths=$selectedPaths");
+                                debugPrint(
+                                    "Relevant state: image paths=$selectedPaths");
                               }
                               Navigator.pop(context);
                               _insertSelectedImages(selectedPaths);
@@ -1960,7 +2028,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                             },
                             child: Text(
                               "Insert (${selectedPaths.length})",
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                       ],
@@ -1970,7 +2039,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                       child: GridView.builder(
                         shrinkWrap: true,
                         itemCount: sampleUrls.length + 2,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
                           crossAxisSpacing: 8,
                           mainAxisSpacing: 8,
@@ -1979,25 +2049,29 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                           if (index == 0) {
                             return InkWell(
                               onTap: () async {
+                                if (kImageDebug) {
+                                  debugPrint("[Stage 3 - Camera] Started");
+                                }
+                                Navigator.pop(context);
+                                final picked = await _imagePicker.pickImage(
+                                    source: ImageSource.camera);
+                                if (picked != null) {
                                   if (kImageDebug) {
-                                    debugPrint("[Stage 3 - Camera] Started");
+                                    debugPrint(
+                                        "Relevant state: image path=file://${picked.path}");
                                   }
-                                  Navigator.pop(context);
-                                  final picked = await _imagePicker.pickImage(source: ImageSource.camera);
-                                  if (picked != null) {
-                                    if (kImageDebug) {
-                                      debugPrint("Relevant state: image path=file://${picked.path}");
-                                    }
-                                    _insertSelectedImages(['file://${picked.path}']);
-                                  }
-                                  if (kImageDebug) {
-                                    debugPrint("[Stage 3 - Camera] Completed");
-                                  }
-                                },
+                                  _insertSelectedImages(
+                                      ['file://${picked.path}']);
+                                }
+                                if (kImageDebug) {
+                                  debugPrint("[Stage 3 - Camera] Completed");
+                                }
+                              },
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                                  border: Border.all(
+                                      color: theme.colorScheme.outlineVariant),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Column(
@@ -2005,7 +2079,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                                   children: [
                                     Icon(Icons.camera_alt_outlined, size: 28),
                                     SizedBox(height: 4),
-                                    Text("Camera", style: TextStyle(fontSize: 12)),
+                                    Text("Camera",
+                                        style: TextStyle(fontSize: 12)),
                                   ],
                                 ),
                               ),
@@ -2013,34 +2088,42 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                           } else if (index == 1) {
                             return InkWell(
                               onTap: () async {
+                                if (kImageDebug) {
+                                  debugPrint("[Stage 3 - Gallery] Started");
+                                }
+                                Navigator.pop(context);
+                                final pickedList =
+                                    await _imagePicker.pickMultiImage();
+                                if (pickedList.isNotEmpty) {
+                                  final paths = pickedList
+                                      .map((x) => 'file://${x.path}')
+                                      .toList();
                                   if (kImageDebug) {
-                                    debugPrint("[Stage 3 - Gallery] Started");
+                                    debugPrint(
+                                        "Relevant state: image paths=$paths");
                                   }
-                                  Navigator.pop(context);
-                                  final pickedList = await _imagePicker.pickMultiImage();
-                                  if (pickedList.isNotEmpty) {
-                                    final paths = pickedList.map((x) => 'file://${x.path}').toList();
-                                    if (kImageDebug) {
-                                      debugPrint("Relevant state: image paths=$paths");
-                                    }
-                                    _insertSelectedImages(paths);
-                                  }
-                                  if (kImageDebug) {
-                                    debugPrint("[Stage 3 - Gallery] Completed");
-                                  }
-                                },
+                                  _insertSelectedImages(paths);
+                                }
+                                if (kImageDebug) {
+                                  debugPrint("[Stage 3 - Gallery] Completed");
+                                }
+                              },
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                                  border: Border.all(
+                                      color: theme.colorScheme.outlineVariant),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.photo_library_outlined, size: 28),
+                                    Icon(Icons.photo_library_outlined,
+                                        size: 28),
                                     SizedBox(height: 4),
-                                    Text("System Gallery", style: const TextStyle(fontSize: 12), textAlign: TextAlign.center),
+                                    Text("System Gallery",
+                                        style: const TextStyle(fontSize: 12),
+                                        textAlign: TextAlign.center),
                                   ],
                                 ),
                               ),
@@ -2068,8 +2151,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                                       child: Image.network(
                                         url,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => Container(
-                                          color: theme.colorScheme.surfaceContainerHighest,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Container(
+                                          color: theme.colorScheme
+                                              .surfaceContainerHighest,
                                           child: const Icon(Icons.broken_image),
                                         ),
                                       ),
@@ -2080,8 +2166,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                                       child: Container(
                                         decoration: BoxDecoration(
                                           color: Colors.black26,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: theme.colorScheme.primary, width: 3),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                              color: theme.colorScheme.primary,
+                                              width: 3),
                                         ),
                                       ),
                                     ),
@@ -2090,10 +2179,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                                       right: 8,
                                       child: CircleAvatar(
                                         radius: 10,
-                                        backgroundColor: theme.colorScheme.primary,
+                                        backgroundColor:
+                                            theme.colorScheme.primary,
                                         child: Text(
                                           "$selectIdx",
-                                          style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                                          style: const TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold),
                                         ),
                                       ),
                                     ),
@@ -2118,7 +2211,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   Future<void> _insertSelectedImages(List<String> paths) async {
     if (kImageDebug) {
       debugPrint("[Stage 4] Started");
-      debugPrint("Relevant state: paths=$paths, selection=${_contentController.selection}, styledChars length=${_contentController.styledChars.length}");
+      debugPrint(
+          "Relevant state: paths=$paths, selection=${_contentController.selection}, styledChars length=${_contentController.styledChars.length}");
     }
     if (_noteType == 'text' && NoteEditorScreen.useSingleDocumentEditor) {
       for (final path in paths) {
@@ -2194,7 +2288,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
             WidgetsBinding.instance.addPostFrameCallback((_) {
               afterBlock.focusNode.requestFocus();
-              afterBlock.controller.selection = const TextSelection.collapsed(offset: 0);
+              afterBlock.controller.selection =
+                  const TextSelection.collapsed(offset: 0);
             });
           }
         } else {
@@ -2224,7 +2319,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
   }
 
-  Future<void> _showReplaceGalleryBottomSheet(int index, {int? stackImageIndex}) async {
+  Future<void> _showReplaceGalleryBottomSheet(int index,
+      {int? stackImageIndex}) async {
     final theme = Theme.of(context);
     final List<String> sampleUrls = [
       'https://images.unsplash.com/photo-1517842645767-c639042777db?w=500&q=80',
@@ -2260,7 +2356,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   child: GridView.builder(
                     shrinkWrap: true,
                     itemCount: sampleUrls.length + 2,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8,
@@ -2270,15 +2367,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                         return InkWell(
                           onTap: () async {
                             Navigator.pop(context);
-                            final picked = await _imagePicker.pickImage(source: ImageSource.camera);
+                            final picked = await _imagePicker.pickImage(
+                                source: ImageSource.camera);
                             if (picked != null) {
-                              _replaceImage(index, 'file://${picked.path}', stackImageIndex: stackImageIndex);
+                              _replaceImage(index, 'file://${picked.path}',
+                                  stackImageIndex: stackImageIndex);
                             }
                           },
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
                             decoration: BoxDecoration(
-                              border: Border.all(color: theme.colorScheme.outlineVariant),
+                              border: Border.all(
+                                  color: theme.colorScheme.outlineVariant),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Column(
@@ -2295,15 +2395,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                         return InkWell(
                           onTap: () async {
                             Navigator.pop(context);
-                            final picked = await _imagePicker.pickImage(source: ImageSource.gallery);
+                            final picked = await _imagePicker.pickImage(
+                                source: ImageSource.gallery);
                             if (picked != null) {
-                              _replaceImage(index, 'file://${picked.path}', stackImageIndex: stackImageIndex);
+                              _replaceImage(index, 'file://${picked.path}',
+                                  stackImageIndex: stackImageIndex);
                             }
                           },
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
                             decoration: BoxDecoration(
-                              border: Border.all(color: theme.colorScheme.outlineVariant),
+                              border: Border.all(
+                                  color: theme.colorScheme.outlineVariant),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Column(
@@ -2311,7 +2414,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                               children: [
                                 Icon(Icons.photo_library_outlined, size: 28),
                                 SizedBox(height: 4),
-                                Text("System Gallery", style: TextStyle(fontSize: 12)),
+                                Text("System Gallery",
+                                    style: TextStyle(fontSize: 12)),
                               ],
                             ),
                           ),
@@ -2321,15 +2425,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                         return GestureDetector(
                           onTap: () {
                             Navigator.pop(context);
-                            _replaceImage(index, url, stackImageIndex: stackImageIndex);
+                            _replaceImage(index, url,
+                                stackImageIndex: stackImageIndex);
                           },
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.network(
                               url,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: theme.colorScheme.surfaceContainerHighest,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
                                 child: const Icon(Icons.broken_image),
                               ),
                             ),
@@ -2392,8 +2499,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
   }
 
-
-
   // --- Audio Recording operations ---
   Future<void> _startRecording() async {
     try {
@@ -2402,10 +2507,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
       if (isGranted) {
         final Directory tempDir = await getTemporaryDirectory();
-        final String path = '${tempDir.path}/voice_note_${DateTime.now().millisecondsSinceEpoch}.m4a';
-        
-        await _audioRecorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
-        
+        final String path =
+            '${tempDir.path}/voice_note_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+        await _audioRecorder
+            .start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
+
         setState(() {
           _isRecording = true;
           _recordDuration = 0;
@@ -2477,7 +2584,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _contentFocusNode.requestFocus();
     });
-    setState(() { _hasChanges = true; });
+    setState(() {
+      _hasChanges = true;
+    });
   }
 
   void _scrollToCursor() {
@@ -2495,10 +2604,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
 
   double _getDynamicBottomScrollPadding() {
-    final double currentToolbarHeight = !_isFormattingBarExpanded 
-        ? 48.0 
+    final double currentToolbarHeight = !_isFormattingBarExpanded
+        ? 48.0
         : (_activeCategory != _ActiveCategory.none ? 100.0 : 50.0);
-    return MediaQuery.of(context).viewInsets.bottom + currentToolbarHeight + 30.0;
+    return MediaQuery.of(context).viewInsets.bottom +
+        currentToolbarHeight +
+        30.0;
   }
 
   // --- Save Operations ---
@@ -2510,7 +2621,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     try {
       final title = _titleController.text.trim();
       final content = NoteEditorScreen.useSingleDocumentEditor
-          ? generateMarkdownFromStyledChars(_contentController.styledChars).trim()
+          ? generateMarkdownFromStyledChars(_contentController.styledChars)
+              .trim()
           : _blocks.map((b) => b.toMarkdown()).join('\n').trim();
 
       if (title.isEmpty && content.isEmpty) return;
@@ -2567,7 +2679,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
         );
         await provider.updateNote(updatedNote);
       }
-      
+
       setState(() {
         _hasChanges = false;
       });
@@ -2610,7 +2722,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     }
   }
 
-  void _toggleBlockType(NoteBlock block, Type targetType, {int? headingLevel, bool? isChecked}) {
+  void _toggleBlockType(NoteBlock block, Type targetType,
+      {int? headingLevel, bool? isChecked}) {
     final index = _blocks.indexOf(block);
     if (index == -1) return;
 
@@ -2658,7 +2771,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     } else if (targetType == QuoteBlock) {
       newBlock = QuoteBlock(id: id, markdown: "");
     } else if (targetType == ChecklistBlock) {
-      newBlock = ChecklistBlock(id: id, isChecked: isChecked ?? false, markdown: "");
+      newBlock =
+          ChecklistBlock(id: id, isChecked: isChecked ?? false, markdown: "");
     } else if (targetType == BulletedListBlock) {
       newBlock = BulletedListBlock(id: id, markdown: "");
     } else if (targetType == NumberedListBlock) {
@@ -2734,7 +2848,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       } else if (prefix == '~~') {
         controller.toggleStyleAttribute('strikethrough');
       } else if (prefix == 'highlight') {
-        controller.toggleStyleAttribute('highlight', value: Colors.yellow.withAlpha(180));
+        controller.toggleStyleAttribute('highlight',
+            value: Colors.yellow.withAlpha(180));
       } else if (prefix == '```\n') {
         controller.toggleStyleAttribute('code');
       } else if (prefix.startsWith('<p align="')) {
@@ -2821,7 +2936,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           final newText = text.replaceRange(start, end, textToInsert);
           controller.value = TextEditingValue(
             text: newText,
-            selection: TextSelection.collapsed(offset: start + textToInsert.length),
+            selection:
+                TextSelection.collapsed(offset: start + textToInsert.length),
           );
         }
       } else {
@@ -2830,13 +2946,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           if (block != null) _toggleBlockType(block, QuoteBlock);
         } else if (textToInsert == '# ') {
           final block = _focusedBlock;
-          if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 1);
+          if (block != null)
+            _toggleBlockType(block, HeadingBlock, headingLevel: 1);
         } else if (textToInsert == '## ') {
           final block = _focusedBlock;
-          if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 2);
+          if (block != null)
+            _toggleBlockType(block, HeadingBlock, headingLevel: 2);
         } else if (textToInsert == '### ') {
           final block = _focusedBlock;
-          if (block != null) _toggleBlockType(block, HeadingBlock, headingLevel: 3);
+          if (block != null)
+            _toggleBlockType(block, HeadingBlock, headingLevel: 3);
         } else if (textToInsert == '- ') {
           controller.toggleParagraphStyle('bullet');
         } else if (textToInsert == '1. ') {
@@ -2856,7 +2975,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           final newText = text.replaceRange(start, end, textToInsert);
           controller.value = TextEditingValue(
             text: newText,
-            selection: TextSelection.collapsed(offset: start + textToInsert.length),
+            selection:
+                TextSelection.collapsed(offset: start + textToInsert.length),
           );
         }
       }
@@ -2955,7 +3075,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               ),
               _buildCommandItem(
                 context,
-                icon: _isPreviewMarkdown ? Icons.edit_note : Icons.chrome_reader_mode,
+                icon: _isPreviewMarkdown
+                    ? Icons.edit_note
+                    : Icons.chrome_reader_mode,
                 label: _isPreviewMarkdown ? "Edit Note" : "Preview Markdown",
                 onTap: () {
                   Navigator.pop(context);
@@ -2987,7 +3109,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                 label: _isLocked ? "Unlock Note" : "Lock Note with PIN",
                 onTap: () async {
                   if (!_isLocked) {
-                    final hasPin = await VaultService.instance.hasPinConfigured();
+                    final hasPin =
+                        await VaultService.instance.hasPinConfigured();
                     if (!hasPin && mounted) {
                       _showSetupPinDialog();
                       return;
@@ -2999,7 +3122,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   });
                 },
               ),
-
               _buildCommandItem(
                 context,
                 icon: Icons.grid_on_rounded,
@@ -3059,13 +3181,33 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             final isDark = theme.brightness == Brightness.dark;
 
             final List<Map<String, dynamic>> guideOptions = [
-              {'type': 'plain', 'label': 'Plain', 'icon': Icons.crop_free_rounded},
+              {
+                'type': 'plain',
+                'label': 'Plain',
+                'icon': Icons.crop_free_rounded
+              },
               {'type': 'grid', 'label': 'Grid', 'icon': Icons.grid_on_rounded},
               {'type': 'dots', 'label': 'Dots', 'icon': Icons.blur_on_rounded},
-              {'type': 'lines_extra_tight', 'label': 'Lines (Extra Tight)', 'icon': Icons.format_align_justify_rounded},
-              {'type': 'lines_tight', 'label': 'Lines (Tight)', 'icon': Icons.notes_rounded},
-              {'type': 'lines_comfort', 'label': 'Lines (Comfort)', 'icon': Icons.menu_rounded},
-              {'type': 'custom', 'label': 'Custom Lines', 'icon': Icons.tune_rounded},
+              {
+                'type': 'lines_extra_tight',
+                'label': 'Lines (Extra Tight)',
+                'icon': Icons.format_align_justify_rounded
+              },
+              {
+                'type': 'lines_tight',
+                'label': 'Lines (Tight)',
+                'icon': Icons.notes_rounded
+              },
+              {
+                'type': 'lines_comfort',
+                'label': 'Lines (Comfort)',
+                'icon': Icons.menu_rounded
+              },
+              {
+                'type': 'custom',
+                'label': 'Custom Lines',
+                'icon': Icons.tune_rounded
+              },
             ];
 
             final List<int> presetColors = [
@@ -3100,7 +3242,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Toggle Switch for Visibility
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3139,7 +3281,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                       ),
                     ),
                     const SizedBox(height: 10),
-                    
+
                     // Style list
                     SizedBox(
                       height: 80,
@@ -3178,13 +3320,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                               width: 85,
                               margin: const EdgeInsets.only(right: 10),
                               decoration: BoxDecoration(
-                                color: isSelected 
-                                    ? theme.colorScheme.primary.withOpacity(0.15) 
-                                    : (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F3EF)),
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                        .withOpacity(0.15)
+                                    : (isDark
+                                        ? const Color(0xFF1E1E1E)
+                                        : const Color(0xFFF5F3EF)),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: isSelected 
-                                      ? theme.colorScheme.primary 
+                                  color: isSelected
+                                      ? theme.colorScheme.primary
                                       : Colors.transparent,
                                   width: 1.5,
                                 ),
@@ -3194,9 +3339,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                                 children: [
                                   Icon(
                                     opt['icon'] as IconData,
-                                    color: isSelected 
-                                        ? theme.colorScheme.primary 
-                                        : (isDark ? Colors.white70 : Colors.black54),
+                                    color: isSelected
+                                        ? theme.colorScheme.primary
+                                        : (isDark
+                                            ? Colors.white70
+                                            : Colors.black54),
                                     size: 24,
                                   ),
                                   const SizedBox(height: 6),
@@ -3205,10 +3352,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.inter(
                                       fontSize: 10.5,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      color: isSelected 
-                                          ? theme.colorScheme.primary 
-                                          : (isDark ? Colors.white60 : Colors.black87),
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isSelected
+                                          ? theme.colorScheme.primary
+                                          : (isDark
+                                              ? Colors.white60
+                                              : Colors.black87),
                                     ),
                                   ),
                                 ],
@@ -3227,11 +3378,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                         children: [
                           Text(
                             "Line Height Factor: ${_paperGuideHeight.toStringAsFixed(2)}",
-                            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+                            style: GoogleFonts.inter(
+                                fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           Text(
                             "${(_paperGuideHeight * 20).toInt()} px",
-                            style: GoogleFonts.jetBrainsMono(fontSize: 12, color: theme.colorScheme.primary),
+                            style: GoogleFonts.jetBrainsMono(
+                                fontSize: 12, color: theme.colorScheme.primary),
                           ),
                         ],
                       ),
@@ -3259,7 +3412,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                       children: [
                         Text(
                           "Guide Opacity: ${(_paperGuideOpacity * 100).toInt()}%",
-                          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+                          style: GoogleFonts.inter(
+                              fontSize: 14, fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
@@ -3301,7 +3455,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
 
                             Color displayCol;
                             if (colVal == 0) {
-                              displayCol = isDark ? Colors.white60 : Colors.black45;
+                              displayCol =
+                                  isDark ? Colors.white60 : Colors.black45;
                             } else {
                               displayCol = Color(colVal);
                             }
@@ -3324,7 +3479,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                                   color: displayCol.withOpacity(0.4),
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: isSelected ? theme.colorScheme.primary : displayCol,
+                                    color: isSelected
+                                        ? theme.colorScheme.primary
+                                        : displayCol,
                                     width: isSelected ? 3.0 : 1.5,
                                   ),
                                 ),
@@ -3333,7 +3490,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                                         child: Icon(
                                           Icons.autorenew_rounded,
                                           size: 14,
-                                          color: isDark ? Colors.white70 : Colors.black87,
+                                          color: isDark
+                                              ? Colors.white70
+                                              : Colors.black87,
                                         ),
                                       )
                                     : null,
@@ -3367,7 +3526,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     final query = _localSearchController.query;
     if (match.isTitle) {
       _titleController.searchQuery = query;
-      _titleController.activeMatchRange = TextRange(start: match.start, end: match.end);
+      _titleController.activeMatchRange =
+          TextRange(start: match.start, end: match.end);
 
       _contentController.searchQuery = query;
       _contentController.activeMatchRange = null;
@@ -3384,7 +3544,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
       _titleController.activeMatchRange = null;
 
       _contentController.searchQuery = query;
-      _contentController.activeMatchRange = TextRange(start: match.start, end: match.end);
+      _contentController.activeMatchRange =
+          TextRange(start: match.start, end: match.end);
 
       if (_sdeKey.currentState != null) {
         _sdeKey.currentState!.scrollToMatchOffset(match.start);
@@ -3420,7 +3581,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
-                  color: isSelected ? Theme.of(context).colorScheme.primary : titleColor.withAlpha(30),
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : titleColor.withAlpha(30),
                   width: 1.0,
                 ),
               ),
@@ -3468,13 +3631,17 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: isActive ? theme.colorScheme.primary.withAlpha(40) : Colors.transparent,
+                color: isActive
+                    ? theme.colorScheme.primary.withAlpha(40)
+                    : Colors.transparent,
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Icon(
                   icon,
-                  color: isActive ? theme.colorScheme.primary : buttonColor.withAlpha(200),
+                  color: isActive
+                      ? theme.colorScheme.primary
+                      : buttonColor.withAlpha(200),
                   size: 20,
                 ),
               ),
@@ -3521,7 +3688,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                 icon: Transform(
                   transform: Matrix4.rotationY(3.14159),
                   alignment: Alignment.center,
-                  child: Icon(Icons.play_arrow_rounded, color: buttonColor.withAlpha(180)),
+                  child: Icon(Icons.play_arrow_rounded,
+                      color: buttonColor.withAlpha(180)),
                 ),
                 onPressed: () {
                   _pageController.previousPage(
@@ -3532,7 +3700,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               ),
             ),
           ),
-          
+
           // Sliding Options
           Expanded(
             child: SizedBox(
@@ -3657,25 +3825,29 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                   buildPageWrapper([
                     buildToolbarButton(
                       icon: Icons.format_align_left_rounded,
-                      onPressed: () => _wrapSelection('<p align="left">', '</p>'),
+                      onPressed: () =>
+                          _wrapSelection('<p align="left">', '</p>'),
                       tooltip: 'Align Left',
                       isActive: activeStyle.align == TextAlign.left,
                     ),
                     buildToolbarButton(
                       icon: Icons.format_align_center_rounded,
-                      onPressed: () => _wrapSelection('<p align="center">', '</p>'),
+                      onPressed: () =>
+                          _wrapSelection('<p align="center">', '</p>'),
                       tooltip: 'Align Center',
                       isActive: activeStyle.align == TextAlign.center,
                     ),
                     buildToolbarButton(
                       icon: Icons.format_align_right_rounded,
-                      onPressed: () => _wrapSelection('<p align="right">', '</p>'),
+                      onPressed: () =>
+                          _wrapSelection('<p align="right">', '</p>'),
                       tooltip: 'Align Right',
                       isActive: activeStyle.align == TextAlign.right,
                     ),
                     buildToolbarButton(
                       icon: Icons.format_align_justify_rounded,
-                      onPressed: () => _wrapSelection('<p align="justify">', '</p>'),
+                      onPressed: () =>
+                          _wrapSelection('<p align="justify">', '</p>'),
                       tooltip: 'Align Justify',
                       isActive: activeStyle.align == TextAlign.justify,
                     ),
@@ -3707,7 +3879,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
             child: IgnorePointer(
               ignoring: _currentPage == 3,
               child: IconButton(
-                icon: Icon(Icons.play_arrow_rounded, color: buttonColor.withAlpha(180)),
+                icon: Icon(Icons.play_arrow_rounded,
+                    color: buttonColor.withAlpha(180)),
                 onPressed: () {
                   _pageController.nextPage(
                     duration: const Duration(milliseconds: 300),
@@ -3722,7 +3895,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
     );
   }
 
-  Widget _buildStandardBottomPanel(Color editorBgColor, Color titleColor, Color textColor, ThemeData theme) {
+  Widget _buildStandardBottomPanel(
+      Color editorBgColor, Color titleColor, Color textColor, ThemeData theme) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -3731,7 +3905,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
           children: [
             Text(
               "$_wordCount words  |  $_charCount chars",
-              style: GoogleFonts.inter(fontSize: 11.0, color: textColor.withAlpha(150)),
+              style: GoogleFonts.inter(
+                  fontSize: 11.0, color: textColor.withAlpha(150)),
             ),
             SizedBox(
               height: 24,
@@ -3773,7 +3948,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
               borderRadius: BorderRadius.circular(30),
               border: Border.all(color: const Color(0xFFEBEBE8)),
               boxShadow: const [
-                BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))
+                BoxShadow(
+                    color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))
               ],
             ),
             child: Row(
@@ -3786,10 +3962,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                     bottomLeft: Radius.circular(30),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       children: [
-                        Icon(Icons.more_horiz_rounded, size: 18, color: theme.colorScheme.primary),
+                        Icon(Icons.more_horiz_rounded,
+                            size: 18, color: theme.colorScheme.primary),
                         const SizedBox(width: 6),
                         Text(
                           "Note Actions",
@@ -3815,10 +3993,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
                     bottomRight: Radius.circular(30),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       children: [
-                        const Icon(Icons.add_circle_outline_rounded, size: 18, color: Colors.black87),
+                        const Icon(Icons.add_circle_outline_rounded,
+                            size: 18, color: Colors.black87),
                         const SizedBox(width: 6),
                         Text(
                           "Attachments",
@@ -3974,26 +4154,30 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> with WidgetsBinding
   }
   */
 
-Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
+  Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     final notesProvider = Provider.of<NotesProvider>(context);
-    
+
     final RichTextEditingController? currentController = (_noteType == 'text')
         ? _activeController
-        : (_contentController is RichTextEditingController ? _contentController as RichTextEditingController : null);
+        : (_contentController is RichTextEditingController
+            ? _contentController as RichTextEditingController
+            : null);
     final activeStyle = currentController != null
         ? currentController.currentActiveStyle
         : const Style();
-    
+
     final noteDate = widget.note?.createdAt ?? DateTime.now();
     final dateStr = DateFormat('EEE, d MMMM yyyy').format(noteDate);
     final timeStr = DateFormat('hh:mm a').format(noteDate);
-    
+
     final screenWidth = MediaQuery.of(context).size.width;
-    final double targetWidth = _isFormattingBarExpanded ? (screenWidth - 48.0) : 48.0;
-    final double targetHeight = !_isFormattingBarExpanded ? 48.0 : (_activeCategory != _ActiveCategory.none ? 100.0 : 50.0);
-    final double targetLeft = _isFormattingBarExpanded 
-        ? 24.0 
-        : (screenWidth - targetWidth - 24.0);
+    final double targetWidth =
+        _isFormattingBarExpanded ? (screenWidth - 48.0) : 48.0;
+    final double targetHeight = !_isFormattingBarExpanded
+        ? 48.0
+        : (_activeCategory != _ActiveCategory.none ? 100.0 : 50.0);
+    final double targetLeft =
+        _isFormattingBarExpanded ? 24.0 : (screenWidth - targetWidth - 24.0);
 
     const textColor = Color(0xFF1C1C1E);
     const titleColor = Color(0xFF1C1C1E);
@@ -4069,9 +4253,12 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                   ),
 
                   // 1.5 Global Paper Guide Painter (if visible, drawn inside the rounded card over the white background)
-                  if (_paperGuideVisible && 
-                      ((_paperGuideType == 'grid' || _paperGuideType == 'dots') || 
-                       (NoteEditorScreen.useSingleDocumentEditor && (_paperGuideType.startsWith('lines') || _paperGuideType == 'custom'))))
+                  if (_paperGuideVisible &&
+                      ((_paperGuideType == 'grid' ||
+                              _paperGuideType == 'dots') ||
+                          (NoteEditorScreen.useSingleDocumentEditor &&
+                              (_paperGuideType.startsWith('lines') ||
+                                  _paperGuideType == 'custom'))))
                     Positioned(
                       top: 50.0, // starts below the card curve
                       left: 0.0,
@@ -4084,10 +4271,14 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                         ),
                         child: IgnorePointer(
                           child: CustomPaint(
-                            key: ValueKey('${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
+                            key: ValueKey(
+                                '${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
                             painter: GlobalPaperGuidePainter(
                               guideType: _paperGuideType,
-                              spacing: (NoteEditorScreen.useSingleDocumentEditor && (_paperGuideType.startsWith('lines') || _paperGuideType == 'custom'))
+                              spacing: (NoteEditorScreen
+                                          .useSingleDocumentEditor &&
+                                      (_paperGuideType.startsWith('lines') ||
+                                          _paperGuideType == 'custom'))
                                   ? (16.0 * 1.35 * _paperGuideHeight)
                                   : (20.0 * _paperGuideHeight),
                               color: _getPaperGuideColor(isDark),
@@ -4109,28 +4300,36 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                               _pointerDownPos = event.position;
                               _activeDragImage = null;
                               _dragDirection = 0;
-                              
+
                               final controller = _contentController;
-                              for (final entry in controller.imageKeys.entries) {
+                              for (final entry
+                                  in controller.imageKeys.entries) {
                                 final key = entry.value;
                                 final context = key.currentContext;
                                 if (context != null) {
-                                  final RenderBox? box = context.findRenderObject() as RenderBox?;
+                                  final RenderBox? box =
+                                      context.findRenderObject() as RenderBox?;
                                   if (box != null && box.hasSize) {
-                                    final position = box.localToGlobal(Offset.zero);
+                                    final position =
+                                        box.localToGlobal(Offset.zero);
                                     final size = box.size;
                                     final rect = position & size;
                                     if (rect.contains(event.position)) {
-                                      _activeDragImage = key.currentState as ResizableImageWidgetState?;
+                                      _activeDragImage = key.currentState
+                                          as ResizableImageWidgetState?;
                                       if (_activeDragImage != null) {
-                                        final isControlsShown = _activeDragImage!.showControls;
-                                        final localX = event.position.dx - position.dx;
+                                        final isControlsShown =
+                                            _activeDragImage!.showControls;
+                                        final localX =
+                                            event.position.dx - position.dx;
                                         if (isControlsShown && localX < 30.0) {
                                           _dragDirection = -1; // Left handle
-                                        } else if (isControlsShown && localX > size.width - 30.0) {
+                                        } else if (isControlsShown &&
+                                            localX > size.width - 30.0) {
                                           _dragDirection = 1; // Right handle
                                         } else {
-                                          _dragDirection = 0; // Tap/double-tap area
+                                          _dragDirection =
+                                              0; // Tap/double-tap area
                                         }
                                       }
                                       break;
@@ -4140,28 +4339,40 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                               }
                             },
                             onPointerMove: (event) {
-                              if (_activeDragImage != null && _dragDirection != 0) {
-                                _activeDragImage!.updateWidth(event.delta.dx, _dragDirection);
+                              if (_activeDragImage != null &&
+                                  _dragDirection != 0) {
+                                _activeDragImage!.updateWidth(
+                                    event.delta.dx, _dragDirection);
                               }
                             },
                             onPointerUp: (event) {
                               if (_activeDragImage != null) {
-                                final dist = _pointerDownPos != null ? (event.position - _pointerDownPos!).distance : 0.0;
+                                final dist = _pointerDownPos != null
+                                    ? (event.position - _pointerDownPos!)
+                                        .distance
+                                    : 0.0;
                                 if (dist < 10.0 && _dragDirection == 0) {
                                   _activeDragImage!.toggleControls();
                                 }
                                 _activeDragImage = null;
                                 _dragDirection = 0;
                               } else {
-                                final dist = _pointerDownPos != null ? (event.position - _pointerDownPos!).distance : 0.0;
+                                final dist = _pointerDownPos != null
+                                    ? (event.position - _pointerDownPos!)
+                                        .distance
+                                    : 0.0;
                                 if (dist < 10.0) {
-                                  if (NoteEditorScreen.useSingleDocumentEditor) {
+                                  if (NoteEditorScreen
+                                      .useSingleDocumentEditor) {
                                     bool isInsideSDE = false;
-                                    final BuildContext? sdeContext = _sdeKey.currentContext;
+                                    final BuildContext? sdeContext =
+                                        _sdeKey.currentContext;
                                     if (sdeContext != null) {
-                                      final RenderBox? box = sdeContext.findRenderObject() as RenderBox?;
+                                      final RenderBox? box = sdeContext
+                                          .findRenderObject() as RenderBox?;
                                       if (box != null && box.hasSize) {
-                                        final position = box.localToGlobal(Offset.zero);
+                                        final position =
+                                            box.localToGlobal(Offset.zero);
                                         final rect = position & box.size;
                                         if (rect.contains(event.position)) {
                                           isInsideSDE = true;
@@ -4170,11 +4381,14 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                     }
                                     if (!isInsideSDE) {
                                       bool isInsideTitle = false;
-                                      final BuildContext? titleContext = _titleFocusNode.context;
+                                      final BuildContext? titleContext =
+                                          _titleFocusNode.context;
                                       if (titleContext != null) {
-                                        final RenderBox? box = titleContext.findRenderObject() as RenderBox?;
+                                        final RenderBox? box = titleContext
+                                            .findRenderObject() as RenderBox?;
                                         if (box != null && box.hasSize) {
-                                          final position = box.localToGlobal(Offset.zero);
+                                          final position =
+                                              box.localToGlobal(Offset.zero);
                                           final rect = position & box.size;
                                           if (rect.contains(event.position)) {
                                             isInsideTitle = true;
@@ -4183,9 +4397,11 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                       }
                                       if (!isInsideTitle) {
                                         _contentFocusNode.requestFocus();
-                                        final len = _contentController.text.length;
+                                        final len =
+                                            _contentController.text.length;
                                         _contentController.selection =
-                                            TextSelection.collapsed(offset: len);
+                                            TextSelection.collapsed(
+                                                offset: len);
                                       }
                                     }
                                   }
@@ -4194,7 +4410,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                               _pointerDownPos = null;
                             },
                             child: RepaintBoundary(
-                              child: (NoteEditorScreen.useSingleDocumentEditor && !_isPreviewMarkdown)
+                              child: (NoteEditorScreen
+                                          .useSingleDocumentEditor &&
+                                      !_isPreviewMarkdown)
                                   ? SingleDocumentDragOverlay(
                                       controller: _contentController,
                                       sdeKey: _sdeKey,
@@ -4210,14 +4428,19 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                         formattingToolbarHeight: targetHeight,
                                         onBackspaceAtStart: _focusTitleArea,
                                         header: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Focus(
                                               onKeyEvent: (node, event) {
                                                 if (event is KeyDownEvent &&
-                                                    (event.logicalKey == LogicalKeyboardKey.enter ||
-                                                     event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                                                    (event.logicalKey ==
+                                                            LogicalKeyboardKey
+                                                                .enter ||
+                                                        event.logicalKey ==
+                                                            LogicalKeyboardKey
+                                                                .numpadEnter)) {
                                                   _focusContentArea();
                                                   return KeyEventResult.handled;
                                                 }
@@ -4226,18 +4449,27 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                               child: TextField(
                                                 controller: _titleController,
                                                 focusNode: _titleFocusNode,
-                                                textCapitalization: TextCapitalization.sentences,
+                                                textCapitalization:
+                                                    TextCapitalization
+                                                        .sentences,
                                                 maxLines: 1,
-                                                textInputAction: TextInputAction.next,
-                                                onEditingComplete: _focusContentArea,
-                                                selectionControls: EmptyTextSelectionControls(),
-                                                contextMenuBuilder: _buildContextMenu,
-                                                scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
+                                                textInputAction:
+                                                    TextInputAction.next,
+                                                onEditingComplete:
+                                                    _focusContentArea,
+                                                selectionControls:
+                                                    EmptyTextSelectionControls(),
+                                                contextMenuBuilder:
+                                                    _buildContextMenu,
+                                                scrollPadding: EdgeInsets.only(
+                                                    bottom:
+                                                        _getDynamicBottomScrollPadding()),
                                                 style: GoogleFonts.inter(
                                                   fontSize: 24.0,
                                                   fontWeight: FontWeight.bold,
                                                   color: titleColor,
-                                                  decoration: TextDecoration.none,
+                                                  decoration:
+                                                      TextDecoration.none,
                                                   height: 1.15,
                                                 ),
                                                 decoration: InputDecoration(
@@ -4245,12 +4477,15 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                                   hintStyle: GoogleFonts.inter(
                                                     fontSize: 24.0,
                                                     fontWeight: FontWeight.bold,
-                                                    color: titleColor.withOpacity(0.3),
+                                                    color: titleColor
+                                                        .withOpacity(0.3),
                                                     height: 1.15,
-                                                    decoration: TextDecoration.none,
+                                                    decoration:
+                                                        TextDecoration.none,
                                                   ),
                                                   border: InputBorder.none,
-                                                  contentPadding: EdgeInsets.zero,
+                                                  contentPadding:
+                                                      EdgeInsets.zero,
                                                   filled: false,
                                                 ),
                                                 onChanged: (val) {
@@ -4278,19 +4513,25 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                       padding: const EdgeInsets.only(
                                         left: 24.0,
                                         right: 24.0,
-                                        top: 59.0, // Date bar (50) + padding (9)
+                                        top:
+                                            59.0, // Date bar (50) + padding (9)
                                         bottom: 120.0,
                                       ),
                                       physics: const BouncingScrollPhysics(),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           // Title
                                           Focus(
                                             onKeyEvent: (node, event) {
                                               if (event is KeyDownEvent &&
-                                                  (event.logicalKey == LogicalKeyboardKey.enter ||
-                                                   event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                                                  (event.logicalKey ==
+                                                          LogicalKeyboardKey
+                                                              .enter ||
+                                                      event.logicalKey ==
+                                                          LogicalKeyboardKey
+                                                              .numpadEnter)) {
                                                 _focusContentArea();
                                                 return KeyEventResult.handled;
                                               }
@@ -4299,13 +4540,20 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                             child: TextField(
                                               controller: _titleController,
                                               focusNode: _titleFocusNode,
-                                              textCapitalization: TextCapitalization.sentences,
+                                              textCapitalization:
+                                                  TextCapitalization.sentences,
                                               maxLines: 1,
-                                              textInputAction: TextInputAction.next,
-                                              onEditingComplete: _focusContentArea,
-                                              selectionControls: EmptyTextSelectionControls(),
-                                              contextMenuBuilder: _buildContextMenu,
-                                              scrollPadding: EdgeInsets.only(bottom: _getDynamicBottomScrollPadding()),
+                                              textInputAction:
+                                                  TextInputAction.next,
+                                              onEditingComplete:
+                                                  _focusContentArea,
+                                              selectionControls:
+                                                  EmptyTextSelectionControls(),
+                                              contextMenuBuilder:
+                                                  _buildContextMenu,
+                                              scrollPadding: EdgeInsets.only(
+                                                  bottom:
+                                                      _getDynamicBottomScrollPadding()),
                                               style: GoogleFonts.inter(
                                                 fontSize: 24.0,
                                                 fontWeight: FontWeight.bold,
@@ -4318,9 +4566,11 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                                 hintStyle: GoogleFonts.inter(
                                                   fontSize: 24.0,
                                                   fontWeight: FontWeight.bold,
-                                                  color: titleColor.withOpacity(0.3),
+                                                  color: titleColor
+                                                      .withOpacity(0.3),
                                                   height: 1.15,
-                                                  decoration: TextDecoration.none,
+                                                  decoration:
+                                                      TextDecoration.none,
                                                 ),
                                                 border: InputBorder.none,
                                                 contentPadding: EdgeInsets.zero,
@@ -4334,20 +4584,31 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                                             ),
                                           ),
                                           const SizedBox(height: 4.0),
-                                          
+
                                           if (_isPreviewMarkdown)
                                             _buildMarkdownPreview(textColor)
                                           else
                                             Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 ...() {
                                                   final List<Widget> list = [];
-                                                  for (int i = 0; i < _blocks.length; i++) {
-                                                    list.add(_buildBlockWidget(_blocks[i], textColor, titleColor));
-                                                    if (i < _blocks.length - 1) {
-                                                      final spacing = _getSpacingBetween(_blocks[i], _blocks[i + 1]);
-                                                      list.add(SizedBox(height: spacing));
+                                                  for (int i = 0;
+                                                      i < _blocks.length;
+                                                      i++) {
+                                                    list.add(_buildBlockWidget(
+                                                        _blocks[i],
+                                                        textColor,
+                                                        titleColor));
+                                                    if (i <
+                                                        _blocks.length - 1) {
+                                                      final spacing =
+                                                          _getSpacingBetween(
+                                                              _blocks[i],
+                                                              _blocks[i + 1]);
+                                                      list.add(SizedBox(
+                                                          height: spacing));
                                                     }
                                                   }
                                                   return list;
@@ -4373,13 +4634,16 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                               topRight: Radius.circular(30.0),
                             ),
                             child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                              filter:
+                                  ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                               child: Container(
                                 color: const Color(0xFFFFCC00).withOpacity(0.9),
-                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24.0),
                                 alignment: Alignment.center,
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       dateStr,
@@ -4416,7 +4680,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
             IgnorePointer(
               ignoring: !_isNoteOptionsOpen,
               child: AnimatedOpacity(
-                duration: Duration(milliseconds: _isNoteOptionsOpen ? 500 : 415),
+                duration:
+                    Duration(milliseconds: _isNoteOptionsOpen ? 500 : 415),
                 curve: Curves.easeOutCubic,
                 opacity: _isNoteOptionsOpen ? 1.0 : 0.0,
                 child: GestureDetector(
@@ -4437,7 +4702,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
-                opacity: (notesProvider.isZenModeEnabled && _isZenTyping) ? 0.0 : 1.0,
+                opacity: (notesProvider.isZenModeEnabled && _isZenTyping)
+                    ? 0.0
+                    : 1.0,
                 child: IgnorePointer(
                   ignoring: notesProvider.isZenModeEnabled && _isZenTyping,
                   child: _isLocalSearchOpen
@@ -4486,219 +4753,252 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                             },
                             onDeleteNote: _onDeleteNoteSelected,
                           ),
-                    leftWidth: 44.0,
-                    onLeftTap: () {
-                      if (_isNoteOptionsOpen) {
-                        setState(() => _isNoteOptionsOpen = false);
-                      } else {
-                        Navigator.of(context).maybePop();
-                      }
-                    },
-                    leftChild: SvgPicture.asset(
-                      'assets/icons/angle_left.svg',
-                      width: 22,
-                      height: 22,
-                      colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                    ),
-                rightWidth: 192.0,
-                rightChild: Row(
-                  children: [
-                    // Undo Button
-                    Expanded(
-                      child: ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: _contentController,
-                        builder: (context, val, _) {
-                          final canUndo = _contentController.canUndo;
-                          return TactileButton(
-                            useAppleSpring: true,
-                            compressionScale: 0.7,
-                            settleDuration: const Duration(milliseconds: 1000),
-                            onTap: canUndo ? () {
-                              _contentController.undo();
-                              _restoreContentFocus();
-                              setState(() {
-                                _hasChanges = true;
-                              });
-                            } : () {},
-                            child: Center(
-                              child: Icon(
-                                Icons.undo_rounded,
-                                size: 22,
-                                color: canUndo ? const Color(0xFF1C1C1E) : const Color(0xFF1C1C1E).withOpacity(0.3),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    // Redo Button
-                    Expanded(
-                      child: ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: _contentController,
-                        builder: (context, val, _) {
-                          final canRedo = _contentController.canRedo;
-                          return TactileButton(
-                            useAppleSpring: true,
-                            compressionScale: 0.7,
-                            settleDuration: const Duration(milliseconds: 1000),
-                            onTap: canRedo ? () {
-                              _contentController.redo();
-                              _restoreContentFocus();
-                              setState(() {
-                                _hasChanges = true;
-                              });
-                            } : () {},
-                            child: Center(
-                              child: Icon(
-                                Icons.redo_rounded,
-                                size: 22,
-                                color: canRedo ? const Color(0xFF1C1C1E) : const Color(0xFF1C1C1E).withOpacity(0.3),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    // Separator line
-                    Container(
-                      width: 1.0,
-                      height: 18.0,
-                      color: const Color(0xFF1C1C1E).withOpacity(0.15),
-                    ),
-                    // Folder Select Button
-                    Expanded(
-                      child: TactileButton(
-                        useAppleSpring: true,
-                        compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
-                        onTap: () {
-                          _showFolderSelectorDialog();
-                        },
-                        child: Center(
-                          child: SvgPicture.asset(
-                            'assets/icons/bottom_navigation/folder-open.svg',
+                          leftWidth: 44.0,
+                          onLeftTap: () {
+                            if (_isNoteOptionsOpen) {
+                              setState(() => _isNoteOptionsOpen = false);
+                            } else {
+                              Navigator.of(context).maybePop();
+                            }
+                          },
+                          leftChild: SvgPicture.asset(
+                            'assets/icons/angle_left.svg',
                             width: 22,
                             height: 22,
-                            colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+                            colorFilter: const ColorFilter.mode(
+                                Color(0xFF1C1C1E), BlendMode.srcIn),
                           ),
-                        ),
-                      ),
-                    ),
-                    // Options Button
-                    Expanded(
-                      child: TactileButton(
-                        useAppleSpring: true,
-                        compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
-                        onTap: () {
-                          setState(() {
-                            _isNoteOptionsOpen = !_isNoteOptionsOpen;
-                          });
-                        },
-                        child: const Center(
-                          child: Icon(
-                            Icons.more_horiz_rounded,
-                            size: 22,
-                            color: Color(0xFF1C1C1E),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-            
-            AnimatedPositioned(
-                duration: const Duration(milliseconds: 1000),
-                curve: Curves.elasticOut,
-                bottom: 12,
-                left: targetLeft,
-                width: targetWidth,
-                height: targetHeight,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  opacity: (notesProvider.isZenModeEnabled && _isZenTyping) ? 0.0 : 1.0,
-                  child: IgnorePointer(
-                    ignoring: notesProvider.isZenModeEnabled && _isZenTyping,
-                    child: GestureDetector(
-                      onVerticalDragEnd: (details) {
-                        if (details.primaryVelocity != null && details.primaryVelocity! > 100) {
-                          if (_activeCategory != _ActiveCategory.none) {
-                            setState(() {
-                              _activeCategory = _ActiveCategory.none;
-                            });
-                          }
-                        }
-                      },
-                  child: RichTextFormattingPillContainer(
-                    width: targetWidth,
-                    height: targetHeight,
-                    borderRadius: _activeCategory != _ActiveCategory.none
-                        ? BorderRadius.circular(30.0)
-                        : null,
-                    child: !_isFormattingBarExpanded
-                        ? TactileButton(
-                            useAppleSpring: true,
-                            compressionScale: 0.7,
-                            settleDuration: const Duration(milliseconds: 1000),
-                            pressDuration: const Duration(milliseconds: 80),
-                            playSelectionHaptic: true,
-                            onTap: () {
-                              setState(() {
-                                _isFormattingBarExpanded = true;
-                              });
-                            },
-                            child: const SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: Icon(
-                                Icons.edit_note_rounded,
-                                color: Color(0xFF333333),
-                                size: 24,
-                              ),
-                            ),
-                          )
-                        : SingleChildScrollView(
-                            physics: const NeverScrollableScrollPhysics(),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                TweenAnimationBuilder<double>(
-                                  duration: const Duration(milliseconds: 1000),
-                                  curve: Curves.elasticOut,
-                                  tween: Tween<double>(
-                                    begin: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
-                                    end: _activeCategory != _ActiveCategory.none ? 50.0 : 0.0,
-                                  ),
-                                  builder: (context, animHeight, child) {
-                                    final clampedHeight = animHeight.clamp(0.0, double.infinity);
-                                    return SizedBox(
-                                      height: clampedHeight,
-                                      child: ClipRect(
-                                        child: clampedHeight > 0.0 ? child : const SizedBox.shrink(),
+                          rightWidth: 192.0,
+                          rightChild: Row(
+                            children: [
+                              // Undo Button
+                              Expanded(
+                                child: ValueListenableBuilder<TextEditingValue>(
+                                  valueListenable: _contentController,
+                                  builder: (context, val, _) {
+                                    final canUndo = _contentController.canUndo;
+                                    return TactileButton(
+                                      useAppleSpring: true,
+                                      compressionScale: 0.7,
+                                      settleDuration:
+                                          const Duration(milliseconds: 1000),
+                                      onTap: canUndo
+                                          ? () {
+                                              _contentController.undo();
+                                              _restoreContentFocus();
+                                              setState(() {
+                                                _hasChanges = true;
+                                              });
+                                            }
+                                          : () {},
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.undo_rounded,
+                                          size: 22,
+                                          color: canUndo
+                                              ? const Color(0xFF1C1C1E)
+                                              : const Color(0xFF1C1C1E)
+                                                  .withOpacity(0.3),
+                                        ),
                                       ),
                                     );
                                   },
-                                  child: _activeCategory != _ActiveCategory.none
-                                      ? _buildSubsectionRow(activeStyle, _focusedBlock)
-                                      : const SizedBox.shrink(),
                                 ),
-                                SizedBox(
-                                  height: 50.0,
-                                  child: _buildCategoriesRow(activeStyle),
+                              ),
+                              // Redo Button
+                              Expanded(
+                                child: ValueListenableBuilder<TextEditingValue>(
+                                  valueListenable: _contentController,
+                                  builder: (context, val, _) {
+                                    final canRedo = _contentController.canRedo;
+                                    return TactileButton(
+                                      useAppleSpring: true,
+                                      compressionScale: 0.7,
+                                      settleDuration:
+                                          const Duration(milliseconds: 1000),
+                                      onTap: canRedo
+                                          ? () {
+                                              _contentController.redo();
+                                              _restoreContentFocus();
+                                              setState(() {
+                                                _hasChanges = true;
+                                              });
+                                            }
+                                          : () {},
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.redo_rounded,
+                                          size: 22,
+                                          color: canRedo
+                                              ? const Color(0xFF1C1C1E)
+                                              : const Color(0xFF1C1C1E)
+                                                  .withOpacity(0.3),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ],
-                            ),
+                              ),
+                              // Separator line
+                              Container(
+                                width: 1.0,
+                                height: 18.0,
+                                color:
+                                    const Color(0xFF1C1C1E).withOpacity(0.15),
+                              ),
+                              // Folder Select Button
+                              Expanded(
+                                child: TactileButton(
+                                  useAppleSpring: true,
+                                  compressionScale: 0.7,
+                                  settleDuration:
+                                      const Duration(milliseconds: 1000),
+                                  onTap: () {
+                                    _showFolderSelectorDialog();
+                                  },
+                                  child: Center(
+                                    child: SvgPicture.asset(
+                                      'assets/icons/bottom_navigation/folder-open.svg',
+                                      width: 22,
+                                      height: 22,
+                                      colorFilter: const ColorFilter.mode(
+                                          Color(0xFF1C1C1E), BlendMode.srcIn),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Options Button
+                              Expanded(
+                                child: TactileButton(
+                                  useAppleSpring: true,
+                                  compressionScale: 0.7,
+                                  settleDuration:
+                                      const Duration(milliseconds: 1000),
+                                  onTap: () {
+                                    setState(() {
+                                      _isNoteOptionsOpen = !_isNoteOptionsOpen;
+                                    });
+                                  },
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.more_horiz_rounded,
+                                      size: 22,
+                                      color: Color(0xFF1C1C1E),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                ),
+              ),
+            ),
+
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 1000),
+              curve: Curves.elasticOut,
+              bottom: 12,
+              left: targetLeft,
+              width: targetWidth,
+              height: targetHeight,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                opacity: (notesProvider.isZenModeEnabled && _isZenTyping)
+                    ? 0.0
+                    : 1.0,
+                child: IgnorePointer(
+                  ignoring: notesProvider.isZenModeEnabled && _isZenTyping,
+                  child: GestureDetector(
+                    onVerticalDragEnd: (details) {
+                      if (details.primaryVelocity != null &&
+                          details.primaryVelocity! > 100) {
+                        if (_activeCategory != _ActiveCategory.none) {
+                          setState(() {
+                            _activeCategory = _ActiveCategory.none;
+                          });
+                        }
+                      }
+                    },
+                    child: RichTextFormattingPillContainer(
+                      width: targetWidth,
+                      height: targetHeight,
+                      borderRadius: _activeCategory != _ActiveCategory.none
+                          ? BorderRadius.circular(30.0)
+                          : null,
+                      child: !_isFormattingBarExpanded
+                          ? TactileButton(
+                              useAppleSpring: true,
+                              compressionScale: 0.7,
+                              settleDuration:
+                                  const Duration(milliseconds: 1000),
+                              pressDuration: const Duration(milliseconds: 80),
+                              playSelectionHaptic: true,
+                              onTap: () {
+                                setState(() {
+                                  _isFormattingBarExpanded = true;
+                                });
+                              },
+                              child: const SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: Icon(
+                                  Icons.edit_note_rounded,
+                                  color: Color(0xFF333333),
+                                  size: 24,
+                                ),
+                              ),
+                            )
+                          : SingleChildScrollView(
+                              physics: const NeverScrollableScrollPhysics(),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TweenAnimationBuilder<double>(
+                                    duration:
+                                        const Duration(milliseconds: 1000),
+                                    curve: Curves.elasticOut,
+                                    tween: Tween<double>(
+                                      begin: _activeCategory !=
+                                              _ActiveCategory.none
+                                          ? 50.0
+                                          : 0.0,
+                                      end: _activeCategory !=
+                                              _ActiveCategory.none
+                                          ? 50.0
+                                          : 0.0,
+                                    ),
+                                    builder: (context, animHeight, child) {
+                                      final clampedHeight = animHeight.clamp(
+                                          0.0, double.infinity);
+                                      return SizedBox(
+                                        height: clampedHeight,
+                                        child: ClipRect(
+                                          child: clampedHeight > 0.0
+                                              ? child
+                                              : const SizedBox.shrink(),
+                                        ),
+                                      );
+                                    },
+                                    child:
+                                        _activeCategory != _ActiveCategory.none
+                                            ? _buildSubsectionRow(
+                                                activeStyle, _focusedBlock)
+                                            : const SizedBox.shrink(),
+                                  ),
+                                  SizedBox(
+                                    height: 50.0,
+                                    child: _buildCategoriesRow(activeStyle),
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
             // Floating Quick-Scroll Pill (AutoScroll to Beginning / End)
             Positioned(
@@ -4707,7 +5007,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
-                opacity: (notesProvider.isZenModeEnabled && _isZenTyping) ? 0.0 : 1.0,
+                opacity: (notesProvider.isZenModeEnabled && _isZenTyping)
+                    ? 0.0
+                    : 1.0,
                 child: IgnorePointer(
                   ignoring: notesProvider.isZenModeEnabled && _isZenTyping,
                   child: EditorQuickScrollPill(
@@ -4716,10 +5018,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                 ),
               ),
             ),
-            
+
             // Custom Delete Popup
-            if (_showDeletePopup)
-              _buildDeletePopup(),
+            if (_showDeletePopup) _buildDeletePopup(),
           ],
         ),
       ),
@@ -4774,7 +5075,7 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
           isActive: false,
           isEnabled: _currentPage > 0,
         ),
-        
+
         // Sliding Categories
         Expanded(
           child: PageView(
@@ -5108,7 +5409,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
           onTap: () {
             if (kImageDebug) {
               debugPrint("[Stage 1] Started");
-              debugPrint("Relevant state: selection=${_contentController.selection}, styledChars length=${_contentController.styledChars.length}");
+              debugPrint(
+                  "Relevant state: selection=${_contentController.selection}, styledChars length=${_contentController.styledChars.length}");
             }
             _showGalleryBottomSheet(context);
             if (kImageDebug) {
@@ -5124,7 +5426,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
             if (NoteEditorScreen.useSingleDocumentEditor) {
               _contentController.insertDivider();
               _restoreContentFocus();
-              setState(() { _hasChanges = true; });
+              setState(() {
+                _hasChanges = true;
+              });
             }
           },
           isActive: false,
@@ -5267,7 +5571,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
             style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: _activeCategory == _ActiveCategory.aa ? Colors.white : const Color(0xFF333333),
+              color: _activeCategory == _ActiveCategory.aa
+                  ? Colors.white
+                  : const Color(0xFF333333),
             ),
           ),
           onTap: () {
@@ -5411,7 +5717,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
               color: const Color(0xFF222222),
               borderRadius: BorderRadius.circular(20),
               boxShadow: const [
-                BoxShadow(color: Colors.black45, blurRadius: 20, spreadRadius: 1),
+                BoxShadow(
+                    color: Colors.black45, blurRadius: 20, spreadRadius: 1),
               ],
             ),
             child: Stack(
@@ -5439,7 +5746,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                   height: 35,
                   child: GestureDetector(
                     onTap: () async {
-                      final provider = Provider.of<NotesProvider>(context, listen: false);
+                      final provider =
+                          Provider.of<NotesProvider>(context, listen: false);
                       if (widget.note != null) {
                         await provider.trashNote(widget.note!.id);
                       }
@@ -5506,7 +5814,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
   Widget build(BuildContext context) {
     if (kImageDebug && NoteEditorScreen.useSingleDocumentEditor) {
       debugPrint("[Stage 7] Started");
-      debugPrint("Relevant state: text length=${_contentController.text.length}, selection=${_contentController.selection}, scrollOffset=${_scrollController.hasClients ? _scrollController.offset : 'null'}");
+      debugPrint(
+          "Relevant state: text length=${_contentController.text.length}, selection=${_contentController.selection}, scrollOffset=${_scrollController.hasClients ? _scrollController.offset : 'null'}");
     }
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -5528,7 +5837,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                 color: theme.colorScheme.errorContainer,
                 borderRadius: BorderRadius.circular(24.0),
                 boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 1),
+                  BoxShadow(
+                      color: Colors.black26, blurRadius: 10, spreadRadius: 1),
                 ],
               ),
               child: Row(
@@ -5631,10 +5941,12 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
         title: const Text("Add Note Tag"),
         content: TextField(
           controller: _tagController,
-          decoration: const InputDecoration(hintText: "Enter tag (e.g. urgent)"),
+          decoration:
+              const InputDecoration(hintText: "Enter tag (e.g. urgent)"),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
@@ -5647,8 +5959,6 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
     );
   }
 
-
-
   // Markdown renderer viewer
   Widget _buildMarkdownPreview(Color textColor) {
     final theme = Theme.of(context);
@@ -5657,7 +5967,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
       selectable: true,
       imageBuilder: (uri, title, alt) {
         final cleanUri = uri.hasQuery ? uri.replace(queryParameters: {}) : uri;
-        final path = cleanUri.scheme == 'file' ? cleanUri.toFilePath() : cleanUri.toString();
+        final path = cleanUri.scheme == 'file'
+            ? cleanUri.toFilePath()
+            : cleanUri.toString();
         return GestureDetector(
           onTap: () {
             Navigator.push(
@@ -5692,9 +6004,12 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
       },
       styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
         p: GoogleFonts.inter(fontSize: 18.0, color: textColor, height: 1.6),
-        h1: GoogleFonts.outfit(fontSize: 24.0, fontWeight: FontWeight.bold, color: textColor),
-        h2: GoogleFonts.outfit(fontSize: 22.0, fontWeight: FontWeight.bold, color: textColor),
-        h3: GoogleFonts.outfit(fontSize: 20.0, fontWeight: FontWeight.bold, color: textColor),
+        h1: GoogleFonts.outfit(
+            fontSize: 24.0, fontWeight: FontWeight.bold, color: textColor),
+        h2: GoogleFonts.outfit(
+            fontSize: 22.0, fontWeight: FontWeight.bold, color: textColor),
+        h3: GoogleFonts.outfit(
+            fontSize: 20.0, fontWeight: FontWeight.bold, color: textColor),
       ),
     );
   }
@@ -5719,7 +6034,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
       id: widget.note?.id ?? 'temp',
       title: _titleController.text.trim(),
       content: NoteEditorScreen.useSingleDocumentEditor
-          ? generateMarkdownFromStyledChars(_contentController.styledChars).trim()
+          ? generateMarkdownFromStyledChars(_contentController.styledChars)
+              .trim()
           : _blocks.map((b) => b.toMarkdown()).join('\n').trim(),
       tags: _tags,
       attachments: _attachments,
@@ -5750,7 +6066,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: theme.colorScheme.surface,
-              title: Text("Habit Settings", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+              title: Text("Habit Settings",
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -5773,12 +6090,18 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                   if (_isHabit) ...[
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: "Reset Interval", border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: "Reset Interval",
+                          border: OutlineInputBorder()),
                       dropdownColor: theme.colorScheme.surface,
-                      initialValue: _habitRecurrence == 'none' ? 'daily' : _habitRecurrence,
+                      initialValue: _habitRecurrence == 'none'
+                          ? 'daily'
+                          : _habitRecurrence,
                       items: const [
-                        DropdownMenuItem(value: 'daily', child: Text("Daily Reset")),
-                        DropdownMenuItem(value: 'weekly', child: Text("Weekly Reset")),
+                        DropdownMenuItem(
+                            value: 'daily', child: Text("Daily Reset")),
+                        DropdownMenuItem(
+                            value: 'weekly', child: Text("Weekly Reset")),
                       ],
                       onChanged: (val) {
                         if (val != null) {
@@ -5793,7 +6116,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                 ],
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text("Done")),
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Done")),
               ],
             );
           },
@@ -5814,7 +6139,8 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
       builder: (context) {
         return AlertDialog(
           backgroundColor: theme.colorScheme.surface,
-          title: Text("Setup Secure PIN", style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          title: Text("Setup Secure PIN",
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
           content: Form(
             key: formKey,
             child: Column(
@@ -5826,9 +6152,14 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                   keyboardType: TextInputType.number,
                   obscureText: true,
                   maxLength: 4,
-                  decoration: const InputDecoration(labelText: "Enter 4-digit PIN", border: OutlineInputBorder(), counterText: ""),
+                  decoration: const InputDecoration(
+                      labelText: "Enter 4-digit PIN",
+                      border: OutlineInputBorder(),
+                      counterText: ""),
                   validator: (value) {
-                    if (value == null || value.length != 4 || int.tryParse(value) == null) {
+                    if (value == null ||
+                        value.length != 4 ||
+                        int.tryParse(value) == null) {
                       return "Enter exactly 4 digits";
                     }
                     return null;
@@ -5840,7 +6171,10 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
                   keyboardType: TextInputType.number,
                   obscureText: true,
                   maxLength: 4,
-                  decoration: const InputDecoration(labelText: "Confirm PIN", border: OutlineInputBorder(), counterText: ""),
+                  decoration: const InputDecoration(
+                      labelText: "Confirm PIN",
+                      border: OutlineInputBorder(),
+                      counterText: ""),
                   validator: (value) {
                     if (value != pinController.text) {
                       return "PINs do not match";
@@ -5852,7 +6186,9 @@ Widget _buildActiveEditorScreen(ThemeData theme, bool isDark) {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel")),
             ElevatedButton(
               onPressed: () async {
                 if (formKey.currentState!.validate()) {
@@ -5882,7 +6218,8 @@ class FullScreenImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFile = !imagePath.startsWith('http://') && !imagePath.startsWith('https://');
+    final isFile =
+        !imagePath.startsWith('http://') && !imagePath.startsWith('https://');
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -5957,7 +6294,8 @@ class HeadingBlock extends NoteBlock {
   @override
   String toMarkdown() {
     final prefix = '#' * level + ' ';
-    final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
+    final content =
+        generateMarkdownFromStyledChars(controller.styledChars).trim();
     return '$prefix$content';
   }
 }
@@ -5972,7 +6310,8 @@ class QuoteBlock extends NoteBlock {
 
   @override
   String toMarkdown() {
-    final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
+    final content =
+        generateMarkdownFromStyledChars(controller.styledChars).trim();
     return '> $content';
   }
 }
@@ -5982,14 +6321,16 @@ class ChecklistBlock extends NoteBlock {
   final FocusNode focusNode;
   bool isChecked;
 
-  ChecklistBlock({required super.id, required this.isChecked, String markdown = ""})
+  ChecklistBlock(
+      {required super.id, required this.isChecked, String markdown = ""})
       : controller = RichTextEditingController(markdown: markdown),
         focusNode = FocusNode();
 
   @override
   String toMarkdown() {
     final prefix = isChecked ? '- [x] ' : '- [ ] ';
-    final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
+    final content =
+        generateMarkdownFromStyledChars(controller.styledChars).trim();
     return '$prefix$content';
   }
 }
@@ -6004,7 +6345,8 @@ class BulletedListBlock extends NoteBlock {
 
   @override
   String toMarkdown() {
-    final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
+    final content =
+        generateMarkdownFromStyledChars(controller.styledChars).trim();
     return '- $content';
   }
 }
@@ -6019,7 +6361,8 @@ class NumberedListBlock extends NoteBlock {
 
   @override
   String toMarkdown() {
-    final content = generateMarkdownFromStyledChars(controller.styledChars).trim();
+    final content =
+        generateMarkdownFromStyledChars(controller.styledChars).trim();
     return '1. $content';
   }
 }
@@ -6200,4 +6543,3 @@ class _ImageStackWidgetState extends State<ImageStackWidget> {
     );
   }
 }
-

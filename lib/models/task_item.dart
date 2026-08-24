@@ -69,11 +69,13 @@ class TaskItem {
         createdAt = (createdAt ?? DateTime.now()).toUtc(),
         updatedAt = (updatedAt ?? DateTime.now()).toUtc(),
         reminderMode = reminderMode ??
-            ((reminderEnabled == false || (reminderTime == null && reminderEnabled == null))
+            ((reminderEnabled == false ||
+                    (reminderTime == null && reminderEnabled == null))
                 ? ReminderMode.off
                 : ReminderMode.alarm),
         reminderEnabled = (reminderMode ??
-                ((reminderEnabled == false || (reminderTime == null && reminderEnabled == null))
+                ((reminderEnabled == false ||
+                        (reminderTime == null && reminderEnabled == null))
                     ? ReminderMode.off
                     : ReminderMode.alarm)) !=
             ReminderMode.off,
@@ -90,7 +92,8 @@ class TaskItem {
 
   /// Helper getters for status classification
   bool get isMissed => status == TaskStatus.missed;
-  bool get isWaiting => status == TaskStatus.waiting || status == TaskStatus.scheduled;
+  bool get isWaiting =>
+      status == TaskStatus.waiting || status == TaskStatus.scheduled;
 
   Map<String, dynamic> toMap() {
     return {
@@ -127,17 +130,22 @@ class TaskItem {
   }
 
   factory TaskItem.fromMap(Map<String, dynamic> map) {
-    final statusVal = TaskStatusExtension.fromDbString(map['status'] as String?);
-    final rawCompleted = (map['completed'] as int? ?? (map['isCompleted'] as int? ?? 0)) == 1;
+    final statusVal =
+        TaskStatusExtension.fromDbString(map['status'] as String?);
+    final rawCompleted =
+        (map['completed'] as int? ?? (map['isCompleted'] as int? ?? 0)) == 1;
 
     // Resolve authoritative status, defaulting from completed boolean if status column was null
     final finalStatus = map['status'] != null
         ? statusVal
         : (rawCompleted ? TaskStatus.completed : TaskStatus.waiting);
 
-    final rawDueDate = DateTime.tryParse(map['dueDate'] as String? ?? '') ?? DateTime.now();
-    final rawCreatedAt = DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now();
-    final rawUpdatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now();
+    final rawDueDate =
+        DateTime.tryParse(map['dueDate'] as String? ?? '') ?? DateTime.now();
+    final rawCreatedAt =
+        DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now();
+    final rawUpdatedAt =
+        DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now();
 
     final recRule = RecurrenceRule.tryDecode(map['recurrenceRule'] as String?);
     final rawIsRec = (map['isRecurring'] as int? ?? 0) == 1 || recRule != null;
@@ -152,7 +160,8 @@ class TaskItem {
       } catch (_) {}
     }
 
-    final rawRemEnabled = (map['reminderEnabled'] as int? ?? 0) == 1 || map['reminderTime'] != null;
+    final rawRemEnabled = (map['reminderEnabled'] as int? ?? 0) == 1 ||
+        map['reminderTime'] != null;
     final rawRemModeStr = map['reminderMode'] as String?;
     final resolvedRemMode = rawRemModeStr != null
         ? ReminderModeExtension.fromDbString(rawRemModeStr)
@@ -166,25 +175,36 @@ class TaskItem {
       folderId: map['folderId'] as String?,
       categoryId: map['categoryId'] as String?,
       dueDate: rawDueDate.toUtc(),
-      startTime: map['startTime'] != null ? DateTime.tryParse(map['startTime'] as String)?.toUtc() : null,
-      endTime: map['endTime'] != null ? DateTime.tryParse(map['endTime'] as String)?.toUtc() : null,
+      startTime: map['startTime'] != null
+          ? DateTime.tryParse(map['startTime'] as String)?.toUtc()
+          : null,
+      endTime: map['endTime'] != null
+          ? DateTime.tryParse(map['endTime'] as String)?.toUtc()
+          : null,
       priority: map['priority'] as String? ?? 'None',
       status: finalStatus,
       createdAt: rawCreatedAt.toUtc(),
       updatedAt: rawUpdatedAt.toUtc(),
-      completedAt: map['completedAt'] != null ? DateTime.tryParse(map['completedAt'] as String)?.toUtc() : null,
+      completedAt: map['completedAt'] != null
+          ? DateTime.tryParse(map['completedAt'] as String)?.toUtc()
+          : null,
       reminderEnabled: resolvedRemMode != ReminderMode.off,
       reminderMode: resolvedRemMode,
-      reminderTime: map['reminderTime'] != null ? DateTime.tryParse(map['reminderTime'] as String)?.toUtc() : null,
+      reminderTime: map['reminderTime'] != null
+          ? DateTime.tryParse(map['reminderTime'] as String)?.toUtc()
+          : null,
       notificationId: map['notificationId'] as int? ?? 0,
-      repeatRule: RepeatRuleExtension.fromDbString(map['repeatRule'] as String?),
+      repeatRule:
+          RepeatRuleExtension.fromDbString(map['repeatRule'] as String?),
       isRecurring: rawIsRec,
       recurrence: recRule,
       recurringSeriesId: map['recurringSeriesId'] as String?,
       timezone: map['timezone'] as String? ?? DateTime.now().timeZoneName,
       completedDates: rawCompletedDates,
       isDeleted: map['isDeleted'] == 1 || map['isDeleted'] == true,
-      deletedAt: map['deletedAt'] != null ? DateTime.tryParse(map['deletedAt'] as String)?.toUtc() : null,
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.tryParse(map['deletedAt'] as String)?.toUtc()
+          : null,
       version: (map['version'] ?? 1) as int,
       lastSyncedVersion: (map['lastSyncedVersion'] ?? 0) as int,
     );
@@ -232,7 +252,11 @@ class TaskItem {
 
     final resolvedRemMode = reminderMode ??
         (reminderEnabled != null
-            ? (reminderEnabled ? (this.reminderMode != ReminderMode.off ? this.reminderMode : ReminderMode.alarm) : ReminderMode.off)
+            ? (reminderEnabled
+                ? (this.reminderMode != ReminderMode.off
+                    ? this.reminderMode
+                    : ReminderMode.alarm)
+                : ReminderMode.off)
             : this.reminderMode);
 
     return TaskItem(
@@ -252,7 +276,8 @@ class TaskItem {
       completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
       reminderEnabled: resolvedRemMode != ReminderMode.off,
       reminderMode: resolvedRemMode,
-      reminderTime: clearReminderTime ? null : (reminderTime ?? this.reminderTime),
+      reminderTime:
+          clearReminderTime ? null : (reminderTime ?? this.reminderTime),
       notificationId: notificationId ?? this.notificationId,
       repeatRule: repeatRule ?? this.repeatRule,
       isRecurring: isRecurring ?? this.isRecurring,

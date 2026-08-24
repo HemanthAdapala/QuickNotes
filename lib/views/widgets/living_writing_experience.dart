@@ -69,7 +69,7 @@ class AnimatedCharacterWidget extends StatelessWidget {
 class LivingTextEditingController extends TextEditingController {
   final List<CharacterAnimation> _animations = [];
   final Map<int, DateTime> _headingAnimations = {};
-  
+
   Ticker? _ticker;
   int _nextAnimId = 0;
   String _previousText = "";
@@ -179,7 +179,8 @@ class LivingTextEditingController extends TextEditingController {
     int suffixLen = 0;
     while (suffixLen < oldText.length - prefixLen &&
         suffixLen < newText.length - prefixLen &&
-        oldText[oldText.length - 1 - suffixLen] == newText[newText.length - 1 - suffixLen]) {
+        oldText[oldText.length - 1 - suffixLen] ==
+            newText[newText.length - 1 - suffixLen]) {
       suffixLen++;
     }
 
@@ -194,7 +195,8 @@ class LivingTextEditingController extends TextEditingController {
       }
 
       // Add new animations
-      final addedText = newText.substring(prefixLen, newText.length - suffixLen);
+      final addedText =
+          newText.substring(prefixLen, newText.length - suffixLen);
       // Skip animations for large pastes to prioritize responsiveness
       if (addedText.length < 50) {
         final now = DateTime.now();
@@ -222,7 +224,8 @@ class LivingTextEditingController extends TextEditingController {
       final int deleteStart = prefixLen;
       final int deleteEnd = prefixLen + removedCount;
 
-      _animations.removeWhere((anim) => anim.startIndex >= deleteStart && anim.startIndex < deleteEnd);
+      _animations.removeWhere((anim) =>
+          anim.startIndex >= deleteStart && anim.startIndex < deleteEnd);
       for (var anim in _animations) {
         if (anim.startIndex >= deleteEnd) {
           anim.startIndex -= removedCount;
@@ -250,14 +253,16 @@ class LivingTextEditingController extends TextEditingController {
       if (_isHeadingText(lineText)) {
         currentHeadingOffsets.add(line.start);
 
-        if (!oldHeadingOffsets.contains(line.start) && !_headingAnimations.containsKey(line.start)) {
+        if (!oldHeadingOffsets.contains(line.start) &&
+            !_headingAnimations.containsKey(line.start)) {
           _headingAnimations[line.start] = now;
           _startTicker();
         }
       }
     }
 
-    _headingAnimations.removeWhere((offset, _) => !currentHeadingOffsets.contains(offset));
+    _headingAnimations
+        .removeWhere((offset, _) => !currentHeadingOffsets.contains(offset));
   }
 
   bool _isHeadingText(String text) {
@@ -339,7 +344,8 @@ class LivingTextEditingController extends TextEditingController {
           final elapsed = now.difference(startTime).inMilliseconds;
           final progress = (elapsed / 300.0).clamp(0.0, 1.0);
 
-          final FontWeight weight = FontWeight.lerp(FontWeight.normal, FontWeight.bold, progress)!;
+          final FontWeight weight =
+              FontWeight.lerp(FontWeight.normal, FontWeight.bold, progress)!;
           final double opacity = 0.6 + (0.4 * progress);
 
           lineStyle = lineStyle.copyWith(
@@ -359,7 +365,9 @@ class LivingTextEditingController extends TextEditingController {
       if (lineAnims == null || lineAnims.isEmpty) {
         spans.add(TextSpan(text: lineText, style: lineStyle));
       } else {
-        final activeAnimMap = {for (var anim in lineAnims) anim.startIndex: anim};
+        final activeAnimMap = {
+          for (var anim in lineAnims) anim.startIndex: anim
+        };
         int lineIndex = line.start;
         int staticStart = line.start;
 
@@ -427,7 +435,8 @@ class LivingCaretOverlay extends StatefulWidget {
   State<LivingCaretOverlay> createState() => _LivingCaretOverlayState();
 }
 
-class _LivingCaretOverlayState extends State<LivingCaretOverlay> with SingleTickerProviderStateMixin {
+class _LivingCaretOverlayState extends State<LivingCaretOverlay>
+    with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   DateTime _lastTypingTime = DateTime.now();
 
@@ -487,7 +496,8 @@ class _LivingCaretOverlayState extends State<LivingCaretOverlay> with SingleTick
         Positioned.fill(
           child: IgnorePointer(
             child: AnimatedBuilder(
-              animation: Listenable.merge([_pulseController, widget.controller, widget.focusNode]),
+              animation: Listenable.merge(
+                  [_pulseController, widget.controller, widget.focusNode]),
               builder: (context, _) {
                 if (!widget.focusNode.hasFocus) {
                   return const SizedBox.shrink();
@@ -498,7 +508,8 @@ class _LivingCaretOverlayState extends State<LivingCaretOverlay> with SingleTick
                   return const SizedBox.shrink();
                 }
 
-                final renderEditable = _findRenderEditable(context.findRenderObject());
+                final renderEditable =
+                    _findRenderEditable(context.findRenderObject());
                 if (renderEditable == null) {
                   return const SizedBox.shrink();
                 }
@@ -506,27 +517,36 @@ class _LivingCaretOverlayState extends State<LivingCaretOverlay> with SingleTick
                 try {
                   final extent = selection.extent;
                   final rect = renderEditable.getLocalRectForCaret(extent);
-                  
-                  final RenderBox overlayBox = context.findRenderObject() as RenderBox;
-                  final localTopLeft = overlayBox.globalToLocal(renderEditable.localToGlobal(rect.topLeft));
-                  final localBottomRight = overlayBox.globalToLocal(renderEditable.localToGlobal(rect.bottomRight));
-                  
-                  final caretRect = Rect.fromPoints(localTopLeft, localBottomRight);
 
-                  final timeSinceTyping = DateTime.now().difference(_lastTypingTime).inMilliseconds;
+                  final RenderBox overlayBox =
+                      context.findRenderObject() as RenderBox;
+                  final localTopLeft = overlayBox.globalToLocal(
+                      renderEditable.localToGlobal(rect.topLeft));
+                  final localBottomRight = overlayBox.globalToLocal(
+                      renderEditable.localToGlobal(rect.bottomRight));
+
+                  final caretRect =
+                      Rect.fromPoints(localTopLeft, localBottomRight);
+
+                  final timeSinceTyping =
+                      DateTime.now().difference(_lastTypingTime).inMilliseconds;
                   double opacity = 1.0;
                   if (timeSinceTyping > 500) {
                     final double pulseProgress = _pulseController.value;
                     final double pulsedOpacity = 0.7 + (0.3 * pulseProgress);
-                    
-                    final double blend = ((timeSinceTyping - 500) / 300.0).clamp(0.0, 1.0);
+
+                    final double blend =
+                        ((timeSinceTyping - 500) / 300.0).clamp(0.0, 1.0);
                     opacity = lerpDouble(1.0, pulsedOpacity, blend)!;
                   }
 
                   return CustomPaint(
                     painter: _CaretPainter(
                       rect: caretRect,
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: opacity),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: opacity),
                       cursorWidth: 2.0,
                       radius: const Radius.circular(1.0),
                     ),
@@ -561,7 +581,7 @@ class _CaretPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-    
+
     final RRect rrect = RRect.fromRectAndRadius(
       Rect.fromLTWH(rect.left, rect.top, cursorWidth, rect.height),
       radius,
@@ -571,7 +591,9 @@ class _CaretPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CaretPainter oldDelegate) {
-    return oldDelegate.rect != rect || oldDelegate.color != color || oldDelegate.cursorWidth != cursorWidth;
+    return oldDelegate.rect != rect ||
+        oldDelegate.color != color ||
+        oldDelegate.cursorWidth != cursorWidth;
   }
 }
 
@@ -593,10 +615,12 @@ class LivingFloatingActionButton extends StatefulWidget {
   });
 
   @override
-  State<LivingFloatingActionButton> createState() => _LivingFloatingActionButtonState();
+  State<LivingFloatingActionButton> createState() =>
+      _LivingFloatingActionButtonState();
 }
 
-class _LivingFloatingActionButtonState extends State<LivingFloatingActionButton> with SingleTickerProviderStateMixin {
+class _LivingFloatingActionButtonState extends State<LivingFloatingActionButton>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -648,7 +672,8 @@ class FabMorphPageRoute<T> extends PageRouteBuilder<T> {
     required this.fabBounds,
     required WidgetBuilder builder,
   }) : super(
-          pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              builder(context),
           transitionDuration: const Duration(milliseconds: 400), // 350 - 500ms
           reverseTransitionDuration: const Duration(milliseconds: 350),
           opaque: true,
@@ -662,7 +687,8 @@ class FabMorphPageRoute<T> extends PageRouteBuilder<T> {
             final double curvedT = Curves.easeInOutCubic.transform(t);
 
             final mediaQuery = MediaQuery.of(context);
-            final screenBounds = Rect.fromLTWH(0, 0, mediaQuery.size.width, mediaQuery.size.height);
+            final screenBounds = Rect.fromLTWH(
+                0, 0, mediaQuery.size.width, mediaQuery.size.height);
 
             final rect = Rect.lerp(fabBounds, screenBounds, curvedT)!;
             final radius = lerpDouble(16.0, 0.0, curvedT)!;
@@ -720,7 +746,8 @@ class TactileFlipWrapper extends StatefulWidget {
   State<TactileFlipWrapper> createState() => _TactileFlipWrapperState();
 }
 
-class _TactileFlipWrapperState extends State<TactileFlipWrapper> with SingleTickerProviderStateMixin {
+class _TactileFlipWrapperState extends State<TactileFlipWrapper>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
   Offset _currentOffset = Offset.zero;
@@ -732,7 +759,8 @@ class _TactileFlipWrapperState extends State<TactileFlipWrapper> with SingleTick
       vsync: this,
       duration: const Duration(milliseconds: 350),
     );
-    _offsetAnimation = Tween<Offset>(begin: Offset.zero, end: Offset.zero).animate(_controller);
+    _offsetAnimation = Tween<Offset>(begin: Offset.zero, end: Offset.zero)
+        .animate(_controller);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -769,7 +797,8 @@ class _TactileFlipWrapperState extends State<TactileFlipWrapper> with SingleTick
       try {
         final RenderBox? box = context.findRenderObject() as RenderBox?;
         if (box != null && box.attached) {
-          TactileFlipWrapper._savedPositions[widget.id] = box.localToGlobal(Offset.zero);
+          TactileFlipWrapper._savedPositions[widget.id] =
+              box.localToGlobal(Offset.zero);
           final idToClean = widget.id;
           Future.delayed(const Duration(seconds: 10), () {
             TactileFlipWrapper._savedPositions.remove(idToClean);
@@ -788,7 +817,8 @@ class _TactileFlipWrapperState extends State<TactileFlipWrapper> with SingleTick
     return AnimatedBuilder(
       animation: _offsetAnimation,
       builder: (context, child) {
-        final offset = _controller.isAnimating ? _offsetAnimation.value : _currentOffset;
+        final offset =
+            _controller.isAnimating ? _offsetAnimation.value : _currentOffset;
         if (offset == Offset.zero) {
           return widget.child;
         }
@@ -809,7 +839,8 @@ class FolderMorphPageRoute<T> extends PageRouteBuilder<T> {
     required this.cardBounds,
     required WidgetBuilder builder,
   }) : super(
-          pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              builder(context),
           transitionDuration: const Duration(milliseconds: 450), // 350 - 500ms
           reverseTransitionDuration: const Duration(milliseconds: 400),
           opaque: true,
@@ -823,7 +854,8 @@ class FolderMorphPageRoute<T> extends PageRouteBuilder<T> {
             final double curvedT = Curves.easeInOutCubic.transform(t);
 
             final mediaQuery = MediaQuery.of(context);
-            final screenBounds = Rect.fromLTWH(0, 0, mediaQuery.size.width, mediaQuery.size.height);
+            final screenBounds = Rect.fromLTWH(
+                0, 0, mediaQuery.size.width, mediaQuery.size.height);
 
             final rect = Rect.lerp(cardBounds, screenBounds, curvedT)!;
             final radius = lerpDouble(20.0, 0.0, curvedT)!;

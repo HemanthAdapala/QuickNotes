@@ -133,13 +133,18 @@ class BackupManifest {
     }
 
     return BackupManifest(
-      formatVersion: (map['formatVersion'] as num?)?.toInt() ?? BackupFormat.formatVersion,
+      formatVersion:
+          (map['formatVersion'] as num?)?.toInt() ?? BackupFormat.formatVersion,
       backupId: map['backupId'] as String,
       createdAt: DateTime.parse(map['createdAt'] as String),
-      appVersion: map['appVersion'] as String? ?? BackupFormat.defaultAppVersion,
-      databaseSchemaVersion: (map['databaseSchemaVersion'] as num?)?.toInt() ?? BackupFormat.databaseSchemaVersion,
-      identity: BackupManifestIdentity.fromMap(map['identity'] as Map<String, dynamic>? ?? {}),
-      contents: BackupContentCounts.fromMap(map['contents'] as Map<String, dynamic>? ?? {}),
+      appVersion:
+          map['appVersion'] as String? ?? BackupFormat.defaultAppVersion,
+      databaseSchemaVersion: (map['databaseSchemaVersion'] as num?)?.toInt() ??
+          BackupFormat.databaseSchemaVersion,
+      identity: BackupManifestIdentity.fromMap(
+          map['identity'] as Map<String, dynamic>? ?? {}),
+      contents: BackupContentCounts.fromMap(
+          map['contents'] as Map<String, dynamic>? ?? {}),
       checksums: checksums,
     );
   }

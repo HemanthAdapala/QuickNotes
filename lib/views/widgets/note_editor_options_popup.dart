@@ -58,7 +58,6 @@ class NoteEditorOptionsPopup extends StatelessWidget {
                   ),
                 ),
               ),
-
             Positioned(
               left: 14,
               top: 17,
@@ -68,7 +67,6 @@ class NoteEditorOptionsPopup extends StatelessWidget {
                 child: Center(child: icon),
               ),
             ),
-
             Positioned(
               left: 39,
               top: 10,
@@ -112,7 +110,8 @@ class NoteEditorOptionsPopup extends StatelessWidget {
             icon: Icon(
               isPinned ? Icons.push_pin : Icons.push_pin_outlined,
               size: 16,
-              color: isPinned ? Theme.of(context).colorScheme.primary : textColor,
+              color:
+                  isPinned ? Theme.of(context).colorScheme.primary : textColor,
             ),
             label: isPinned ? 'Unpin Note' : 'Pin Note',
             onTap: onTogglePin,
@@ -161,7 +160,8 @@ class NoteEditorOptionsPopup extends StatelessWidget {
               'assets/icons/trash.svg',
               width: 16,
               height: 16,
-              colorFilter: const ColorFilter.mode(Colors.redAccent, BlendMode.srcIn),
+              colorFilter:
+                  const ColorFilter.mode(Colors.redAccent, BlendMode.srcIn),
             ),
             label: 'Delete Note',
             onTap: onDeleteNote,

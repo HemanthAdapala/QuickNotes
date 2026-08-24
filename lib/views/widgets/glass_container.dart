@@ -31,13 +31,13 @@ class GlassSurface extends StatelessWidget {
     double? height,
     BorderRadius borderRadius = const BorderRadius.all(Radius.circular(25)),
   }) : this(
-         key: key,
-         child: child,
-         width: width,
-         height: height,
-         borderRadius: borderRadius,
-         useBottomBarPreset: true,
-       );
+          key: key,
+          child: child,
+          width: width,
+          height: height,
+          borderRadius: borderRadius,
+          useBottomBarPreset: true,
+        );
 
   final Widget child;
   final double? width;
@@ -60,8 +60,10 @@ class GlassSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeBlur = customBlurSigma ?? blurSigma ?? GlassmorphismPresets.blurSigma;
-    final activeFrost = customFrostOpacity ?? frostOpacity ?? GlassmorphismPresets.frostOpacity;
+    final activeBlur =
+        customBlurSigma ?? blurSigma ?? GlassmorphismPresets.blurSigma;
+    final activeFrost =
+        customFrostOpacity ?? frostOpacity ?? GlassmorphismPresets.frostOpacity;
 
     final Widget backgroundWidget;
     if (customTintColor != null) {
@@ -74,7 +76,8 @@ class GlassSurface extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               borderRadius: borderRadius,
-              color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.94),
+              color: (isDark ? Colors.black : Colors.white)
+                  .withValues(alpha: 0.94),
             ),
           ),
           Container(
@@ -117,59 +120,73 @@ class GlassSurface extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: borderRadius,
-        boxShadow: useBottomBarPreset ? GlassmorphismPresets.shadows : (customShadows ?? GlassmorphismPresets.shadows),
+        boxShadow: useBottomBarPreset
+            ? GlassmorphismPresets.shadows
+            : (customShadows ?? GlassmorphismPresets.shadows),
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
           filter: ImageFilter.blur(
-            sigmaX: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
-            sigmaY: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
+            sigmaX: useBottomBarPreset
+                ? GlassmorphismPresets.blurSigma
+                : activeBlur,
+            sigmaY: useBottomBarPreset
+                ? GlassmorphismPresets.blurSigma
+                : activeBlur,
           ),
           child: CustomPaint(
-              foregroundPainter: useBottomBarPreset
-                  ? _InnerGlassBorderPainter(borderRadius: borderRadius)
-                  : _GlassRimPainter(
-                      borderRadius: borderRadius,
-                      depthOpacity: customDepthOpacity ?? GlassmorphismPresets.depthOpacity,
-                      bevelIntensity: customBevelIntensity ?? GlassmorphismPresets.bevelIntensity,
-                      lightDirection: Alignment.topCenter,
-                    ),
-              child: SizedBox(
-                width: width,
-                height: height,
-                child: Padding(
-                  padding: padding,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: borderRadius,
+            foregroundPainter: useBottomBarPreset
+                ? _InnerGlassBorderPainter(borderRadius: borderRadius)
+                : _GlassRimPainter(
+                    borderRadius: borderRadius,
+                    depthOpacity:
+                        customDepthOpacity ?? GlassmorphismPresets.depthOpacity,
+                    bevelIntensity: customBevelIntensity ??
+                        GlassmorphismPresets.bevelIntensity,
+                    lightDirection: Alignment.topCenter,
+                  ),
+            child: SizedBox(
+              width: width,
+              height: height,
+              child: Padding(
+                padding: padding,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: borderRadius,
+                    color: useBottomBarPreset
+                        ? GlassmorphismPresets.fillColor
+                        : (customTintColor != null
+                            ? Colors.transparent
+                            : GlassmorphismPresets.fillColor),
+                    boxShadow: GlassmorphismPresets.innerShadows,
+                    border: Border.all(
                       color: useBottomBarPreset
-                          ? GlassmorphismPresets.fillColor
-                          : (customTintColor != null ? Colors.transparent : GlassmorphismPresets.fillColor),
-                      boxShadow: GlassmorphismPresets.innerShadows,
-                      border: Border.all(
-                        color: useBottomBarPreset
-                            ? Colors.white.withValues(alpha: 0.45)
-                            : (customTintColor ?? Colors.white).withValues(
-                                alpha: customOutlineOpacity ?? GlassmorphismPresets.outlineOpacity,
-                              ),
-                        width: useBottomBarPreset ? 0.8 : (customOutlineWidth ?? GlassmorphismPresets.outlineWidth),
-                      ),
+                          ? Colors.white.withValues(alpha: 0.45)
+                          : (customTintColor ?? Colors.white).withValues(
+                              alpha: customOutlineOpacity ??
+                                  GlassmorphismPresets.outlineOpacity,
+                            ),
+                      width: useBottomBarPreset
+                          ? 0.8
+                          : (customOutlineWidth ??
+                              GlassmorphismPresets.outlineWidth),
                     ),
-                    child: Stack(
-                      fit: StackFit.passthrough,
-                      children: [
-                        Positioned.fill(child: backgroundWidget),
-                        child,
-                      ],
-                    ),
+                  ),
+                  child: Stack(
+                    fit: StackFit.passthrough,
+                    children: [
+                      Positioned.fill(child: backgroundWidget),
+                      child,
+                    ],
                   ),
                 ),
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 }
 

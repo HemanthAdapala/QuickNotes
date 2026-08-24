@@ -56,7 +56,7 @@ class _PinLockSheetState extends State<PinLockSheet> {
       setState(() {
         _enteredPin += digit;
       });
-      
+
       // Auto-submit when 4 digits are entered
       if (_enteredPin.length == 4) {
         Future.delayed(const Duration(milliseconds: 200), () {
@@ -102,7 +102,7 @@ class _PinLockSheetState extends State<PinLockSheet> {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Lock Icon
           Icon(
             Icons.lock_person_rounded,
@@ -110,7 +110,7 @@ class _PinLockSheetState extends State<PinLockSheet> {
             color: theme.colorScheme.primary,
           ),
           const SizedBox(height: 12),
-          
+
           // Title
           Text(
             widget.title,
@@ -129,7 +129,7 @@ class _PinLockSheetState extends State<PinLockSheet> {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // PIN Indicator Dots
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -142,9 +142,8 @@ class _PinLockSheetState extends State<PinLockSheet> {
                 height: 18,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isFilled
-                      ? theme.colorScheme.primary
-                      : Colors.transparent,
+                  color:
+                      isFilled ? theme.colorScheme.primary : Colors.transparent,
                   border: Border.all(
                     color: theme.colorScheme.outline,
                     width: 2,
@@ -154,7 +153,7 @@ class _PinLockSheetState extends State<PinLockSheet> {
             }),
           ),
           const SizedBox(height: 32),
-          
+
           // Keypad Grid
           SizedBox(
             width: size.width * 0.75,

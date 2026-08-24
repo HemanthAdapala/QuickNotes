@@ -18,14 +18,17 @@ void notificationTapBackground(NotificationResponse response) {
 
 /// Concrete implementation of ReminderScheduler using flutter_local_notifications
 class AndroidReminderScheduler implements ReminderScheduler {
-  static final AndroidReminderScheduler _instance = AndroidReminderScheduler._internal();
+  static final AndroidReminderScheduler _instance =
+      AndroidReminderScheduler._internal();
   factory AndroidReminderScheduler() => _instance;
 
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   static const String channelId = 'quick_notes_alarm_channel_v3';
   static const String channelName = 'Task System Alarms';
-  static const String channelDescription = 'Full alarm ringtone notifications for task reminders';
+  static const String channelDescription =
+      'Full alarm ringtone notifications for task reminders';
 
   bool _isInitialized = false;
 
@@ -52,7 +55,8 @@ class AndroidReminderScheduler implements ReminderScheduler {
 
       await _notificationsPlugin.initialize(
         settings: initSettings,
-        onDidReceiveNotificationResponse: NotificationActionHandler.handleForegroundResponse,
+        onDidReceiveNotificationResponse:
+            NotificationActionHandler.handleForegroundResponse,
         onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
 
@@ -90,17 +94,21 @@ class AndroidReminderScheduler implements ReminderScheduler {
         description: 'Full alarm ringtone notifications for task reminders',
         importance: Importance.max,
         playSound: true,
-        sound: UriAndroidNotificationSound('content://settings/system/alarm_alert'),
+        sound: UriAndroidNotificationSound(
+            'content://settings/system/alarm_alert'),
         enableVibration: true,
       );
 
-      final androidPlugin = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final androidPlugin =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
 
       if (androidPlugin != null) {
         try {
-          await androidPlugin.deleteNotificationChannel(channelId: 'quick_notes_tasks');
-          await androidPlugin.deleteNotificationChannel(channelId: 'quick_notes_alarm_channel_v2');
+          await androidPlugin.deleteNotificationChannel(
+              channelId: 'quick_notes_tasks');
+          await androidPlugin.deleteNotificationChannel(
+              channelId: 'quick_notes_alarm_channel_v2');
         } catch (_) {}
 
         await androidPlugin.createNotificationChannel(notificationChannel);
@@ -115,19 +123,23 @@ class AndroidReminderScheduler implements ReminderScheduler {
 
       _isInitialized = true;
       if (kDebugMode) {
-        debugPrint('AndroidReminderScheduler successfully initialized for timezone ${tz.local.name}.');
+        debugPrint(
+            'AndroidReminderScheduler successfully initialized for timezone ${tz.local.name}.');
       }
 
       // Check if cold start app launch was triggered by a notification tap
       try {
-        final launchDetails = await _notificationsPlugin.getNotificationAppLaunchDetails();
+        final launchDetails =
+            await _notificationsPlugin.getNotificationAppLaunchDetails();
         if (launchDetails != null &&
             launchDetails.didNotificationLaunchApp &&
             launchDetails.notificationResponse != null) {
           if (kDebugMode) {
-            debugPrint('NOTIFICATION COLD LAUNCH: payload=${launchDetails.notificationResponse?.payload}');
+            debugPrint(
+                'NOTIFICATION COLD LAUNCH: payload=${launchDetails.notificationResponse?.payload}');
           }
-          NotificationActionHandler.handleForegroundResponse(launchDetails.notificationResponse!);
+          NotificationActionHandler.handleForegroundResponse(
+              launchDetails.notificationResponse!);
         }
       } catch (e) {
         debugPrint('Error checking notification app launch details: $e');
@@ -145,7 +157,9 @@ class AndroidReminderScheduler implements ReminderScheduler {
       await initialize();
     }
 
-    if (!task.reminderEnabled || task.reminderMode == ReminderMode.off || task.reminderTime == null) {
+    if (!task.reminderEnabled ||
+        task.reminderMode == ReminderMode.off ||
+        task.reminderTime == null) {
       return;
     }
 
@@ -181,17 +195,21 @@ class AndroidReminderScheduler implements ReminderScheduler {
         targetChannelId = 'quick_notes_alarm_channel_v3';
         targetImportance = Importance.max;
         targetPriority = Priority.max;
-        targetSound = const UriAndroidNotificationSound('content://settings/system/alarm_alert');
+        targetSound = const UriAndroidNotificationSound(
+            'content://settings/system/alarm_alert');
         targetCategory = AndroidNotificationCategory.alarm;
         isFullScreen = true;
       }
 
       final androidDetails = AndroidNotificationDetails(
         targetChannelId,
-        targetChannelId == 'quick_notes_notification_channel_v3' ? 'Task Notifications' : 'Task Alarms',
-        channelDescription: targetChannelId == 'quick_notes_notification_channel_v3'
-            ? 'Standard notifications for task reminders'
-            : 'Full alarm ringtone notifications for task reminders',
+        targetChannelId == 'quick_notes_notification_channel_v3'
+            ? 'Task Notifications'
+            : 'Task Alarms',
+        channelDescription:
+            targetChannelId == 'quick_notes_notification_channel_v3'
+                ? 'Standard notifications for task reminders'
+                : 'Full alarm ringtone notifications for task reminders',
         importance: targetImportance,
         priority: targetPriority,
         playSound: true,
@@ -257,7 +275,8 @@ class AndroidReminderScheduler implements ReminderScheduler {
     try {
       await _notificationsPlugin.cancel(id: notificationId);
       if (kDebugMode) {
-        debugPrint('SCHEDULER CANCEL [Success]: NotificationID $notificationId cancelled.');
+        debugPrint(
+            'SCHEDULER CANCEL [Success]: NotificationID $notificationId cancelled.');
       }
     } catch (e) {
       debugPrint('Error cancelling notification $notificationId: $e');
@@ -272,7 +291,8 @@ class AndroidReminderScheduler implements ReminderScheduler {
     }
 
     try {
-      final pendingRequests = await _notificationsPlugin.pendingNotificationRequests();
+      final pendingRequests =
+          await _notificationsPlugin.pendingNotificationRequests();
       return pendingRequests.map((req) => req.id).toList();
     } catch (e) {
       debugPrint('Error fetching pendingNotificationRequests: $e');

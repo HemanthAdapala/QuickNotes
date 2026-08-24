@@ -70,13 +70,18 @@ class SyncOutboxItem {
       createdAt: DateTime.parse(map['createdAt'] as String),
       attemptCount: map['attemptCount'] as int? ?? 0,
       status: map['status'] as String? ?? 'pending',
-      lastAttemptAt: map['lastAttemptAt'] != null ? DateTime.parse(map['lastAttemptAt'] as String) : null,
-      nextAttemptAt: map['nextAttemptAt'] != null ? DateTime.parse(map['nextAttemptAt'] as String) : null,
+      lastAttemptAt: map['lastAttemptAt'] != null
+          ? DateTime.parse(map['lastAttemptAt'] as String)
+          : null,
+      nextAttemptAt: map['nextAttemptAt'] != null
+          ? DateTime.parse(map['nextAttemptAt'] as String)
+          : null,
       lastError: map['lastError'] as String?,
     );
   }
 
-  Map<String, dynamic> get payloadMap => jsonDecode(payload) as Map<String, dynamic>;
+  Map<String, dynamic> get payloadMap =>
+      jsonDecode(payload) as Map<String, dynamic>;
 
   SyncOutboxItem copyWith({
     int? localSequence,

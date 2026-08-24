@@ -45,7 +45,10 @@ class OwnershipException implements Exception {
   final String message;
   final Object? cause;
 
-  const OwnershipException([this.message = 'No active canonical user exists for this repository operation.', this.cause]);
+  const OwnershipException(
+      [this.message =
+          'No active canonical user exists for this repository operation.',
+      this.cause]);
 
   @override
   String toString() {

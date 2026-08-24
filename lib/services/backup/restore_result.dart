@@ -28,7 +28,8 @@ class RestoreError {
   });
 
   @override
-  String toString() => '[$type] $message${target != null ? " (target: $target)" : ""}';
+  String toString() =>
+      '[$type] $message${target != null ? " (target: $target)" : ""}';
 }
 
 /// RestoreResult — Structured outcome report emitted by RestoreEngine.

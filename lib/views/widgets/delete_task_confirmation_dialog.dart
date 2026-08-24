@@ -21,7 +21,8 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
   const DeleteTaskConfirmationDialog({
     super.key,
     this.title = 'Delete Task',
-    this.message = 'Are you sure you want to delete\nthis task? This action cannot be\nundone',
+    this.message =
+        'Are you sure you want to delete\nthis task? This action cannot be\nundone',
     this.isRecurring = true,
   });
 
@@ -29,7 +30,8 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+      insetPadding:
+          const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
       elevation: 0,
       child: Center(
         child: Container(
@@ -55,7 +57,8 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
             children: [
               // Title & Subtitle Message Content Area
               Padding(
-                padding: const EdgeInsets.only(top: 18.0, left: 16.0, right: 16.0),
+                padding:
+                    const EdgeInsets.only(top: 18.0, left: 16.0, right: 16.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -85,7 +88,8 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
 
               // Action Buttons List
               Padding(
-                padding: const EdgeInsets.only(bottom: 18.0, left: 14.0, right: 14.0),
+                padding: const EdgeInsets.only(
+                    bottom: 18.0, left: 14.0, right: 14.0),
                 child: isRecurring
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
@@ -245,7 +249,8 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
 Future<String?> showDeleteTaskDialog(
   BuildContext context, {
   String title = 'Delete Task',
-  String message = 'Are you sure you want to delete\nthis task? This action cannot be\nundone',
+  String message =
+      'Are you sure you want to delete\nthis task? This action cannot be\nundone',
   bool isRecurring = true,
 }) {
   return showDialog<String>(

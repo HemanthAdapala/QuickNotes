@@ -15,7 +15,8 @@ class AnimatedListEntrance extends StatefulWidget {
   State<AnimatedListEntrance> createState() => _AnimatedListEntranceState();
 }
 
-class _AnimatedListEntranceState extends State<AnimatedListEntrance> with SingleTickerProviderStateMixin {
+class _AnimatedListEntranceState extends State<AnimatedListEntrance>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _translateAnimation;

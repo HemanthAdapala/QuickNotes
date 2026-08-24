@@ -14,10 +14,12 @@ class GlassmorphismSandboxScreen extends StatefulWidget {
   const GlassmorphismSandboxScreen({super.key});
 
   @override
-  State<GlassmorphismSandboxScreen> createState() => _GlassmorphismSandboxScreenState();
+  State<GlassmorphismSandboxScreen> createState() =>
+      _GlassmorphismSandboxScreenState();
 }
 
-class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen> with TickerProviderStateMixin {
+class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
+    with TickerProviderStateMixin {
   // Pill positions
   Offset _pillPosition = const Offset(100, 250);
   Offset _dockPosition = const Offset(60, 360);
@@ -45,7 +47,8 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
   String _tintName = 'None';
   double _outlineWidth = 0.8;
   double _outlineOpacity = 0.30;
-  double _bevelIntensity = 0.20; // Defaults to bevel intensity from Figma values!
+  double _bevelIntensity =
+      0.20; // Defaults to bevel intensity from Figma values!
 
   // Liquid Glass Renderer Settings
   bool _useShaderGlass = true;
@@ -255,11 +258,13 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    
+
     // Position the pill in the center on first launch
     if (!_initialized) {
-      _pillPosition = Offset((size.width - 250) / 2, (size.height - 65) / 2 - 120);
-      _dockPosition = Offset((size.width - 264) / 2, (size.height - 50) / 2 + 60);
+      _pillPosition =
+          Offset((size.width - 250) / 2, (size.height - 65) / 2 - 120);
+      _dockPosition =
+          Offset((size.width - 264) / 2, (size.height - 50) / 2 + 60);
       _initialized = true;
     }
 
@@ -279,7 +284,8 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
             child: SingleChildScrollView(
               physics: const NeverScrollableScrollPhysics(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 60.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0, vertical: 60.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -366,188 +372,222 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
           Stack(
             clipBehavior: Clip.none,
             children: [
-                  // 3a. Draggable & Clickable Glass Pill
-                  Positioned(
-                    left: _pillPosition.dx,
-                    top: _pillPosition.dy,
-                    child: GestureDetector(
-                      onPanUpdate: (details) {
-                        setState(() {
-                          _pillPosition = Offset(
-                            (_pillPosition.dx + details.delta.dx).clamp(0.0, size.width - targetWidth),
-                            (_pillPosition.dy + details.delta.dy).clamp(0.0, size.height - 180),
-                          );
-                        });
-                      },
-                      onTapDown: (_) {
-                        _triggerHaptic();
-                        _releaseController.stop();
-                        _pressController.forward(from: 0.0);
-                        if (_selectedTapStyle == 'Shimmer Sweep') {
-                          _shimmerController.forward(from: 0.0);
-                        }
-                      },
-                      onTapCancel: () {
-                        _pressController.stop();
-                        _releaseController.duration = Duration(milliseconds: _settleDurationMs);
-                        _releaseController.forward(from: 0.0);
-                      },
-                      onTapUp: (_) {
-                        _pressController.stop();
-                        _releaseController.duration = Duration(milliseconds: _settleDurationMs);
-                        _releaseController.forward(from: 0.0);
-                        if (_selectedTapStyle == 'Particle Burst') {
-                          _particleController.forward(from: 0.0);
-                        }
-                      },
-                      child: AnimatedBuilder(
-                        animation: Listenable.merge([_pressController, _releaseController, _particleController, _shimmerController]),
-                        builder: (context, child) {
-                          // Calculate compression scale
-                          double scale = 1.0;
-                          if (_pressController.isAnimating || _pressController.value > 0.0) {
-                            scale = 1.0 - (_pressController.value * (1.0 - _tapCompressionScale));
-                          } else if (_releaseController.isAnimating) {
-                            final releaseVal = CurvedAnimation(parent: _releaseController, curve: _getSettleCurve()).value;
-                            scale = _tapCompressionScale + (releaseVal * (1.0 - _tapCompressionScale));
-                          }
+              // 3a. Draggable & Clickable Glass Pill
+              Positioned(
+                left: _pillPosition.dx,
+                top: _pillPosition.dy,
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    setState(() {
+                      _pillPosition = Offset(
+                        (_pillPosition.dx + details.delta.dx)
+                            .clamp(0.0, size.width - targetWidth),
+                        (_pillPosition.dy + details.delta.dy)
+                            .clamp(0.0, size.height - 180),
+                      );
+                    });
+                  },
+                  onTapDown: (_) {
+                    _triggerHaptic();
+                    _releaseController.stop();
+                    _pressController.forward(from: 0.0);
+                    if (_selectedTapStyle == 'Shimmer Sweep') {
+                      _shimmerController.forward(from: 0.0);
+                    }
+                  },
+                  onTapCancel: () {
+                    _pressController.stop();
+                    _releaseController.duration =
+                        Duration(milliseconds: _settleDurationMs);
+                    _releaseController.forward(from: 0.0);
+                  },
+                  onTapUp: (_) {
+                    _pressController.stop();
+                    _releaseController.duration =
+                        Duration(milliseconds: _settleDurationMs);
+                    _releaseController.forward(from: 0.0);
+                    if (_selectedTapStyle == 'Particle Burst') {
+                      _particleController.forward(from: 0.0);
+                    }
+                  },
+                  child: AnimatedBuilder(
+                    animation: Listenable.merge([
+                      _pressController,
+                      _releaseController,
+                      _particleController,
+                      _shimmerController
+                    ]),
+                    builder: (context, child) {
+                      // Calculate compression scale
+                      double scale = 1.0;
+                      if (_pressController.isAnimating ||
+                          _pressController.value > 0.0) {
+                        scale = 1.0 -
+                            (_pressController.value *
+                                (1.0 - _tapCompressionScale));
+                      } else if (_releaseController.isAnimating) {
+                        final releaseVal = CurvedAnimation(
+                                parent: _releaseController,
+                                curve: _getSettleCurve())
+                            .value;
+                        scale = _tapCompressionScale +
+                            (releaseVal * (1.0 - _tapCompressionScale));
+                      }
 
-                          return Transform.scale(
-                            scale: scale,
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              alignment: Alignment.center,
-                              children: [
-                                // Glass Pill morphing width
-                                AnimatedContainer(
-                                  duration: Duration(milliseconds: _morphDurationMs),
-                                  curve: _getMorphCurve(),
-                                  width: targetWidth,
-                                  height: 65,
-                                  child: GlassSurface(
-                                    borderRadius: BorderRadius.circular(32.5),
-                                    customBlurSigma: _blurSigma,
-                                    customFrostOpacity: _frostOpacity,
-                                    customDepthOpacity: _depthOpacity,
-                                    customTintColor: _tintColor,
-                                    customOutlineWidth: _outlineWidth,
-                                    customOutlineOpacity: _outlineOpacity,
-                                    customBevelIntensity: _bevelIntensity,
-                                    customShadows: _getShadows(),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(32.5),
-                                      child: Stack(
-                                        children: [
-                                          // Shimmer Sweep overlay
-                                          if (_selectedTapStyle == 'Shimmer Sweep')
-                                            Positioned.fill(
-                                              child: IgnorePointer(
-                                                child: CustomPaint(
-                                                  painter: _ShimmerSweepPainter(progress: _shimmerController.value),
-                                                ),
-                                              ),
-                                            ),
-                                          // Content Crossfade
-                                          Center(
-                                            child: AnimatedCrossFade(
-                                              firstChild: Container(
-                                                width: 65,
-                                                height: 65,
-                                                alignment: Alignment.center,
-                                                child: Icon(
-                                                  Icons.blur_on_rounded,
-                                                  color: _tintColor != null ? const Color(0xFF333333) : const Color(0xFFFFA322),
-                                                  size: 24,
-                                                ),
-                                              ),
-                                              secondChild: SizedBox(
-                                                width: 250,
-                                                height: 65,
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.blur_on_rounded,
-                                                      color: _tintColor != null ? const Color(0xFF333333) : const Color(0xFFFFA322),
-                                                      size: 24,
-                                                    ),
-                                                    const SizedBox(width: 8),
-                                                    Text(
-                                                      'Glass Pill',
-                                                      style: GoogleFonts.inter(
-                                                        fontSize: 16,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: const Color(0xFF333333),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              crossFadeState: _isMorphed ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                                              duration: Duration(milliseconds: (_morphDurationMs * 0.4).toInt()),
+                      return Transform.scale(
+                        scale: scale,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.center,
+                          children: [
+                            // Glass Pill morphing width
+                            AnimatedContainer(
+                              duration:
+                                  Duration(milliseconds: _morphDurationMs),
+                              curve: _getMorphCurve(),
+                              width: targetWidth,
+                              height: 65,
+                              child: GlassSurface(
+                                borderRadius: BorderRadius.circular(32.5),
+                                customBlurSigma: _blurSigma,
+                                customFrostOpacity: _frostOpacity,
+                                customDepthOpacity: _depthOpacity,
+                                customTintColor: _tintColor,
+                                customOutlineWidth: _outlineWidth,
+                                customOutlineOpacity: _outlineOpacity,
+                                customBevelIntensity: _bevelIntensity,
+                                customShadows: _getShadows(),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(32.5),
+                                  child: Stack(
+                                    children: [
+                                      // Shimmer Sweep overlay
+                                      if (_selectedTapStyle == 'Shimmer Sweep')
+                                        Positioned.fill(
+                                          child: IgnorePointer(
+                                            child: CustomPaint(
+                                              painter: _ShimmerSweepPainter(
+                                                  progress:
+                                                      _shimmerController.value),
                                             ),
                                           ),
-                                          // Material Ripple overlay
-                                          if (_selectedTapStyle == 'Material Ripple')
-                                            Positioned.fill(
-                                              child: Material(
-                                                color: Colors.transparent,
-                                                child: InkWell(
-                                                  borderRadius: BorderRadius.circular(32.5),
-                                                  onTap: () {},
-                                                ),
-                                              ),
+                                        ),
+                                      // Content Crossfade
+                                      Center(
+                                        child: AnimatedCrossFade(
+                                          firstChild: Container(
+                                            width: 65,
+                                            height: 65,
+                                            alignment: Alignment.center,
+                                            child: Icon(
+                                              Icons.blur_on_rounded,
+                                              color: _tintColor != null
+                                                  ? const Color(0xFF333333)
+                                                  : const Color(0xFFFFA322),
+                                              size: 24,
                                             ),
-                                        ],
+                                          ),
+                                          secondChild: SizedBox(
+                                            width: 250,
+                                            height: 65,
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons.blur_on_rounded,
+                                                  color: _tintColor != null
+                                                      ? const Color(0xFF333333)
+                                                      : const Color(0xFFFFA322),
+                                                  size: 24,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  'Glass Pill',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color:
+                                                        const Color(0xFF333333),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          crossFadeState: _isMorphed
+                                              ? CrossFadeState.showSecond
+                                              : CrossFadeState.showFirst,
+                                          duration: Duration(
+                                              milliseconds:
+                                                  (_morphDurationMs * 0.4)
+                                                      .toInt()),
+                                        ),
                                       ),
+                                      // Material Ripple overlay
+                                      if (_selectedTapStyle ==
+                                          'Material Ripple')
+                                        Positioned.fill(
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              borderRadius:
+                                                  BorderRadius.circular(32.5),
+                                              onTap: () {},
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Particle Burst overlay (drawn outside so they fly off bounds)
+                            if (_selectedTapStyle == 'Particle Burst')
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: CustomPaint(
+                                    painter: _DotBurstPainter(
+                                      progress: _particleController.value,
+                                      directions: const [
+                                        Offset(0.951, 0.309), // 18 degrees
+                                        Offset(0.000, 1.000), // 90 degrees
+                                        Offset(-0.951, 0.309), // 162 degrees
+                                        Offset(-0.588, -0.809), // 234 degrees
+                                        Offset(0.588, -0.809), // 306 degrees
+                                      ],
+                                      scale: 1.2,
                                     ),
                                   ),
                                 ),
-                                // Particle Burst overlay (drawn outside so they fly off bounds)
-                                if (_selectedTapStyle == 'Particle Burst')
-                                  Positioned.fill(
-                                    child: IgnorePointer(
-                                      child: CustomPaint(
-                                        painter: _DotBurstPainter(
-                                          progress: _particleController.value,
-                                          directions: const [
-                                            Offset(0.951, 0.309),   // 18 degrees
-                                            Offset(0.000, 1.000),   // 90 degrees
-                                            Offset(-0.951, 0.309),  // 162 degrees
-                                            Offset(-0.588, -0.809), // 234 degrees
-                                            Offset(0.588, -0.809),  // 306 degrees
-                                          ],
-                                          scale: 1.2,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-
-                  // 3b. Draggable Liquid Glass Dock
-                  Positioned(
-                    left: _dockPosition.dx,
-                    top: _dockPosition.dy,
-                    child: GestureDetector(
-                      onPanUpdate: (details) {
-                        setState(() {
-                          _dockPosition = Offset(
-                            (_dockPosition.dx + details.delta.dx).clamp(0.0, size.width - 264),
-                            (_dockPosition.dy + details.delta.dy).clamp(0.0, size.height - 180),
-                          );
-                        });
-                      },
-                      child: const LiquidGlassDock(useRawLayout: false),
-                    ),
-                  ),
-                ],
+                ),
               ),
+
+              // 3b. Draggable Liquid Glass Dock
+              Positioned(
+                left: _dockPosition.dx,
+                top: _dockPosition.dy,
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    setState(() {
+                      _dockPosition = Offset(
+                        (_dockPosition.dx + details.delta.dx)
+                            .clamp(0.0, size.width - 264),
+                        (_dockPosition.dy + details.delta.dy)
+                            .clamp(0.0, size.height - 180),
+                      );
+                    });
+                  },
+                  child: const LiquidGlassDock(useRawLayout: false),
+                ),
+              ),
+            ],
+          ),
 
           // 4. Back navigation button (Floating in top-left)
           Positioned(
@@ -594,12 +634,15 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                       expandCurve: _getCurveByName(_popupExpandCurveName),
                       shrinkCurve: _getCurveByName(_popupShrinkCurveName),
                       expandedChild: MoreOptionsPopup(
-                        onDeleteData: () => setState(() => _isPopupExpanded = false),
-                        onRefresh: () => setState(() => _isPopupExpanded = false),
+                        onDeleteData: () =>
+                            setState(() => _isPopupExpanded = false),
+                        onRefresh: () =>
+                            setState(() => _isPopupExpanded = false),
                       ),
                       rightChild: TactileButton(
                         useAppleSpring: true,
-                        onTap: () => setState(() => _isPopupExpanded = !_isPopupExpanded),
+                        onTap: () => setState(
+                            () => _isPopupExpanded = !_isPopupExpanded),
                         child: const SizedBox(
                           width: 44,
                           height: 44,
@@ -627,7 +670,8 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.94),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.15),
@@ -662,7 +706,9 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            _isPanelCollapsed ? 'Tap to Show Controls' : 'Design & Motion Playground',
+                            _isPanelCollapsed
+                                ? 'Tap to Show Controls'
+                                : 'Design & Motion Playground',
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -683,45 +729,79 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                           children: [
                             // Tab Headers Selection
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0, vertical: 4),
                               child: Row(
                                 children: [
                                   Expanded(
                                     child: TextButton(
                                       style: TextButton.styleFrom(
-                                        backgroundColor: _activeTabIndex == 0 ? const Color(0xFFFFA322) : Colors.black12,
-                                        foregroundColor: _activeTabIndex == 0 ? Colors.white : Colors.black87,
-                                        padding: const EdgeInsets.symmetric(vertical: 8),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        backgroundColor: _activeTabIndex == 0
+                                            ? const Color(0xFFFFA322)
+                                            : Colors.black12,
+                                        foregroundColor: _activeTabIndex == 0
+                                            ? Colors.white
+                                            : Colors.black87,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
                                       ),
-                                      onPressed: () => setState(() => _activeTabIndex = 0),
-                                      child: Text('Visuals', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
+                                      onPressed: () =>
+                                          setState(() => _activeTabIndex = 0),
+                                      child: Text('Visuals',
+                                          style: GoogleFonts.inter(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: TextButton(
                                       style: TextButton.styleFrom(
-                                        backgroundColor: _activeTabIndex == 1 ? const Color(0xFFFFA322) : Colors.black12,
-                                        foregroundColor: _activeTabIndex == 1 ? Colors.white : Colors.black87,
-                                        padding: const EdgeInsets.symmetric(vertical: 8),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        backgroundColor: _activeTabIndex == 1
+                                            ? const Color(0xFFFFA322)
+                                            : Colors.black12,
+                                        foregroundColor: _activeTabIndex == 1
+                                            ? Colors.white
+                                            : Colors.black87,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
                                       ),
-                                      onPressed: () => setState(() => _activeTabIndex = 1),
-                                      child: Text('Motion', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
+                                      onPressed: () =>
+                                          setState(() => _activeTabIndex = 1),
+                                      child: Text('Motion',
+                                          style: GoogleFonts.inter(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: TextButton(
                                       style: TextButton.styleFrom(
-                                        backgroundColor: _activeTabIndex == 2 ? const Color(0xFFFFA322) : Colors.black12,
-                                        foregroundColor: _activeTabIndex == 2 ? Colors.white : Colors.black87,
-                                        padding: const EdgeInsets.symmetric(vertical: 8),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        backgroundColor: _activeTabIndex == 2
+                                            ? const Color(0xFFFFA322)
+                                            : Colors.black12,
+                                        foregroundColor: _activeTabIndex == 2
+                                            ? Colors.white
+                                            : Colors.black87,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
                                       ),
-                                      onPressed: () => setState(() => _activeTabIndex = 2),
-                                      child: Text('Popup Morph', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
+                                      onPressed: () =>
+                                          setState(() => _activeTabIndex = 2),
+                                      child: Text('Popup Morph',
+                                          style: GoogleFonts.inter(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                 ],
@@ -731,10 +811,13 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
 
                             // Active Tab Contents
                             Padding(
-                              padding: const EdgeInsets.only(left: 24, right: 24, bottom: 28),
+                              padding: const EdgeInsets.only(
+                                  left: 24, right: 24, bottom: 28),
                               child: _activeTabIndex == 0
                                   ? _buildVisualsTab()
-                                  : (_activeTabIndex == 1 ? _buildMotionTab() : _buildPopupMorphingTab()),
+                                  : (_activeTabIndex == 1
+                                      ? _buildMotionTab()
+                                      : _buildPopupMorphingTab()),
                             ),
                           ],
                         ),
@@ -813,11 +896,17 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
           children: [
             Text(
               'Tint Color: ',
-              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+              style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF333333)),
             ),
             Text(
               _tintName,
-              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFFFA322)),
+              style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFFFA322)),
             ),
           ],
         ),
@@ -846,7 +935,9 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                       shape: BoxShape.circle,
                       color: tint['color'] as Color? ?? Colors.transparent,
                       border: Border.all(
-                        color: isSelected ? const Color(0xFFFFA322) : Colors.grey.shade400,
+                        color: isSelected
+                            ? const Color(0xFFFFA322)
+                            : Colors.grey.shade400,
                         width: isSelected ? 2.5 : 1,
                       ),
                     ),
@@ -864,7 +955,10 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
         // Background Style Choice Selector
         Text(
           'Background Style:',
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+          style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF333333)),
         ),
         const SizedBox(height: 6),
         SizedBox(
@@ -876,10 +970,13 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: ChoiceChip(
-                  label: Text(type, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  label: Text(type,
+                      style: GoogleFonts.inter(
+                          fontSize: 10, fontWeight: FontWeight.bold)),
                   selected: isSelected,
                   selectedColor: const Color(0xFFFFA322),
-                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black87),
                   showCheckmark: false,
                   onSelected: (selected) {
                     if (selected) {
@@ -896,7 +993,10 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
         // Shadow Preset Choice Selector
         Text(
           'Shadow Preset:',
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+          style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF333333)),
         ),
         const SizedBox(height: 6),
         SizedBox(
@@ -908,10 +1008,13 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: ChoiceChip(
-                  label: Text(preset, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  label: Text(preset,
+                      style: GoogleFonts.inter(
+                          fontSize: 10, fontWeight: FontWeight.bold)),
                   selected: isSelected,
                   selectedColor: const Color(0xFFFFA322),
-                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black87),
                   showCheckmark: false,
                   onSelected: (selected) {
                     if (selected) {
@@ -924,15 +1027,32 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
           ),
         ),
         const SizedBox(height: 16),
-
       ],
     );
   }
 
   Widget _buildMotionTab() {
-    final List<String> curves = ['Apple Emphasized', 'Spring (Elastic)', 'Bouncy', 'Ease In Out', 'Linear'];
-    final List<String> tapStyles = ['Apple Pressable', 'Particle Burst', 'Shimmer Sweep', 'Material Ripple', 'Standard'];
-    final List<String> haptics = ['None', 'Light', 'Medium', 'Heavy', 'Selection'];
+    final List<String> curves = [
+      'Apple Emphasized',
+      'Spring (Elastic)',
+      'Bouncy',
+      'Ease In Out',
+      'Linear'
+    ];
+    final List<String> tapStyles = [
+      'Apple Pressable',
+      'Particle Burst',
+      'Shimmer Sweep',
+      'Material Ripple',
+      'Standard'
+    ];
+    final List<String> haptics = [
+      'None',
+      'Light',
+      'Medium',
+      'Heavy',
+      'Selection'
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -943,7 +1063,10 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
           children: [
             Text(
               'Pill Width: ${_isMorphed ? "Wide (250px)" : "Circle (65px)"}',
-              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+              style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF333333)),
             ),
             Switch(
               value: _isMorphed,
@@ -968,7 +1091,10 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
         // Morph Curve Select Box
         Text(
           'Morph Curve:',
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+          style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF333333)),
         ),
         const SizedBox(height: 6),
         SizedBox(
@@ -982,10 +1108,13 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: ChoiceChip(
-                  label: Text(curve, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  label: Text(curve,
+                      style: GoogleFonts.inter(
+                          fontSize: 10, fontWeight: FontWeight.bold)),
                   selected: isSelected,
                   selectedColor: const Color(0xFFFFA322),
-                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black87),
                   showCheckmark: false,
                   onSelected: (selected) {
                     if (selected) {
@@ -1002,7 +1131,10 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
         // Tap Style Picker
         Text(
           'Tap Animation Look:',
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+          style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF333333)),
         ),
         const SizedBox(height: 6),
         SizedBox(
@@ -1016,10 +1148,13 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: ChoiceChip(
-                  label: Text(style, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  label: Text(style,
+                      style: GoogleFonts.inter(
+                          fontSize: 10, fontWeight: FontWeight.bold)),
                   selected: isSelected,
                   selectedColor: const Color(0xFFFFA322),
-                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black87),
                   showCheckmark: false,
                   onSelected: (selected) {
                     if (selected) {
@@ -1058,7 +1193,10 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
         // Haptic Trigger Selector
         Text(
           'Haptic Click Touchdown:',
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+          style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF333333)),
         ),
         const SizedBox(height: 6),
         SizedBox(
@@ -1072,10 +1210,13 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: ChoiceChip(
-                  label: Text(hap, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  label: Text(hap,
+                      style: GoogleFonts.inter(
+                          fontSize: 10, fontWeight: FontWeight.bold)),
                   selected: isSelected,
                   selectedColor: const Color(0xFFFFA322),
-                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black87),
                   showCheckmark: false,
                   onSelected: (selected) {
                     if (selected) {
@@ -1118,17 +1259,20 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFFA322),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {
               setState(() {
                 _isPopupExpanded = !_isPopupExpanded;
               });
             },
-            icon: Icon(_isPopupExpanded ? Icons.close : Icons.open_in_full, size: 18),
+            icon: Icon(_isPopupExpanded ? Icons.close : Icons.open_in_full,
+                size: 18),
             label: Text(
               _isPopupExpanded ? 'Close Popup' : 'Expand Popup (Top Right)',
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12),
+              style:
+                  GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
         ),
@@ -1159,7 +1303,10 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
         // Expand Curve Selector
         Text(
           'Expand Curve:',
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+          style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF333333)),
         ),
         const SizedBox(height: 6),
         SizedBox(
@@ -1173,10 +1320,13 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: ChoiceChip(
-                  label: Text(curve, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  label: Text(curve,
+                      style: GoogleFonts.inter(
+                          fontSize: 10, fontWeight: FontWeight.bold)),
                   selected: isSelected,
                   selectedColor: const Color(0xFFFFA322),
-                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black87),
                   showCheckmark: false,
                   onSelected: (selected) {
                     if (selected) {
@@ -1193,7 +1343,10 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
         // Shrink Curve Selector
         Text(
           'Shrink Curve:',
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF333333)),
+          style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF333333)),
         ),
         const SizedBox(height: 6),
         SizedBox(
@@ -1207,10 +1360,13 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: ChoiceChip(
-                  label: Text(curve, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold)),
+                  label: Text(curve,
+                      style: GoogleFonts.inter(
+                          fontSize: 10, fontWeight: FontWeight.bold)),
                   selected: isSelected,
                   selectedColor: const Color(0xFFFFA322),
-                  labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87),
+                  labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black87),
                   showCheckmark: false,
                   onSelected: (selected) {
                     if (selected) {
@@ -1344,20 +1500,21 @@ class _ShimmerSweepPainter extends CustomPainter {
     canvas.save();
     final translation = -size.width + (progress * size.width * 3);
     canvas.translate(translation, 0);
-    
+
     final path = Path()
       ..moveTo(0, 0)
       ..lineTo(size.width * 0.4, 0)
       ..lineTo(size.width * 0.8, size.height)
       ..lineTo(size.width * 0.4, size.height)
       ..close();
-      
+
     canvas.drawPath(path, paint);
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(_ShimmerSweepPainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(_ShimmerSweepPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
 class _DotBurstPainter extends CustomPainter {

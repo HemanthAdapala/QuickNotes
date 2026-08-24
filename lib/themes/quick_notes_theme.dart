@@ -4,12 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 class QuickNotesTheme {
   // Brand Color Palette
   static const Color background = Color(0xFF080808); // Near Black / Matte Black
-  static const Color surface = Color(0xFF141414);    // Dark Charcoal / Elevated Surface
-  static const Color surfaceElevated = Color(0xFF1C1C1E); // Elevated card hover/dialog
-  static const Color accent = Color(0xFFCCFF00);     // Bright Chartreuse / Neon Yellow
+  static const Color surface =
+      Color(0xFF141414); // Dark Charcoal / Elevated Surface
+  static const Color surfaceElevated =
+      Color(0xFF1C1C1E); // Elevated card hover/dialog
+  static const Color accent =
+      Color(0xFFCCFF00); // Bright Chartreuse / Neon Yellow
   static const Color textPrimary = Color(0xFFFFFFFF); // Pure White
   static const Color textSecondary = Color(0xFF8E8E93); // Muted Gray
-  static const Color border = Color(0xFF242426);      // Quiet Hairline Border
+  static const Color border = Color(0xFF242426); // Quiet Hairline Border
   static const Color borderActive = Color(0xFF38383A);
 
   static ThemeData get darkTheme {
@@ -20,7 +23,6 @@ class QuickNotesTheme {
       cardColor: surface,
       dividerColor: border,
       dialogTheme: const DialogThemeData(backgroundColor: surface),
-      
       colorScheme: const ColorScheme.dark(
         primary: accent,
         onPrimary: Color(0xFF000000),
@@ -30,7 +32,6 @@ class QuickNotesTheme {
         onSurface: textPrimary,
         outline: border,
       ),
-
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
         foregroundColor: textPrimary,
@@ -38,7 +39,6 @@ class QuickNotesTheme {
         centerTitle: false,
         iconTheme: IconThemeData(color: textPrimary),
       ),
-
       textTheme: TextTheme(
         displayLarge: GoogleFonts.inter(
           fontSize: 40,
@@ -114,7 +114,6 @@ class QuickNotesTheme {
           color: textSecondary,
         ),
       ),
-
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: accent,
         foregroundColor: Color(0xFF000000),
@@ -123,7 +122,6 @@ class QuickNotesTheme {
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
       ),
-
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: accent,
@@ -133,7 +131,6 @@ class QuickNotesTheme {
           ),
         ),
       ),
-
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: accent,
@@ -149,7 +146,6 @@ class QuickNotesTheme {
           ),
         ),
       ),
-
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: textPrimary,
@@ -163,7 +159,6 @@ class QuickNotesTheme {
           ),
         ),
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
@@ -182,7 +177,6 @@ class QuickNotesTheme {
         labelStyle: GoogleFonts.inter(color: textSecondary),
         hintStyle: GoogleFonts.inter(color: textSecondary),
       ),
-
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: surface,
         modalBackgroundColor: surface,

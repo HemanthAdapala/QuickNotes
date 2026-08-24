@@ -55,11 +55,15 @@ class Folder {
       name: map['name'] as String,
       parentId: map['parentId'] as String?,
       createdAt: created,
-      updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt'] as String) : created,
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.parse(map['updatedAt'] as String)
+          : created,
       colorHex: map['colorHex'] as String?,
       sticker: map['sticker'] as String?,
       isDeleted: map['isDeleted'] == 1 || map['isDeleted'] == true,
-      deletedAt: map['deletedAt'] != null ? DateTime.parse(map['deletedAt'] as String) : null,
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.parse(map['deletedAt'] as String)
+          : null,
       trashedByFolderId: map['trashedByFolderId'] as String?,
       version: (map['version'] ?? 1) as int,
       lastSyncedVersion: (map['lastSyncedVersion'] ?? 0) as int,
@@ -94,7 +98,9 @@ class Folder {
       sticker: clearSticker ? null : (sticker ?? this.sticker),
       isDeleted: isDeleted ?? this.isDeleted,
       deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
-      trashedByFolderId: clearTrashedByFolderId ? null : (trashedByFolderId ?? this.trashedByFolderId),
+      trashedByFolderId: clearTrashedByFolderId
+          ? null
+          : (trashedByFolderId ?? this.trashedByFolderId),
       version: version ?? this.version,
       lastSyncedVersion: lastSyncedVersion ?? this.lastSyncedVersion,
     );
@@ -110,29 +116,30 @@ class FolderWithDepth {
 class FolderUtils {
   static List<FolderWithDepth> getHierarchicalFolders(List<Folder> folders) {
     final List<FolderWithDepth> result = [];
-    
+
     void traverse(String? parentId, int depth) {
       final children = folders.where((f) => f.parentId == parentId).toList();
-      children.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      children
+          .sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       for (var child in children) {
         result.add(FolderWithDepth(child, depth));
         traverse(child.id, depth + 1);
       }
     }
-    
+
     traverse(null, 0);
-    
+
     // Add orphan folders (parentId is not null, but parent is missing)
     for (var folder in folders) {
-      if (folder.parentId != null && !folders.any((f) => f.id == folder.parentId)) {
+      if (folder.parentId != null &&
+          !folders.any((f) => f.id == folder.parentId)) {
         if (!result.any((r) => r.folder.id == folder.id)) {
           result.add(FolderWithDepth(folder, 0));
           traverse(folder.id, 1);
         }
       }
     }
-    
+
     return result;
   }
 }
-

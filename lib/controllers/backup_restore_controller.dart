@@ -61,7 +61,8 @@ class BackupRestoreController extends ChangeNotifier {
   bool get isIdle => _operationState == BackupOperationState.idle;
   bool get isBusy => _operationState != BackupOperationState.idle;
 
-  List<RemoteBackupMetadata> get remoteBackups => List.unmodifiable(_remoteBackups);
+  List<RemoteBackupMetadata> get remoteBackups =>
+      List.unmodifiable(_remoteBackups);
   BackupResult? get lastLocalBackupResult => _lastLocalBackupResult;
   RestoreResult? get lastRestoreResult => _lastRestoreResult;
   String? get errorMessage => _errorMessage;
@@ -71,12 +72,19 @@ class BackupRestoreController extends ChangeNotifier {
   Future<Map<String, int>> fetchCurrentDataCounts() async {
     try {
       final userId = _sessionManager.activeUserId;
-      if (userId == null) return {'notes': 0, 'folders': 0, 'tasks': 0, 'attachments': 0};
+      if (userId == null)
+        return {'notes': 0, 'folders': 0, 'tasks': 0, 'attachments': 0};
 
       final db = await DatabaseService.instance.database;
-      final notesRes = await db.rawQuery('SELECT COUNT(*) as cnt FROM notes WHERE user_id = ? AND is_trashed = 0', [userId]);
-      final foldersRes = await db.rawQuery('SELECT COUNT(*) as cnt FROM folders WHERE user_id = ? AND is_trashed = 0', [userId]);
-      final tasksRes = await db.rawQuery('SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND is_trashed = 0', [userId]);
+      final notesRes = await db.rawQuery(
+          'SELECT COUNT(*) as cnt FROM notes WHERE user_id = ? AND is_trashed = 0',
+          [userId]);
+      final foldersRes = await db.rawQuery(
+          'SELECT COUNT(*) as cnt FROM folders WHERE user_id = ? AND is_trashed = 0',
+          [userId]);
+      final tasksRes = await db.rawQuery(
+          'SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND is_trashed = 0',
+          [userId]);
 
       final nCnt = (notesRes.first['cnt'] as int?) ?? 0;
       final fCnt = (foldersRes.first['cnt'] as int?) ?? 0;
@@ -96,7 +104,8 @@ class BackupRestoreController extends ChangeNotifier {
   // ── Concurrency Protection Helper ─────────────────────────────────────────
   bool _startOperation(BackupOperationState state) {
     if (_operationState != BackupOperationState.idle) {
-      _errorMessage = 'Another operation is currently in progress. Please wait.';
+      _errorMessage =
+          'Another operation is currently in progress. Please wait.';
       notifyListeners();
       return false;
     }
@@ -134,13 +143,15 @@ class BackupRestoreController extends ChangeNotifier {
 
       _lastLocalBackupResult = result;
       if (result.success) {
-        _infoMessage = 'Local backup created successfully (${result.noteCount} notes, ${result.folderCount} folders).';
+        _infoMessage =
+            'Local backup created successfully (${result.noteCount} notes, ${result.folderCount} folders).';
       } else {
         _errorMessage = 'Local backup creation failed: ${result.error}';
       }
       return result;
     } catch (e) {
-      _errorMessage = 'An unexpected error occurred during local backup creation.';
+      _errorMessage =
+          'An unexpected error occurred during local backup creation.';
       return BackupResult.failure(error: e.toString());
     } finally {
       _finishOperation();
@@ -152,7 +163,8 @@ class BackupRestoreController extends ChangeNotifier {
 
   // ── 2. Cloud Backup Upload ────────────────────────────────────────────────
   Future<RemoteBackupMetadata?> uploadCloudBackup() async {
-    if (!_startOperation(BackupOperationState.uploadingCloudBackup)) return null;
+    if (!_startOperation(BackupOperationState.uploadingCloudBackup))
+      return null;
 
     try {
       final localResult = _lastLocalBackupResult;
@@ -162,7 +174,8 @@ class BackupRestoreController extends ChangeNotifier {
           localResult.filePath == null ||
           manifest == null ||
           !File(localResult.filePath!).existsSync()) {
-        _errorMessage = 'Create a local backup before uploading it to Google Drive.';
+        _errorMessage =
+            'Create a local backup before uploading it to Google Drive.';
         return null;
       }
 
@@ -211,7 +224,8 @@ class BackupRestoreController extends ChangeNotifier {
       return const [];
     } catch (e) {
       debugPrint('fetchCloudBackups error: $e');
-      _errorMessage = 'Failed to retrieve cloud backup listing: ${e.toString()}';
+      _errorMessage =
+          'Failed to retrieve cloud backup listing: ${e.toString()}';
       return const [];
     } finally {
       if (previousState == BackupOperationState.idle) {
@@ -240,7 +254,8 @@ class BackupRestoreController extends ChangeNotifier {
 
       _lastRestoreResult = result;
       if (result.success) {
-        _infoMessage = 'Restore complete! Restored ${result.noteCount} notes, ${result.folderCount} folders, and ${result.taskCount} tasks.';
+        _infoMessage =
+            'Restore complete! Restored ${result.noteCount} notes, ${result.folderCount} folders, and ${result.taskCount} tasks.';
       } else {
         _errorMessage = mapRestoreError(result);
       }
@@ -266,7 +281,8 @@ class BackupRestoreController extends ChangeNotifier {
       return null;
     }
     if (!file.path.toLowerCase().endsWith('.qnb')) {
-      _errorMessage = 'Selected file is not a valid .qnb Quick Notes backup file.';
+      _errorMessage =
+          'Selected file is not a valid .qnb Quick Notes backup file.';
       notifyListeners();
       return null;
     }
@@ -274,13 +290,15 @@ class BackupRestoreController extends ChangeNotifier {
     try {
       final zipBytes = file.readAsBytesSync();
       final archiveInput = BackupArchiveInput.fromZipBytes(zipBytes);
-      final validationResult = await BackupValidator.validate(archiveInput: archiveInput);
+      final validationResult =
+          await BackupValidator.validate(archiveInput: archiveInput);
 
       if (!validationResult.isValid || validationResult.manifest == null) {
         final firstError = validationResult.errors.isNotEmpty
             ? validationResult.errors.first.message
             : 'Backup validation failed.';
-        _errorMessage = 'This backup could not be verified and was not restored ($firstError).';
+        _errorMessage =
+            'This backup could not be verified and was not restored ($firstError).';
         notifyListeners();
         return null;
       }
@@ -303,7 +321,8 @@ class BackupRestoreController extends ChangeNotifier {
         sha256Checksum: '',
       );
     } catch (_) {
-      _errorMessage = 'Selected file could not be parsed as a valid .qnb archive.';
+      _errorMessage =
+          'Selected file could not be parsed as a valid .qnb archive.';
       notifyListeners();
       return null;
     }
@@ -341,7 +360,8 @@ class BackupRestoreController extends ChangeNotifier {
       _currentRestoreStage = 'Downloading backup from Google Drive...';
       notifyListeners();
 
-      final destFile = File(p.join(tempDownloadDir.path, 'downloaded_cloud_$remoteFileId.qnb'));
+      final destFile = File(
+          p.join(tempDownloadDir.path, 'downloaded_cloud_$remoteFileId.qnb'));
       tempDownloadedFile = await _storageAdapter.downloadBackup(
         remoteFileId: remoteFileId,
         destinationLocalFile: destFile,
@@ -358,7 +378,8 @@ class BackupRestoreController extends ChangeNotifier {
 
       _lastRestoreResult = result;
       if (result.success) {
-        _infoMessage = 'Cloud restore complete! Restored ${result.noteCount} notes, ${result.folderCount} folders, and ${result.taskCount} tasks.';
+        _infoMessage =
+            'Cloud restore complete! Restored ${result.noteCount} notes, ${result.folderCount} folders, and ${result.taskCount} tasks.';
       } else {
         _errorMessage = mapRestoreError(result);
       }
@@ -367,7 +388,8 @@ class BackupRestoreController extends ChangeNotifier {
       _errorMessage = mapDriveError(e);
       return null;
     } catch (e) {
-      _errorMessage = 'The cloud backup could not be downloaded or restored safely.';
+      _errorMessage =
+          'The cloud backup could not be downloaded or restored safely.';
       return null;
     } finally {
       if (tempDownloadedFile != null && tempDownloadedFile.existsSync()) {
@@ -381,7 +403,8 @@ class BackupRestoreController extends ChangeNotifier {
 
   // ── 6. Delete Cloud Backup ────────────────────────────────────────────────
   Future<bool> deleteCloudBackup(dynamic target) async {
-    if (!_startOperation(BackupOperationState.deletingCloudBackup)) return false;
+    if (!_startOperation(BackupOperationState.deletingCloudBackup))
+      return false;
 
     final String remoteFileId = target is RemoteBackupMetadata
         ? target.remoteFileId
@@ -390,7 +413,8 @@ class BackupRestoreController extends ChangeNotifier {
     try {
       await _storageAdapter.deleteBackup(remoteFileId);
       _infoMessage = 'Cloud backup deleted successfully.';
-      _remoteBackups = _remoteBackups.where((b) => b.remoteFileId != remoteFileId).toList();
+      _remoteBackups =
+          _remoteBackups.where((b) => b.remoteFileId != remoteFileId).toList();
       notifyListeners();
       return true;
     } on DriveStorageException catch (e) {
@@ -412,9 +436,14 @@ class BackupRestoreController extends ChangeNotifier {
       case DriveStorageErrorType.networkUnavailable:
         return 'No internet connection. Please check your network and try again.';
       case DriveStorageErrorType.permissionDenied:
-        if (exception.message.contains('Google Drive permission denied (403):')) {
-          final details = exception.message.split('Google Drive permission denied (403):').last.trim();
-          if (details.contains('disabled') || details.contains('has not been used')) {
+        if (exception.message
+            .contains('Google Drive permission denied (403):')) {
+          final details = exception.message
+              .split('Google Drive permission denied (403):')
+              .last
+              .trim();
+          if (details.contains('disabled') ||
+              details.contains('has not been used')) {
             return "Google Drive API is not enabled in Google Cloud Console. Please enable 'Google Drive API' for your project.";
           }
           if (details.isNotEmpty && details.length < 160) {

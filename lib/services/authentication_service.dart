@@ -51,7 +51,8 @@ class AuthResult {
 /// AuthenticationService — Single responsibility service for authenticating users.
 /// Integrates native GoogleSignIn with graceful cancellation & error handling.
 class AuthenticationService {
-  static final AuthenticationService _instance = AuthenticationService._internal();
+  static final AuthenticationService _instance =
+      AuthenticationService._internal();
   factory AuthenticationService() => _instance;
   AuthenticationService._internal();
 

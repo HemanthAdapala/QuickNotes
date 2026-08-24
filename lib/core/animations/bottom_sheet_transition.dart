@@ -16,7 +16,8 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
   });
 
   @override
-  Color? get barrierColor => customBarrierColor ?? Colors.black.withValues(alpha: 0.20);
+  Color? get barrierColor =>
+      customBarrierColor ?? Colors.black.withValues(alpha: 0.20);
 
   @override
   bool get barrierDismissible => true;
@@ -31,7 +32,8 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
   Duration get reverseTransitionDuration => kDurationFast; // 150ms
 
   @override
-  Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
+  Widget buildPage(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation) {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final maxHeight = mediaQuery.size.height * 0.9;
@@ -42,9 +44,10 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
         constraints: BoxConstraints(maxHeight: maxHeight),
         child: Material(
           color: backgroundColor ?? theme.scaffoldBackgroundColor,
-          shape: shape ?? const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
-          ),
+          shape: shape ??
+              const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+              ),
           clipBehavior: Clip.antiAlias,
           child: child,
         ),
@@ -53,8 +56,10 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
   }
 
   @override
-  Widget buildTransitions(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
-    final isEntering = animation.status == AnimationStatus.forward || animation.status == AnimationStatus.completed;
+  Widget buildTransitions(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation, Widget child) {
+    final isEntering = animation.status == AnimationStatus.forward ||
+        animation.status == AnimationStatus.completed;
     final curve = isEntering ? kCurveEnter : kCurveExit;
 
     final curvedAnimation = CurvedAnimation(

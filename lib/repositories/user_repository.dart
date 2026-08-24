@@ -70,7 +70,7 @@ class UserRepository {
           ? 'offline@local.quicknotes'
           : 'user@quicknotes.app',
       displayName: sessionManager.activeSessionType == SessionType.offline
-          ? 'Offline User'
+          ? 'Guest'
           : 'QuickNotes User',
       sessionType: sessionManager.activeSessionType,
       isOffline: sessionManager.activeSessionType == SessionType.offline,
@@ -91,8 +91,7 @@ class UserRepository {
   Future<bool> hasCompletedProfile() async {
     final userId = _currentUser?.id;
     if (userId == null) return false;
-    final profile =
-        await SqliteProfileRepository().getProfileForUser(userId);
+    final profile = await SqliteProfileRepository().getProfileForUser(userId);
     return profile != null;
   }
 
@@ -101,4 +100,3 @@ class UserRepository {
     _currentUser = null;
   }
 }
-

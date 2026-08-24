@@ -16,7 +16,8 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateMixin {
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with TickerProviderStateMixin {
   late AnimationController _entranceController;
   late AnimationController _floatController;
   late AnimationController _arrowController;
@@ -171,8 +172,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
           child: AnimatedBuilder(
             animation: Listenable.merge([_floatController, _arrowController]),
             builder: (context, child) {
-              final floatOffset1 = math.sin(_floatController.value * math.pi * 2) * 5.0;
-              final floatOffset2 = math.cos(_floatController.value * math.pi * 2) * 4.0;
+              final floatOffset1 =
+                  math.sin(_floatController.value * math.pi * 2) * 5.0;
+              final floatOffset2 =
+                  math.cos(_floatController.value * math.pi * 2) * 4.0;
 
               return Stack(
                 clipBehavior: Clip.none,
@@ -397,7 +400,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                               ),
                               const SizedBox(height: 8),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24.0),
                                 child: Text(
                                   'Capture thoughts. Organize effortlessly.',
                                   textAlign: TextAlign.center,

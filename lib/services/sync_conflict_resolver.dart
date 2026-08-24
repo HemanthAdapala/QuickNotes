@@ -38,7 +38,8 @@ class SyncConflictResolver {
 
     // 2. Stale & Duplicate Check
     if (localEntityMap != null) {
-      final lastSyncedVersion = (localEntityMap['lastSyncedVersion'] as num? ?? 0).toInt();
+      final lastSyncedVersion =
+          (localEntityMap['lastSyncedVersion'] as num? ?? 0).toInt();
       if (change.remoteVersion <= lastSyncedVersion) {
         return ConflictDecision.ignoreStaleOrDuplicate;
       }

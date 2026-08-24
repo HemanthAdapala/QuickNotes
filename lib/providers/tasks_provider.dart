@@ -43,9 +43,12 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
 
   TaskEngine get engine => _engine;
   List<TaskItem> get tasks => _engine.tasks;
-  List<TaskItem> get activeTasks => _engine.tasks.where((t) => !t.completed).toList();
-  List<TaskItem> get completedTasks => _engine.tasks.where((t) => t.completed).toList();
-  List<TaskItem> get missedTasks => _engine.tasks.where((t) => t.isMissed).toList();
+  List<TaskItem> get activeTasks =>
+      _engine.tasks.where((t) => !t.completed).toList();
+  List<TaskItem> get completedTasks =>
+      _engine.tasks.where((t) => t.completed).toList();
+  List<TaskItem> get missedTasks =>
+      _engine.tasks.where((t) => t.isMissed).toList();
   bool get isLoading => _isLoading;
 
   String? _highlightedTaskId;
@@ -68,7 +71,8 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         notifyListeners();
       });
 
-      _foregroundActionSubscription ??= NotificationActionHandler.foregroundStream.listen((payload) {
+      _foregroundActionSubscription ??=
+          NotificationActionHandler.foregroundStream.listen((payload) {
         if (payload.action == NotificationAction.done) {
           toggleTaskCompletion(payload.taskId);
         } else if (payload.action == NotificationAction.snooze) {
@@ -78,7 +82,8 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         }
       });
 
-      final pendingPayload = NotificationActionHandler.consumeLastLaunchedPayload();
+      final pendingPayload =
+          NotificationActionHandler.consumeLastLaunchedPayload();
       if (pendingPayload != null) {
         if (pendingPayload.action == NotificationAction.done) {
           toggleTaskCompletion(pendingPayload.taskId);
@@ -211,21 +216,29 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         (t) => t.id == realId || t.id == id || id.startsWith(t.id),
         orElse: () => _engine.tasks.first,
       );
-      if (!task.isRecurring && task.recurrence == null && task.repeatRule == RepeatRule.none) {
+      if (!task.isRecurring &&
+          task.recurrence == null &&
+          task.repeatRule == RepeatRule.none) {
         await _engine.deleteTask(realId);
       } else {
         DateTime nextDue = task.dueDate;
         final type = task.recurrence?.type;
         final interval = task.recurrence?.interval ?? 1;
 
-        if (type == RecurrenceType.daily || task.repeatRule == RepeatRule.daily) {
+        if (type == RecurrenceType.daily ||
+            task.repeatRule == RepeatRule.daily) {
           nextDue = nextDue.add(Duration(days: 1 * interval));
-        } else if (type == RecurrenceType.weekly || task.repeatRule == RepeatRule.weekly) {
+        } else if (type == RecurrenceType.weekly ||
+            task.repeatRule == RepeatRule.weekly) {
           nextDue = nextDue.add(Duration(days: 7 * interval));
-        } else if (type == RecurrenceType.monthly || task.repeatRule == RepeatRule.monthly) {
-          nextDue = DateTime(nextDue.year, nextDue.month + interval, nextDue.day, nextDue.hour, nextDue.minute);
-        } else if (type == RecurrenceType.yearly || task.repeatRule == RepeatRule.yearly) {
-          nextDue = DateTime(nextDue.year + interval, nextDue.month, nextDue.day, nextDue.hour, nextDue.minute);
+        } else if (type == RecurrenceType.monthly ||
+            task.repeatRule == RepeatRule.monthly) {
+          nextDue = DateTime(nextDue.year, nextDue.month + interval,
+              nextDue.day, nextDue.hour, nextDue.minute);
+        } else if (type == RecurrenceType.yearly ||
+            task.repeatRule == RepeatRule.yearly) {
+          nextDue = DateTime(nextDue.year + interval, nextDue.month,
+              nextDue.day, nextDue.hour, nextDue.minute);
         } else {
           nextDue = nextDue.add(const Duration(days: 1));
         }
@@ -243,7 +256,8 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     }
   }
 
-  Future<void> toggleTaskCompletionOnDate(String id, DateTime targetDate) async {
+  Future<void> toggleTaskCompletionOnDate(
+      String id, DateTime targetDate) async {
     await _ensureEngineReady();
     try {
       final String realId = _getBaseId(id);
@@ -252,12 +266,15 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         orElse: () => _engine.tasks.firstWhere((t) => t.id.startsWith(realId)),
       );
 
-      final bool isRecurring = task.isRecurring || task.recurrence != null || task.repeatRule != RepeatRule.none;
+      final bool isRecurring = task.isRecurring ||
+          task.recurrence != null ||
+          task.repeatRule != RepeatRule.none;
 
       if (!isRecurring) {
         await _engine.toggleCompletion(task.id);
       } else {
-        final dateStr = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+        final dateStr =
+            '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
         final newDates = List<String>.from(task.completedDates);
         if (newDates.contains(dateStr)) {
           newDates.remove(dateStr);
@@ -286,7 +303,9 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
       final localDue = t.dueDate.toLocal();
       final taskStart = DateTime(localDue.year, localDue.month, localDue.day);
 
-      if (!t.isRecurring && t.recurrence == null && t.repeatRule == RepeatRule.none) {
+      if (!t.isRecurring &&
+          t.recurrence == null &&
+          t.repeatRule == RepeatRule.none) {
         if (taskStart.isAtSameMomentAs(target)) {
           result.add(t);
         }
@@ -304,32 +323,47 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
       bool matches = false;
       if (type == RecurrenceType.daily || t.repeatRule == RepeatRule.daily) {
         matches = (daysDiff % interval) == 0;
-      } else if (type == RecurrenceType.weekly || t.repeatRule == RepeatRule.weekly) {
+      } else if (type == RecurrenceType.weekly ||
+          t.repeatRule == RepeatRule.weekly) {
         matches = (daysDiff % (7 * interval)) == 0;
-      } else if (type == RecurrenceType.monthly || t.repeatRule == RepeatRule.monthly) {
-        final monthsDiff = (target.year - taskStart.year) * 12 + (target.month - taskStart.month);
+      } else if (type == RecurrenceType.monthly ||
+          t.repeatRule == RepeatRule.monthly) {
+        final monthsDiff = (target.year - taskStart.year) * 12 +
+            (target.month - taskStart.month);
         final targetLastDay = DateTime(target.year, target.month + 1, 0).day;
-        final expectedDay = taskStart.day > targetLastDay ? targetLastDay : taskStart.day;
+        final expectedDay =
+            taskStart.day > targetLastDay ? targetLastDay : taskStart.day;
         matches = (monthsDiff % interval == 0) && (target.day == expectedDay);
-      } else if (type == RecurrenceType.yearly || t.repeatRule == RepeatRule.yearly) {
+      } else if (type == RecurrenceType.yearly ||
+          t.repeatRule == RepeatRule.yearly) {
         final yearsDiff = target.year - taskStart.year;
         final targetLastDay = DateTime(target.year, target.month + 1, 0).day;
-        final expectedDay = taskStart.day > targetLastDay ? targetLastDay : taskStart.day;
-        matches = (yearsDiff % interval == 0) && (target.month == taskStart.month) && (target.day == expectedDay);
+        final expectedDay =
+            taskStart.day > targetLastDay ? targetLastDay : taskStart.day;
+        matches = (yearsDiff % interval == 0) &&
+            (target.month == taskStart.month) &&
+            (target.day == expectedDay);
       }
 
       if (matches) {
-        final targetDateStr = '${target.year}-${target.month.toString().padLeft(2, '0')}-${target.day.toString().padLeft(2, '0')}';
-        final bool isCompletedOnThisDay = t.completedDates.contains(targetDateStr);
+        final targetDateStr =
+            '${target.year}-${target.month.toString().padLeft(2, '0')}-${target.day.toString().padLeft(2, '0')}';
+        final bool isCompletedOnThisDay =
+            t.completedDates.contains(targetDateStr);
 
         if (taskStart.isAtSameMomentAs(target)) {
           result.add(t.copyWith(
-            status: isCompletedOnThisDay ? TaskStatus.completed : TaskStatus.waiting,
+            status: isCompletedOnThisDay
+                ? TaskStatus.completed
+                : TaskStatus.waiting,
           ));
         } else {
           result.add(t.copyWith(
-            dueDate: DateTime(target.year, target.month, target.day, localDue.hour, localDue.minute),
-            status: isCompletedOnThisDay ? TaskStatus.completed : TaskStatus.waiting,
+            dueDate: DateTime(target.year, target.month, target.day,
+                localDue.hour, localDue.minute),
+            status: isCompletedOnThisDay
+                ? TaskStatus.completed
+                : TaskStatus.waiting,
           ));
         }
       }
@@ -344,15 +378,19 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
 
     final daysUntilEndOfWeek = 7 - now.weekday;
-    final weekEnd = DateTime(now.year, now.month, now.day + daysUntilEndOfWeek, 23, 59, 59, 999);
+    final weekEnd = DateTime(
+        now.year, now.month, now.day + daysUntilEndOfWeek, 23, 59, 59, 999);
 
     final lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
-    final monthEnd = DateTime(now.year, now.month, lastDayOfMonth, 23, 59, 59, 999);
+    final monthEnd =
+        DateTime(now.year, now.month, lastDayOfMonth, 23, 59, 59, 999);
 
     final result = <TaskItem>[];
 
     for (final t in _engine.tasks) {
-      final bool isRecurring = t.isRecurring || t.recurrence != null || t.repeatRule != RepeatRule.none;
+      final bool isRecurring = t.isRecurring ||
+          t.recurrence != null ||
+          t.repeatRule != RepeatRule.none;
 
       if (!isRecurring) {
         if (!t.completed) {
@@ -364,18 +402,23 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
               }
               break;
             case 'Today':
-              if ((localDue.isAfter(today.subtract(const Duration(milliseconds: 1))) || localDue.isAtSameMomentAs(today)) &&
-                  (localDue.isBefore(todayEnd) || localDue.isAtSameMomentAs(todayEnd))) {
+              if ((localDue.isAfter(
+                          today.subtract(const Duration(milliseconds: 1))) ||
+                      localDue.isAtSameMomentAs(today)) &&
+                  (localDue.isBefore(todayEnd) ||
+                      localDue.isAtSameMomentAs(todayEnd))) {
                 result.add(t);
               }
               break;
             case 'Weekly':
-              if (localDue.isBefore(weekEnd) || localDue.isAtSameMomentAs(weekEnd)) {
+              if (localDue.isBefore(weekEnd) ||
+                  localDue.isAtSameMomentAs(weekEnd)) {
                 result.add(t);
               }
               break;
             case 'Monthly':
-              if (localDue.isBefore(monthEnd) || localDue.isAtSameMomentAs(monthEnd)) {
+              if (localDue.isBefore(monthEnd) ||
+                  localDue.isAtSameMomentAs(monthEnd)) {
                 result.add(t);
               }
               break;
@@ -424,7 +467,8 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
 
       for (int i = 0; i <= 180; i++) {
         final currentDay = taskStart.add(Duration(days: daysOffset + i));
-        final currentDayEnd = DateTime(currentDay.year, currentDay.month, currentDay.day, 23, 59, 59, 999);
+        final currentDayEnd = DateTime(
+            currentDay.year, currentDay.month, currentDay.day, 23, 59, 59, 999);
 
         if (currentDayEnd.isAfter(maxHorizon) && filter != 'All') break;
 
@@ -433,26 +477,39 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
 
         if (type == RecurrenceType.daily || t.repeatRule == RepeatRule.daily) {
           matches = (daysDiff % interval) == 0;
-        } else if (type == RecurrenceType.weekly || t.repeatRule == RepeatRule.weekly) {
+        } else if (type == RecurrenceType.weekly ||
+            t.repeatRule == RepeatRule.weekly) {
           matches = (daysDiff % (7 * interval)) == 0;
-        } else if (type == RecurrenceType.monthly || t.repeatRule == RepeatRule.monthly) {
-          final monthsDiff = (currentDay.year - taskStart.year) * 12 + (currentDay.month - taskStart.month);
-          final targetLastDay = DateTime(currentDay.year, currentDay.month + 1, 0).day;
-          final expectedDay = taskStart.day > targetLastDay ? targetLastDay : taskStart.day;
-          matches = (monthsDiff % interval == 0) && (currentDay.day == expectedDay);
-        } else if (type == RecurrenceType.yearly || t.repeatRule == RepeatRule.yearly) {
+        } else if (type == RecurrenceType.monthly ||
+            t.repeatRule == RepeatRule.monthly) {
+          final monthsDiff = (currentDay.year - taskStart.year) * 12 +
+              (currentDay.month - taskStart.month);
+          final targetLastDay =
+              DateTime(currentDay.year, currentDay.month + 1, 0).day;
+          final expectedDay =
+              taskStart.day > targetLastDay ? targetLastDay : taskStart.day;
+          matches =
+              (monthsDiff % interval == 0) && (currentDay.day == expectedDay);
+        } else if (type == RecurrenceType.yearly ||
+            t.repeatRule == RepeatRule.yearly) {
           final yearsDiff = currentDay.year - taskStart.year;
-          final targetLastDay = DateTime(currentDay.year, currentDay.month + 1, 0).day;
-          final expectedDay = taskStart.day > targetLastDay ? targetLastDay : taskStart.day;
-          matches = (yearsDiff % interval == 0) && (currentDay.month == taskStart.month) && (currentDay.day == expectedDay);
+          final targetLastDay =
+              DateTime(currentDay.year, currentDay.month + 1, 0).day;
+          final expectedDay =
+              taskStart.day > targetLastDay ? targetLastDay : taskStart.day;
+          matches = (yearsDiff % interval == 0) &&
+              (currentDay.month == taskStart.month) &&
+              (currentDay.day == expectedDay);
         }
 
         if (matches) {
-          final dateStr = '${currentDay.year}-${currentDay.month.toString().padLeft(2, '0')}-${currentDay.day.toString().padLeft(2, '0')}';
+          final dateStr =
+              '${currentDay.year}-${currentDay.month.toString().padLeft(2, '0')}-${currentDay.day.toString().padLeft(2, '0')}';
           final isCompletedOnDay = t.completedDates.contains(dateStr);
 
           if (!isCompletedOnDay) {
-            final projectedDue = DateTime(currentDay.year, currentDay.month, currentDay.day, localDue.hour, localDue.minute);
+            final projectedDue = DateTime(currentDay.year, currentDay.month,
+                currentDay.day, localDue.hour, localDue.minute);
             result.add(t.copyWith(
               dueDate: projectedDue,
               status: TaskStatus.waiting,
@@ -505,7 +562,8 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
 
       await _engine.createTask(
         title: '${titles[titleIndex]} #$i',
-        description: 'Automated QA stress test task #$i generated for Test 12.1 rendering performance benchmark.',
+        description:
+            'Automated QA stress test task #$i generated for Test 12.1 rendering performance benchmark.',
         dueDate: dueDate,
         priority: priorities[priorityIndex],
         reminderMode: ReminderMode.off,

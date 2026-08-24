@@ -49,7 +49,8 @@ class GradientBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant GradientBorderPainter oldDelegate) {
-    return oldDelegate.strokeWidth != strokeWidth || oldDelegate.gradient != gradient;
+    return oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.gradient != gradient;
   }
 }
 
@@ -151,7 +152,9 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isCurrent ? const Color(0xFF222222) : const Color(0xFFE6E3D2),
+                    color: isCurrent
+                        ? const Color(0xFF222222)
+                        : const Color(0xFFE6E3D2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
@@ -173,7 +176,8 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
         setState(() {
           _currentMonth = DateTime(2026, selected.month);
           // Auto-select the 1st of the month (or 15th if it's June)
-          _selectedDate = DateTime(2026, selected.month, selected.month == 6 ? 15 : 1);
+          _selectedDate =
+              DateTime(2026, selected.month, selected.month == 6 ? 15 : 1);
         });
       }
     });
@@ -188,8 +192,10 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
   }
 
   // Render individual day cell in grid
-  Widget _buildDayCell(int dayNumber, bool isDifferentMonth, Color dotColor, bool isSelected) {
-    final bool isToday = _isSameDay(DateTime.now(), DateTime(_currentMonth.year, _currentMonth.month, dayNumber));
+  Widget _buildDayCell(
+      int dayNumber, bool isDifferentMonth, Color dotColor, bool isSelected) {
+    final bool isToday = _isSameDay(DateTime.now(),
+        DateTime(_currentMonth.year, _currentMonth.month, dayNumber));
 
     Widget content = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -198,8 +204,12 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
           "$dayNumber",
           style: GoogleFonts.inter(
             fontSize: 12,
-            fontWeight: isSelected ? FontWeight.bold : (isToday ? FontWeight.w700 : FontWeight.normal),
-            color: isDifferentMonth ? AppColors.ink.withOpacity(0.3) : AppColors.ink,
+            fontWeight: isSelected
+                ? FontWeight.bold
+                : (isToday ? FontWeight.w700 : FontWeight.normal),
+            color: isDifferentMonth
+                ? AppColors.ink.withOpacity(0.3)
+                : AppColors.ink,
           ),
         ),
         const SizedBox(height: 4),
@@ -270,14 +280,20 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
 
     // Filter notes for the selected date
     final dayNotes = notes.where((note) {
-      return (note.reminderTime != null && _isSameDay(note.reminderTime!, _selectedDate)) ||
+      return (note.reminderTime != null &&
+              _isSameDay(note.reminderTime!, _selectedDate)) ||
           (_isSameDay(note.createdAt, _selectedDate));
     }).toList();
 
     // Months and dates math
-    final int daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
-    final int firstWeekday = DateTime(_currentMonth.year, _currentMonth.month, 1).weekday; // 1=Mon, 7=Sun
-    final int offset = firstWeekday == 7 ? 0 : firstWeekday; // offset assuming week starts on Sunday
+    final int daysInMonth =
+        DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+    final int firstWeekday =
+        DateTime(_currentMonth.year, _currentMonth.month, 1)
+            .weekday; // 1=Mon, 7=Sun
+    final int offset = firstWeekday == 7
+        ? 0
+        : firstWeekday; // offset assuming week starts on Sunday
 
     // Total cells to display in grid (offsets + days)
     final int totalCells = offset + daysInMonth;
@@ -288,55 +304,59 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
         bottom: false,
         child: Column(
           children: [
-             Padding(
-               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-               child: AppHeaderBar(
-                 leftWidth: 44.0,
-                 onLeftTap: () {
-                   HapticFeedback.lightImpact();
-                   widget.onNavigateToTab?.call(0);
-                 },
-                 leftChild: SvgPicture.asset(
-                   'assets/icons/angle_left.svg',
-                   width: 22,
-                   height: 22,
-                   colorFilter: const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
-                 ),
-                 title: "Note Calendar",
-                 rightWidth: 44.0,
-                 rightChild: TactileButton(
-                   useAppleSpring: true,
-                   compressionScale: 0.7,
-                   settleDuration: const Duration(milliseconds: 1000),
-                   onTap: () {
-                     HapticFeedback.lightImpact();
-                     Navigator.of(context).push(buildSearchTransitionRoute(
-                       builder: (_) => const SearchScreen(
-                         initialScope: 'tasks',
-                       ),
-                     ));
-                   },
-                   child: const Center(
-                     child: Icon(
-                       Icons.search_rounded,
-                       color: Color(0xFF1C1C1E),
-                       size: 22,
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-             const SizedBox(height: 12.0),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              child: AppHeaderBar(
+                leftWidth: 44.0,
+                onLeftTap: () {
+                  HapticFeedback.lightImpact();
+                  widget.onNavigateToTab?.call(0);
+                },
+                leftChild: SvgPicture.asset(
+                  'assets/icons/angle_left.svg',
+                  width: 22,
+                  height: 22,
+                  colorFilter: const ColorFilter.mode(
+                      Color(0xFF1C1C1E), BlendMode.srcIn),
+                ),
+                title: "Note Calendar",
+                rightWidth: 44.0,
+                rightChild: TactileButton(
+                  useAppleSpring: true,
+                  compressionScale: 0.7,
+                  settleDuration: const Duration(milliseconds: 1000),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.of(context).push(buildSearchTransitionRoute(
+                      builder: (_) => const SearchScreen(
+                        initialScope: 'tasks',
+                      ),
+                    ));
+                  },
+                  child: const Center(
+                    child: Icon(
+                      Icons.search_rounded,
+                      color: Color(0xFF1C1C1E),
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12.0),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 120.0), // space for bottom nav bar
+                padding: const EdgeInsets.only(
+                    bottom: 120.0), // space for bottom nav bar
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── Note Activity Section Header ────────────────────────────────
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0, vertical: 16.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -350,7 +370,8 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                             ),
                           ),
                           Text(
-                            "${provider.notes.length} total notes".toUpperCase(),
+                            "${provider.notes.length} total notes"
+                                .toUpperCase(),
                             style: GoogleFonts.jetBrainsMono(
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
@@ -380,20 +401,25 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                             Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   IconButton(
-                                    icon: const Icon(Icons.chevron_left_rounded, color: AppColors.ink),
+                                    icon: const Icon(Icons.chevron_left_rounded,
+                                        color: AppColors.ink),
                                     onPressed: () {
                                       setState(() {
-                                        _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+                                        _currentMonth = DateTime(
+                                            _currentMonth.year,
+                                            _currentMonth.month - 1);
                                       });
                                     },
                                   ),
                                   GestureDetector(
                                     onTap: () => _showMonthPicker(context),
                                     child: Text(
-                                      DateFormat('MMMM yyyy').format(_currentMonth),
+                                      DateFormat('MMMM yyyy')
+                                          .format(_currentMonth),
                                       style: GoogleFonts.inter(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold,
@@ -402,10 +428,14 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                                     ),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.chevron_right_rounded, color: AppColors.ink),
+                                    icon: const Icon(
+                                        Icons.chevron_right_rounded,
+                                        color: AppColors.ink),
                                     onPressed: () {
                                       setState(() {
-                                        _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+                                        _currentMonth = DateTime(
+                                            _currentMonth.year,
+                                            _currentMonth.month + 1);
                                       });
                                     },
                                   ),
@@ -415,10 +445,20 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
 
                             // Days of Week Header Row
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  'Mon',
+                                  'Tue',
+                                  'Wed',
+                                  'Thu',
+                                  'Fri',
+                                  'Sat',
+                                  'Sun'
+                                ].map((day) {
                                   return SizedBox(
                                     width: 38,
                                     child: Center(
@@ -439,11 +479,13 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
 
                             // Calendar Grid
                             Padding(
-                              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 20.0),
+                              padding: const EdgeInsets.only(
+                                  left: 16.0, right: 16.0, bottom: 20.0),
                               child: GridView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 7,
                                   crossAxisSpacing: 8,
                                   mainAxisSpacing: 8,
@@ -454,28 +496,41 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                                   if (index < offset) {
                                     return const SizedBox.shrink();
                                   }
-                                  
+
                                   final int dayNumber = index - offset + 1;
-                                  final DateTime cellDate = DateTime(_currentMonth.year, _currentMonth.month, dayNumber);
-                                  final bool isToday = cellDate.year == DateTime.now().year &&
+                                  final DateTime cellDate = DateTime(
+                                      _currentMonth.year,
+                                      _currentMonth.month,
+                                      dayNumber);
+                                  final bool isToday = cellDate.year ==
+                                          DateTime.now().year &&
                                       cellDate.month == DateTime.now().month &&
                                       cellDate.day == DateTime.now().day;
-                                  final bool isSelected = cellDate.year == _selectedDate.year &&
+                                  final bool isSelected = cellDate.year ==
+                                          _selectedDate.year &&
                                       cellDate.month == _selectedDate.month &&
                                       cellDate.day == _selectedDate.day;
 
                                   // Find notes on this day
                                   final dayNotes = provider.notes.where((note) {
-                                    return note.createdAt.year == cellDate.year &&
-                                        note.createdAt.month == cellDate.month &&
+                                    return note.createdAt.year ==
+                                            cellDate.year &&
+                                        note.createdAt.month ==
+                                            cellDate.month &&
                                         note.createdAt.day == cellDate.day;
                                   }).toList();
 
                                   // Check if day has habits/vault/tasks/notes
-                                  final hasLocked = dayNotes.any((n) => n.isLocked);
-                                  final hasTasks = dayNotes.any((n) => n.title.startsWith("Task:"));
-                                  final hasHabits = dayNotes.any((n) => n.isHabit);
-                                  final hasStandard = dayNotes.any((n) => !n.isLocked && !n.isHabit && !n.title.startsWith("Task:"));
+                                  final hasLocked =
+                                      dayNotes.any((n) => n.isLocked);
+                                  final hasTasks = dayNotes
+                                      .any((n) => n.title.startsWith("Task:"));
+                                  final hasHabits =
+                                      dayNotes.any((n) => n.isHabit);
+                                  final hasStandard = dayNotes.any((n) =>
+                                      !n.isLocked &&
+                                      !n.isHabit &&
+                                      !n.title.startsWith("Task:"));
 
                                   return GestureDetector(
                                     onTap: () {
@@ -503,8 +558,11 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                                         decoration: BoxDecoration(
                                           color: isToday
                                               ? const Color(0xFFFCE1B6)
-                                              : (isSelected ? Colors.white : Colors.transparent),
-                                          borderRadius: BorderRadius.circular(10.0),
+                                              : (isSelected
+                                                  ? Colors.white
+                                                  : Colors.transparent),
+                                          borderRadius:
+                                              BorderRadius.circular(10.0),
                                         ),
                                         child: Stack(
                                           alignment: Alignment.center,
@@ -513,7 +571,10 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                                               child: Text(
                                                 dayNumber.toString(),
                                                 style: GoogleFonts.inter(
-                                                  fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.w500,
+                                                  fontWeight:
+                                                      isSelected || isToday
+                                                          ? FontWeight.bold
+                                                          : FontWeight.w500,
                                                   color: AppColors.ink,
                                                   fontSize: 14,
                                                 ),
@@ -524,12 +585,21 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                                               Positioned(
                                                 bottom: 4,
                                                 child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
                                                   children: [
-                                                    if (hasLocked) _buildDot(const Color(0xFF6B685B)),
-                                                    if (hasTasks) _buildDot(const Color(0xFFE07A5F)),
-                                                    if (hasHabits) _buildDot(const Color(0xFF81B29A)),
-                                                    if (hasStandard) _buildDot(const Color(0xFF3D5A80)),
+                                                    if (hasLocked)
+                                                      _buildDot(const Color(
+                                                          0xFF6B685B)),
+                                                    if (hasTasks)
+                                                      _buildDot(const Color(
+                                                          0xFFE07A5F)),
+                                                    if (hasHabits)
+                                                      _buildDot(const Color(
+                                                          0xFF81B29A)),
+                                                    if (hasStandard)
+                                                      _buildDot(const Color(
+                                                          0xFF3D5A80)),
                                                   ],
                                                 ),
                                               ),
@@ -544,16 +614,21 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
 
                             // Legend Row
                             Padding(
-                              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
+                              padding: const EdgeInsets.only(
+                                  left: 16.0, right: 16.0, bottom: 16.0),
                               child: Wrap(
                                 spacing: 12,
                                 runSpacing: 8,
                                 alignment: WrapAlignment.center,
                                 children: [
-                                  _buildLegendItem(const Color(0xFF3D5A80), "Notes"),
-                                  _buildLegendItem(const Color(0xFFE07A5F), "Tasks"),
-                                  _buildLegendItem(const Color(0xFF81B29A), "Habits"),
-                                  _buildLegendItem(const Color(0xFF6B685B), "Locked"),
+                                  _buildLegendItem(
+                                      const Color(0xFF3D5A80), "Notes"),
+                                  _buildLegendItem(
+                                      const Color(0xFFE07A5F), "Tasks"),
+                                  _buildLegendItem(
+                                      const Color(0xFF81B29A), "Habits"),
+                                  _buildLegendItem(
+                                      const Color(0xFF6B685B), "Locked"),
                                 ],
                               ),
                             ),
@@ -567,134 +642,145 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                     // ── Tasks Card List ──────────────────────────────────────────
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(32),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Tasks for ${DateFormat('MMMM d').format(_selectedDate)}",
-                            style: GoogleFonts.inter(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.ink,
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
-                          TactileButton(
-                            onTap: _showAddTaskSheet,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF222222),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    "Add Task",
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      if (dayNotes.isEmpty) ...[
-                        // Empty State for days with no notes
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 32.0),
-                            child: Column(
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Icon(
-                                  Icons.assignment_turned_in_outlined,
-                                  size: 40,
-                                  color: AppColors.ink.withOpacity(0.2),
-                                ),
-                                const SizedBox(height: 12),
                                 Text(
-                                  "No tasks scheduled for today",
+                                  "Tasks for ${DateFormat('MMMM d').format(_selectedDate)}",
                                   style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: AppColors.ink.withOpacity(0.4),
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                                TactileButton(
+                                  onTap: _showAddTaskSheet,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14.0, vertical: 8.0),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF222222),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.add,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          "Add Task",
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
+                            const SizedBox(height: 24),
+                            if (dayNotes.isEmpty) ...[
+                              // Empty State for days with no notes
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 32.0),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.assignment_turned_in_outlined,
+                                        size: 40,
+                                        color: AppColors.ink.withOpacity(0.2),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        "No tasks scheduled for today",
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          color: AppColors.ink.withOpacity(0.4),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ] else ...[
+                              // Real notes scheduled for this day
+                              ...dayNotes.map((note) {
+                                final isTaskChecked = note
+                                    .isFavorite; // map to favorite or check items completion
+                                final priorityType =
+                                    note.tags.contains('yellow')
+                                        ? 'yellow'
+                                        : (note.tags.contains('blue')
+                                            ? 'blue'
+                                            : 'pink');
+
+                                // Resolve folder name
+                                String folderLabel = "Quick Note";
+                                if (note.folderId != null) {
+                                  final folder = provider.folders.firstWhere(
+                                    (f) => f.id == note.folderId,
+                                    orElse: () => Folder(
+                                        id: '',
+                                        name: 'Folder',
+                                        createdAt: DateTime.now()),
+                                  );
+                                  if (folder.name.isNotEmpty) {
+                                    folderLabel = "${folder.name} folder";
+                                  }
+                                }
+
+                                return _buildTaskCard(
+                                  id: note.id,
+                                  title: note.title,
+                                  subtitle:
+                                      "$folderLabel • ${note.reminderTime != null ? DateFormat('jm').format(note.reminderTime!) : 'All Day'}",
+                                  type: priorityType,
+                                  isCompleted: isTaskChecked,
+                                  onToggle: () {
+                                    HapticFeedback.lightImpact();
+                                    provider.updateNote(note.copyWith(
+                                        isFavorite: !note.isFavorite));
+                                  },
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      buildPageRoute(
+                                          NoteEditorScreen(note: note)),
+                                    );
+                                  },
+                                );
+                              }),
+                            ],
+                          ],
                         ),
-                      ] else ...[
-                        // Real notes scheduled for this day
-                        ...dayNotes.map((note) {
-                          final isTaskChecked = note.isFavorite; // map to favorite or check items completion
-                          final priorityType = note.tags.contains('yellow')
-                              ? 'yellow'
-                              : (note.tags.contains('blue') ? 'blue' : 'pink');
-
-                          // Resolve folder name
-                          String folderLabel = "Quick Note";
-                          if (note.folderId != null) {
-                            final folder = provider.folders.firstWhere(
-                              (f) => f.id == note.folderId,
-                              orElse: () => Folder(id: '', name: 'Folder', createdAt: DateTime.now()),
-                            );
-                            if (folder.name.isNotEmpty) {
-                              folderLabel = "${folder.name} folder";
-                            }
-                          }
-
-                          return _buildTaskCard(
-                            id: note.id,
-                            title: note.title,
-                            subtitle: "$folderLabel • ${note.reminderTime != null ? DateFormat('jm').format(note.reminderTime!) : 'All Day'}",
-                            type: priorityType,
-                            isCompleted: isTaskChecked,
-                            onToggle: () {
-                              HapticFeedback.lightImpact();
-                              provider.updateNote(note.copyWith(isFavorite: !note.isFavorite));
-                            },
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                buildPageRoute(NoteEditorScreen(note: note)),
-                              );
-                            },
-                          );
-                        }),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -765,7 +851,8 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 12.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -776,7 +863,8 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: AppColors.ink,
-                          decoration: isCompleted ? TextDecoration.lineThrough : null,
+                          decoration:
+                              isCompleted ? TextDecoration.lineThrough : null,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -803,7 +891,9 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                   margin: const EdgeInsets.only(right: 16.0),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isCompleted ? const Color(0xFF222222) : Colors.transparent,
+                    color: isCompleted
+                        ? const Color(0xFF222222)
+                        : Colors.transparent,
                     border: isCompleted
                         ? null
                         : Border.all(

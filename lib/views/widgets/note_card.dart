@@ -52,7 +52,8 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
       vsync: this,
       duration: kDurationSlow,
     );
-    _deleteAnimation = CurvedAnimation(parent: _deleteController, curve: kCurvePage);
+    _deleteAnimation =
+        CurvedAnimation(parent: _deleteController, curve: kCurvePage);
 
     _pinController = AnimationController(
       vsync: this,
@@ -106,13 +107,15 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
-    final cardColor = NotesProvider.getNoteColor(widget.note.colorValue, context);
+
+    final cardColor =
+        NotesProvider.getNoteColor(widget.note.colorValue, context);
     final textColor = isDark ? Colors.white70 : AppColors.ink.withOpacity(0.8);
     final titleColor = isDark ? Colors.white : AppColors.ink;
 
     // Format timestamp
-    final formattedDate = DateFormat('MMM d, h:mm a').format(widget.note.updatedAt);
+    final formattedDate =
+        DateFormat('MMM d, h:mm a').format(widget.note.updatedAt);
 
     if (_isDeleting) {
       final double progress = _deleteAnimation.value;
@@ -122,7 +125,8 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
       final double translateX = 120.0 * progress;
 
       return SizeTransition(
-        sizeFactor: Tween<double>(begin: 1.0, end: 0.0).animate(_deleteAnimation),
+        sizeFactor:
+            Tween<double>(begin: 1.0, end: 0.0).animate(_deleteAnimation),
         axis: Axis.vertical,
         child: Opacity(
           opacity: opacity.clamp(0.0, 1.0),
@@ -132,7 +136,8 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
               angle: angle,
               child: Transform.scale(
                 scale: scale,
-                child: _buildCardContent(context, theme, cardColor, textColor, titleColor, widget.note.folderName, formattedDate),
+                child: _buildCardContent(context, theme, cardColor, textColor,
+                    titleColor, widget.note.folderName, formattedDate),
               ),
             ),
           ),
@@ -148,24 +153,28 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
           color: Colors.transparent,
           child: GestureDetector(
             onTapDown: (_) {
-              _pressController.animateTo(1.0, duration: kDurationCardPress, curve: kCurveExit);
+              _pressController.animateTo(1.0,
+                  duration: kDurationCardPress, curve: kCurveExit);
             },
             onTapUp: (_) {
-              _pressController.animateTo(0.0, duration: kDurationCardRelease, curve: kCurveEnter);
+              _pressController.animateTo(0.0,
+                  duration: kDurationCardRelease, curve: kCurveEnter);
               widget.onTap();
             },
             onTapCancel: () {
-              _pressController.animateTo(0.0, duration: kDurationCardRelease, curve: kCurveEnter);
+              _pressController.animateTo(0.0,
+                  duration: kDurationCardRelease, curve: kCurveEnter);
             },
             child: AnimatedBuilder(
               animation: Listenable.merge([_pressController, _pinAnimation]),
               builder: (context, child) {
-                final double currentScale = _isPinning 
+                final double currentScale = _isPinning
                     ? 1.0 - (0.03 * _pinAnimation.value)
                     : _scaleAnimation.value;
                 return Transform.scale(
                   scale: currentScale,
-                  child: _buildCardContent(context, theme, cardColor, textColor, titleColor, widget.note.folderName, formattedDate),
+                  child: _buildCardContent(context, theme, cardColor, textColor,
+                      titleColor, widget.note.folderName, formattedDate),
                 );
               },
             ),
@@ -185,7 +194,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
     String formattedDate,
   ) {
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // Soft ambient shadow
     final cardShadow = isDark
         ? [
@@ -218,7 +227,9 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
         border: Border.all(
           color: widget.note.isPinned
               ? theme.colorScheme.primary
-              : (isDark ? Colors.white.withOpacity(0.12) : Colors.white.withOpacity(0.4)),
+              : (isDark
+                  ? Colors.white.withOpacity(0.12)
+                  : Colors.white.withOpacity(0.4)),
           width: widget.note.isPinned ? 2.0 : 1.0,
         ),
         boxShadow: cardShadow,
@@ -242,7 +253,6 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                 ),
               ),
             ),
-          
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -259,7 +269,9 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                           Text(
                             widget.note.isLocked
                                 ? "Locked Note"
-                                : (widget.note.title.isNotEmpty ? widget.note.title : "Untitled"),
+                                : (widget.note.title.isNotEmpty
+                                    ? widget.note.title
+                                    : "Untitled"),
                             style: GoogleFonts.inter(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -271,11 +283,14 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                           if (widget.note.isHabit && !widget.note.isLocked) ...[
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: Colors.orange.withAlpha(30),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.orange.withAlpha(80), width: 0.8),
+                                border: Border.all(
+                                    color: Colors.orange.withAlpha(80),
+                                    width: 0.8),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -308,14 +323,18 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         icon: Icon(
-                          widget.note.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                          widget.note.isFavorite
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
                           size: 20,
-                          color: widget.note.isFavorite 
-                              ? Colors.amber 
+                          color: widget.note.isFavorite
+                              ? Colors.amber
                               : titleColor.withAlpha(120),
                         ),
                         onPressed: widget.onFavoriteToggle,
-                        tooltip: widget.note.isFavorite ? "Remove favorite" : "Add favorite",
+                        tooltip: widget.note.isFavorite
+                            ? "Remove favorite"
+                            : "Add favorite",
                       ),
                       const SizedBox(width: 6),
                       // Pin Toggle Button
@@ -324,104 +343,129 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                         constraints: const BoxConstraints(),
                         icon: RotationTransition(
                           turns: Tween<double>(
-                            begin: 0.0, 
+                            begin: 0.0,
                             end: widget.note.isPinned ? -0.125 : 0.125,
                           ).animate(_pinAnimation),
                           child: Icon(
-                            widget.note.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                            widget.note.isPinned
+                                ? Icons.push_pin
+                                : Icons.push_pin_outlined,
                             size: 20,
-                            color: widget.note.isPinned 
-                                ? theme.colorScheme.primary 
+                            color: widget.note.isPinned
+                                ? theme.colorScheme.primary
                                 : titleColor.withAlpha(120),
                           ),
                         ),
                         onPressed: _handlePinToggle,
-                        tooltip: widget.note.isPinned ? "Unpin note" : "Pin note",
+                        tooltip:
+                            widget.note.isPinned ? "Unpin note" : "Pin note",
                       ),
                     ],
                   ],
                 ),
-                
+
                 // Category & Folder Badges Tag Wrap
-                if (!widget.note.isLocked && ((widget.note.categoryName != null && widget.note.categoryName != 'Uncategorized') || folderName != null))
+                if (!widget.note.isLocked &&
+                    ((widget.note.categoryName != null &&
+                            widget.note.categoryName != 'Uncategorized') ||
+                        folderName != null))
                   Padding(
-                     padding: const EdgeInsets.only(top: 6, bottom: 4),
-                     child: Wrap(
-                       spacing: 6,
-                       runSpacing: 4,
-                       children: [
-                         if (widget.note.categoryName != null && widget.note.categoryName != 'Uncategorized')
-                           GestureDetector(
-                             behavior: HitTestBehavior.opaque,
-                             onTap: () {
-                               HapticFeedback.lightImpact();
-                               Navigator.of(context).push(
-                                 buildPageRoute(CategoryDetailsScreen(category: widget.note.categoryName!)),
-                               );
-                             },
-                             child: Container(
-                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                               decoration: BoxDecoration(
-                                 color: NotesProvider.getCategoryTagColor(widget.note.colorValue, context),
-                                 borderRadius: BorderRadius.circular(8),
-                                 border: Border.all(color: (isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.4)), width: 0.8),
-                               ),
-                               child: Text(
-                                 widget.note.categoryName!,
-                                 style: GoogleFonts.inter(
-                                   fontSize: 10,
-                                   fontWeight: FontWeight.w700,
-                                   color: textColor,
-                                 ),
-                               ),
-                             ),
-                           ),
-                         if (folderName != null)
-                           Container(
-                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                             decoration: BoxDecoration(
-                               color: NotesProvider.getCategoryTagColor(widget.note.colorValue, context).withAlpha(120),
-                               borderRadius: BorderRadius.circular(8),
-                               border: Border.all(
-                                 color: (isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.4)),
-                                 width: 0.8,
-                               ),
-                             ),
-                             child: Row(
-                               mainAxisSize: MainAxisSize.min,
-                               children: [
-                                 Icon(
-                                   Icons.folder_open_rounded,
-                                   size: 11,
-                                   color: isDark ? Colors.white60 : AppColors.ink.withOpacity(0.6),
-                                 ),
-                                 const SizedBox(width: 4),
-                                 Text(
-                                   folderName,
-                                   style: GoogleFonts.inter(
-                                     fontSize: 10,
-                                     fontWeight: FontWeight.w700,
-                                     color: textColor,
-                                   ),
-                                 ),
-                               ],
-                             ),
-                           ),
-                       ],
-                     ),
-                   ),
-                  
+                    padding: const EdgeInsets.only(top: 6, bottom: 4),
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        if (widget.note.categoryName != null &&
+                            widget.note.categoryName != 'Uncategorized')
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(context).push(
+                                buildPageRoute(CategoryDetailsScreen(
+                                    category: widget.note.categoryName!)),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: NotesProvider.getCategoryTagColor(
+                                    widget.note.colorValue, context),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: (isDark
+                                        ? Colors.white.withOpacity(0.1)
+                                        : Colors.white.withOpacity(0.4)),
+                                    width: 0.8),
+                              ),
+                              child: Text(
+                                widget.note.categoryName!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: textColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (folderName != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: NotesProvider.getCategoryTagColor(
+                                      widget.note.colorValue, context)
+                                  .withAlpha(120),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: (isDark
+                                    ? Colors.white.withOpacity(0.1)
+                                    : Colors.white.withOpacity(0.4)),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.folder_open_rounded,
+                                  size: 11,
+                                  color: isDark
+                                      ? Colors.white60
+                                      : AppColors.ink.withOpacity(0.6),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  folderName,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: textColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
                 const SizedBox(height: 10),
-                
+
                 // Body Content / Locked Mockup
                 if (widget.note.isLocked)
                   _buildLockedContent(context, textColor)
                 else
                   Text(
-                    widget.note.previewText.isNotEmpty ? widget.note.previewText : "No additional text",
+                    widget.note.previewText.isNotEmpty
+                        ? widget.note.previewText
+                        : "No additional text",
                     style: GoogleFonts.inter(
                       fontSize: 14,
-                      color: widget.note.previewText.isNotEmpty ? textColor : textColor.withAlpha(120),
+                      color: widget.note.previewText.isNotEmpty
+                          ? textColor
+                          : textColor.withAlpha(120),
                       height: 1.4,
                     ),
                     maxLines: 2,
@@ -429,7 +473,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                   ),
 
                 const SizedBox(height: 16),
-                
+
                 // Footer Row: Date / Icons & Delete Action
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -441,7 +485,9 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white60 : AppColors.ink.withOpacity(0.6),
+                            color: isDark
+                                ? Colors.white60
+                                : AppColors.ink.withOpacity(0.6),
                           ),
                         ),
                         if (widget.note.reminderTime != null) ...[
@@ -466,7 +512,8 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                               : textColor.withAlpha(180),
                         ),
                         onPressed: () {
-                          Provider.of<NotesProvider>(context, listen: false).restoreFromTrash(widget.note.id);
+                          Provider.of<NotesProvider>(context, listen: false)
+                              .restoreFromTrash(widget.note.id);
                           ScaffoldMessenger.of(context).hideCurrentSnackBar();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -490,7 +537,8 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                           final confirm = await showDeleteNoteDialog(
                             context,
                             title: 'Delete Note Permanently?',
-                            message: 'This action cannot be undone. Are you sure you want to permanently delete this note?',
+                            message:
+                                'This action cannot be undone. Are you sure you want to permanently delete this note?',
                           );
                           if (confirm == true) {
                             _handleDelete();
@@ -505,8 +553,8 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
                         icon: Icon(
                           Icons.delete_outline_rounded,
                           size: 18,
-                          color: widget.note.colorValue == 0 
-                              ? theme.colorScheme.error.withAlpha(180) 
+                          color: widget.note.colorValue == 0
+                              ? theme.colorScheme.error.withAlpha(180)
                               : textColor.withAlpha(150),
                         ),
                         onPressed: () async {
@@ -554,5 +602,4 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
       ),
     );
   }
-
 }

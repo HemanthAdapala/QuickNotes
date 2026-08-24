@@ -46,7 +46,8 @@ class RestoreConfirmationDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+      insetPadding:
+          const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
       elevation: 0,
       child: Container(
         width: 340,
@@ -176,13 +177,17 @@ class RestoreConfirmationDialog extends StatelessWidget {
                       ],
                     ),
                     const Divider(height: 12, thickness: 1),
-                    _buildMetricRow('Notes', currentNotes, remoteBackup.noteCount),
+                    _buildMetricRow(
+                        'Notes', currentNotes, remoteBackup.noteCount),
                     const SizedBox(height: 6),
-                    _buildMetricRow('Folders', currentFolders, remoteBackup.folderCount),
+                    _buildMetricRow(
+                        'Folders', currentFolders, remoteBackup.folderCount),
                     const SizedBox(height: 6),
-                    _buildMetricRow('Tasks', currentTasks, remoteBackup.taskCount),
+                    _buildMetricRow(
+                        'Tasks', currentTasks, remoteBackup.taskCount),
                     const SizedBox(height: 6),
-                    _buildMetricRow('Attachments', currentAttachments, remoteBackup.attachmentCount),
+                    _buildMetricRow('Attachments', currentAttachments,
+                        remoteBackup.attachmentCount),
                   ],
                 ),
               ),
@@ -198,7 +203,8 @@ class RestoreConfirmationDialog extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.shield_outlined, color: Color(0xFF059669), size: 18),
+                    const Icon(Icons.shield_outlined,
+                        color: Color(0xFF059669), size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(

@@ -47,30 +47,33 @@ import 'category_details_screen.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum _Scope { all, notes, tasks, folders, categories }
+
 enum _DateFilter { allTime, today, thisWeek, thisMonth }
+
 enum _UiState { empty, typing, results, noResults }
 
-const Color _kGroupedBg     = Color(0xFFF2F2F7);
-const Color _kSheetBg       = Color(0xFFFFFFFF);
-const Color _kInk           = Color(0xFF1C1C1E);
-const Color _kAmberYellow   = Color(0xFFFFCC00);
-const Color _kPillInactive  = Color(0x28787880);
-const Color _kLabelSecondary= Color(0x993C3C43);
-const Color _kPlaceholder   = Color(0xFF8C8987);
-const Color _kDivider       = Color(0xFFE5E5EA);
+const Color _kGroupedBg = Color(0xFFF2F2F7);
+const Color _kSheetBg = Color(0xFFFFFFFF);
+const Color _kInk = Color(0xFF1C1C1E);
+const Color _kAmberYellow = Color(0xFFFFCC00);
+const Color _kPillInactive = Color(0x28787880);
+const Color _kLabelSecondary = Color(0x993C3C43);
+const Color _kPlaceholder = Color(0xFF8C8987);
+const Color _kDivider = Color(0xFFE5E5EA);
 
 const Map<String, Color> _kCategoryDotColors = {
-  'Personal':      Color(0xFF4A90D9),
-  'Work':          Color(0xFF4CAF50),
-  'Ideas':         Color(0xFFFFB800),
-  'Study':         Color(0xFFE91E63),
-  'Hobbies':       Color(0xFF9C27B0),
-  'Recipes':       Color(0xFF64B5F6),
+  'Personal': Color(0xFF4A90D9),
+  'Work': Color(0xFF4CAF50),
+  'Ideas': Color(0xFFFFB800),
+  'Study': Color(0xFFE91E63),
+  'Hobbies': Color(0xFF9C27B0),
+  'Recipes': Color(0xFF64B5F6),
   'Uncategorized': Color(0xFF9E9E9E),
 };
 
 Color _categoryDotColor(String category) {
-  if (_kCategoryDotColors.containsKey(category)) return _kCategoryDotColors[category]!;
+  if (_kCategoryDotColors.containsKey(category))
+    return _kCategoryDotColors[category]!;
   final hue = (category.hashCode.abs() % 360).toDouble();
   return HSLColor.fromAHSL(1.0, hue, 0.55, 0.50).toColor();
 }
@@ -97,7 +100,6 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen>
     with TickerProviderStateMixin {
-
   // Controllers
   final TextEditingController _queryCtrl = TextEditingController();
   final FocusNode _focusNode = FocusNode();
@@ -106,31 +108,31 @@ class _SearchScreenState extends State<SearchScreen>
   Timer? _debounce;
 
   // State
-  _Scope            _scope       = _Scope.all;
-  final _DateFilter _dateFilter  = _DateFilter.allTime;
-  _UiState          _uiState     = _UiState.empty;
-  bool         _isLoading   = false;
+  _Scope _scope = _Scope.all;
+  final _DateFilter _dateFilter = _DateFilter.allTime;
+  _UiState _uiState = _UiState.empty;
+  bool _isLoading = false;
 
   String? _filterFolderId;
   String? _filterCategory;
-  String  _query = '';
+  String _query = '';
 
   // Results
-  List<Note>     _allNoteResults      = [];
-  List<TaskItem> _allTaskResults      = [];
-  List<Folder>   _allFolderResults    = [];
-  List<String>   _allCategoryResults  = [];
+  List<Note> _allNoteResults = [];
+  List<TaskItem> _allTaskResults = [];
+  List<Folder> _allFolderResults = [];
+  List<String> _allCategoryResults = [];
 
-  List<Note>     _noteResults     = [];
-  List<TaskItem> _taskResults     = [];
-  List<Folder>   _folderResults   = [];
-  List<String>   _categoryResults = [];
+  List<Note> _noteResults = [];
+  List<TaskItem> _taskResults = [];
+  List<Folder> _folderResults = [];
+  List<String> _categoryResults = [];
 
   List<String> _recentSearches = [];
   int _resultGeneration = 0;
 
   late AnimationController _entryCtrl;
-  late Animation<double>    _entryFade;
+  late Animation<double> _entryFade;
 
   @override
   void initState() {
@@ -232,44 +234,46 @@ class _SearchScreenState extends State<SearchScreen>
     final q = query.toLowerCase();
 
     // Active Notes
-    final notes = notesProvider.allActiveNotes.where((n) =>
-      n.title.toLowerCase().contains(q) ||
-      n.previewText.toLowerCase().contains(q)
-    ).toList();
+    final notes = notesProvider.allActiveNotes
+        .where((n) =>
+            n.title.toLowerCase().contains(q) ||
+            n.previewText.toLowerCase().contains(q))
+        .toList();
 
     // Standalone Tasks
-    final tasks = tasksProvider.tasks.where((t) =>
-      t.title.toLowerCase().contains(q) || t.description.toLowerCase().contains(q)
-    ).toList();
+    final tasks = tasksProvider.tasks
+        .where((t) =>
+            t.title.toLowerCase().contains(q) ||
+            t.description.toLowerCase().contains(q))
+        .toList();
 
     // Folders
-    final folders = notesProvider.folders.where((f) =>
-      f.name.toLowerCase().contains(q)
-    ).toList();
+    final folders = notesProvider.folders
+        .where((f) => f.name.toLowerCase().contains(q))
+        .toList();
 
     // Categories
     final allCats = <String>{...NotesProvider.categories};
     for (final n in notesProvider.allActiveNotes) {
       allCats.add(n.category);
     }
-    final categories = allCats.where((c) =>
-      c.toLowerCase().contains(q)
-    ).toList();
+    final categories =
+        allCats.where((c) => c.toLowerCase().contains(q)).toList();
 
     if (!mounted) return;
 
     setState(() {
-      _allNoteResults     = notes;
-      _allTaskResults     = tasks;
-      _allFolderResults   = folders;
+      _allNoteResults = notes;
+      _allTaskResults = tasks;
+      _allFolderResults = folders;
       _allCategoryResults = categories;
       _isLoading = false;
       _resultGeneration++;
       _applyFilters();
       _uiState = (_noteResults.isEmpty &&
-                  _taskResults.isEmpty &&
-                  _folderResults.isEmpty &&
-                  _categoryResults.isEmpty)
+              _taskResults.isEmpty &&
+              _folderResults.isEmpty &&
+              _categoryResults.isEmpty)
           ? _UiState.noResults
           : _UiState.results;
 
@@ -278,10 +282,10 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   void _applyFilters() {
-    var notes   = List<Note>.from(_allNoteResults);
-    var tasks   = List<TaskItem>.from(_allTaskResults);
+    var notes = List<Note>.from(_allNoteResults);
+    var tasks = List<TaskItem>.from(_allTaskResults);
     var folders = List<Folder>.from(_allFolderResults);
-    var cats    = List<String>.from(_allCategoryResults);
+    var cats = List<String>.from(_allCategoryResults);
 
     if (_filterFolderId != null) {
       notes = notes.where((n) => n.folderId == _filterFolderId).toList();
@@ -290,7 +294,10 @@ class _SearchScreenState extends State<SearchScreen>
 
     if (_filterCategory != null) {
       notes = notes.where((n) => n.category == _filterCategory).toList();
-      tasks = tasks.where((t) => (t.categoryId == _filterCategory || t.priority == _filterCategory)).toList();
+      tasks = tasks
+          .where((t) => (t.categoryId == _filterCategory ||
+              t.priority == _filterCategory))
+          .toList();
     }
 
     final now = DateTime.now();
@@ -301,22 +308,30 @@ class _SearchScreenState extends State<SearchScreen>
       case _Scope.all:
         break;
       case _Scope.notes:
-        tasks = []; folders = []; cats = [];
+        tasks = [];
+        folders = [];
+        cats = [];
         break;
       case _Scope.tasks:
-        notes = []; folders = []; cats = [];
+        notes = [];
+        folders = [];
+        cats = [];
         break;
       case _Scope.folders:
-        notes = []; tasks = []; cats = [];
+        notes = [];
+        tasks = [];
+        cats = [];
         break;
       case _Scope.categories:
-        notes = []; tasks = []; folders = [];
+        notes = [];
+        tasks = [];
+        folders = [];
         break;
     }
 
-    _noteResults     = notes;
-    _taskResults     = tasks;
-    _folderResults   = folders;
+    _noteResults = notes;
+    _taskResults = tasks;
+    _folderResults = folders;
     _categoryResults = cats;
   }
 
@@ -330,9 +345,10 @@ class _SearchScreenState extends State<SearchScreen>
         final weekAgo = now.subtract(const Duration(days: 7));
         return list.where((n) => n.updatedAt.isAfter(weekAgo)).toList();
       case _DateFilter.thisMonth:
-        return list.where((n) =>
-          n.updatedAt.year == now.year && n.updatedAt.month == now.month
-        ).toList();
+        return list
+            .where((n) =>
+                n.updatedAt.year == now.year && n.updatedAt.month == now.month)
+            .toList();
     }
   }
 
@@ -354,7 +370,7 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   bool _isSameDay(DateTime a, DateTime b) =>
-    a.year == b.year && a.month == b.month && a.day == b.day;
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   void _onScopeChanged(_Scope scope) {
     HapticFeedback.selectionClick();
@@ -362,8 +378,10 @@ class _SearchScreenState extends State<SearchScreen>
       _scope = scope;
       if (_uiState == _UiState.results || _uiState == _UiState.noResults) {
         _applyFilters();
-        _uiState = (_noteResults.isEmpty && _taskResults.isEmpty &&
-                    _folderResults.isEmpty && _categoryResults.isEmpty)
+        _uiState = (_noteResults.isEmpty &&
+                _taskResults.isEmpty &&
+                _folderResults.isEmpty &&
+                _categoryResults.isEmpty)
             ? _UiState.noResults
             : _UiState.results;
       }
@@ -390,40 +408,50 @@ class _SearchScreenState extends State<SearchScreen>
   // ── Navigation ────────────────────────────────────────────────────────────
 
   void _openNote(Note note) {
-    Navigator.push(context, buildPageRoute(
-      NoteEditorScreen(note: note),
-    ));
+    Navigator.push(
+        context,
+        buildPageRoute(
+          NoteEditorScreen(note: note),
+        ));
   }
 
   void _openTask(TaskItem task) async {
-    await Navigator.push(context, buildPageRoute(
-      TaskEditorScreen(
-        initialDate: task.dueDate.toLocal(),
-        taskToEdit: task,
-      ),
-    ));
+    await Navigator.push(
+        context,
+        buildPageRoute(
+          TaskEditorScreen(
+            initialDate: task.dueDate.toLocal(),
+            taskToEdit: task,
+          ),
+        ));
     if (mounted && _query.isNotEmpty) {
       _runSearch(_query);
     }
   }
 
   void _openFolder(Folder folder) {
-    Navigator.push(context, FolderMorphPageRoute(
-      cardBounds: Rect.zero,
-      builder: (_) => FolderNotesScreen(folder: folder),
-    ));
+    Navigator.push(
+        context,
+        FolderMorphPageRoute(
+          cardBounds: Rect.zero,
+          builder: (_) => FolderNotesScreen(folder: folder),
+        ));
   }
 
   void _openCategory(String category) {
-    Navigator.push(context, buildPageRoute(
-      CategoryDetailsScreen(category: category),
-    ));
+    Navigator.push(
+        context,
+        buildPageRoute(
+          CategoryDetailsScreen(category: category),
+        ));
   }
 
   void _createNoteWithTitle(String title) {
-    Navigator.push(context, buildPageRoute(
-      const NoteEditorScreen(defaultCategory: 'Uncategorized'),
-    ));
+    Navigator.push(
+        context,
+        buildPageRoute(
+          const NoteEditorScreen(defaultCategory: 'Uncategorized'),
+        ));
   }
 
   void _tapRecentSearch(String term) {
@@ -431,24 +459,33 @@ class _SearchScreenState extends State<SearchScreen>
     _queryCtrl.selection = TextSelection.collapsed(offset: term.length);
   }
 
-
   _Scope _scopeFromString(String s) {
     switch (s) {
-      case 'notes':      return _Scope.notes;
-      case 'tasks':      return _Scope.tasks;
-      case 'folders':    return _Scope.folders;
-      case 'categories': return _Scope.categories;
-      default:           return _Scope.all;
+      case 'notes':
+        return _Scope.notes;
+      case 'tasks':
+        return _Scope.tasks;
+      case 'folders':
+        return _Scope.folders;
+      case 'categories':
+        return _Scope.categories;
+      default:
+        return _Scope.all;
     }
   }
 
   String _scopeLabel(_Scope s) {
     switch (s) {
-      case _Scope.all:        return 'All';
-      case _Scope.notes:      return 'Notes';
-      case _Scope.tasks:      return 'Tasks';
-      case _Scope.folders:    return 'Folders';
-      case _Scope.categories: return 'Categories';
+      case _Scope.all:
+        return 'All';
+      case _Scope.notes:
+        return 'Notes';
+      case _Scope.tasks:
+        return 'Tasks';
+      case _Scope.folders:
+        return 'Folders';
+      case _Scope.categories:
+        return 'Categories';
     }
   }
 
@@ -722,10 +759,10 @@ class _SearchScreenState extends State<SearchScreen>
       children: [
         if (_recentSearches.isNotEmpty)
           ..._recentSearches.map((term) => _RecentSearchRow(
-            term: term,
-            onTap: () => _tapRecentSearch(term),
-            onDelete: () => _removeSearch(term),
-          )),
+                term: term,
+                onTap: () => _tapRecentSearch(term),
+                onDelete: () => _removeSearch(term),
+              )),
       ],
     );
   }
@@ -758,10 +795,12 @@ class _SearchScreenState extends State<SearchScreen>
           ),
           const SizedBox(height: 20),
         ],
-        ...List.generate(5, (i) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _ShimmerRow(index: i),
-        )),
+        ...List.generate(
+            5,
+            (i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _ShimmerRow(index: i),
+                )),
       ],
     );
   }
@@ -783,28 +822,38 @@ class _SearchScreenState extends State<SearchScreen>
     }
 
     if (_noteResults.isNotEmpty) {
-      addSection('NOTES', _noteResults.length,
-        _noteResults.map((n) => AnimatedListEntrance(
-          key: ValueKey('note_${n.id}_$gen'),
-          index: idx++,
-          child: SearchNoteCard(
-            note: n, query: _query,
-            onTap: () => _openNote(n),
-          ),
-        )).toList(),
+      addSection(
+        'NOTES',
+        _noteResults.length,
+        _noteResults
+            .map((n) => AnimatedListEntrance(
+                  key: ValueKey('note_${n.id}_$gen'),
+                  index: idx++,
+                  child: SearchNoteCard(
+                    note: n,
+                    query: _query,
+                    onTap: () => _openNote(n),
+                  ),
+                ))
+            .toList(),
       );
     }
 
     if (_taskResults.isNotEmpty) {
-      addSection('TASKS', _taskResults.length,
-        _taskResults.map((t) => AnimatedListEntrance(
-          key: ValueKey('task_${t.id}_$gen'),
-          index: idx++,
-          child: SearchTaskCard(
-            task: t, query: _query,
-            onTap: () => _openTask(t),
-          ),
-        )).toList(),
+      addSection(
+        'TASKS',
+        _taskResults.length,
+        _taskResults
+            .map((t) => AnimatedListEntrance(
+                  key: ValueKey('task_${t.id}_$gen'),
+                  index: idx++,
+                  child: SearchTaskCard(
+                    task: t,
+                    query: _query,
+                    onTap: () => _openTask(t),
+                  ),
+                ))
+            .toList(),
       );
     }
 
@@ -831,7 +880,8 @@ class _SearchScreenState extends State<SearchScreen>
             itemBuilder: (context, folderIndex) {
               final f = _folderResults[folderIndex];
               final noteCount = provider.allActiveNotes
-                  .where((n) => n.folderId == f.id).length;
+                  .where((n) => n.folderId == f.id)
+                  .length;
               return AnimatedListEntrance(
                 key: ValueKey('folder_${f.id}_$gen'),
                 index: idx++,
@@ -851,15 +901,19 @@ class _SearchScreenState extends State<SearchScreen>
 
     if (_categoryResults.isNotEmpty) {
       final provider = Provider.of<NotesProvider>(context, listen: false);
-      addSection('CATEGORIES', _categoryResults.length,
+      addSection(
+        'CATEGORIES',
+        _categoryResults.length,
         _categoryResults.map((c) {
-          final noteCount = provider.allActiveNotes
-              .where((n) => n.category == c).length;
+          final noteCount =
+              provider.allActiveNotes.where((n) => n.category == c).length;
           return AnimatedListEntrance(
             key: ValueKey('cat_${c}_$gen'),
             index: idx++,
             child: _CategoryResultRow(
-              category: c, noteCount: noteCount, query: _query,
+              category: c,
+              noteCount: noteCount,
+              query: _query,
               dotColor: _categoryDotColor(c),
               onTap: () => _openCategory(c),
             ),
@@ -897,7 +951,8 @@ class _SearchScreenState extends State<SearchScreen>
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      const Icon(Icons.search_rounded, size: 36, color: _kLabelSecondary),
+                      const Icon(Icons.search_rounded,
+                          size: 36, color: _kLabelSecondary),
                       Positioned(
                         right: 12,
                         bottom: 12,
@@ -908,7 +963,8 @@ class _SearchScreenState extends State<SearchScreen>
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.close_rounded, size: 13, color: _kLabelSecondary),
+                          child: const Icon(Icons.close_rounded,
+                              size: 13, color: _kLabelSecondary),
                         ),
                       ),
                     ],
@@ -919,14 +975,13 @@ class _SearchScreenState extends State<SearchScreen>
                   'No results for "$_query"',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
-                    fontSize: 18, fontWeight: FontWeight.w700, color: _kInk),
+                      fontSize: 18, fontWeight: FontWeight.w700, color: _kInk),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Try searching across all scopes or categories',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 14, color: _kPlaceholder),
+                  style: GoogleFonts.inter(fontSize: 14, color: _kPlaceholder),
                 ),
               ],
             ),
@@ -934,7 +989,6 @@ class _SearchScreenState extends State<SearchScreen>
           const SizedBox(height: 32),
           const Divider(color: _kDivider),
           const SizedBox(height: 16),
-
           Text(
             'CREATE NEW',
             style: GoogleFonts.inter(
@@ -963,7 +1017,8 @@ class _SearchScreenState extends State<SearchScreen>
                       color: _kAmberYellow.withValues(alpha: 0.20),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.add_rounded, color: Color(0xFFD49200), size: 20),
+                    child: const Icon(Icons.add_rounded,
+                        color: Color(0xFFD49200), size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -976,17 +1031,23 @@ class _SearchScreenState extends State<SearchScreen>
                               TextSpan(
                                 text: '"',
                                 style: GoogleFonts.inter(
-                                  fontSize: 15, fontWeight: FontWeight.w500, color: _kInk),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: _kInk),
                               ),
                               TextSpan(
                                 text: _query.trim(),
                                 style: GoogleFonts.inter(
-                                  fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFFD49200)),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFFD49200)),
                               ),
                               TextSpan(
                                 text: '"',
                                 style: GoogleFonts.inter(
-                                  fontSize: 15, fontWeight: FontWeight.w500, color: _kInk),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: _kInk),
                               ),
                             ],
                           ),
@@ -994,7 +1055,8 @@ class _SearchScreenState extends State<SearchScreen>
                         const SizedBox(height: 2),
                         Text(
                           'Start a new note with this title',
-                          style: GoogleFonts.inter(fontSize: 12, color: _kPlaceholder),
+                          style: GoogleFonts.inter(
+                              fontSize: 12, color: _kPlaceholder),
                         ),
                       ],
                     ),
@@ -1103,20 +1165,22 @@ class _RecentSearchRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 9),
         child: Row(
           children: [
-            const Icon(Icons.history_rounded, size: 18, color: _kLabelSecondary),
+            const Icon(Icons.history_rounded,
+                size: 18, color: _kLabelSecondary),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 term,
                 style: GoogleFonts.inter(
-                  fontSize: 15, color: _kInk, fontWeight: FontWeight.w400),
+                    fontSize: 15, color: _kInk, fontWeight: FontWeight.w400),
               ),
             ),
             GestureDetector(
               onTap: onDelete,
               child: const Padding(
                 padding: EdgeInsets.only(left: 8),
-                child: Icon(Icons.close_rounded, size: 16, color: _kPlaceholder),
+                child:
+                    Icon(Icons.close_rounded, size: 16, color: _kPlaceholder),
               ),
             ),
           ],
@@ -1125,9 +1189,6 @@ class _RecentSearchRow extends StatelessWidget {
     );
   }
 }
-
-
-
 
 class _CategoryResultRow extends StatelessWidget {
   final String category;
@@ -1147,7 +1208,8 @@ class _CategoryResultRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final base = GoogleFonts.inter(
         fontSize: 15, fontWeight: FontWeight.w500, color: _kInk);
-    final hl   = base.copyWith(color: const Color(0xFFD49200), fontWeight: FontWeight.w700);
+    final hl = base.copyWith(
+        color: const Color(0xFFD49200), fontWeight: FontWeight.w700);
 
     return GestureDetector(
       onTap: onTap,
@@ -1162,23 +1224,27 @@ class _CategoryResultRow extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: dotColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Container(
-                  width: 14, height: 14,
-                  decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+                  width: 14,
+                  height: 14,
+                  decoration:
+                      BoxDecoration(color: dotColor, shape: BoxShape.circle),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: RichText(
-                text: TextSpan(children:
-                  _buildHighlightSpans(category, query, base: base, highlight: hl)),
+                text: TextSpan(
+                    children: _buildHighlightSpans(category, query,
+                        base: base, highlight: hl)),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

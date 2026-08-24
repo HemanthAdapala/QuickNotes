@@ -100,7 +100,8 @@ class _ExportDialogState extends State<ExportDialog> {
             const SizedBox(height: 8),
             Row(
               children: [
-                _buildFormatButton('pdf', 'PDF Document', Icons.picture_as_pdf_rounded),
+                _buildFormatButton(
+                    'pdf', 'PDF Document', Icons.picture_as_pdf_rounded),
                 const SizedBox(width: 8),
                 _buildFormatButton('html', 'HTML Webpage', Icons.html_rounded),
                 const SizedBox(width: 8),
@@ -179,7 +180,8 @@ class _ExportDialogState extends State<ExportDialog> {
                 : theme.colorScheme.surfaceContainerHighest.withAlpha(50),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? theme.colorScheme.primary : Colors.transparent,
+              color:
+                  isSelected ? theme.colorScheme.primary : Colors.transparent,
               width: 1.5,
             ),
           ),
@@ -187,7 +189,9 @@ class _ExportDialogState extends State<ExportDialog> {
             children: [
               Icon(
                 icon,
-                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(height: 4),
               Text(
@@ -195,7 +199,9 @@ class _ExportDialogState extends State<ExportDialog> {
                 style: GoogleFonts.inter(
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -213,7 +219,8 @@ class _ExportDialogState extends State<ExportDialog> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant.withAlpha(100)),
+        border:
+            Border.all(color: theme.colorScheme.outlineVariant.withAlpha(100)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<ExportTemplate>(

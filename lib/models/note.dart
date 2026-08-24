@@ -11,7 +11,8 @@ class Note {
   final String category;
   final String noteType; // 'text' or 'checklist'
   final List<String> tags;
-  final List<Map<String, dynamic>> attachments; // List of image/voice attachments metadata
+  final List<Map<String, dynamic>>
+      attachments; // List of image/voice attachments metadata
   final bool isLocked;
   final DateTime? reminderTime;
   final DateTime createdAt;
@@ -21,7 +22,7 @@ class Note {
   final DateTime? deletedAt;
   final String? trashedByFolderId;
   final String previewText;
-  
+
   // Folder & Habits Expansion
   final String? folderId;
   final bool isHabit;
@@ -128,7 +129,8 @@ class Note {
       trimmed = trimmed.replaceAll(RegExp(r'<[^>]*>'), '');
 
       // Strip link syntax: [text](url) -> keep text
-      trimmed = trimmed.replaceAllMapped(RegExp(r'\[(.*?)\]\((.*?)\)'), (match) {
+      trimmed =
+          trimmed.replaceAllMapped(RegExp(r'\[(.*?)\]\((.*?)\)'), (match) {
         return match.group(1) ?? '';
       });
 
@@ -201,8 +203,10 @@ class Note {
     List<Map<String, dynamic>> parsedAttachments = [];
     if (map['attachments'] != null) {
       try {
-        final decoded = jsonDecode(map['attachments'] as String) as List<dynamic>;
-        parsedAttachments = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        final decoded =
+            jsonDecode(map['attachments'] as String) as List<dynamic>;
+        parsedAttachments =
+            decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
       } catch (e) {
         parsedAttachments = [];
       }
@@ -216,7 +220,8 @@ class Note {
 
     if (map['paperSettings'] != null) {
       try {
-        final decoded = jsonDecode(map['paperSettings'] as String) as Map<String, dynamic>;
+        final decoded =
+            jsonDecode(map['paperSettings'] as String) as Map<String, dynamic>;
         paperGuideType = decoded['guideType'] ?? 'lines_extra_tight';
         paperGuideVisible = decoded['guideVisible'] ?? false;
         paperGuideHeight = (decoded['lineHeight'] as num?)?.toDouble() ?? 1.05;
@@ -238,18 +243,24 @@ class Note {
       tags: parsedTags,
       attachments: parsedAttachments,
       isLocked: (map['isLocked'] ?? 0) as int == 1,
-      reminderTime: map['reminderTime'] != null ? DateTime.tryParse(map['reminderTime'] as String) : null,
+      reminderTime: map['reminderTime'] != null
+          ? DateTime.tryParse(map['reminderTime'] as String)
+          : null,
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: DateTime.parse(map['updatedAt'] as String),
       colorValue: map['colorValue'] as int,
       isDeleted: (map['isDeleted'] ?? 0) as int == 1,
-      deletedAt: map['deletedAt'] != null ? DateTime.tryParse(map['deletedAt'] as String) : null,
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.tryParse(map['deletedAt'] as String)
+          : null,
       trashedByFolderId: map['trashedByFolderId'] as String?,
       folderId: map['folderId'] as String?,
       isHabit: ((map['isHabit'] ?? 0) as int) == 1,
       habitRecurrence: (map['habitRecurrence'] ?? 'none') as String,
       habitStreak: (map['habitStreak'] ?? 0) as int,
-      habitLastCompleted: map['habitLastCompleted'] != null ? DateTime.tryParse(map['habitLastCompleted'] as String) : null,
+      habitLastCompleted: map['habitLastCompleted'] != null
+          ? DateTime.tryParse(map['habitLastCompleted'] as String)
+          : null,
       previewText: map['previewText'] as String?,
       paperGuideType: paperGuideType,
       paperGuideVisible: paperGuideVisible,
@@ -320,12 +331,16 @@ class Note {
       colorValue: colorValue ?? this.colorValue,
       isDeleted: isDeleted ?? this.isDeleted,
       deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
-      trashedByFolderId: clearTrashedByFolderId ? null : (trashedByFolderId ?? this.trashedByFolderId),
+      trashedByFolderId: clearTrashedByFolderId
+          ? null
+          : (trashedByFolderId ?? this.trashedByFolderId),
       folderId: clearFolder ? null : (folderId ?? this.folderId),
       isHabit: isHabit ?? this.isHabit,
       habitRecurrence: habitRecurrence ?? this.habitRecurrence,
       habitStreak: habitStreak ?? this.habitStreak,
-      habitLastCompleted: clearHabitLastCompleted ? null : (habitLastCompleted ?? this.habitLastCompleted),
+      habitLastCompleted: clearHabitLastCompleted
+          ? null
+          : (habitLastCompleted ?? this.habitLastCompleted),
       previewText: previewText ?? this.previewText,
       paperGuideType: paperGuideType ?? this.paperGuideType,
       paperGuideVisible: paperGuideVisible ?? this.paperGuideVisible,

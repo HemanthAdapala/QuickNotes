@@ -17,8 +17,8 @@ import 'package:intl/intl.dart';
 import '../../models/note.dart';
 import '../widgets/tactile_button.dart';
 
-const Color _kAmberYellow   = Color(0xFFFFCC00);
-const Color _kInk           = Color(0xFF333333);
+const Color _kAmberYellow = Color(0xFFFFCC00);
+const Color _kInk = Color(0xFF333333);
 
 class SearchNoteCard extends StatelessWidget {
   final Note note;

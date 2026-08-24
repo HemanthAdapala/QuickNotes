@@ -85,5 +85,6 @@ class TasksReconciledEvent extends TaskEvent {
     required String eventId,
     required this.reconciledTasks,
     DateTime? timestamp,
-  }) : super(eventId: eventId, taskId: 'SYSTEM_RECONCILE', timestamp: timestamp);
+  }) : super(
+            eventId: eventId, taskId: 'SYSTEM_RECONCILE', timestamp: timestamp);
 }

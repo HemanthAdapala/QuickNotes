@@ -68,7 +68,8 @@ class SyncEngine {
   /// Calculates exponential backoff delay based on attempt count.
   Duration calculateBackoff(int attemptCount) {
     if (attemptCount <= 0) return Duration(seconds: initialDelaySeconds);
-    final double rawDelay = (initialDelaySeconds * pow(multiplier, attemptCount)).toDouble();
+    final double rawDelay =
+        (initialDelaySeconds * pow(multiplier, attemptCount)).toDouble();
     final int clampedDelay = min(rawDelay.round(), maximumDelaySeconds);
     return Duration(seconds: clampedDelay);
   }
@@ -93,15 +94,18 @@ class SyncEngine {
       if (items.isNotEmpty) {
         for (final item in items) {
           // Session isolation guard before every mutation
-          if (_sessionManager.activeUserId != activeUserId || _state == SyncEngineState.stopped) {
-            debugPrint('SyncEngine flush aborted: Session changed or engine stopped.');
+          if (_sessionManager.activeUserId != activeUserId ||
+              _state == SyncEngineState.stopped) {
+            debugPrint(
+                'SyncEngine flush aborted: Session changed or engine stopped.');
             break;
           }
 
           // Retry eligibility check based on nextAttemptAt
           final now = nowProvider();
           if (item.nextAttemptAt != null && item.nextAttemptAt!.isAfter(now)) {
-            debugPrint('SyncEngine skipping item ${item.id}: Backoff timer active until ${item.nextAttemptAt}');
+            debugPrint(
+                'SyncEngine skipping item ${item.id}: Backoff timer active until ${item.nextAttemptAt}');
             continue;
           }
 
@@ -189,14 +193,16 @@ class SyncEngine {
           item,
           SyncNetworkException(
             type: SyncNetworkErrorType.malformedResponse,
-            message: 'ACK operationId mismatch: expected ${item.operationId}, got ${ack.operationId}',
+            message:
+                'ACK operationId mismatch: expected ${item.operationId}, got ${ack.operationId}',
           ),
         );
         return false;
       }
 
       // Process valid ACK / STALE ACK
-      if (ack.status == SyncAckStatus.acknowledged || ack.status == SyncAckStatus.stale) {
+      if (ack.status == SyncAckStatus.acknowledged ||
+          ack.status == SyncAckStatus.stale) {
         await _outboxRepo.acknowledgeOutboxItem(
           outboxId: item.id,
           entityType: item.entityType,
@@ -222,7 +228,8 @@ class SyncEngine {
     }
   }
 
-  Future<void> _handleError(SyncOutboxItem item, SyncNetworkException ex) async {
+  Future<void> _handleError(
+      SyncOutboxItem item, SyncNetworkException ex) async {
     final now = nowProvider();
 
     switch (ex.type) {
@@ -239,7 +246,8 @@ class SyncEngine {
             attemptCount: newAttempt,
             status: 'failed',
             lastAttemptAt: now,
-            lastError: 'Max attempts ($maxAttempts) reached. Last error: ${ex.message}',
+            lastError:
+                'Max attempts ($maxAttempts) reached. Last error: ${ex.message}',
           );
         } else {
           final backoffDelay = calculateBackoff(newAttempt);

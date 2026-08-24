@@ -65,11 +65,26 @@ class GlassPopupPageRoute<T> extends PageRouteBuilder<T> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(width: 5, height: 5, decoration: const BoxDecoration(color: Color(0xFF1C1C1E), shape: BoxShape.circle)),
+                                  Container(
+                                      width: 5,
+                                      height: 5,
+                                      decoration: const BoxDecoration(
+                                          color: Color(0xFF1C1C1E),
+                                          shape: BoxShape.circle)),
                                   const SizedBox(width: 4),
-                                  Container(width: 5, height: 5, decoration: const BoxDecoration(color: Color(0xFF1C1C1E), shape: BoxShape.circle)),
+                                  Container(
+                                      width: 5,
+                                      height: 5,
+                                      decoration: const BoxDecoration(
+                                          color: Color(0xFF1C1C1E),
+                                          shape: BoxShape.circle)),
                                   const SizedBox(width: 4),
-                                  Container(width: 5, height: 5, decoration: const BoxDecoration(color: Color(0xFF1C1C1E), shape: BoxShape.circle)),
+                                  Container(
+                                      width: 5,
+                                      height: 5,
+                                      decoration: const BoxDecoration(
+                                          color: Color(0xFF1C1C1E),
+                                          shape: BoxShape.circle)),
                                 ],
                               ),
                             ),

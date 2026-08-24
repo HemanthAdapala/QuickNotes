@@ -16,12 +16,15 @@ class HabitDashboardScreen extends StatelessWidget {
   });
 
   // Toggle checklist completion directly from Dashboard
-  void _toggleHabitComplete(BuildContext context, Note note, NotesProvider provider) {
+  void _toggleHabitComplete(
+      BuildContext context, Note note, NotesProvider provider) {
     try {
       final decoded = jsonDecode(note.content) as List<dynamic>;
-      final List<Map<String, dynamic>> items = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final List<Map<String, dynamic>> items =
+          decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
 
-      final allChecked = items.every((e) => e['checked'] == true || e['done'] == true);
+      final allChecked =
+          items.every((e) => e['checked'] == true || e['done'] == true);
 
       // If all checked, uncheck all. Otherwise, check all.
       final newItems = items.map((e) {
@@ -32,7 +35,7 @@ class HabitDashboardScreen extends StatelessWidget {
       }).toList();
 
       final updatedContent = jsonEncode(newItems);
-      
+
       // Update streak count if checking all
       int newStreak = note.habitStreak;
       if (!allChecked) {
@@ -108,7 +111,8 @@ class HabitDashboardScreen extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: Container(
@@ -116,70 +120,75 @@ class HabitDashboardScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Bento Grid for Habits
+                        if (habitNotes.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 40.0),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome,
+                                    size: 48,
+                                    color: theme.colorScheme.onSurface
+                                        .withAlpha(50),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    "No Active Habits",
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(120),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    "Configure any checklist note as a habit in the editor options.",
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(100),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else ...[
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: width > 600 ? 2 : 1,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 1.6,
+                            ),
+                            itemCount: habitNotes.length,
+                            itemBuilder: (context, index) {
+                              final note = habitNotes[index];
+                              return _buildHabitBentoCard(
+                                  context, note, provider);
+                            },
+                          ),
+                          const SizedBox(height: 32),
 
-                // Bento Grid for Habits
-                if (habitNotes.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40.0),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.auto_awesome,
-                            size: 48,
-                            color: theme.colorScheme.onSurface.withAlpha(50),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "No Active Habits",
-                            style: GoogleFonts.outfit(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onSurface.withAlpha(120),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Configure any checklist note as a habit in the editor options.",
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: theme.colorScheme.onSurface.withAlpha(100),
-                            ),
-                          ),
+                          // The Long View monthly dot matrix
+                          _buildLongViewMatrix(context, habitNotes),
                         ],
-                      ),
+
+                        const SizedBox(height: 32),
+                        _buildAtmosphericQuote(context),
+                        const SizedBox(height: 60),
+                      ],
                     ),
-                  )
-                else ...[
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: width > 600 ? 2 : 1,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 1.6,
-                    ),
-                    itemCount: habitNotes.length,
-                    itemBuilder: (context, index) {
-                      final note = habitNotes[index];
-                      return _buildHabitBentoCard(context, note, provider);
-                    },
                   ),
-                  const SizedBox(height: 32),
-
-                  // The Long View monthly dot matrix
-                  _buildLongViewMatrix(context, habitNotes),
-                ],
-
-                const SizedBox(height: 32),
-                _buildAtmosphericQuote(context),
-                const SizedBox(height: 60),
-              ],
-            ),
-          ),
-        ),
-      ),
+                ),
+              ),
             ),
           ],
         ),
@@ -188,7 +197,8 @@ class HabitDashboardScreen extends StatelessWidget {
   }
 
   // Habits Bento card
-  Widget _buildHabitBentoCard(BuildContext context, Note note, NotesProvider provider) {
+  Widget _buildHabitBentoCard(
+      BuildContext context, Note note, NotesProvider provider) {
     final theme = Theme.of(context);
 
     // Calculate checklist completion progress
@@ -197,7 +207,9 @@ class HabitDashboardScreen extends StatelessWidget {
     try {
       final decoded = jsonDecode(note.content) as List;
       total = decoded.length;
-      checked = decoded.where((item) => item['checked'] == true || item['done'] == true).length;
+      checked = decoded
+          .where((item) => item['checked'] == true || item['done'] == true)
+          .length;
     } catch (_) {}
 
     final progress = total == 0 ? 0.0 : (checked / total);
@@ -247,17 +259,23 @@ class HabitDashboardScreen extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: isCompleted ? theme.colorScheme.primary : Colors.transparent,
+                    color: isCompleted
+                        ? theme.colorScheme.primary
+                        : Colors.transparent,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isCompleted ? Colors.transparent : theme.dividerColor.withAlpha(180),
+                      color: isCompleted
+                          ? Colors.transparent
+                          : theme.dividerColor.withAlpha(180),
                       width: 1.5,
                     ),
                   ),
                   child: Icon(
                     Icons.check,
                     size: 16,
-                    color: isCompleted ? Colors.white : theme.colorScheme.primary.withAlpha(120),
+                    color: isCompleted
+                        ? Colors.white
+                        : theme.colorScheme.primary.withAlpha(120),
                   ),
                 ),
               ),
@@ -270,7 +288,8 @@ class HabitDashboardScreen extends StatelessWidget {
               value: progress,
               minHeight: 4,
               backgroundColor: theme.dividerColor,
-              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
             ),
           ),
           const SizedBox(height: 8),
@@ -329,7 +348,8 @@ class HabitDashboardScreen extends StatelessWidget {
                   children: [
                     _buildLegendItem(theme.colorScheme.primary, "Completed"),
                     const SizedBox(width: 12),
-                    _buildLegendItem(theme.dividerColor.withAlpha(200), "Missed"),
+                    _buildLegendItem(
+                        theme.dividerColor.withAlpha(200), "Missed"),
                   ],
                 ),
               ],
@@ -368,9 +388,12 @@ class HabitDashboardScreen extends StatelessWidget {
                             return Container(
                               width: 8,
                               height: 8,
-                              margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 2.0),
                               decoration: BoxDecoration(
-                                color: isDone ? theme.colorScheme.primary : theme.dividerColor,
+                                color: isDone
+                                    ? theme.colorScheme.primary
+                                    : theme.dividerColor,
                                 borderRadius: BorderRadius.circular(1.5),
                               ),
                             );
@@ -411,7 +434,9 @@ class HabitDashboardScreen extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
-        Text(label, style: GoogleFonts.jetBrainsMono(fontSize: 10, color: const Color(0xFF91918E))),
+        Text(label,
+            style: GoogleFonts.jetBrainsMono(
+                fontSize: 10, color: const Color(0xFF91918E))),
       ],
     );
   }

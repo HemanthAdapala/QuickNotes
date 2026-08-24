@@ -62,7 +62,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
   void dispose() {
     _folderNameController.dispose();
     try {
-      Provider.of<NotesProvider>(context, listen: false).setSelectedFolder(null);
+      Provider.of<NotesProvider>(context, listen: false)
+          .setSelectedFolder(null);
     } catch (_) {}
     super.dispose();
   }
@@ -78,7 +79,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
         sorted.sort((a, b) => a.updatedAt.compareTo(b.updatedAt));
         break;
       case FolderSortOption.alphabetical:
-        sorted.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+        sorted.sort(
+            (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
         break;
     }
     return sorted;
@@ -128,7 +130,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
             final msng = ScaffoldMessenger.of(context);
             if (await provider.unlockVault(pin)) {
               final decryptedNote = await provider.getNoteById(note.id);
-              if (mounted && decryptedNote != null) nav.push(buildPageRoute(NoteEditorScreen(note: decryptedNote)));
+              if (mounted && decryptedNote != null)
+                nav.push(buildPageRoute(NoteEditorScreen(note: decryptedNote)));
             } else {
               if (mounted) {
                 msng
@@ -162,7 +165,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
       context: context,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Rename Folder", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        title: Text("Rename Folder",
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         content: TextField(
           controller: _folderNameController,
           autofocus: true,
@@ -210,13 +214,16 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 'Sort Notes By',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
             const Divider(height: 1),
             ListTile(
               title: const Text('Date Modified (Newest First)'),
-              trailing: _currentSort == FolderSortOption.newest ? const Icon(Icons.check, color: Color(0xFF1C1C1E)) : null,
+              trailing: _currentSort == FolderSortOption.newest
+                  ? const Icon(Icons.check, color: Color(0xFF1C1C1E))
+                  : null,
               onTap: () {
                 setState(() => _currentSort = FolderSortOption.newest);
                 Navigator.pop(context);
@@ -224,7 +231,9 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
             ),
             ListTile(
               title: const Text('Date Modified (Oldest First)'),
-              trailing: _currentSort == FolderSortOption.oldest ? const Icon(Icons.check, color: Color(0xFF1C1C1E)) : null,
+              trailing: _currentSort == FolderSortOption.oldest
+                  ? const Icon(Icons.check, color: Color(0xFF1C1C1E))
+                  : null,
               onTap: () {
                 setState(() => _currentSort = FolderSortOption.oldest);
                 Navigator.pop(context);
@@ -232,7 +241,9 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
             ),
             ListTile(
               title: const Text('Title (Alphabetical)'),
-              trailing: _currentSort == FolderSortOption.alphabetical ? const Icon(Icons.check, color: Color(0xFF1C1C1E)) : null,
+              trailing: _currentSort == FolderSortOption.alphabetical
+                  ? const Icon(Icons.check, color: Color(0xFF1C1C1E))
+                  : null,
               onTap: () {
                 setState(() => _currentSort = FolderSortOption.alphabetical);
                 Navigator.pop(context);
@@ -250,8 +261,10 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
       context: context,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Delete Folder?", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: const Text("Deleting this folder will move its notes to Uncategorized. Notes will not be deleted."),
+        title: Text("Delete Folder?",
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        content: const Text(
+            "Deleting this folder will move its notes to Uncategorized. Notes will not be deleted."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -274,7 +287,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
 
   // ── Bulk Actions: Move, Pin, Delete Selected ──────────────────────────────
   void _bulkMoveNotes(NotesProvider provider) {
-    final availableFolders = provider.folders.where((f) => f.id != widget.folder.id).toList();
+    final availableFolders =
+        provider.folders.where((f) => f.id != widget.folder.id).toList();
 
     showAnimatedBottomSheet(
       context: context,
@@ -306,7 +320,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Color(0xFF828282), size: 20),
+                      icon: const Icon(Icons.close_rounded,
+                          color: Color(0xFF828282), size: 20),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -323,12 +338,14 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                       // Uncategorized Option
                       ListTile(
                         dense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 2.0),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20.0, vertical: 2.0),
                         leading: SvgPicture.asset(
                           'assets/icons/bottom_navigation/folder-open.svg',
                           width: 22,
                           height: 22,
-                          colorFilter: const ColorFilter.mode(Color(0xFF828282), BlendMode.srcIn),
+                          colorFilter: const ColorFilter.mode(
+                              Color(0xFF828282), BlendMode.srcIn),
                         ),
                         title: Text(
                           'Uncategorized (No Folder)',
@@ -344,7 +361,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                           for (final id in _selectedNoteIds) {
                             final note = await provider.getNoteById(id);
                             if (note != null) {
-                              await provider.updateNote(note.copyWith(clearFolder: true));
+                              await provider
+                                  .updateNote(note.copyWith(clearFolder: true));
                             }
                           }
                           if (mounted) {
@@ -360,12 +378,14 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                       for (final folder in availableFolders)
                         ListTile(
                           dense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 2.0),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 2.0),
                           leading: SvgPicture.asset(
                             'assets/icons/bottom_navigation/folder-open.svg',
                             width: 22,
                             height: 22,
-                            colorFilter: const ColorFilter.mode(Color(0xFFFFCC00), BlendMode.srcIn),
+                            colorFilter: const ColorFilter.mode(
+                                Color(0xFFFFCC00), BlendMode.srcIn),
                           ),
                           title: Text(
                             folder.name,
@@ -381,7 +401,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                             for (final id in _selectedNoteIds) {
                               final note = await provider.getNoteById(id);
                               if (note != null) {
-                                await provider.updateNote(note.copyWith(folderId: folder.id));
+                                await provider.updateNote(
+                                    note.copyWith(folderId: folder.id));
                               }
                             }
                             if (mounted) {
@@ -459,11 +480,13 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                 HapticFeedback.lightImpact();
                 Navigator.push(
                   context,
-                  buildPageRoute(NoteEditorScreen(defaultFolderId: widget.folder.id)),
+                  buildPageRoute(
+                      NoteEditorScreen(defaultFolderId: widget.folder.id)),
                 );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFCC00), // Vibrant Yellow pill
                   borderRadius: BorderRadius.circular(20),
@@ -500,8 +523,10 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
         .where((n) => n.folderId == widget.folder.id && !n.isDeleted)
         .toList();
 
-    final pinnedNotes = _sortNotes(allFolderNotes.where((n) => n.isPinned).toList());
-    final unpinnedNotes = _sortNotes(allFolderNotes.where((n) => !n.isPinned).toList());
+    final pinnedNotes =
+        _sortNotes(allFolderNotes.where((n) => n.isPinned).toList());
+    final unpinnedNotes =
+        _sortNotes(allFolderNotes.where((n) => !n.isPinned).toList());
 
     return PopScope(
       canPop: !_isSelectionMode && !_isFolderOptionsOpen,
@@ -521,7 +546,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
         }
         if (didPop) {
           try {
-            Provider.of<NotesProvider>(context, listen: false).setSelectedFolder(null);
+            Provider.of<NotesProvider>(context, listen: false)
+                .setSelectedFolder(null);
           } catch (_) {}
         }
       },
@@ -555,7 +581,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(20)),
                     child: allFolderNotes.isEmpty
                         ? _buildEmptyState()
                         : CustomScrollView(
@@ -566,10 +593,12 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                               // panel width — card shadows are never clipped by the
                               // viewport's hard-edge clip during scroll.
                               SliverPadding(
-                                padding: const EdgeInsets.fromLTRB(24.0, 17.0, 24.0, 24.0),
+                                padding: const EdgeInsets.fromLTRB(
+                                    24.0, 17.0, 24.0, 24.0),
                                 sliver: SliverToBoxAdapter(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         widget.folder.name,
@@ -602,11 +631,13 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                               // ── Pinned section ─────────────────────────────────
                               if (pinnedNotes.isNotEmpty) ...[
                                 SliverPadding(
-                                  padding: const EdgeInsets.fromLTRB(24.0, 8.0, 24.0, 8.0),
+                                  padding: const EdgeInsets.fromLTRB(
+                                      24.0, 8.0, 24.0, 8.0),
                                   sliver: SliverToBoxAdapter(
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.push_pin_rounded, size: 12, color: Color(0xFFF5A623)),
+                                        const Icon(Icons.push_pin_rounded,
+                                            size: 12, color: Color(0xFFF5A623)),
                                         const SizedBox(width: 4),
                                         Text(
                                           "PINNED",
@@ -622,9 +653,11 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                   ),
                                 ),
                                 SliverPadding(
-                                  padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
+                                  padding: const EdgeInsets.fromLTRB(
+                                      24.0, 0.0, 24.0, 16.0),
                                   sliver: SliverGrid(
-                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
                                       crossAxisCount: 2,
                                       crossAxisSpacing: 22.0,
                                       mainAxisSpacing: 24.0,
@@ -633,7 +666,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                     delegate: SliverChildBuilderDelegate(
                                       (context, index) {
                                         final note = pinnedNotes[index];
-                                        final isSelected = _selectedNoteIds.contains(note.id);
+                                        final isSelected =
+                                            _selectedNoteIds.contains(note.id);
                                         return AnimatedListEntrance(
                                           key: ValueKey(note.id),
                                           index: index,
@@ -641,8 +675,10 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                             note: note,
                                             isSelectionMode: _isSelectionMode,
                                             isSelected: isSelected,
-                                            onTap: () => _onNoteTap(note, provider),
-                                            onLongPressStart: (_) => _onNoteLongPress(note),
+                                            onTap: () =>
+                                                _onNoteTap(note, provider),
+                                            onLongPressStart: (_) =>
+                                                _onNoteLongPress(note),
                                           ),
                                         );
                                       },
@@ -652,7 +688,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                 ),
                                 if (unpinnedNotes.isNotEmpty)
                                   SliverPadding(
-                                    padding: const EdgeInsets.fromLTRB(24.0, 8.0, 24.0, 8.0),
+                                    padding: const EdgeInsets.fromLTRB(
+                                        24.0, 8.0, 24.0, 8.0),
                                     sliver: SliverToBoxAdapter(
                                       child: Text(
                                         "NOTES",
@@ -673,10 +710,12 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                   padding: EdgeInsets.only(
                                     left: 24.0,
                                     right: 24.0,
-                                    bottom: 80.0 + MediaQuery.paddingOf(context).bottom,
+                                    bottom: 80.0 +
+                                        MediaQuery.paddingOf(context).bottom,
                                   ),
                                   sliver: SliverGrid(
-                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
                                       crossAxisCount: 2,
                                       crossAxisSpacing: 22.0,
                                       mainAxisSpacing: 24.0,
@@ -685,7 +724,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                     delegate: SliverChildBuilderDelegate(
                                       (context, index) {
                                         final note = unpinnedNotes[index];
-                                        final isSelected = _selectedNoteIds.contains(note.id);
+                                        final isSelected =
+                                            _selectedNoteIds.contains(note.id);
                                         return AnimatedListEntrance(
                                           key: ValueKey(note.id),
                                           index: index,
@@ -693,8 +733,10 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                             note: note,
                                             isSelectionMode: _isSelectionMode,
                                             isSelected: isSelected,
-                                            onTap: () => _onNoteTap(note, provider),
-                                            onLongPressStart: (_) => _onNoteLongPress(note),
+                                            onTap: () =>
+                                                _onNoteTap(note, provider),
+                                            onLongPressStart: (_) =>
+                                                _onNoteLongPress(note),
                                           ),
                                         );
                                       },
@@ -742,7 +784,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                       HapticFeedback.lightImpact();
                       Navigator.push(
                         context,
-                        buildPageRoute(NoteEditorScreen(defaultFolderId: widget.folder.id)),
+                        buildPageRoute(NoteEditorScreen(
+                            defaultFolderId: widget.folder.id)),
                       );
                     },
                     child: const Center(
@@ -782,22 +825,26 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.drive_file_move_outlined, color: Color(0xFF333333)),
+                              icon: const Icon(Icons.drive_file_move_outlined,
+                                  color: Color(0xFF333333)),
                               tooltip: 'Move to Folder',
                               onPressed: () => _bulkMoveNotes(provider),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.push_pin_outlined, color: Color(0xFF333333)),
+                              icon: const Icon(Icons.push_pin_outlined,
+                                  color: Color(0xFF333333)),
                               tooltip: 'Pin/Unpin',
                               onPressed: () => _bulkPinNotes(provider),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  color: Colors.red),
                               tooltip: 'Delete Selected',
                               onPressed: () => _bulkDeleteNotes(provider),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                              icon: const Icon(Icons.close_rounded,
+                                  color: Colors.grey),
                               tooltip: 'Cancel',
                               onPressed: () {
                                 setState(() {
@@ -824,7 +871,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                     child: SizedBox(
                       width: screenWidth.clamp(0.0, 402.0),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24.0, vertical: 12.0),
                         child: AppHeaderBar(
                           leftHeroTag: 'hero_profile_header',
                           rightHeroTag: 'hero_more_options',
@@ -895,10 +943,12 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                 child: TactileButton(
                                   useAppleSpring: true,
                                   compressionScale: 0.7,
-                                  settleDuration: const Duration(milliseconds: 1000),
+                                  settleDuration:
+                                      const Duration(milliseconds: 1000),
                                   onTap: () {
                                     HapticFeedback.lightImpact();
-                                    Navigator.of(context).push(buildSearchTransitionRoute(
+                                    Navigator.of(context)
+                                        .push(buildSearchTransitionRoute(
                                       builder: (_) => SearchScreen(
                                         initialScope: 'notes',
                                         presetFolder: widget.folder.id,
@@ -922,11 +972,13 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                 child: TactileButton(
                                   useAppleSpring: true,
                                   compressionScale: 0.7,
-                                  settleDuration: const Duration(milliseconds: 1000),
+                                  settleDuration:
+                                      const Duration(milliseconds: 1000),
                                   onTap: () {
                                     HapticFeedback.lightImpact();
                                     setState(() {
-                                      _isFolderOptionsOpen = !_isFolderOptionsOpen;
+                                      _isFolderOptionsOpen =
+                                          !_isFolderOptionsOpen;
                                     });
                                   },
                                   child: const Center(

@@ -65,7 +65,8 @@ class RemoteChangeApplier {
       for (final change in sortedChanges) {
         // User isolation check
         if (change.userId != activeUserId) {
-          debugPrint('RemoteChangeApplier: Rejected change for user ${change.userId} (active: $activeUserId)');
+          debugPrint(
+              'RemoteChangeApplier: Rejected change for user ${change.userId} (active: $activeUserId)');
           continue;
         }
 
@@ -82,8 +83,14 @@ class RemoteChangeApplier {
         // Fetch pending outbox item for this entity
         final outboxRows = await executor.query(
           'sync_outbox',
-          where: 'userId = ? AND entityType = ? AND entityId = ? AND status = ?',
-          whereArgs: [activeUserId, change.entityType, change.entityId, 'pending'],
+          where:
+              'userId = ? AND entityType = ? AND entityId = ? AND status = ?',
+          whereArgs: [
+            activeUserId,
+            change.entityType,
+            change.entityId,
+            'pending'
+          ],
         );
         final pendingOutboxItem = outboxRows.isNotEmpty
             ? SyncOutboxItem.fromMap(outboxRows.first)
@@ -102,14 +109,17 @@ class RemoteChangeApplier {
           case ConflictDecision.serverWinsOverWrite:
             await _applyRemoteToDb(executor, tableName, activeUserId, change);
             if (decision == ConflictDecision.serverWinsOverWrite) {
-              await _clearPendingOutboxItem(executor, activeUserId, change.entityType, change.entityId);
+              await _clearPendingOutboxItem(
+                  executor, activeUserId, change.entityType, change.entityId);
             }
             appliedCount++;
             break;
 
           case ConflictDecision.serverDeleteWins:
-            await _applyRemoteDeleteToDb(executor, tableName, activeUserId, change);
-            await _clearPendingOutboxItem(executor, activeUserId, change.entityType, change.entityId);
+            await _applyRemoteDeleteToDb(
+                executor, tableName, activeUserId, change);
+            await _clearPendingOutboxItem(
+                executor, activeUserId, change.entityType, change.entityId);
             appliedCount++;
             break;
 

@@ -48,10 +48,11 @@ class RestoreEngine {
     BackupEngine? backupEngine,
   })  : _dbService = dbService ?? DatabaseService.instance,
         _sessionManager = sessionManager ?? SessionManager(),
-        _backupEngine = backupEngine ?? BackupEngine(
-          dbService: dbService,
-          sessionManager: sessionManager,
-        );
+        _backupEngine = backupEngine ??
+            BackupEngine(
+              dbService: dbService,
+              sessionManager: sessionManager,
+            );
 
   /// Executes a multi-resource atomic restore of a validated local .qnb backup file.
   Future<RestoreResult> restoreFromBackup({
@@ -90,7 +91,8 @@ class RestoreEngine {
       final zipBytes = backupFile.readAsBytesSync();
       final archiveInput = BackupArchiveInput.fromZipBytes(zipBytes);
 
-      String? expectedProviderUserIdHash = BackupIntegrity.sha256String(activeUserId);
+      String? expectedProviderUserIdHash =
+          BackupIntegrity.sha256String(activeUserId);
       final db = await _dbService.database;
 
       final identityMaps = await db.query(
@@ -115,7 +117,8 @@ class RestoreEngine {
         return RestoreResult.failure(
           error: RestoreError(
             type: RestoreErrorType.validationFailed,
-            message: 'Backup file failed pre-restore validation: ${validationResult.errors.first.message}',
+            message:
+                'Backup file failed pre-restore validation: ${validationResult.errors.first.message}',
             target: validationResult.errors.first.targetPath,
           ),
           validationResult: validationResult,
@@ -123,33 +126,49 @@ class RestoreEngine {
       }
 
       // Gate 2: Identity Isolation Guard
-      if (validationResult.identityStatus == BackupIdentityStatus.mismatch && !forceOfflineOverride) {
+      if (validationResult.identityStatus == BackupIdentityStatus.mismatch &&
+          !forceOfflineOverride) {
         return RestoreResult.failure(
           error: const RestoreError(
             type: RestoreErrorType.identityMismatch,
-            message: 'Identity isolation guard blocked restore: Backup identity does not match current authenticated user',
+            message:
+                'Identity isolation guard blocked restore: Backup identity does not match current authenticated user',
           ),
           validationResult: validationResult,
         );
       }
 
       // Gate 3: Create Isolated Restore Workspace & Stage JSON Payloads
-      final docsDir = customDocumentsDir ?? await getApplicationDocumentsDirectory();
-      tempWorkspace = Directory(p.join(docsDir.path, 'restore_workspace_${const Uuid().v4()}'));
+      final docsDir =
+          customDocumentsDir ?? await getApplicationDocumentsDirectory();
+      tempWorkspace = Directory(
+          p.join(docsDir.path, 'restore_workspace_${const Uuid().v4()}'));
       tempWorkspace.createSync(recursive: true);
 
       final manifest = validationResult.manifest!;
-      final foldersJson = archiveInput.getFileString(BackupFormat.foldersDataFileName)!;
-      final notesJson = archiveInput.getFileString(BackupFormat.notesDataFileName)!;
-      final tasksJson = archiveInput.getFileString(BackupFormat.tasksDataFileName)!;
+      final foldersJson =
+          archiveInput.getFileString(BackupFormat.foldersDataFileName)!;
+      final notesJson =
+          archiveInput.getFileString(BackupFormat.notesDataFileName)!;
+      final tasksJson =
+          archiveInput.getFileString(BackupFormat.tasksDataFileName)!;
 
       final rawFoldersList = jsonDecode(foldersJson) as List;
       final rawNotesList = jsonDecode(notesJson) as List;
       final rawTasksList = jsonDecode(tasksJson) as List;
 
-      final restoredFolders = rawFoldersList.map((e) => BackupSerializer.deserializeFolder(Map<String, dynamic>.from(e as Map))).toList();
-      final restoredNotes = rawNotesList.map((e) => BackupSerializer.deserializeNote(Map<String, dynamic>.from(e as Map))).toList();
-      final restoredTasks = rawTasksList.map((e) => BackupSerializer.deserializeTask(Map<String, dynamic>.from(e as Map))).toList();
+      final restoredFolders = rawFoldersList
+          .map((e) => BackupSerializer.deserializeFolder(
+              Map<String, dynamic>.from(e as Map)))
+          .toList();
+      final restoredNotes = rawNotesList
+          .map((e) => BackupSerializer.deserializeNote(
+              Map<String, dynamic>.from(e as Map)))
+          .toList();
+      final restoredTasks = rawTasksList
+          .map((e) => BackupSerializer.deserializeTask(
+              Map<String, dynamic>.from(e as Map)))
+          .toList();
 
       final sortedFolders = _topologicalSortFolders(restoredFolders);
 
@@ -164,7 +183,8 @@ class RestoreEngine {
         return RestoreResult.failure(
           error: RestoreError(
             type: RestoreErrorType.safetySnapshotFailed,
-            message: 'Pre-restore safety snapshot creation failed: ${snapshotResult.error}',
+            message:
+                'Pre-restore safety snapshot creation failed: ${snapshotResult.error}',
           ),
           validationResult: validationResult,
         );
@@ -172,18 +192,23 @@ class RestoreEngine {
       safetySnapshotPath = snapshotResult.filePath;
 
       // Stage Original Attachment Files into Rollback Location
-      attachmentRollbackWorkspace = Directory(p.join(docsDir.path, 'attachments_backup_${const Uuid().v4()}'));
+      attachmentRollbackWorkspace = Directory(
+          p.join(docsDir.path, 'attachments_backup_${const Uuid().v4()}'));
       attachmentRollbackWorkspace.createSync(recursive: true);
-      _preserveCurrentAttachments(docsDir: docsDir, rollbackDir: attachmentRollbackWorkspace);
+      _preserveCurrentAttachments(
+          docsDir: docsDir, rollbackDir: attachmentRollbackWorkspace);
 
       // ── STAGE 2: STAGE NEW ATTACHMENTS (Before SQLite Commit) ───────────
       final attachmentFiles = archiveInput.entries.keys
-          .where((k) => k.startsWith('${BackupFormat.attachmentsDirectory}/') && k.length > BackupFormat.attachmentsDirectory.length + 1)
+          .where((k) =>
+              k.startsWith('${BackupFormat.attachmentsDirectory}/') &&
+              k.length > BackupFormat.attachmentsDirectory.length + 1)
           .toList();
 
       try {
         for (final attPath in attachmentFiles) {
-          final filename = attPath.substring(BackupFormat.attachmentsDirectory.length + 1);
+          final filename =
+              attPath.substring(BackupFormat.attachmentsDirectory.length + 1);
           final bytes = archiveInput.getFileBytes(attPath)!;
 
           final targetCandidates = [
@@ -199,7 +224,8 @@ class RestoreEngine {
           }
         }
       } catch (attError) {
-        _restorePreservedAttachments(docsDir: docsDir, rollbackDir: attachmentRollbackWorkspace);
+        _restorePreservedAttachments(
+            docsDir: docsDir, rollbackDir: attachmentRollbackWorkspace);
         _cleanupDirectory(tempWorkspace);
         _cleanupDirectory(attachmentRollbackWorkspace);
 
@@ -223,41 +249,49 @@ class RestoreEngine {
       try {
         await db.transaction((txn) async {
           // Scoped purge of active user's existing records
-          await txn.delete('tasks', where: 'userId = ?', whereArgs: [activeUserId]);
-          await txn.delete('notes', where: 'userId = ?', whereArgs: [activeUserId]);
-          await txn.delete('folders', where: 'userId = ?', whereArgs: [activeUserId]);
+          await txn
+              .delete('tasks', where: 'userId = ?', whereArgs: [activeUserId]);
+          await txn
+              .delete('notes', where: 'userId = ?', whereArgs: [activeUserId]);
+          await txn.delete('folders',
+              where: 'userId = ?', whereArgs: [activeUserId]);
 
           // Insert Restored Folders (Parent-first)
           for (final folder in sortedFolders) {
             final map = folder.toMap();
             map['userId'] = activeUserId;
-            await txn.insert('folders', map, conflictAlgorithm: ConflictAlgorithm.replace);
+            await txn.insert('folders', map,
+                conflictAlgorithm: ConflictAlgorithm.replace);
           }
 
           // Insert Restored Notes
           for (final note in restoredNotes) {
             final map = note.toMap();
             map['userId'] = activeUserId;
-            await txn.insert('notes', map, conflictAlgorithm: ConflictAlgorithm.replace);
+            await txn.insert('notes', map,
+                conflictAlgorithm: ConflictAlgorithm.replace);
           }
 
           // Insert Restored Tasks
           for (final task in restoredTasks) {
             final map = task.toMap();
             map['userId'] = activeUserId;
-            await txn.insert('tasks', map, conflictAlgorithm: ConflictAlgorithm.replace);
+            await txn.insert('tasks', map,
+                conflictAlgorithm: ConflictAlgorithm.replace);
           }
         });
       } catch (dbError) {
         // SQLite automatically rolled back its transaction. Now rollback attachments & cursor
-        _restorePreservedAttachments(docsDir: docsDir, rollbackDir: attachmentRollbackWorkspace);
+        _restorePreservedAttachments(
+            docsDir: docsDir, rollbackDir: attachmentRollbackWorkspace);
         _cleanupDirectory(tempWorkspace);
         _cleanupDirectory(attachmentRollbackWorkspace);
 
         return RestoreResult.failure(
           error: RestoreError(
             type: RestoreErrorType.databaseRestoreFailed,
-            message: 'SQLite database transaction failed: ${dbError.toString()}',
+            message:
+                'SQLite database transaction failed: ${dbError.toString()}',
           ),
           validationResult: validationResult,
           safetySnapshotPath: safetySnapshotPath,
@@ -271,14 +305,16 @@ class RestoreEngine {
       } catch (_) {}
 
       // ── STAGE 4: POST-COMMIT VERIFICATION ───────────────────────────────
-      final postFolders = await db.query('folders', where: 'userId = ?', whereArgs: [activeUserId]);
-      final postNotes = await db.query('notes', where: 'userId = ?', whereArgs: [activeUserId]);
-      final postTasks = await db.query('tasks', where: 'userId = ?', whereArgs: [activeUserId]);
+      final postFolders = await db
+          .query('folders', where: 'userId = ?', whereArgs: [activeUserId]);
+      final postNotes = await db
+          .query('notes', where: 'userId = ?', whereArgs: [activeUserId]);
+      final postTasks = await db
+          .query('tasks', where: 'userId = ?', whereArgs: [activeUserId]);
 
       if (postFolders.length != restoredFolders.length ||
           postNotes.length != restoredNotes.length ||
           postTasks.length != restoredTasks.length) {
-
         // Verification Failed: Execute explicit non-recursive internal rollback!
         await _rollbackRestore(
           db: db,
@@ -295,7 +331,8 @@ class RestoreEngine {
         return RestoreResult.failure(
           error: const RestoreError(
             type: RestoreErrorType.verificationFailed,
-            message: 'Post-restore verification count check failed; database and attachments rolled back to safety snapshot',
+            message:
+                'Post-restore verification count check failed; database and attachments rolled back to safety snapshot',
           ),
           validationResult: validationResult,
           safetySnapshotPath: safetySnapshotPath,
@@ -319,7 +356,9 @@ class RestoreEngine {
       );
     } catch (e) {
       if (attachmentRollbackWorkspace != null && customDocumentsDir != null) {
-        _restorePreservedAttachments(docsDir: customDocumentsDir, rollbackDir: attachmentRollbackWorkspace);
+        _restorePreservedAttachments(
+            docsDir: customDocumentsDir,
+            rollbackDir: attachmentRollbackWorkspace);
       }
       _cleanupDirectory(tempWorkspace);
       _cleanupDirectory(attachmentRollbackWorkspace);
@@ -357,31 +396,46 @@ class RestoreEngine {
         final nJson = input.getFileString(BackupFormat.notesDataFileName)!;
         final tJson = input.getFileString(BackupFormat.tasksDataFileName)!;
 
-        final snapFolders = (jsonDecode(fJson) as List).map((e) => BackupSerializer.deserializeFolder(Map<String, dynamic>.from(e as Map))).toList();
-        final snapNotes = (jsonDecode(nJson) as List).map((e) => BackupSerializer.deserializeNote(Map<String, dynamic>.from(e as Map))).toList();
-        final snapTasks = (jsonDecode(tJson) as List).map((e) => BackupSerializer.deserializeTask(Map<String, dynamic>.from(e as Map))).toList();
+        final snapFolders = (jsonDecode(fJson) as List)
+            .map((e) => BackupSerializer.deserializeFolder(
+                Map<String, dynamic>.from(e as Map)))
+            .toList();
+        final snapNotes = (jsonDecode(nJson) as List)
+            .map((e) => BackupSerializer.deserializeNote(
+                Map<String, dynamic>.from(e as Map)))
+            .toList();
+        final snapTasks = (jsonDecode(tJson) as List)
+            .map((e) => BackupSerializer.deserializeTask(
+                Map<String, dynamic>.from(e as Map)))
+            .toList();
 
         final sortedFolders = _topologicalSortFolders(snapFolders);
 
         await db.transaction((txn) async {
-          await txn.delete('tasks', where: 'userId = ?', whereArgs: [activeUserId]);
-          await txn.delete('notes', where: 'userId = ?', whereArgs: [activeUserId]);
-          await txn.delete('folders', where: 'userId = ?', whereArgs: [activeUserId]);
+          await txn
+              .delete('tasks', where: 'userId = ?', whereArgs: [activeUserId]);
+          await txn
+              .delete('notes', where: 'userId = ?', whereArgs: [activeUserId]);
+          await txn.delete('folders',
+              where: 'userId = ?', whereArgs: [activeUserId]);
 
           for (final f in sortedFolders) {
             final map = f.toMap();
             map['userId'] = activeUserId;
-            await txn.insert('folders', map, conflictAlgorithm: ConflictAlgorithm.replace);
+            await txn.insert('folders', map,
+                conflictAlgorithm: ConflictAlgorithm.replace);
           }
           for (final n in snapNotes) {
             final map = n.toMap();
             map['userId'] = activeUserId;
-            await txn.insert('notes', map, conflictAlgorithm: ConflictAlgorithm.replace);
+            await txn.insert('notes', map,
+                conflictAlgorithm: ConflictAlgorithm.replace);
           }
           for (final t in snapTasks) {
             final map = t.toMap();
             map['userId'] = activeUserId;
-            await txn.insert('tasks', map, conflictAlgorithm: ConflictAlgorithm.replace);
+            await txn.insert('tasks', map,
+                conflictAlgorithm: ConflictAlgorithm.replace);
           }
         });
       } catch (_) {}
@@ -407,7 +461,8 @@ class RestoreEngine {
       sources.addAll(imagesDir.listSync().whereType<File>());
     }
     if (docsDir.existsSync()) {
-      sources.addAll(docsDir.listSync().whereType<File>().where((f) => p.extension(f.path).isNotEmpty && !f.path.endsWith('.db')));
+      sources.addAll(docsDir.listSync().whereType<File>().where(
+          (f) => p.extension(f.path).isNotEmpty && !f.path.endsWith('.db')));
     }
 
     for (final file in sources) {
@@ -448,7 +503,9 @@ class RestoreEngine {
     void visit(Folder f) {
       if (addedIds.contains(f.id)) return;
       final parentId = f.parentId;
-      if (parentId != null && parentId.isNotEmpty && map.containsKey(parentId)) {
+      if (parentId != null &&
+          parentId.isNotEmpty &&
+          map.containsKey(parentId)) {
         visit(map[parentId]!);
       }
       addedIds.add(f.id);

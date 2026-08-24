@@ -65,9 +65,10 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isMoreOptionsOpen = false;
   String _activeFilter = 'Today';
   bool _isSortAscending = false;
-  String _username = 'Hemanth Adapala';
+  String _username = 'Guest';
   String? _avatarPath;
-  final GlobalKey<FolderManagementScreenState> _foldersKey = GlobalKey<FolderManagementScreenState>();
+  final GlobalKey<FolderManagementScreenState> _foldersKey =
+      GlobalKey<FolderManagementScreenState>();
   final List<OverlayEntry> _overlayEntries = [];
   StreamSubscription<NotificationPayload>? _notificationSub;
 
@@ -92,13 +93,15 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
 
-    final initialPayload = NotificationActionHandler.consumeLastLaunchedPayload();
+    final initialPayload =
+        NotificationActionHandler.consumeLastLaunchedPayload();
     if (initialPayload != null) {
       _activeNavIndex = 0;
       _isNotesActive = false;
     }
 
-    _notificationSub = NotificationActionHandler.foregroundStream.listen((payload) {
+    _notificationSub =
+        NotificationActionHandler.foregroundStream.listen((payload) {
       if (mounted) {
         setState(() {
           _activeNavIndex = 0;
@@ -113,7 +116,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     _settingsBody = SettingsScreen(
       isDarkMode: Provider.of<NotesProvider>(context, listen: false).isDarkMode,
-      onThemeToggle: Provider.of<NotesProvider>(context, listen: false).toggleTheme,
+      onThemeToggle:
+          Provider.of<NotesProvider>(context, listen: false).toggleTheme,
       onMenuTap: () {
         HapticFeedback.lightImpact();
         setState(() => _activeNavIndex = 0);
@@ -125,7 +129,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      final name = prefs.getString('profile_username') ?? prefs.getString('profile_full_name');
+      final name = prefs.getString('profile_username') ??
+          prefs.getString('profile_full_name');
       if (name != null && name.trim().isNotEmpty) {
         _username = name.trim();
       }
@@ -162,20 +167,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<TaskItem> get _filteredTasks {
     final tasksProvider = Provider.of<TasksProvider>(context);
-    final uncompleted = tasksProvider.getUncompletedTasksForFilter(_activeFilter);
-    return AppStatisticsService.sortTasks(uncompleted, filter: _activeFilter, ascending: _isSortAscending);
+    final uncompleted =
+        tasksProvider.getUncompletedTasksForFilter(_activeFilter);
+    return AppStatisticsService.sortTasks(uncompleted,
+        filter: _activeFilter, ascending: _isSortAscending);
   }
 
   List<Note> get _filteredNotes {
     final notesProvider = Provider.of<NotesProvider>(context);
-    final filtered = AppStatisticsService.filterNotesByDateRange(notesProvider.notes, _activeFilter);
-    return AppStatisticsService.sortNotes(filtered, ascending: _isSortAscending);
+    final filtered = AppStatisticsService.filterNotesByDateRange(
+        notesProvider.notes, _activeFilter);
+    return AppStatisticsService.sortNotes(filtered,
+        ascending: _isSortAscending);
   }
 
   int _countForFilter(String filter) {
     if (_isNotesActive) {
       final notesProvider = Provider.of<NotesProvider>(context);
-      return AppStatisticsService.filterNotesByDateRange(notesProvider.notes, filter).length;
+      return AppStatisticsService.filterNotesByDateRange(
+              notesProvider.notes, filter)
+          .length;
     } else {
       final tasksProvider = Provider.of<TasksProvider>(context);
       return tasksProvider.getUncompletedTasksForFilter(filter).length;
@@ -194,23 +205,63 @@ class _HomeScreenState extends State<HomeScreen> {
     if (isDark) {
       // Dark Mode Preset: D1, D2, D3, D4, FL, BV, I1, I2
       GlassmorphismPresets.shadows = const [
-        BoxShadow(offset: Offset(1.25, 0), blurRadius: 0, spreadRadius: -0.75, color: Color(0xFFD0D0D0)),
-        BoxShadow(offset: Offset(-1.25, 0), blurRadius: 0, spreadRadius: -0.75, color: Color(0xFFD0D0D0)),
-        BoxShadow(offset: Offset(0, 0), blurRadius: 0, spreadRadius: 0.5, color: Color(0xFFCCCCCC)),
-        BoxShadow(offset: Offset(0, 8), blurRadius: 15, spreadRadius: 0, color: Color(0x05000000)),
+        BoxShadow(
+            offset: Offset(1.25, 0),
+            blurRadius: 0,
+            spreadRadius: -0.75,
+            color: Color(0xFFD0D0D0)),
+        BoxShadow(
+            offset: Offset(-1.25, 0),
+            blurRadius: 0,
+            spreadRadius: -0.75,
+            color: Color(0xFFD0D0D0)),
+        BoxShadow(
+            offset: Offset(0, 0),
+            blurRadius: 0,
+            spreadRadius: 0.5,
+            color: Color(0xFFCCCCCC)),
+        BoxShadow(
+            offset: Offset(0, 8),
+            blurRadius: 15,
+            spreadRadius: 0,
+            color: Color(0x05000000)),
       ];
       GlassmorphismPresets.innerShadows = const [
-        BoxShadow(offset: Offset(0, 1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true),
-        BoxShadow(offset: Offset(0, -1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true),
+        BoxShadow(
+            offset: Offset(0, 1.25),
+            blurRadius: 0.25,
+            spreadRadius: 0,
+            color: Color(0xFF282828),
+            inset: true),
+        BoxShadow(
+            offset: Offset(0, -1.25),
+            blurRadius: 0.25,
+            spreadRadius: 0,
+            color: Color(0xFF282828),
+            inset: true),
       ];
     } else {
       // Light Mode Preset: D4, FL, BV, I1, I2
       GlassmorphismPresets.shadows = const [
-        BoxShadow(offset: Offset(0, 8), blurRadius: 15, spreadRadius: 0, color: Color(0x05000000)),
+        BoxShadow(
+            offset: Offset(0, 8),
+            blurRadius: 15,
+            spreadRadius: 0,
+            color: Color(0x05000000)),
       ];
       GlassmorphismPresets.innerShadows = const [
-        BoxShadow(offset: Offset(0, 1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true),
-        BoxShadow(offset: Offset(0, -1.25), blurRadius: 0.25, spreadRadius: 0, color: Color(0xFF282828), inset: true),
+        BoxShadow(
+            offset: Offset(0, 1.25),
+            blurRadius: 0.25,
+            spreadRadius: 0,
+            color: Color(0xFF282828),
+            inset: true),
+        BoxShadow(
+            offset: Offset(0, -1.25),
+            blurRadius: 0.25,
+            spreadRadius: 0,
+            color: Color(0xFF282828),
+            inset: true),
       ];
     }
 
@@ -300,15 +351,24 @@ class _HomeScreenState extends State<HomeScreen> {
       bottom: false, // bottom handled by nav bar + system padding
       child: HomePromptView(
         date: DateTime.now(),
+        displayName: _username.split(' ').where((e) => e.isNotEmpty).firstOrNull ?? _username,
         isNotesActive: _isNotesActive,
         isMoreOptionsOpen: _isMoreOptionsOpen,
         interactive: false,
         onTap: _openNewNote,
         onLastEditedNoteTap: _openNote,
-        isDarkBackground: selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6,
-        showPrompt: Platform.environment.containsKey('FLUTTER_TEST') ? _isNotesActive : false,
-        showProfileHeader: Platform.environment.containsKey('FLUTTER_TEST') ? !_isNotesActive : true,
-        greetingOverride: Platform.environment.containsKey('FLUTTER_TEST') ? null : (_isNotesActive ? "nice to see you" : null),
+        isDarkBackground: selectedBgIndex == 1 ||
+            selectedBgIndex == 2 ||
+            selectedBgIndex == 6,
+        showPrompt: Platform.environment.containsKey('FLUTTER_TEST')
+            ? _isNotesActive
+            : false,
+        showProfileHeader: Platform.environment.containsKey('FLUTTER_TEST')
+            ? !_isNotesActive
+            : true,
+        greetingOverride: Platform.environment.containsKey('FLUTTER_TEST')
+            ? null
+            : (_isNotesActive ? "nice to see you" : null),
       ),
     );
   }
@@ -438,8 +498,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
-
   // ── Root build ───────────────────────────────────────────────────────────
 
   @override
@@ -451,17 +509,21 @@ class _HomeScreenState extends State<HomeScreen> {
     _updatePresetsForBackground(selectedBgIndex);
     final double screenHeight = MediaQuery.of(context).size.height;
     final bool isShortScreen = screenHeight < 780.0;
-    
+
     // Panel & Pill positions
-    final double panelTop = MediaQuery.paddingOf(context).top + (isShortScreen ? 136.0 : 172.0);
+    final double panelTop =
+        MediaQuery.paddingOf(context).top + (isShortScreen ? 136.0 : 172.0);
     final double filterTop = panelTop + (isShortScreen ? 12.0 : 20.0);
     final double switcherTop = filterTop + 48.0 + (isShortScreen ? 10.0 : 16.0);
-    
+
     // Card stack bottom position
     final double bottomGap = isShortScreen ? 4.0 : 24.0;
-    final double stackBottom = 58.0 + MediaQuery.paddingOf(context).bottom + bottomGap;
+    final double stackBottom =
+        58.0 + MediaQuery.paddingOf(context).bottom + bottomGap;
 
-    final int numCards = (_isNotesActive ? _filteredNotes.length : _filteredTasks.length).clamp(1, 3);
+    final int numCards =
+        (_isNotesActive ? _filteredNotes.length : _filteredTasks.length)
+            .clamp(1, 3);
     final double stackOffset = (3 - numCards) * 22.0;
 
     return Scaffold(
@@ -515,114 +577,145 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     children: [
                       SizedBox(height: isShortScreen ? 12.0 : 20.0),
-                      
+
                       // 1. Scrollable filter bar
-                      if (Platform.environment.containsKey('FLUTTER_TEST') ? !_isNotesActive : true)
+                      if (Platform.environment.containsKey('FLUTTER_TEST')
+                          ? !_isNotesActive
+                          : true)
                         Builder(
                           builder: (context) {
                             final filters = _isNotesActive
                                 ? ['All', 'Today', 'Weekly', 'Monthly']
-                                : ['All', 'Missed', 'Today', 'Weekly', 'Monthly'];
+                                : [
+                                    'All',
+                                    'Missed',
+                                    'Today',
+                                    'Weekly',
+                                    'Monthly'
+                                  ];
                             return SizedBox(
                               height: 52.0,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24.0),
                                 itemCount: filters.length,
                                 itemBuilder: (context, index) {
                                   final filter = filters[index];
-                                  final bool isSelected = _activeFilter == filter;
-                                  
+                                  final bool isSelected =
+                                      _activeFilter == filter;
+
                                   final String text;
                                   if (filter == 'All') {
                                     text = 'All';
                                   } else {
-                                    final labelText = _isNotesActive ? 'Notes' : 'Tasks';
-                                    text = filter == 'Missed' ? "Missed $labelText ${_countForFilter(filter)}" : "${filter}'s $labelText ${_countForFilter(filter)}";
+                                    final labelText =
+                                        _isNotesActive ? 'Notes' : 'Tasks';
+                                    text = filter == 'Missed'
+                                        ? "Missed $labelText ${_countForFilter(filter)}"
+                                        : "${filter}'s $labelText ${_countForFilter(filter)}";
                                   }
 
                                   return Padding(
-                                    padding: EdgeInsets.only(right: index == filters.length - 1 ? 0.0 : 12.0),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      HapticFeedback.selectionClick();
-                                      if (_activeFilter == filter) {
-                                        // Toggle sort direction on active filter tap (both Notes & Tasks)
-                                        _isSortAscending = !_isSortAscending;
-                                        final sortLabel = _isSortAscending ? 'Oldest to Newest' : 'Newest to Oldest';
-                                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Sorted: $sortLabel',
+                                    padding: EdgeInsets.only(
+                                        right: index == filters.length - 1
+                                            ? 0.0
+                                            : 12.0),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        if (_activeFilter == filter) {
+                                          // Toggle sort direction on active filter tap (both Notes & Tasks)
+                                          _isSortAscending = !_isSortAscending;
+                                          final sortLabel = _isSortAscending
+                                              ? 'Oldest to Newest'
+                                              : 'Newest to Oldest';
+                                          ScaffoldMessenger.of(context)
+                                              .hideCurrentSnackBar();
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Sorted: $sortLabel',
+                                                style: GoogleFonts.inter(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              backgroundColor: _isNotesActive
+                                                  ? const Color(0xFFFFCC00)
+                                                  : const Color(0xFF0088FF),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              duration:
+                                                  const Duration(seconds: 2),
+                                            ),
+                                          );
+                                        } else {
+                                          _activeFilter = filter;
+                                          _isSortAscending =
+                                              false; // Default to Newest to Oldest on filter switch
+                                        }
+                                        setState(() {});
+                                      },
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            height: 40.0,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 20.0),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0x33787878),
+                                              borderRadius:
+                                                  BorderRadius.circular(20.0),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              text,
                                               style: GoogleFonts.inter(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w500,
+                                                fontSize: 16.0,
+                                                fontWeight: FontWeight.w600,
+                                                color: isSelected
+                                                    ? const Color(0xFF333333)
+                                                    : const Color(0x80333333),
+                                                height: 1.38,
+                                                letterSpacing: -0.43,
                                               ),
                                             ),
-                                            backgroundColor: _isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
-                                            behavior: SnackBarBehavior.floating,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          const SizedBox(height: 4.0),
+                                          Opacity(
+                                            opacity: isSelected ? 1.0 : 0.0,
+                                            child: Container(
+                                              width: 5.0,
+                                              height: 5.0,
+                                              decoration: ShapeDecoration(
+                                                color: _isNotesActive
+                                                    ? const Color(0xFFFFCC00)
+                                                    : const Color(0xFF0088FF),
+                                                shape: const OvalBorder(),
+                                              ),
                                             ),
-                                            duration: const Duration(seconds: 2),
                                           ),
-                                        );
-                                      } else {
-                                        _activeFilter = filter;
-                                        _isSortAscending = false; // Default to Newest to Oldest on filter switch
-                                      }
-                                      setState(() {});
-                                    },
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        height: 40.0,
-                                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0x33787878),
-                                          borderRadius: BorderRadius.circular(20.0),
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: Text(
-                                          text,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 16.0,
-                                            fontWeight: FontWeight.w600,
-                                            color: isSelected
-                                                ? const Color(0xFF333333)
-                                                : const Color(0x80333333),
-                                            height: 1.38,
-                                            letterSpacing: -0.43,
-                                          ),
-                                        ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 4.0),
-                                      Opacity(
-                                        opacity: isSelected ? 1.0 : 0.0,
-                                        child: Container(
-                                          width: 5.0,
-                                          height: 5.0,
-                                          decoration: ShapeDecoration(
-                                            color: _isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
-                                            shape: const OvalBorder(),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                      
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+
                       SizedBox(height: isShortScreen ? 10.0 : 16.0),
-                      
+
                       // 2. Segmented Control Pill (Switcher Tab)
                       NotesAndTaskPill(
                         isNotesActive: _isNotesActive,
@@ -635,18 +728,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           });
                         },
                       ),
-                      
+
                       // 3. Card Stack Area centered dynamically in remaining space
                       Expanded(
                         child: Center(
                           child: Padding(
                             padding: EdgeInsets.only(
                               // Add bottom spacing to prevent overlapping the floating nav bar
-                              bottom: 58.0 + MediaQuery.paddingOf(context).bottom + (isShortScreen ? 4.0 : 12.0) - (isShortScreen ? 12.0 : 0.0),
+                              bottom: 58.0 +
+                                  MediaQuery.paddingOf(context).bottom +
+                                  (isShortScreen ? 4.0 : 12.0) -
+                                  (isShortScreen ? 12.0 : 0.0),
                             ),
-                            child: (Platform.environment.containsKey('FLUTTER_TEST') ? !_isNotesActive : true)
+                            child: (Platform.environment
+                                        .containsKey('FLUTTER_TEST')
+                                    ? !_isNotesActive
+                                    : true)
                                 ? TweenAnimationBuilder<double>(
-                                    key: ValueKey('${_isNotesActive ? "notes" : "tasks"}_${_activeFilter}_${_isSortAscending}_${_filteredTasks.length}_${_filteredTasks.isNotEmpty ? _filteredTasks.first.id : ""}'),
+                                    key: ValueKey(
+                                        '${_isNotesActive ? "notes" : "tasks"}_${_activeFilter}_${_isSortAscending}_${_filteredTasks.length}_${_filteredTasks.isNotEmpty ? _filteredTasks.first.id : ""}'),
                                     tween: Tween<double>(begin: 0.0, end: 1.0),
                                     duration: const Duration(milliseconds: 500),
                                     curve: Curves.easeOutCubic,
@@ -661,45 +761,69 @@ class _HomeScreenState extends State<HomeScreen> {
                                     },
                                     child: _isNotesActive
                                         ? NotesStackWidget(
-                                            width: screenWidth.clamp(0.0, 398.0) - 48.0,
+                                            width:
+                                                screenWidth.clamp(0.0, 398.0) -
+                                                    48.0,
                                             notes: _filteredNotes,
-                                            onEdit: (note) => _openNote(note.id),
+                                            onEdit: (note) =>
+                                                _openNote(note.id),
                                           )
                                         : TaskWidget(
-                                            width: screenWidth.clamp(0.0, 398.0) - 48.0,
+                                            width:
+                                                screenWidth.clamp(0.0, 398.0) -
+                                                    48.0,
                                             tasks: _filteredTasks,
                                             onEdit: _openEditTask,
                                             onComplete: (taskId) async {
-                                              final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                                              final tasksProvider =
+                                                  Provider.of<TasksProvider>(
+                                                      context,
+                                                      listen: false);
                                               TaskItem? currentTask;
-                                              for (final t in tasksProvider.tasks) {
-                                                if (t.id == taskId || t.id.startsWith(taskId) || taskId.startsWith(t.id)) {
+                                              for (final t
+                                                  in tasksProvider.tasks) {
+                                                if (t.id == taskId ||
+                                                    t.id.startsWith(taskId) ||
+                                                    taskId.startsWith(t.id)) {
                                                   currentTask = t;
                                                   break;
                                                 }
                                               }
                                               if (currentTask != null) {
-                                                await tasksProvider.toggleTaskCompletionOnDate(currentTask.id, currentTask.dueDate);
+                                                await tasksProvider
+                                                    .toggleTaskCompletionOnDate(
+                                                        currentTask.id,
+                                                        currentTask.dueDate);
                                               } else {
-                                                await tasksProvider.toggleTaskCompletion(taskId);
+                                                await tasksProvider
+                                                    .toggleTaskCompletion(
+                                                        taskId);
                                               }
 
-                                              final bool allDone = tasksProvider.activeTasks.isEmpty;
+                                              final bool allDone = tasksProvider
+                                                  .activeTasks.isEmpty;
                                               final String msg;
-                                               if (allDone) {
-                                                 msg = '🎉 All tasks are done!';
-                                                 _triggerCelebration(msg);
-                                               } else if (_activeFilter == 'Missed') {
-                                                 msg = '🎉 Missed task completed!';
-                                                 _triggerCelebration(msg);
-                                               } else if (_activeFilter == 'Today') {
-                                                msg = "🎉 Today's task is done!";
+                                              if (allDone) {
+                                                msg = '🎉 All tasks are done!';
                                                 _triggerCelebration(msg);
-                                              } else if (_activeFilter == 'Weekly') {
+                                              } else if (_activeFilter ==
+                                                  'Missed') {
+                                                msg =
+                                                    '🎉 Missed task completed!';
+                                                _triggerCelebration(msg);
+                                              } else if (_activeFilter ==
+                                                  'Today') {
+                                                msg =
+                                                    "🎉 Today's task is done!";
+                                                _triggerCelebration(msg);
+                                              } else if (_activeFilter ==
+                                                  'Weekly') {
                                                 msg = '🎉 Weekly task is done!';
                                                 _triggerCelebration(msg);
-                                              } else if (_activeFilter == 'Monthly') {
-                                                msg = '🎉 Monthly task is done!';
+                                              } else if (_activeFilter ==
+                                                  'Monthly') {
+                                                msg =
+                                                    '🎉 Monthly task is done!';
                                                 _triggerCelebration(msg);
                                               } else {
                                                 msg = '🎉 Task is done!';
@@ -725,7 +849,9 @@ class _HomeScreenState extends State<HomeScreen> {
             bottom: 0,
             child: AppBottomNavigationBar(
               selectedIndex: _activeNavIndex,
-              activeColor: _isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
+              activeColor: _isNotesActive
+                  ? const Color(0xFFFFCC00)
+                  : const Color(0xFF0088FF),
               onDestinationSelected: (i) {
                 if (i == 4) {
                   if (_activeNavIndex == 1) {
@@ -791,7 +917,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         shape: BoxShape.circle,
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: _avatarPath != null && _avatarPath!.startsWith('assets/')
+                      child: _avatarPath != null &&
+                              _avatarPath!.startsWith('assets/')
                           ? Padding(
                               padding: const EdgeInsets.all(3.0),
                               child: Image.asset(
@@ -803,7 +930,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fit: BoxFit.contain,
                               ),
                             )
-                          : _avatarPath != null && File(_avatarPath!).existsSync()
+                          : _avatarPath != null &&
+                                  File(_avatarPath!).existsSync()
                               ? Image.file(
                                   File(_avatarPath!),
                                   width: 34.0,
@@ -831,14 +959,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.push(
                           context,
                           buildSearchTransitionRoute(
-                            builder: (_) => const SearchScreen(initialScope: 'all'),
+                            builder: (_) =>
+                                const SearchScreen(initialScope: 'all'),
                           ),
                         );
                       },
                       child: Center(
                         child: Icon(
                           Icons.search_rounded,
-                          color: (selectedBgIndex == 1 || selectedBgIndex == 2 || selectedBgIndex == 6) ? Colors.white : const Color(0xFF1C1C1E),
+                          color: (selectedBgIndex == 1 ||
+                                  selectedBgIndex == 2 ||
+                                  selectedBgIndex == 6)
+                              ? Colors.white
+                              : const Color(0xFF1C1C1E),
                           size: 22,
                         ),
                       ),
@@ -852,4 +985,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-

@@ -63,7 +63,8 @@ class BackupEngine {
   }) async {
     final activeUserId = _sessionManager.activeUserId;
     if (activeUserId == null || activeUserId.isEmpty) {
-      return BackupResult.failure(error: 'No active canonical user session exists for backup');
+      return BackupResult.failure(
+          error: 'No active canonical user session exists for backup');
     }
 
     try {
@@ -115,7 +116,8 @@ class BackupEngine {
       final allTasks = <TaskItem>[...activeTasks, ...trashTasks];
 
       // ── 3. Collect Local Attachment Files ───────────────────────────────
-      final docsDir = customDocumentsDir ?? await getApplicationDocumentsDirectory();
+      final docsDir =
+          customDocumentsDir ?? await getApplicationDocumentsDirectory();
       final attachmentEntries = <String, List<int>>{};
       final missingAttachments = <String>[];
 
@@ -129,18 +131,21 @@ class BackupEngine {
           if (uri.isNotEmpty) {
             final norm = BackupSerializer.normalizeAttachmentUri(uri);
             if (norm.startsWith(BackupFormat.attachmentSchemePrefix)) {
-              referencedFilenames.add(norm.substring(BackupFormat.attachmentSchemePrefix.length));
+              referencedFilenames.add(
+                  norm.substring(BackupFormat.attachmentSchemePrefix.length));
             }
           }
         }
 
         // Parse note.attachments metadata maps
         for (final attMap in note.attachments) {
-          final pathStr = attMap['path'] as String? ?? attMap['url'] as String? ?? '';
+          final pathStr =
+              attMap['path'] as String? ?? attMap['url'] as String? ?? '';
           if (pathStr.isNotEmpty) {
             final norm = BackupSerializer.normalizeAttachmentUri(pathStr);
             if (norm.startsWith(BackupFormat.attachmentSchemePrefix)) {
-              referencedFilenames.add(norm.substring(BackupFormat.attachmentSchemePrefix.length));
+              referencedFilenames.add(
+                  norm.substring(BackupFormat.attachmentSchemePrefix.length));
             }
           }
         }
@@ -176,7 +181,8 @@ class BackupEngine {
       // Missing Attachment Policy: Fail cleanly if any attachment is missing
       if (missingAttachments.isNotEmpty) {
         return BackupResult.failure(
-          error: 'Backup failed due to missing local attachment asset(s): ${missingAttachments.join(", ")}',
+          error:
+              'Backup failed due to missing local attachment asset(s): ${missingAttachments.join(", ")}',
         );
       }
 
@@ -190,13 +196,15 @@ class BackupEngine {
       final tasksBytes = utf8.encode(tasksJson);
 
       final checksumsMap = <String, String>{
-        BackupFormat.foldersDataFileName: BackupIntegrity.sha256Bytes(foldersBytes),
+        BackupFormat.foldersDataFileName:
+            BackupIntegrity.sha256Bytes(foldersBytes),
         BackupFormat.notesDataFileName: BackupIntegrity.sha256Bytes(notesBytes),
         BackupFormat.tasksDataFileName: BackupIntegrity.sha256Bytes(tasksBytes),
       };
 
       for (final attPath in attachmentEntries.keys) {
-        checksumsMap[attPath] = BackupIntegrity.sha256Bytes(attachmentEntries[attPath]!);
+        checksumsMap[attPath] =
+            BackupIntegrity.sha256Bytes(attachmentEntries[attPath]!);
       }
 
       final backupId = 'bkp_${const Uuid().v4()}';
@@ -240,26 +248,31 @@ class BackupEngine {
 
       // ── 5. Encode ZIP Container ──────────────────────────────────────────
       final zipEntries = <ZipInputEntry>[
-        ZipInputEntry(name: BackupFormat.manifestFileName, bytes: manifestBytes),
-        ZipInputEntry(name: BackupFormat.foldersDataFileName, bytes: foldersBytes),
+        ZipInputEntry(
+            name: BackupFormat.manifestFileName, bytes: manifestBytes),
+        ZipInputEntry(
+            name: BackupFormat.foldersDataFileName, bytes: foldersBytes),
         ZipInputEntry(name: BackupFormat.notesDataFileName, bytes: notesBytes),
         ZipInputEntry(name: BackupFormat.tasksDataFileName, bytes: tasksBytes),
       ];
 
       for (final attPath in attachmentEntries.keys) {
-        zipEntries.add(ZipInputEntry(name: attPath, bytes: attachmentEntries[attPath]!));
+        zipEntries.add(
+            ZipInputEntry(name: attPath, bytes: attachmentEntries[attPath]!));
       }
 
       final zipBytes = ZipEncoder.encode(zipEntries);
 
       // ── 6. Write Temporary File ──────────────────────────────────────────
-      final backupDir = customBackupDir ?? Directory(p.join(docsDir.path, 'backups'));
+      final backupDir =
+          customBackupDir ?? Directory(p.join(docsDir.path, 'backups'));
       if (!backupDir.existsSync()) {
         backupDir.createSync(recursive: true);
       }
 
       final timestampStr = DateFormat('yyyyMMdd_HHmmss').format(nowUtc);
-      final filename = 'quick_notes_backup_$timestampStr${BackupFormat.fileExtension}';
+      final filename =
+          'quick_notes_backup_$timestampStr${BackupFormat.fileExtension}';
       final tempFilePath = p.join(backupDir.path, '$filename.tmp');
       final finalFilePath = p.join(backupDir.path, filename);
 

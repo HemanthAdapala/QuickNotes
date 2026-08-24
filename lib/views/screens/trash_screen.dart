@@ -64,7 +64,8 @@ class TrashScreen extends StatelessWidget {
                       final trashNotes = provider.trashNotes;
                       if (trashNotes.isEmpty) return const SizedBox(width: 38);
                       return TactileButton(
-                        onTap: () => _confirmEmptyTrash(context, provider, trashNotes),
+                        onTap: () =>
+                            _confirmEmptyTrash(context, provider, trashNotes),
                         child: Container(
                           width: 38,
                           height: 38,
@@ -94,19 +95,21 @@ class TrashScreen extends StatelessWidget {
                   // let's fetch all notes directly from the provider and filter isTrash manually!
                   // This is extremely safe and doesn't require modifying active shell state.
                   final trashNotes = provider.trashNotes;
-                  
+
                   if (trashNotes.isEmpty) {
                     return const Center(
                       child: EmptyState(
                         title: "Trash is Empty",
-                        subtitle: "Notes you delete will appear here before being permanently purged.",
+                        subtitle:
+                            "Notes you delete will appear here before being permanently purged.",
                       ),
                     );
                   }
 
                   return ListView.builder(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0, vertical: 8.0),
                     itemCount: trashNotes.length,
                     itemBuilder: (context, index) {
                       final note = trashNotes[index];
@@ -122,9 +125,10 @@ class TrashScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTrashCard(BuildContext context, NotesProvider provider, Note note) {
+  Widget _buildTrashCard(
+      BuildContext context, NotesProvider provider, Note note) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -157,7 +161,8 @@ class TrashScreen extends StatelessWidget {
           children: [
             // Restore action
             IconButton(
-              icon: const Icon(Icons.restore_from_trash_rounded, color: QuickNotesTheme.accent),
+              icon: const Icon(Icons.restore_from_trash_rounded,
+                  color: QuickNotesTheme.accent),
               onPressed: () {
                 provider.restoreNoteFromTrash(note.id);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -168,7 +173,8 @@ class TrashScreen extends StatelessWidget {
             // Permanent Delete action
             IconButton(
               icon: const Icon(Icons.delete_forever_rounded, color: Colors.red),
-              onPressed: () => _confirmDeletePermanently(context, provider, note.id),
+              onPressed: () =>
+                  _confirmDeletePermanently(context, provider, note.id),
             ),
           ],
         ),
@@ -176,17 +182,20 @@ class TrashScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDeletePermanently(BuildContext context, NotesProvider provider, String noteId) {
+  void _confirmDeletePermanently(
+      BuildContext context, NotesProvider provider, String noteId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: QuickNotesTheme.surface,
         title: const Text("Delete Permanently?"),
-        content: const Text("This action cannot be undone. The note will be permanently lost."),
+        content: const Text(
+            "This action cannot be undone. The note will be permanently lost."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("CANCEL", style: TextStyle(color: QuickNotesTheme.textPrimary)),
+            child: const Text("CANCEL",
+                style: TextStyle(color: QuickNotesTheme.textPrimary)),
           ),
           TextButton(
             onPressed: () {
@@ -203,17 +212,20 @@ class TrashScreen extends StatelessWidget {
     );
   }
 
-  void _confirmEmptyTrash(BuildContext context, NotesProvider provider, List<Note> notes) {
+  void _confirmEmptyTrash(
+      BuildContext context, NotesProvider provider, List<Note> notes) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: QuickNotesTheme.surface,
         title: const Text("Empty Recycle Bin?"),
-        content: Text("Are you sure you want to permanently delete all ${notes.length} notes in the trash?"),
+        content: Text(
+            "Are you sure you want to permanently delete all ${notes.length} notes in the trash?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("CANCEL", style: TextStyle(color: QuickNotesTheme.textPrimary)),
+            child: const Text("CANCEL",
+                style: TextStyle(color: QuickNotesTheme.textPrimary)),
           ),
           TextButton(
             onPressed: () {

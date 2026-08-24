@@ -29,69 +29,78 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
       builder: (context) {
         final theme = Theme.of(context);
         final provider = Provider.of<NotesProvider>(context, listen: false);
-        final hierarchical = FolderUtils.getHierarchicalFolders(provider.folders);
+        final hierarchical =
+            FolderUtils.getHierarchicalFolders(provider.folders);
 
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFFF2F2EE),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Text(
-                "New Folder",
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.black),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _folderNameController,
-                    autofocus: true,
-                    style: GoogleFonts.inter(color: Colors.black),
-                    decoration: InputDecoration(
-                      labelText: "Folder Name",
-                      labelStyle: GoogleFonts.inter(color: const Color(0xFF8C8987)),
-                      enabledBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFE6E3D2)),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF222222), width: 1.5),
-                      ),
+        return StatefulBuilder(builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFFF2F2EE),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Text(
+              "New Folder",
+              style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold, color: Colors.black),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _folderNameController,
+                  autofocus: true,
+                  style: GoogleFonts.inter(color: Colors.black),
+                  decoration: InputDecoration(
+                    labelText: "Folder Name",
+                    labelStyle:
+                        GoogleFonts.inter(color: const Color(0xFF8C8987)),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFE6E3D2)),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Color(0xFF222222), width: 1.5),
                     ),
                   ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    _folderNameController.clear();
-                    Navigator.pop(context);
-                  },
-                  child: Text("Cancel", style: GoogleFonts.plusJakartaSans(color: const Color(0xFF8C8987))),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final name = _folderNameController.text.trim();
-                    if (name.isNotEmpty) {
-                      Provider.of<NotesProvider>(context, listen: false).createFolder(
-                        name,
-                        parentId: null,
-                      );
-                      _folderNameController.clear();
-                      Navigator.pop(context);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF222222),
-                    foregroundColor: const Color(0xFFF2F2EE),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: Text("Create", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
                 ),
               ],
-            );
-          }
-        );
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _folderNameController.clear();
+                  Navigator.pop(context);
+                },
+                child: Text("Cancel",
+                    style: GoogleFonts.plusJakartaSans(
+                        color: const Color(0xFF8C8987))),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final name = _folderNameController.text.trim();
+                  if (name.isNotEmpty) {
+                    Provider.of<NotesProvider>(context, listen: false)
+                        .createFolder(
+                      name,
+                      parentId: null,
+                    );
+                    _folderNameController.clear();
+                    Navigator.pop(context);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF222222),
+                  foregroundColor: const Color(0xFFF2F2EE),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text("Create",
+                    style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        });
       },
     );
   }
@@ -103,10 +112,12 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
     final activeNotes = notesProvider.allActiveNotes;
 
     // Build the hierarchical folders list
-    final List<FolderWithDepth> hierarchicalFolders = FolderUtils.getHierarchicalFolders(folders);
+    final List<FolderWithDepth> hierarchicalFolders =
+        FolderUtils.getHierarchicalFolders(folders);
 
     // Get note counts
-    int rootNoteCount = activeNotes.where((note) => note.folderId == null).length;
+    int rootNoteCount =
+        activeNotes.where((note) => note.folderId == null).length;
 
     return Container(
       width: double.infinity,
@@ -142,7 +153,8 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
             ),
             // Header Row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,7 +225,9 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                     ...hierarchicalFolders.map((item) {
                       final folder = item.folder;
                       final depth = item.depth;
-                      final noteCount = activeNotes.where((note) => note.folderId == folder.id).length;
+                      final noteCount = activeNotes
+                          .where((note) => note.folderId == folder.id)
+                          .length;
                       final isSelected = widget.currentFolderId == folder.id;
 
                       return Padding(
@@ -242,7 +256,8 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                   ),
                 ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
               child: TactileButton(
                 onTap: _showCreateFolderDialog,
                 child: Padding(
@@ -316,7 +331,9 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
           children: [
             Icon(
               isSelected ? Icons.folder : Icons.folder_open_outlined,
-              color: isSelected ? const Color(0xFFF2F2EE) : const Color(0xFF8C8987),
+              color: isSelected
+                  ? const Color(0xFFF2F2EE)
+                  : const Color(0xFF8C8987),
               size: 22,
             ),
             const SizedBox(width: 12),

@@ -157,7 +157,8 @@ class SortFilterSheet extends StatelessWidget {
                     title,
                     style: GoogleFonts.inter(
                       fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
                       color: theme.colorScheme.onSurface,
                     ),
                   ),

@@ -41,9 +41,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  String _fullName = 'Hemanth Adapala';
-  String _username = 'byhmnth';
-  String _email = 'hemanth@example.com';
+  String _fullName = 'Guest';
+  String _username = 'Guest';
+  String _email = 'Not connected';
   String? _imagePath;
   bool _avatarFileExists = false;
   bool _isDummyDarkMode = true;
@@ -57,10 +57,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString('profile_full_name') ?? prefs.getString('profile_username');
+    final name = prefs.getString('profile_full_name') ??
+        prefs.getString('profile_username');
     final uname = prefs.getString('profile_username');
-    final mail = prefs.getString('profile_email') ?? prefs.getString('user_email');
-    final imgPath = prefs.getString('profile_avatar_path') ?? prefs.getString('profile_image_path');
+    final mail =
+        prefs.getString('profile_email') ?? prefs.getString('user_email');
+    final imgPath = prefs.getString('profile_avatar_path') ??
+        prefs.getString('profile_image_path');
 
     bool fileExists = false;
     if (imgPath != null && !imgPath.startsWith('assets/')) {
@@ -98,7 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       );
     }
-    
+
     if (_imagePath != null && _avatarFileExists) {
       return Image.file(
         File(_imagePath!),
@@ -201,7 +204,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Container(
                         decoration: const BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(32)),
                         ),
                       ),
                     ),
@@ -300,191 +304,206 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: RepaintBoundary(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 100.0),
+                      padding: const EdgeInsets.only(
+                          left: 24.0, right: 24.0, top: 12.0, bottom: 100.0),
                       child: Column(
-                      children: [
-                        // Section 1 Card (Account, Backup & Sync)
-                        GroupedListContainer(
-                          children: [
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/bottom_navigation/settings.svg',
-                              title: 'Account',
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                Navigator.push(
-                                  context,
-                                  buildPageRoute(const AccountSettingsScreen()),
-                                );
-                              },
-                            ),
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/refresh.svg',
-                              title: 'Backup & Sync',
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                Navigator.push(
-                                  context,
-                                  buildPageRoute(const BackupRestoreScreen()),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16.0),
-
-                        // Section 2 Card (Dark Mode, Storage and Data)
-                        GroupedListContainer(
-                          children: [
-                            GroupedTile.toggle(
-                              iconPath: 'assets/icons/night-day.svg',
-                              title: 'Dark Mode',
-                              trailingSwitch: ToggleSwitch(
-                                value: _isDummyDarkMode,
-                                onChanged: (val) {
-                                  HapticFeedback.selectionClick();
-                                  setState(() {
-                                    _isDummyDarkMode = val;
-                                  });
+                        children: [
+                          // Section 1 Card (Account, Backup & Sync)
+                          GroupedListContainer(
+                            children: [
+                              GroupedTile.navigation(
+                                iconPath:
+                                    'assets/icons/bottom_navigation/settings.svg',
+                                title: 'Account',
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.push(
+                                    context,
+                                    buildPageRoute(
+                                        const AccountSettingsScreen()),
+                                  );
                                 },
                               ),
-                            ),
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/settings-sliders.svg',
-                              title: 'Storage and Data',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "Storage and Data",
-                                "Storage allocations and offline cache settings.",
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16.0),
-
-                        // Section 3 Card (FAQ, Terms of service, Privacy Policy, About)
-                        GroupedListContainer(
-                          children: [
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/interrogation.svg',
-                              title: 'FAQ',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "FAQ",
-                                "Frequently asked questions and support resources.",
-                              ),
-                            ),
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/terms-info.svg',
-                              title: 'Terms of service',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "Terms of service",
-                                "Standard Terms of Service for QuickNotes.",
-                              ),
-                            ),
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/insurance.svg',
-                              title: 'Privacy Policy',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "Privacy Policy",
-                                "Privacy and Data Protection Policy for QuickNotes.",
-                              ),
-                            ),
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/terms-info.svg',
-                              title: 'About',
-                              onTap: () => _showInfoDialog(
-                                context,
-                                "About",
-                                "QuickNotes v2.9.0 — Clean minimal note-taking experience.",
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16.0),
-
-                        // Section 4 Card (🧪 Developer & Testing Screens)
-                        GroupedListContainer(
-                          children: [
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/bottom_navigation/home.svg',
-                              title: '🧪 Test Welcome Screen',
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                Navigator.push(
-                                  context,
-                                  buildPageRoute(const TestWelcomeScreen()),
-                                );
-                              },
-                            ),
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/settings-sliders.svg',
-                              title: '🧪 Test SDE Drag Selection',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (context) => const SDEDragTestScreen()),
-                                );
-                              },
-                            ),
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/refresh.svg',
-                              title: 'Glassmorphism Sandbox',
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                Navigator.push(
-                                  context,
-                                  buildPageRoute(const GlassmorphismSandboxScreen()),
-                                );
-                              },
-                            ),
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/terms-info.svg',
-                              title: 'Seed Long Note (10,000+ Chars)',
-                              onTap: () async {
-                                HapticFeedback.mediumImpact();
-                                final provider = Provider.of<NotesProvider>(context, listen: false);
-                                final seededNote = await provider.seedLongTestNote();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('✅ Seeded Long Note with ${seededNote.content.length} characters!'),
-                                      backgroundColor: const Color(0xFF34C759),
-                                      duration: const Duration(seconds: 3),
-                                    ),
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/refresh.svg',
+                                title: 'Backup & Sync',
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.push(
+                                    context,
+                                    buildPageRoute(const BackupRestoreScreen()),
                                   );
-                                }
-                              },
-                            ),
-                            GroupedTile.navigation(
-                              iconPath: 'assets/icons/alarm_clock.svg',
-                              title: 'Seed 50 Test Tasks',
-                              onTap: () async {
-                                HapticFeedback.mediumImpact();
-                                final provider = Provider.of<TasksProvider>(context, listen: false);
-                                await provider.seedTestTasks(55);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('✅ 55 Test Tasks created across Today, Weekly & Missed!'),
-                                      backgroundColor: Color(0xFF34C759),
-                                      duration: Duration(seconds: 3),
-                                    ),
+                                },
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 16.0),
+
+                          // Section 2 Card (Dark Mode, Storage and Data)
+                          GroupedListContainer(
+                            children: [
+                              GroupedTile.toggle(
+                                iconPath: 'assets/icons/night-day.svg',
+                                title: 'Dark Mode',
+                                trailingSwitch: ToggleSwitch(
+                                  value: _isDummyDarkMode,
+                                  onChanged: (val) {
+                                    HapticFeedback.selectionClick();
+                                    setState(() {
+                                      _isDummyDarkMode = val;
+                                    });
+                                  },
+                                ),
+                              ),
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/settings-sliders.svg',
+                                title: 'Storage and Data',
+                                onTap: () => _showInfoDialog(
+                                  context,
+                                  "Storage and Data",
+                                  "Storage allocations and offline cache settings.",
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 16.0),
+
+                          // Section 3 Card (FAQ, Terms of service, Privacy Policy, About)
+                          GroupedListContainer(
+                            children: [
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/interrogation.svg',
+                                title: 'FAQ',
+                                onTap: () => _showInfoDialog(
+                                  context,
+                                  "FAQ",
+                                  "Frequently asked questions and support resources.",
+                                ),
+                              ),
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/terms-info.svg',
+                                title: 'Terms of service',
+                                onTap: () => _showInfoDialog(
+                                  context,
+                                  "Terms of service",
+                                  "Standard Terms of Service for QuickNotes.",
+                                ),
+                              ),
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/insurance.svg',
+                                title: 'Privacy Policy',
+                                onTap: () => _showInfoDialog(
+                                  context,
+                                  "Privacy Policy",
+                                  "Privacy and Data Protection Policy for QuickNotes.",
+                                ),
+                              ),
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/terms-info.svg',
+                                title: 'About',
+                                onTap: () => _showInfoDialog(
+                                  context,
+                                  "About",
+                                  "QuickNotes v2.9.0 — Clean minimal note-taking experience.",
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 16.0),
+
+                          // Section 4 Card (🧪 Developer & Testing Screens)
+                          GroupedListContainer(
+                            children: [
+                              GroupedTile.navigation(
+                                iconPath:
+                                    'assets/icons/bottom_navigation/home.svg',
+                                title: '🧪 Test Welcome Screen',
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  Navigator.push(
+                                    context,
+                                    buildPageRoute(const TestWelcomeScreen()),
                                   );
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
+                                },
+                              ),
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/settings-sliders.svg',
+                                title: '🧪 Test SDE Drag Selection',
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SDEDragTestScreen()),
+                                  );
+                                },
+                              ),
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/refresh.svg',
+                                title: 'Glassmorphism Sandbox',
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  Navigator.push(
+                                    context,
+                                    buildPageRoute(
+                                        const GlassmorphismSandboxScreen()),
+                                  );
+                                },
+                              ),
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/terms-info.svg',
+                                title: 'Seed Long Note (10,000+ Chars)',
+                                onTap: () async {
+                                  HapticFeedback.mediumImpact();
+                                  final provider = Provider.of<NotesProvider>(
+                                      context,
+                                      listen: false);
+                                  final seededNote =
+                                      await provider.seedLongTestNote();
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            '✅ Seeded Long Note with ${seededNote.content.length} characters!'),
+                                        backgroundColor:
+                                            const Color(0xFF34C759),
+                                        duration: const Duration(seconds: 3),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/alarm_clock.svg',
+                                title: 'Seed 50 Test Tasks',
+                                onTap: () async {
+                                  HapticFeedback.mediumImpact();
+                                  final provider = Provider.of<TasksProvider>(
+                                      context,
+                                      listen: false);
+                                  await provider.seedTestTasks(55);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            '✅ 55 Test Tasks created across Today, Weekly & Missed!'),
+                                        backgroundColor: Color(0xFF34C759),
+                                        duration: Duration(seconds: 3),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
             ],
           ),
 
@@ -496,7 +515,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0, vertical: 12.0),
                 child: AppHeaderBar(
                   leftHeroTag: 'hero_settings_back',
                   leftWidth: 44.0,
@@ -505,7 +525,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     'assets/icons/angle_left.svg',
                     width: 22,
                     height: 22,
-                    colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                    colorFilter: const ColorFilter.mode(
+                        primaryTextColor, BlendMode.srcIn),
                   ),
                   titleWidget: Text(
                     "Settings",
@@ -526,33 +547,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   expandedChild: MoreOptionsPopup(
                     onDeleteData: () async {
                       setState(() => _isMoreOptionsOpen = false);
-                      final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-                      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                      final notesProvider =
+                          Provider.of<NotesProvider>(context, listen: false);
+                      final tasksProvider =
+                          Provider.of<TasksProvider>(context, listen: false);
                       final messenger = ScaffoldMessenger.of(context);
                       final confirm = await showDeleteNoteDialog(
                         context,
                         title: 'Delete Data',
-                        message: 'Are you sure you want to delete\nall notes and tasks? This action\ncannot be undone',
+                        message:
+                            'Are you sure you want to delete\nall notes and tasks? This action\ncannot be undone',
                       );
                       if (confirm == true && mounted) {
-                        for (final note in List<Note>.from(notesProvider.notes)) {
+                        for (final note
+                            in List<Note>.from(notesProvider.notes)) {
                           await notesProvider.deleteNote(note.id);
                         }
-                        for (final task in List<TaskItem>.from(tasksProvider.tasks)) {
+                        for (final task
+                            in List<TaskItem>.from(tasksProvider.tasks)) {
                           await tasksProvider.deleteTask(task.id);
                         }
-                        for (final folder in List<Folder>.from(notesProvider.folders)) {
+                        for (final folder
+                            in List<Folder>.from(notesProvider.folders)) {
                           await notesProvider.deleteFolder(folder.id);
                         }
                         messenger.showSnackBar(
-                          const SnackBar(content: Text('All data deleted successfully.')),
+                          const SnackBar(
+                              content: Text('All data deleted successfully.')),
                         );
                       }
                     },
                     onRefresh: () async {
                       setState(() => _isMoreOptionsOpen = false);
-                      final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-                      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                      final notesProvider =
+                          Provider.of<NotesProvider>(context, listen: false);
+                      final tasksProvider =
+                          Provider.of<TasksProvider>(context, listen: false);
                       final messenger = ScaffoldMessenger.of(context);
                       await notesProvider.loadFolders();
                       await notesProvider.loadNotes();
@@ -581,7 +611,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             width: 5.0,
                             height: 5.0,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                              color: const Color(0xFF1C1C1E)
+                                  .withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -590,7 +621,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             width: 5.0,
                             height: 5.0,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                              color: const Color(0xFF1C1C1E)
+                                  .withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -599,7 +631,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             width: 5.0,
                             height: 5.0,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1C1C1E).withValues(alpha: 0.8),
+                              color: const Color(0xFF1C1C1E)
+                                  .withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),
                           ),

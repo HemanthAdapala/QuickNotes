@@ -94,7 +94,6 @@ class FolderGridCard extends StatelessWidget {
                         painter: FolderBgPainter(color: bgColorDark),
                       ),
                     ),
-
                     Positioned(
                       left: 13.9,
                       top: 9.5,
@@ -104,7 +103,6 @@ class FolderGridCard extends StatelessWidget {
                         child: const DecorativeNoteCard(),
                       ),
                     ),
-
                     Positioned(
                       left: 73.5,
                       top: -1.5,
@@ -114,7 +112,6 @@ class FolderGridCard extends StatelessWidget {
                         child: const DecorativeNoteCard(),
                       ),
                     ),
-
                     Positioned(
                       top: 20.916,
                       left: 0,
@@ -124,7 +121,6 @@ class FolderGridCard extends StatelessWidget {
                         painter: FolderFgPainter(color: bgColor),
                       ),
                     ),
-
                     Positioned(
                       right: 8.0,
                       bottom: 8.0,
@@ -190,7 +186,8 @@ class FolderGridCard extends StatelessWidget {
               ),
               const SizedBox(width: 6.0),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
                 decoration: BoxDecoration(
                   color: const Color(0x1A787880),
                   borderRadius: BorderRadius.circular(10.0),

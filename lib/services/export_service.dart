@@ -25,11 +25,11 @@ class ExportService {
     try {
       dir = await getDownloadsDirectory();
     } catch (_) {}
-    
+
     if (dir == null && Platform.isAndroid) {
       dir = Directory('/storage/emulated/0/Download');
     }
-    
+
     if (dir == null || !dir.existsSync()) {
       dir = await getApplicationDocumentsDirectory();
     }
@@ -40,10 +40,10 @@ class ExportService {
   String generateHtml(Note note, ExportTemplate template) {
     final title = note.title.isEmpty ? 'Untitled Note' : note.title;
     final dateStr = note.updatedAt.toLocal().toString().substring(0, 16);
-    
+
     String fontStyle = "font-family: 'Inter', sans-serif;";
     String themeStyle = "";
-    
+
     switch (template) {
       case ExportTemplate.minimalist:
         themeStyle = """
@@ -85,18 +85,22 @@ class ExportService {
     }
 
     String contentBodyHtml = "";
-    contentBodyHtml += "<p style='white-space: pre-wrap; font-size: 16px; line-height: 1.6;'>${note.content}</p>";
+    contentBodyHtml +=
+        "<p style='white-space: pre-wrap; font-size: 16px; line-height: 1.6;'>${note.content}</p>";
 
     // Embed Image/Voice attachment metadata references
     if (note.attachments.isNotEmpty) {
-      contentBodyHtml += "<div style='margin-top: 32px; border-top: 1px solid #edf2f7; padding-top: 16px;'>";
-      contentBodyHtml += "<h3 style='font-size: 14px; color: #718096; margin-bottom: 12px;'>Attachments</h3><div style='display: flex; gap: 12px; flex-wrap: wrap;'>";
+      contentBodyHtml +=
+          "<div style='margin-top: 32px; border-top: 1px solid #edf2f7; padding-top: 16px;'>";
+      contentBodyHtml +=
+          "<h3 style='font-size: 14px; color: #718096; margin-bottom: 12px;'>Attachments</h3><div style='display: flex; gap: 12px; flex-wrap: wrap;'>";
       for (var att in note.attachments) {
         final type = att['type'] ?? 'file';
         final path = att['path'] ?? '';
         final name = p.basename(path);
         final icon = type == 'image' ? '🖼️' : '🎵';
-        contentBodyHtml += "<div style='background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; font-size: 13px;'><span style='margin-right: 6px;'>$icon</span>$name ($type)</div>";
+        contentBodyHtml +=
+            "<div style='background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; font-size: 13px;'><span style='margin-right: 6px;'>$icon</span>$name ($type)</div>";
       }
       contentBodyHtml += "</div></div>";
     }
@@ -105,7 +109,7 @@ class ExportService {
       <h1>$title</h1>
       <div class="meta">Category: ${note.category} | Last updated: $dateStr</div>
     """;
-    
+
     if (template == ExportTemplate.meeting) {
       headerBlock = """
         <div class="meeting-header">
@@ -147,12 +151,13 @@ class ExportService {
   // --- PDF Export Builder ---
   Future<pw.Document> generatePdf(Note note, ExportTemplate template) async {
     final pdf = pw.Document();
-    
+
     // Choose Fonts based on Template (Academic -> Serif, else Sans-serif)
     final isSerif = template == ExportTemplate.academic;
     final fontNormal = isSerif ? pw.Font.times() : pw.Font.helvetica();
     final fontBold = isSerif ? pw.Font.timesBold() : pw.Font.helveticaBold();
-    final fontItalic = isSerif ? pw.Font.timesItalic() : pw.Font.helveticaOblique();
+    final fontItalic =
+        isSerif ? pw.Font.timesItalic() : pw.Font.helveticaOblique();
 
     final title = note.title.isEmpty ? 'Untitled Note' : note.title;
     final dateStr = note.updatedAt.toLocal().toString().substring(0, 16);
@@ -162,7 +167,7 @@ class ExportService {
     PdfColor textColor = PdfColors.grey900;
     double titleSize = 24;
     pw.Alignment titleAlignment = pw.Alignment.centerLeft;
-    
+
     switch (template) {
       case ExportTemplate.minimalist:
         primaryColor = PdfColors.blueGrey800;
@@ -198,21 +203,29 @@ class ExportService {
                 padding: const pw.EdgeInsets.all(16),
                 decoration: pw.BoxDecoration(
                   color: primaryColor,
-                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+                  borderRadius:
+                      const pw.BorderRadius.all(pw.Radius.circular(8)),
                 ),
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
                       title,
-                      style: pw.TextStyle(fontSize: 22, color: PdfColors.white, fontWeight: pw.FontWeight.bold),
+                      style: pw.TextStyle(
+                          fontSize: 22,
+                          color: PdfColors.white,
+                          fontWeight: pw.FontWeight.bold),
                     ),
                     pw.SizedBox(height: 8),
                     pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
-                        pw.Text("Workspace: ${note.category}", style: const pw.TextStyle(color: PdfColors.white, fontSize: 11)),
-                        pw.Text("Date: $dateStr", style: const pw.TextStyle(color: PdfColors.white, fontSize: 11)),
+                        pw.Text("Workspace: ${note.category}",
+                            style: const pw.TextStyle(
+                                color: PdfColors.white, fontSize: 11)),
+                        pw.Text("Date: $dateStr",
+                            style: const pw.TextStyle(
+                                color: PdfColors.white, fontSize: 11)),
                       ],
                     ),
                   ],
@@ -224,7 +237,10 @@ class ExportService {
                 alignment: titleAlignment,
                 child: pw.Text(
                   title,
-                  style: pw.TextStyle(fontSize: titleSize, color: primaryColor, fontWeight: pw.FontWeight.bold),
+                  style: pw.TextStyle(
+                      fontSize: titleSize,
+                      color: primaryColor,
+                      fontWeight: pw.FontWeight.bold),
                 ),
               ),
               pw.SizedBox(height: 4),
@@ -232,11 +248,14 @@ class ExportService {
                 alignment: titleAlignment,
                 padding: const pw.EdgeInsets.only(bottom: 12),
                 decoration: const pw.BoxDecoration(
-                  border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey300, width: 1)),
+                  border: pw.Border(
+                      bottom:
+                          pw.BorderSide(color: PdfColors.grey300, width: 1)),
                 ),
                 child: pw.Text(
                   "Workspace: ${note.category}   |   Last Updated: $dateStr",
-                  style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+                  style: const pw.TextStyle(
+                      fontSize: 10, color: PdfColors.grey600),
                 ),
               ),
               pw.SizedBox(height: 20),
@@ -254,17 +273,25 @@ class ExportService {
               pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-                  pw.Text("Tags: ", style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700, fontWeight: pw.FontWeight.bold)),
+                  pw.Text("Tags: ",
+                      style: pw.TextStyle(
+                          fontSize: 10,
+                          color: PdfColors.grey700,
+                          fontWeight: pw.FontWeight.bold)),
                   pw.SizedBox(width: 6),
                   ...note.tags.map((tag) => pw.Container(
-                    margin: const pw.EdgeInsets.only(right: 6),
-                    padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                    decoration: const pw.BoxDecoration(
-                      color: PdfColors.grey200,
-                      borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
-                    ),
-                    child: pw.Text(tag, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800)),
-                  )),
+                        margin: const pw.EdgeInsets.only(right: 6),
+                        padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 3),
+                        decoration: const pw.BoxDecoration(
+                          color: PdfColors.grey200,
+                          borderRadius:
+                              pw.BorderRadius.all(pw.Radius.circular(4)),
+                        ),
+                        child: pw.Text(tag,
+                            style: const pw.TextStyle(
+                                fontSize: 9, color: PdfColors.grey800)),
+                      )),
                 ],
               ),
             ],
@@ -274,7 +301,11 @@ class ExportService {
               pw.SizedBox(height: 30),
               pw.Divider(color: PdfColors.grey300),
               pw.SizedBox(height: 10),
-              pw.Text("Attachments Summary", style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: primaryColor)),
+              pw.Text("Attachments Summary",
+                  style: pw.TextStyle(
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: primaryColor)),
               pw.SizedBox(height: 8),
               pw.GridView(
                 crossAxisCount: 2,
@@ -289,15 +320,21 @@ class ExportService {
                     padding: const pw.EdgeInsets.all(6),
                     decoration: pw.BoxDecoration(
                       border: pw.Border.all(color: PdfColors.grey300),
-                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                      borderRadius:
+                          const pw.BorderRadius.all(pw.Radius.circular(4)),
                       color: PdfColors.grey50,
                     ),
                     child: pw.Row(
                       children: [
-                        pw.Text(type == 'image' ? "[IMG]" : "[AUD]", style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+                        pw.Text(type == 'image' ? "[IMG]" : "[AUD]",
+                            style: const pw.TextStyle(
+                                fontSize: 9, color: PdfColors.grey600)),
                         pw.SizedBox(width: 6),
                         pw.Expanded(
-                          child: pw.Text(name, style: const pw.TextStyle(fontSize: 9), maxLines: 1, overflow: pw.TextOverflow.clip),
+                          child: pw.Text(name,
+                              style: const pw.TextStyle(fontSize: 9),
+                              maxLines: 1,
+                              overflow: pw.TextOverflow.clip),
                         ),
                       ],
                     ),
@@ -316,7 +353,7 @@ class ExportService {
   String generateMarkdown(Note note) {
     final title = note.title.isEmpty ? 'Untitled Note' : note.title;
     final dateStr = note.updatedAt.toLocal().toString().substring(0, 16);
-    
+
     var md = """# $title
 
 **Workspace:** ${note.category}

@@ -79,7 +79,8 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
             body: SafeArea(
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0, vertical: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -327,7 +328,8 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: Color(0xFFD97706), size: 20),
+          const Icon(Icons.info_outline_rounded,
+              color: Color(0xFFD97706), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -370,7 +372,8 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF16A34A), size: 20),
+          const Icon(Icons.check_circle_outline_rounded,
+              color: Color(0xFF16A34A), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -413,14 +416,16 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 20),
+          const Icon(Icons.error_outline_rounded,
+              color: Color(0xFFDC2626), size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  errorMessage ?? "Something went wrong while restoring your backup.",
+                  errorMessage ??
+                      "Something went wrong while restoring your backup.",
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -463,7 +468,8 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 22),
+          const Icon(Icons.check_circle_rounded,
+              color: Color(0xFF16A34A), size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -517,7 +523,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
             width: double.infinity,
             height: 52,
             decoration: BoxDecoration(
-              color: isRestoring ? const Color(0xFF3A3A3C) : const Color(0xFF1C1C1E),
+              color: isRestoring
+                  ? const Color(0xFF3A3A3C)
+                  : const Color(0xFF1C1C1E),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
@@ -537,7 +545,8 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -629,8 +638,18 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
 
   static String _formatDate(DateTime dt) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     final month = months[dt.month - 1];
     final hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);

@@ -43,7 +43,9 @@ class NotesAndTaskPill extends StatelessWidget {
             height: 32.0,
             child: Container(
               decoration: ShapeDecoration(
-                color: isNotesActive ? const Color(0xFFFFCC00) : const Color(0xFF0088FF),
+                color: isNotesActive
+                    ? const Color(0xFFFFCC00)
+                    : const Color(0xFF0088FF),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20.0),
                 ),

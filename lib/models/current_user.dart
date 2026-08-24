@@ -37,7 +37,8 @@ class CurrentUser {
       email: json['email'] as String,
       displayName: json['displayName'] as String,
       photoUrl: json['photoUrl'] as String?,
-      sessionType: SessionTypeExtension.fromValue(json['sessionType'] as String?),
+      sessionType:
+          SessionTypeExtension.fromValue(json['sessionType'] as String?),
       isOffline: json['isOffline'] as bool? ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)

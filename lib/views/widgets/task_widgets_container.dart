@@ -155,7 +155,8 @@ class _SwipableCalendarTaskCard extends StatefulWidget {
   });
 
   @override
-  State<_SwipableCalendarTaskCard> createState() => _SwipableCalendarTaskCardState();
+  State<_SwipableCalendarTaskCard> createState() =>
+      _SwipableCalendarTaskCardState();
 }
 
 class _SwipableCalendarTaskCardState extends State<_SwipableCalendarTaskCard>
@@ -232,7 +233,8 @@ class _SwipableCalendarTaskCardState extends State<_SwipableCalendarTaskCard>
       onHorizontalDragEnd: _onHorizontalDragEnd,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        color: Colors.transparent, // Transparent background, no white box artifacts!
+        color: Colors
+            .transparent, // Transparent background, no white box artifacts!
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -375,5 +377,3 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
-
-

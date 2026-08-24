@@ -66,10 +66,12 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFFF2F2EE),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text(
             "New Category",
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.black),
+            style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold, color: Colors.black),
           ),
           content: TextField(
             controller: _categoryNameController,
@@ -92,7 +94,9 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                 _categoryNameController.clear();
                 Navigator.pop(context);
               },
-              child: Text("Cancel", style: GoogleFonts.plusJakartaSans(color: const Color(0xFF8C8987))),
+              child: Text("Cancel",
+                  style: GoogleFonts.plusJakartaSans(
+                      color: const Color(0xFF8C8987))),
             ),
             ElevatedButton(
               onPressed: () {
@@ -102,7 +106,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                   widget.onCategorySelected(name);
                   _categoryNameController.clear();
                   Navigator.pop(context);
-                  
+
                   // Dismiss bottom sheet after a short delay
                   Future.delayed(const Duration(milliseconds: 150), () {
                     if (mounted) {
@@ -114,9 +118,12 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF222222),
                 foregroundColor: const Color(0xFFF2F2EE),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text("Create", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+              child: Text("Create",
+                  style:
+                      GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -138,10 +145,9 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
     final allCategories = allCategoriesSet.toList();
 
     // Sort default categories first, custom ones after, but keep Uncategorized at the end
-    final List<String> gridCategories = allCategories
-        .where((c) => c.toLowerCase() != 'uncategorized')
-        .toList();
-    
+    final List<String> gridCategories =
+        allCategories.where((c) => c.toLowerCase() != 'uncategorized').toList();
+
     // Sort custom categories alphabetically
     final List<String> defaultStatic = ['Personal', 'Work', 'Ideas', 'Study'];
     gridCategories.sort((a, b) {
@@ -152,7 +158,8 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
       return a.compareTo(b);
     });
 
-    final customCategoriesOnly = gridCategories.where((c) => !defaultStatic.contains(c)).toList();
+    final customCategoriesOnly =
+        gridCategories.where((c) => !defaultStatic.contains(c)).toList();
 
     // Group gridCategories into rows of 2
     final List<List<String>> rows = [];
@@ -198,7 +205,8 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
             ),
             // Header Row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,8 +273,10 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                             Expanded(
                               child: _buildTagButton(
                                 category: rowItems[0],
-                                isSelected: widget.currentCategory == rowItems[0],
-                                color: _getCustomCategoryColor(rowItems[0], customCategoriesOnly),
+                                isSelected:
+                                    widget.currentCategory == rowItems[0],
+                                color: _getCustomCategoryColor(
+                                    rowItems[0], customCategoriesOnly),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -274,8 +284,10 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                               child: rowItems.length > 1
                                   ? _buildTagButton(
                                       category: rowItems[1],
-                                      isSelected: widget.currentCategory == rowItems[1],
-                                      color: _getCustomCategoryColor(rowItems[1], customCategoriesOnly),
+                                      isSelected:
+                                          widget.currentCategory == rowItems[1],
+                                      color: _getCustomCategoryColor(
+                                          rowItems[1], customCategoriesOnly),
                                     )
                                   : const SizedBox.shrink(),
                             ),
@@ -288,7 +300,8 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: _buildTagButton(
                         category: "Uncategorized",
-                        isSelected: widget.currentCategory.toLowerCase() == 'uncategorized',
+                        isSelected: widget.currentCategory.toLowerCase() ==
+                            'uncategorized',
                         color: Colors.transparent,
                         isFullWidth: true,
                       ),
@@ -313,7 +326,8 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
               child: TactileButton(
                 onTap: () => _showCreateCategoryDialog(allCategories),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 8.0),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(9999),
                   ),
@@ -386,7 +400,9 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
               : [],
         ),
         child: Row(
-          mainAxisAlignment: isSelected ? MainAxisAlignment.spaceBetween : MainAxisAlignment.start,
+          mainAxisAlignment: isSelected
+              ? MainAxisAlignment.spaceBetween
+              : MainAxisAlignment.start,
           children: [
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -399,7 +415,9 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                     color: color == Colors.transparent ? null : color,
                     border: color == Colors.transparent
                         ? Border.all(
-                            color: isSelected ? const Color(0xFFF2F2EE) : const Color(0xFF747878),
+                            color: isSelected
+                                ? const Color(0xFFF2F2EE)
+                                : const Color(0xFF747878),
                             width: 1.5,
                           )
                         : null,

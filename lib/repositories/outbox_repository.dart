@@ -8,7 +8,8 @@ abstract class OutboxRepository {
   Future<int> insertOutboxItem(DatabaseExecutor executor, SyncOutboxItem item);
   Future<List<SyncOutboxItem>> getPendingOutboxItems(String userId);
   Future<int> markOutboxItemSynced(String id, int syncedVersion);
-  Future<int> deleteOutboxItemsForEntity(DatabaseExecutor executor, String entityId);
+  Future<int> deleteOutboxItemsForEntity(
+      DatabaseExecutor executor, String entityId);
   Future<void> acknowledgeOutboxItem({
     required String outboxId,
     required String entityType,
@@ -34,7 +35,8 @@ class SqliteOutboxRepository implements OutboxRepository {
   String _resolveActiveUserId() {
     final activeId = SessionManager().activeUserId;
     if (activeId == null || activeId.isEmpty) {
-      throw const OwnershipException('No active canonical user exists for this repository operation.');
+      throw const OwnershipException(
+          'No active canonical user exists for this repository operation.');
     }
     return activeId;
   }
@@ -53,10 +55,12 @@ class SqliteOutboxRepository implements OutboxRepository {
   }
 
   @override
-  Future<int> insertOutboxItem(DatabaseExecutor executor, SyncOutboxItem item) async {
+  Future<int> insertOutboxItem(
+      DatabaseExecutor executor, SyncOutboxItem item) async {
     final uid = _resolveActiveUserId();
     if (item.userId != uid) {
-      throw OwnershipException('Ownership violation: Cannot queue outbox item for user ${item.userId} under active user $uid');
+      throw OwnershipException(
+          'Ownership violation: Cannot queue outbox item for user ${item.userId} under active user $uid');
     }
     return await executor.insert(
       'sync_outbox',
@@ -69,7 +73,8 @@ class SqliteOutboxRepository implements OutboxRepository {
   Future<List<SyncOutboxItem>> getPendingOutboxItems(String userId) async {
     final uid = _resolveActiveUserId();
     if (userId != uid) {
-      throw OwnershipException('Ownership violation: Cannot read outbox for user $userId under active user $uid');
+      throw OwnershipException(
+          'Ownership violation: Cannot read outbox for user $userId under active user $uid');
     }
     return await _dbService.runInTransaction((executor) async {
       final maps = await executor.query(
@@ -95,7 +100,8 @@ class SqliteOutboxRepository implements OutboxRepository {
   }
 
   @override
-  Future<int> deleteOutboxItemsForEntity(DatabaseExecutor executor, String entityId) async {
+  Future<int> deleteOutboxItemsForEntity(
+      DatabaseExecutor executor, String entityId) async {
     final uid = _resolveActiveUserId();
     return await executor.delete(
       'sync_outbox',

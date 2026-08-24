@@ -42,7 +42,8 @@ class SqliteNotesRepository implements NotesRepository {
   String _resolveActiveUserId() {
     final activeId = SessionManager().activeUserId;
     if (activeId == null || activeId.isEmpty) {
-      throw const OwnershipException('No active canonical user exists for this repository operation.');
+      throw const OwnershipException(
+          'No active canonical user exists for this repository operation.');
     }
     return activeId;
   }
@@ -92,7 +93,8 @@ class SqliteNotesRepository implements NotesRepository {
     final uid = _resolveActiveUserId();
     final note = await _dbService.queryById(id);
     if (note != null && note.userId != null && note.userId != uid) {
-      throw OwnershipException('Ownership violation: User $uid cannot read note belonging to User ${note.userId}');
+      throw OwnershipException(
+          'Ownership violation: User $uid cannot read note belonging to User ${note.userId}');
     }
     return (note != null && note.userId == uid) ? note : null;
   }
@@ -201,10 +203,13 @@ class SqliteNotesRepository implements NotesRepository {
       if (existingMap.isNotEmpty) {
         final ownerId = existingMap.first['userId'] as String?;
         if (ownerId != null && ownerId != uid) {
-          throw OwnershipException('Ownership violation: User $uid cannot update note belonging to User $ownerId');
+          throw OwnershipException(
+              'Ownership violation: User $uid cannot update note belonging to User $ownerId');
         }
       }
-      final currentVersion = existingMap.isNotEmpty ? (existingMap.first['version'] as int? ?? 1) : 1;
+      final currentVersion = existingMap.isNotEmpty
+          ? (existingMap.first['version'] as int? ?? 1)
+          : 1;
       final newVersion = currentVersion + 1;
       final now = DateTime.now();
 
@@ -382,7 +387,8 @@ class SqliteNotesRepository implements NotesRepository {
       if (existingMap.isEmpty) return 0;
       final ownerId = existingMap.first['userId'] as String?;
       if (ownerId != null && ownerId != uid) {
-        throw OwnershipException('Ownership violation: User $uid cannot trash note belonging to User $ownerId');
+        throw OwnershipException(
+            'Ownership violation: User $uid cannot trash note belonging to User $ownerId');
       }
       final existing = Note.fromMap(existingMap.first);
       if (existing.isDeleted) return 1; // Idempotent
@@ -425,7 +431,8 @@ class SqliteNotesRepository implements NotesRepository {
       if (existingMap.isEmpty) return 0;
       final ownerId = existingMap.first['userId'] as String?;
       if (ownerId != null && ownerId != uid) {
-        throw OwnershipException('Ownership violation: User $uid cannot restore note belonging to User $ownerId');
+        throw OwnershipException(
+            'Ownership violation: User $uid cannot restore note belonging to User $ownerId');
       }
       final existing = Note.fromMap(existingMap.first);
       if (!existing.isDeleted) return 1; // Idempotent
@@ -468,7 +475,8 @@ class SqliteNotesRepository implements NotesRepository {
       if (existingMap.isEmpty) return 0;
       final ownerId = existingMap.first['userId'] as String?;
       if (ownerId != null && ownerId != uid) {
-        throw OwnershipException('Ownership violation: User $uid cannot delete note belonging to User $ownerId');
+        throw OwnershipException(
+            'Ownership violation: User $uid cannot delete note belonging to User $ownerId');
       }
       final existing = Note.fromMap(existingMap.first);
 
@@ -510,7 +518,8 @@ class SqliteNotesRepository implements NotesRepository {
         where: 'userId = ? AND isDeleted = 1',
         whereArgs: [uid],
       );
-      final trashedNotes = trashedNotesMaps.map((m) => Note.fromMap(m)).toList();
+      final trashedNotes =
+          trashedNotesMaps.map((m) => Note.fromMap(m)).toList();
 
       final res = await executor.delete(
         'notes',

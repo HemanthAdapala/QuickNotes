@@ -23,7 +23,8 @@ class RichTextSelectionToolbar extends StatelessWidget {
 
     final controller = editableTextState.widget.controller;
     final bool isRichText = controller is RichTextEditingController;
-    final bool hasSelection = !editableTextState.textEditingValue.selection.isCollapsed;
+    final bool hasSelection =
+        !editableTextState.textEditingValue.selection.isCollapsed;
 
     final List<Widget> items = [];
 

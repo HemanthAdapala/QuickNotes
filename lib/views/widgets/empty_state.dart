@@ -31,22 +31,26 @@ class EmptyState extends StatelessWidget {
     if (view == NotesViewType.archive) {
       visualIcon = icon ?? Icons.archive_outlined;
       titleText = title ?? "Archive is empty";
-      subtitleText = subtitle ?? "Move notes here to declutter your dashboard without losing them permanently.";
+      subtitleText = subtitle ??
+          "Move notes here to declutter your dashboard without losing them permanently.";
       containerColor = theme.colorScheme.secondaryContainer;
     } else if (view == NotesViewType.favorites) {
       visualIcon = icon ?? Icons.star_outline_rounded;
       titleText = title ?? "No favorites yet";
-      subtitleText = subtitle ?? "Mark important notes as favorites to gather them here in one place.";
+      subtitleText = subtitle ??
+          "Mark important notes as favorites to gather them here in one place.";
       containerColor = theme.colorScheme.tertiaryContainer;
     } else if (view == NotesViewType.trash) {
       visualIcon = icon ?? Icons.delete_outline_rounded;
       titleText = title ?? "Trash is empty";
-      subtitleText = subtitle ?? "Notes you delete will appear here before being permanently purged.";
+      subtitleText = subtitle ??
+          "Notes you delete will appear here before being permanently purged.";
       containerColor = theme.colorScheme.errorContainer;
     } else {
       visualIcon = icon ?? Icons.edit_document;
       titleText = title ?? "Your thoughts are empty";
-      subtitleText = subtitle ?? "Capture your ideas, organize tasks, and pin important memories. Tap the button below to write your first note.";
+      subtitleText = subtitle ??
+          "Capture your ideas, organize tasks, and pin important memories. Tap the button below to write your first note.";
       containerColor = theme.colorScheme.primaryContainer;
     }
 
@@ -82,7 +86,8 @@ class EmptyState extends StatelessWidget {
                     width: 110,
                     height: 140,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest.withAlpha(150),
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withAlpha(150),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -119,7 +124,8 @@ class EmptyState extends StatelessWidget {
                           width: 40,
                           height: 6,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.onSurfaceVariant.withAlpha(180),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withAlpha(180),
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),
@@ -128,7 +134,8 @@ class EmptyState extends StatelessWidget {
                           width: 70,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.onSurfaceVariant.withAlpha(100),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withAlpha(100),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -137,7 +144,8 @@ class EmptyState extends StatelessWidget {
                           width: 60,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.onSurfaceVariant.withAlpha(100),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withAlpha(100),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -146,7 +154,8 @@ class EmptyState extends StatelessWidget {
                           width: 45,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.onSurfaceVariant.withAlpha(100),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withAlpha(100),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -156,7 +165,8 @@ class EmptyState extends StatelessWidget {
                           child: Icon(
                             visualIcon,
                             size: 20,
-                            color: theme.colorScheme.onSurfaceVariant.withAlpha(180),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withAlpha(180),
                           ),
                         ),
                       ],
@@ -218,4 +228,3 @@ class EmptyState extends StatelessWidget {
     );
   }
 }
-

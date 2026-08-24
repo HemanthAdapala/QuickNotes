@@ -87,12 +87,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _initMonthTasks() {
     _monthTasks.clear();
     final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-    final daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+    final daysInMonth =
+        DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
 
     for (int day = 1; day <= daysInMonth; day++) {
       final date = DateTime(_currentMonth.year, _currentMonth.month, day);
       final dayTasks = tasksProvider.getTasksForDate(date);
-      
+
       _monthTasks[day] = dayTasks.map((t) {
         final priority = switch (t.priority.toLowerCase()) {
           'high' => TaskPriority.red,
@@ -127,8 +128,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   bool get _isCurrentMonth {
     final now = DateTime.now();
-    return _currentMonth.year == now.year &&
-        _currentMonth.month == now.month;
+    return _currentMonth.year == now.year && _currentMonth.month == now.month;
   }
 
   List<CalendarTask> get _selectedDayTasks {
@@ -160,13 +160,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _toggleTask(String taskId) {
     bool allComplete = false;
     final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-    final selectedDate = DateTime(_currentMonth.year, _currentMonth.month, _selectedDay);
+    final selectedDate =
+        DateTime(_currentMonth.year, _currentMonth.month, _selectedDay);
     tasksProvider.toggleTaskCompletionOnDate(taskId, selectedDate);
 
     setState(() {
       _initMonthTasks();
       final tasks = _monthTasks[_selectedDay];
-      allComplete = tasks != null && tasks.isNotEmpty && tasks.every((t) => t.isCompleted);
+      allComplete = tasks != null &&
+          tasks.isNotEmpty &&
+          tasks.every((t) => t.isCompleted);
     });
 
     if (allComplete) {
@@ -195,8 +198,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
 
-    final bool isRecurring = taskItem.isRecurring || taskItem.recurrence != null || taskItem.repeatRule != RepeatRule.none;
-    final DateTime selectedDate = DateTime(_currentMonth.year, _currentMonth.month, _selectedDay);
+    final bool isRecurring = taskItem.isRecurring ||
+        taskItem.recurrence != null ||
+        taskItem.repeatRule != RepeatRule.none;
+    final DateTime selectedDate =
+        DateTime(_currentMonth.year, _currentMonth.month, _selectedDay);
     final option = await showDeleteTaskDialog(
       context,
       isRecurring: isRecurring,
@@ -364,7 +370,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           settleDuration: const Duration(milliseconds: 1000),
                           onTap: () {
                             HapticFeedback.selectionClick();
-                            Navigator.of(context).push(buildSearchTransitionRoute(
+                            Navigator.of(context)
+                                .push(buildSearchTransitionRoute(
                               builder: (_) => const SearchScreen(
                                 initialScope: 'tasks',
                               ),
@@ -428,7 +435,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(24)),
                     child: TaskWidgetsContainer(
                       selectedDate: DateTime(
                         _currentMonth.year,

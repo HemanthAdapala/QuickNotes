@@ -122,11 +122,10 @@ class AccountController extends ChangeNotifier {
 
   String get displayName =>
       _userRepository.currentUser?.displayName ??
-      (isOffline ? 'Offline User' : 'QuickNotes User');
+      (isOffline ? 'Guest' : 'QuickNotes User');
 
   String get email =>
-      _userRepository.currentUser?.email ??
-      (isOffline ? 'Not connected' : '');
+      _userRepository.currentUser?.email ?? (isOffline ? 'Not connected' : '');
 
   String? get photoUrl => _userRepository.currentUser?.photoUrl;
 
@@ -198,7 +197,8 @@ class AccountController extends ChangeNotifier {
       }
 
       final authUser = authResult.user!;
-      final activeUserId = _sessionManager.activeUserId ?? _userRepository.currentUser?.id;
+      final activeUserId =
+          _sessionManager.activeUserId ?? _userRepository.currentUser?.id;
 
       if (activeUserId == null || activeUserId.isEmpty) {
         const error = 'No active user session found to link Google account.';
@@ -207,7 +207,8 @@ class AccountController extends ChangeNotifier {
       }
 
       // STEP 4: Call UserIdentityService.linkGoogleIdentityToActiveUser
-      final linkResult = await _userIdentityService.linkGoogleIdentityToActiveUser(
+      final linkResult =
+          await _userIdentityService.linkGoogleIdentityToActiveUser(
         activeUserId: activeUserId,
         googleId: authUser.id,
         email: authUser.email,
@@ -231,7 +232,8 @@ class AccountController extends ChangeNotifier {
           final updatedCurrentUser = CurrentUser(
             id: activeUserId,
             email: linkResult.profile?.email ?? authUser.email,
-            displayName: linkResult.profile?.displayName ?? authUser.displayName,
+            displayName:
+                linkResult.profile?.displayName ?? authUser.displayName,
             photoUrl: linkResult.profile?.photoUrl ?? authUser.photoUrl,
             sessionType: SessionType.google,
             isOffline: false,
@@ -242,7 +244,8 @@ class AccountController extends ChangeNotifier {
           // 4. Check First-Run Recovery eligibility
           try {
             final detector = _recoveryDetector ??
-                FirstRunRecoveryDetector(storageAdapter: GoogleDriveBackupService());
+                FirstRunRecoveryDetector(
+                    storageAdapter: GoogleDriveBackupService());
             final recResult = await detector.checkEligibility();
             _recoveryResult = recResult;
 
@@ -268,12 +271,14 @@ class AccountController extends ChangeNotifier {
           );
 
         case IdentityLinkStatus.userNotFound:
-          const notFoundErr = 'Active user was not found. Please restart the app.';
+          const notFoundErr =
+              'Active user was not found. Please restart the app.';
           _setState(AccountUiState.error, error: notFoundErr);
           return AccountLinkResult.error(notFoundErr);
 
         case IdentityLinkStatus.alreadyLinkedToDifferentIdentity:
-          const diffErr = 'Account is already linked to a different Google account.';
+          const diffErr =
+              'Account is already linked to a different Google account.';
           _setState(AccountUiState.error, error: diffErr);
           return AccountLinkResult.error(diffErr);
 

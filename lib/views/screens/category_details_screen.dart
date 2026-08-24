@@ -48,12 +48,12 @@ import 'folder_notes_screen.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const Map<String, Color> _kCategoryDotColors = {
-  'Personal':      Color(0xFF4A90D9), // blue dot  — mockup
-  'Work':          Color(0xFF4CAF50), // green dot
-  'Ideas':         Color(0xFFFFB800), // yellow dot
-  'Study':         Color(0xFFE91E63), // pink dot
-  'Hobbies':       Color(0xFF9C27B0), // purple dot
-  'Recipes':       Color(0xFF64B5F6), // light blue
+  'Personal': Color(0xFF4A90D9), // blue dot  — mockup
+  'Work': Color(0xFF4CAF50), // green dot
+  'Ideas': Color(0xFFFFB800), // yellow dot
+  'Study': Color(0xFFE91E63), // pink dot
+  'Hobbies': Color(0xFF9C27B0), // purple dot
+  'Recipes': Color(0xFF64B5F6), // light blue
   'Uncategorized': Color(0xFF9E9E9E), // grey
 };
 
@@ -90,7 +90,6 @@ class CategoryDetailsScreen extends StatefulWidget {
 
 class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     with TickerProviderStateMixin {
-
   // ── State ─────────────────────────────────────────────────────────────────
   bool _isFabVisible = true;
   final GlobalKey _fabKey = GlobalKey();
@@ -98,14 +97,13 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
 
   // Soft tint on the header area (category accent at ~12% opacity)
   late AnimationController _tintCtrl;
-  late Animation<Color?>    _tintAnim;
+  late Animation<Color?> _tintAnim;
   bool _tintReady = false;
 
   // Fade-in gate for the note list (waits for push-transition to finish)
   double _fadeProgress = 0.0;
 
-  Color get _accent =>
-      widget.accentColor ?? _categoryDotColor(widget.category);
+  Color get _accent => widget.accentColor ?? _categoryDotColor(widget.category);
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -117,13 +115,13 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     _tintCtrl = AnimationController(vsync: this, duration: kDurationNormal);
     _tintAnim = ColorTween(
       begin: AppColors.background,
-      end:   AppColors.background,
+      end: AppColors.background,
     ).animate(_tintCtrl);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<NotesProvider>(context, listen: false);
       provider.setSelectedCategory(widget.category);
-      
+
       final route = ModalRoute.of(context);
       if (route != null) {
         route.animation?.addListener(_onRouteAnim);
@@ -165,10 +163,11 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_tintReady) {
-      final theme  = Theme.of(context);
+      final theme = Theme.of(context);
       const isDark = false;
-      final base   = isDark ? theme.scaffoldBackgroundColor : AppColors.background;
-      final end    = Color.lerp(base, _accent, isDark ? 0.08 : 0.12)!;
+      final base =
+          isDark ? theme.scaffoldBackgroundColor : AppColors.background;
+      final end = Color.lerp(base, _accent, isDark ? 0.08 : 0.12)!;
 
       _tintAnim = ColorTween(begin: base, end: end)
           .animate(CurvedAnimation(parent: _tintCtrl, curve: kCurveDefault));
@@ -185,12 +184,13 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     final route = ModalRoute.of(context);
     route?.animation?.removeListener(_onRouteAnim);
     route?.animation?.removeStatusListener(_onRouteStatus);
-    
+
     // Reset category selection safely
     try {
-      Provider.of<NotesProvider>(context, listen: false).setSelectedCategory("All");
+      Provider.of<NotesProvider>(context, listen: false)
+          .setSelectedCategory("All");
     } catch (_) {}
-    
+
     super.dispose();
   }
 
@@ -215,11 +215,12 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
         ),
         child: PinLockSheet(
           onPinSubmitted: (pin) async {
-            final nav  = Navigator.of(context);
+            final nav = Navigator.of(context);
             final msng = ScaffoldMessenger.of(context);
             if (await provider.unlockVault(pin)) {
               final decryptedNote = await provider.getNoteById(note.id);
-              if (mounted && decryptedNote != null) nav.push(buildPageRoute(NoteEditorScreen(note: decryptedNote)));
+              if (mounted && decryptedNote != null)
+                nav.push(buildPageRoute(NoteEditorScreen(note: decryptedNote)));
             } else {
               if (mounted) {
                 msng
@@ -253,13 +254,14 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                 child: Text(
                   note.title.isNotEmpty ? note.title : 'Untitled Note',
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.bold,
-                    fontSize:   16,
-                    color:      theme.colorScheme.primary,
+                    fontSize: 16,
+                    color: theme.colorScheme.primary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -268,31 +270,44 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
               const Divider(height: 1),
               ListTile(
                 leading: Icon(
-                  note.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                  note.isFavorite
+                      ? Icons.star_rounded
+                      : Icons.star_outline_rounded,
                   color: Colors.amber,
                 ),
-                title: Text(note.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'),
-                onTap: () { Navigator.pop(ctx); provider.toggleFavorite(note.id); },
+                title: Text(note.isFavorite
+                    ? 'Remove from Favorites'
+                    : 'Add to Favorites'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  provider.toggleFavorite(note.id);
+                },
               ),
               ListTile(
                 leading: Icon(
-                  note.isArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
+                  note.isArchived
+                      ? Icons.unarchive_outlined
+                      : Icons.archive_outlined,
                   color: theme.colorScheme.primary,
                 ),
-                title: Text(note.isArchived ? 'Unarchive Note' : 'Archive Note'),
+                title:
+                    Text(note.isArchived ? 'Unarchive Note' : 'Archive Note'),
                 onTap: () {
                   Navigator.pop(ctx);
                   provider.toggleArchive(note.id);
                   ScaffoldMessenger.of(context)
                     ..hideCurrentSnackBar()
                     ..showSnackBar(SnackBar(
-                      content:  Text(note.isArchived ? 'Note unarchived' : 'Note archived'),
+                      content: Text(note.isArchived
+                          ? 'Note unarchived'
+                          : 'Note archived'),
                       duration: const Duration(seconds: 1),
                     ));
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                leading:
+                    const Icon(Icons.delete_outline_rounded, color: Colors.red),
                 title: const Text('Delete (Move to Trash)'),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -318,7 +333,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   // ── Swipe action backgrounds ───────────────────────────────────────────────
 
   Widget _swipeBg({required bool isSecondary}) {
-    final theme  = Theme.of(context);
+    final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
@@ -331,7 +346,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
           width: 1.5,
         ),
       ),
-      padding:   const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       alignment: isSecondary ? Alignment.centerRight : Alignment.centerLeft,
       child: Icon(
         isSecondary ? Icons.more_horiz_rounded : Icons.push_pin_rounded,
@@ -357,12 +372,10 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     bool isDark,
   ) {
     // Count unique folders these notes belong to
-    final folderIds = catNotes
-        .map((n) => n.folderId)
-        .where((id) => id != null)
-        .toSet();
+    final folderIds =
+        catNotes.map((n) => n.folderId).where((id) => id != null).toSet();
     final folderCount = folderIds.length;
-    final noteCount   = catNotes.length;
+    final noteCount = catNotes.length;
 
     return Padding(
       // Matches nav bar horizontal margin: 30px sides, top: 12px below nav bar
@@ -377,12 +390,13 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
               Expanded(
                 child: Text(
                   widget.category,
-                  style: GoogleFonts.inter(    // project rule: Playfair for titles
-                    fontSize:      34,
-                    fontWeight:    FontWeight.w700,       // Bold
-                    color:         isDark ? Colors.white : const Color(0xFF333333),
+                  style: GoogleFonts.inter(
+                    // project rule: Playfair for titles
+                    fontSize: 34,
+                    fontWeight: FontWeight.w700, // Bold
+                    color: isDark ? Colors.white : const Color(0xFF333333),
                     letterSpacing: 0.0,
-                    height:        1.1,
+                    height: 1.1,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -391,7 +405,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
               const SizedBox(width: 8),
               // Accent dot — mockup shows ~10px circle after the title
               Container(
-                width:  10,
+                width: 10,
                 height: 10,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -407,10 +421,11 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
           // Mockup: Inter Regular, ~11px, #828282, uppercase, letterSpacing ~1.2
           Text(
             'ACROSS $folderCount ${folderCount == 1 ? 'FOLDER' : 'FOLDERS'} · $noteCount ${noteCount == 1 ? 'NOTE' : 'NOTES'}',
-            style: GoogleFonts.inter(               // project rule: Inter for labels
-              fontSize:      11,
-              fontWeight:    FontWeight.w400,       // Regular
-              color:         isDark ? Colors.white54 : const Color(0xFF828282),
+            style: GoogleFonts.inter(
+              // project rule: Inter for labels
+              fontSize: 11,
+              fontWeight: FontWeight.w400, // Regular
+              color: isDark ? Colors.white54 : const Color(0xFF828282),
               letterSpacing: 1.2,
             ),
           ),
@@ -429,17 +444,18 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   //   top gap from title block to first card: 16px
   // ─────────────────────────────────────────────────────────────────────────
 
-  Widget _buildNoteList(List<NoteSummary> notes, NotesProvider provider, ThemeData theme) {
+  Widget _buildNoteList(
+      List<NoteSummary> notes, NotesProvider provider, ThemeData theme) {
     return ListView.builder(
-      controller:  _scrollController,
-      physics:     const BouncingScrollPhysics(),
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.only(
-        left:   24,
-        right:  24,
-        top:    0,
+        left: 24,
+        right: 24,
+        top: 0,
         bottom: 120,
       ),
-      itemCount:   notes.length + (provider.isPageLoading ? 1 : 0),
+      itemCount: notes.length + (provider.isPageLoading ? 1 : 0),
       itemBuilder: (context, i) {
         if (i == notes.length) {
           return Padding(
@@ -460,12 +476,12 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0), // mockup gap
           child: AnimatedListEntrance(
-            key:   ValueKey(note.id),
+            key: ValueKey(note.id),
             index: i,
             child: Dismissible(
-              key:       Key('cat_${note.id}'),
+              key: Key('cat_${note.id}'),
               direction: DismissDirection.horizontal,
-              background:          _swipeBg(isSecondary: false),
+              background: _swipeBg(isSecondary: false),
               secondaryBackground: _swipeBg(isSecondary: true),
               confirmDismiss: (dir) async {
                 if (dir == DismissDirection.startToEnd) {
@@ -473,7 +489,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                   ScaffoldMessenger.of(context)
                     ..hideCurrentSnackBar()
                     ..showSnackBar(SnackBar(
-                      content:  Text(note.isPinned ? 'Note unpinned' : 'Note pinned'),
+                      content:
+                          Text(note.isPinned ? 'Note unpinned' : 'Note pinned'),
                       duration: const Duration(seconds: 1),
                     ));
                 } else {
@@ -482,18 +499,18 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                 return false;
               },
               child: _CategoryNoteCard(
-                note:        note,
-                provider:    provider,
-                onTap:       () => _onNoteTap(note, provider),
+                note: note,
+                provider: provider,
+                onTap: () => _onNoteTap(note, provider),
                 onPinToggle: () => provider.togglePin(note.id),
-                onDelete:    () {
+                onDelete: () {
                   provider.trashNote(note.id);
                   ScaffoldMessenger.of(context)
                     ..hideCurrentSnackBar()
                     ..showSnackBar(SnackBar(
                       content: const Text('Note moved to Recycle Bin'),
-                      action:  SnackBarAction(
-                        label:     'UNDO',
+                      action: SnackBarAction(
+                        label: 'UNDO',
                         onPressed: () => provider.restoreFromTrash(note.id),
                       ),
                     ));
@@ -520,8 +537,9 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
 
   Widget _buildEmptyState(BuildContext context, bool isDark) {
     final cardBg = isDark
-        ? const Color(0xFF1E3A2F)   // dark sage
-        : const Color(0xFFD4ECDD);  // light sage — Sage pastcl from provider (index 4)
+        ? const Color(0xFF1E3A2F) // dark sage
+        : const Color(
+            0xFFD4ECDD); // light sage — Sage pastcl from provider (index 4)
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -529,8 +547,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
         decoration: BoxDecoration(
-          color:         cardBg,
-          borderRadius:  BorderRadius.circular(20), // mockup radius
+          color: cardBg,
+          borderRadius: BorderRadius.circular(20), // mockup radius
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.35),
             width: 1.0,
@@ -541,7 +559,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
           children: [
             // Folder illustration + decorative dots
             SizedBox(
-              width:  120,
+              width: 120,
               height: 100,
               child: Stack(
                 alignment: Alignment.center,
@@ -549,17 +567,18 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                   // Main folder icon
                   Icon(
                     Icons.folder_open_outlined,
-                    size:  72,
+                    size: 72,
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.5)
                         : const Color(0xFF524534).withValues(alpha: 0.6),
                   ),
                   // Decorative dot top-right
                   Positioned(
-                    top:   4,
+                    top: 4,
                     right: 8,
                     child: Container(
-                      width: 10, height: 10,
+                      width: 10,
+                      height: 10,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _accent.withValues(alpha: 0.80),
@@ -568,10 +587,11 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                   ),
                   // Decorative dot top-left
                   Positioned(
-                    top:  14,
+                    top: 14,
                     left: 14,
                     child: Container(
-                      width: 7, height: 7,
+                      width: 7,
+                      height: 7,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _accent.withValues(alpha: 0.50),
@@ -581,9 +601,10 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                   // Decorative dot bottom-right
                   Positioned(
                     bottom: 10,
-                    right:  12,
+                    right: 12,
                     child: Container(
-                      width: 6, height: 6,
+                      width: 6,
+                      height: 6,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _accent.withValues(alpha: 0.60),
@@ -600,9 +621,10 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             Text(
               'No notes tagged\n${widget.category} yet',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(    // project rule: Playfair for headings
-                fontSize:   20,
-                fontWeight: FontWeight.w700,          // Bold
+              style: GoogleFonts.inter(
+                // project rule: Playfair for headings
+                fontSize: 20,
+                fontWeight: FontWeight.w700, // Bold
                 color: isDark ? Colors.white : const Color(0xFF211A12),
                 height: 1.3,
               ),
@@ -614,9 +636,10 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             Text(
               'Assign this category from the note editor',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(              // project rule: Inter for body
-                fontSize:   13,
-                fontWeight: FontWeight.w400,          // Regular
+              style: GoogleFonts.inter(
+                // project rule: Inter for body
+                fontSize: 13,
+                fontWeight: FontWeight.w400, // Regular
                 color: isDark
                     ? Colors.white60
                     : const Color(0xFF524534).withValues(alpha: 0.75),
@@ -635,8 +658,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme    = Theme.of(context);
-    const isDark   = false;
+    final theme = Theme.of(context);
+    const isDark = false;
     final provider = Provider.of<NotesProvider>(context);
 
     // All active notes belonging to this category
@@ -650,7 +673,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
       return b.updatedAt.compareTo(a.updatedAt);
     });
 
-    final scaffoldBg = isDark ? theme.scaffoldBackgroundColor : AppColors.background;
+    final scaffoldBg =
+        isDark ? theme.scaffoldBackgroundColor : AppColors.background;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -658,15 +682,15 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
       // ── FAB ───────────────────────────────────────────────────────────────
       // Opens NoteEditorScreen with this category pre-selected
       floatingActionButton: AnimatedScale(
-        scale:    _isFabVisible ? 1.0 : 0.0,
+        scale: _isFabVisible ? 1.0 : 0.0,
         duration: kDurationFast,
-        curve:    _isFabVisible ? kCurveEnter : kCurveExit,
+        curve: _isFabVisible ? kCurveEnter : kCurveExit,
         child: AnimatedOpacity(
-          opacity:  _isFabVisible ? 1.0 : 0.0,
+          opacity: _isFabVisible ? 1.0 : 0.0,
           duration: kDurationFast,
-          curve:    _isFabVisible ? kCurveEnter : kCurveExit,
+          curve: _isFabVisible ? kCurveEnter : kCurveExit,
           child: LivingFloatingActionButton(
-            key:             _fabKey,
+            key: _fabKey,
             backgroundColor: AppColors.amber,
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(16)),
@@ -695,11 +719,9 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
           }
           return false;
         },
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // ── HEADER ─────────────────────────────────────────────────────
             // Same nav-bar pattern as folder_notes_screen.dart:
             //   back arrow  ←  (angle_left.svg)  |  spacer  |  search icon Q
@@ -709,9 +731,9 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             AnimatedBuilder(
               animation: _tintAnim,
               builder: (_, child) => Container(
-                width:      double.infinity,
+                width: double.infinity,
                 decoration: BoxDecoration(color: _tintAnim.value),
-                child:      child,
+                child: child,
               ),
               child: SafeArea(
                 bottom: false,
@@ -720,7 +742,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                   children: [
                     // Nav bar row
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0, vertical: 12.0),
                       child: AppHeaderBar(
                         leftWidth: 44.0,
                         onLeftTap: () {
@@ -743,7 +766,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                           settleDuration: const Duration(milliseconds: 1000),
                           onTap: () {
                             HapticFeedback.lightImpact();
-                            Navigator.of(context).push(buildSearchTransitionRoute(
+                            Navigator.of(context)
+                                .push(buildSearchTransitionRoute(
                               builder: (_) => SearchScreen(
                                 initialScope: 'notes',
                                 presetCategory: widget.category,
@@ -803,7 +827,6 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   }
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // _CategoryNoteCard
 //
@@ -837,7 +860,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CategoryNoteCard extends StatefulWidget {
-  final NoteSummary  note;
+  final NoteSummary note;
   final NotesProvider provider;
   final VoidCallback onTap;
   final VoidCallback onPinToggle;
@@ -857,9 +880,8 @@ class _CategoryNoteCard extends StatefulWidget {
 
 class _CategoryNoteCardState extends State<_CategoryNoteCard>
     with SingleTickerProviderStateMixin {
-
   late AnimationController _press;
-  late Animation<double>   _scale;
+  late Animation<double> _scale;
 
   @override
   void initState() {
@@ -870,12 +892,16 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
   }
 
   @override
-  void dispose() { _press.dispose(); super.dispose(); }
+  void dispose() {
+    _press.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = NotesProvider.getNoteColor(widget.note.colorValue, context);
-    final date      = DateFormat('MMM d, yyyy').format(widget.note.updatedAt);
+    final cardColor =
+        NotesProvider.getNoteColor(widget.note.colorValue, context);
+    final date = DateFormat('MMM d, yyyy').format(widget.note.updatedAt);
 
     final folderName = widget.note.folderName?.toUpperCase();
 
@@ -887,13 +913,20 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
     )!;
 
     return GestureDetector(
-      behavior:    HitTestBehavior.opaque,
-      onTapDown:   (_) => _press.animateTo(1.0, duration: kDurationCardPress,   curve: kCurveExit),
-      onTapUp:     (_) { _press.animateTo(0.0, duration: kDurationCardRelease, curve: kCurveEnter); widget.onTap(); },
-      onTapCancel: ()  => _press.animateTo(0.0, duration: kDurationCardRelease, curve: kCurveEnter),
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => _press.animateTo(1.0,
+          duration: kDurationCardPress, curve: kCurveExit),
+      onTapUp: (_) {
+        _press.animateTo(0.0,
+            duration: kDurationCardRelease, curve: kCurveEnter);
+        widget.onTap();
+      },
+      onTapCancel: () => _press.animateTo(0.0,
+          duration: kDurationCardRelease, curve: kCurveEnter),
       child: AnimatedBuilder(
         animation: _press,
-        builder: (_, child) => Transform.scale(scale: _scale.value, child: child),
+        builder: (_, child) =>
+            Transform.scale(scale: _scale.value, child: child),
         child: _buildCard(context, cardColor, date, folderName, pillBg),
       ),
     );
@@ -909,10 +942,10 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedContainer(
-      duration:    kDurationNormal,
-      width:       double.infinity,
-      decoration:  BoxDecoration(
-        color:        cardColor,
+      duration: kDurationNormal,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardColor,
         borderRadius: BorderRadius.circular(16), // mockup: 16px
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.45),
@@ -920,9 +953,9 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
         ),
         boxShadow: [
           BoxShadow(
-            color:      Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
-            offset:     const Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -931,9 +964,8 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize:       MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           children: [
-
             // ── TOP ROW ────────────────────────────────────────────────────
             // Left:  weight label "Inter 500" / "Inter 400"
             // Right: folder name pill "WEEKDAYS"
@@ -947,10 +979,11 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                   widget.note.isPinned
                       ? 'Pinned'
                       : 'Inter ${widget.note.colorValue > 0 ? '500' : '400'}',
-                  style: GoogleFonts.inter(        // project rule: Inter for labels
-                    fontSize:   11,
-                    fontWeight: FontWeight.w400,   // Regular
-                    color:      const Color(0xFF524534).withValues(alpha: 0.70),
+                  style: GoogleFonts.inter(
+                    // project rule: Inter for labels
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400, // Regular
+                    color: const Color(0xFF524534).withValues(alpha: 0.70),
                     letterSpacing: 0.2,
                   ),
                 ),
@@ -961,23 +994,26 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                     behavior: HitTestBehavior.opaque,
                     onTap: () {
                       HapticFeedback.lightImpact();
-                      final noteFolder = widget.provider.folders.firstWhere((f) => f.id == widget.note.folderId);
+                      final noteFolder = widget.provider.folders
+                          .firstWhere((f) => f.id == widget.note.folderId);
                       Navigator.of(context).push(
                         buildPageRoute(FolderNotesScreen(folder: noteFolder)),
                       );
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),    // mockup pill padding
+                          horizontal: 8, vertical: 3), // mockup pill padding
                       decoration: BoxDecoration(
-                        color:        pillBg,
-                        borderRadius: BorderRadius.circular(4), // mockup: small radius
+                        color: pillBg,
+                        borderRadius:
+                            BorderRadius.circular(4), // mockup: small radius
                       ),
                       child: Text(
                         folderName,
-                        style: GoogleFonts.inter(    // project rule: Inter for labels
-                          fontSize:      10,         // mockup: ~10px
-                          fontWeight:    FontWeight.w500, // Medium
+                        style: GoogleFonts.inter(
+                          // project rule: Inter for labels
+                          fontSize: 10, // mockup: ~10px
+                          fontWeight: FontWeight.w500, // Medium
                           color: isDark
                               ? Colors.white70
                               : const Color(0xFF524534).withValues(alpha: 0.85),
@@ -996,15 +1032,18 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
             Text(
               widget.note.isLocked
                   ? 'Locked Note'
-                  : (widget.note.title.isNotEmpty ? widget.note.title : 'Untitled'),
-              style: GoogleFonts.inter(   // project rule: Playfair for titles
-                fontSize:   20,
-                fontWeight: FontWeight.w600,         // SemiBold
-                color:      isDark ? Colors.white : const Color(0xFF211A12),
-                height:     1.25,
+                  : (widget.note.title.isNotEmpty
+                      ? widget.note.title
+                      : 'Untitled'),
+              style: GoogleFonts.inter(
+                // project rule: Playfair for titles
+                fontSize: 20,
+                fontWeight: FontWeight.w600, // SemiBold
+                color: isDark ? Colors.white : const Color(0xFF211A12),
+                height: 1.25,
               ),
-              maxLines:  2,
-              overflow:  TextOverflow.ellipsis,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
 
             const SizedBox(height: 4),
@@ -1017,18 +1056,17 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                   : (widget.note.previewText.isNotEmpty
                       ? widget.note.previewText
                       : 'No additional text'),
-              style: GoogleFonts.inter(             // project rule: Inter for body
-                fontSize:   13,
-                fontWeight: FontWeight.w400,        // Regular
+              style: GoogleFonts.inter(
+                // project rule: Inter for body
+                fontSize: 13,
+                fontWeight: FontWeight.w400, // Regular
                 color: widget.note.previewText.isNotEmpty
-                    ? (isDark
-                        ? Colors.white70
-                        : const Color(0xFF524534))
+                    ? (isDark ? Colors.white70 : const Color(0xFF524534))
                     : const Color(0xFF524534).withValues(alpha: 0.45),
-                height:     1.5,
+                height: 1.5,
               ),
-              maxLines:  1,
-              overflow:  TextOverflow.ellipsis,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
 
             // ── FOOTER ROW ─────────────────────────────────────────────────
@@ -1047,7 +1085,7 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                   children: [
                     // 8px circle dot — #524534 @ 60% (mockup)
                     Container(
-                      width:  8,
+                      width: 8,
                       height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -1063,16 +1101,18 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                           ? NotesProvider.colorNames[widget.note.colorValue]
                           : 'Default',
                       style: GoogleFonts.inter(
-                        fontSize:   12,
+                        fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color:      isDark ? Colors.white38 : const Color(0xFF828282),
+                        color:
+                            isDark ? Colors.white38 : const Color(0xFF828282),
                       ),
                     ),
                     if (widget.note.isPinned) ...[
                       const SizedBox(width: 8),
                       Icon(Icons.push_pin,
-                          size:  11,
-                          color: const Color(0xFF524534).withValues(alpha: 0.5)),
+                          size: 11,
+                          color:
+                              const Color(0xFF524534).withValues(alpha: 0.5)),
                     ],
                   ],
                 ),
@@ -1081,9 +1121,9 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                 Text(
                   date,
                   style: GoogleFonts.inter(
-                    fontSize:   12,
+                    fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color:      isDark ? Colors.white38 : const Color(0xFF828282),
+                    color: isDark ? Colors.white38 : const Color(0xFF828282),
                   ),
                 ),
               ],

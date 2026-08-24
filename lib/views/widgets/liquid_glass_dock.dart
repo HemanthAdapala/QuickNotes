@@ -70,7 +70,7 @@ class LiquidGlassDock extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // 2. Base White Pill & Glass Layer
           ClipRRect(
             borderRadius: BorderRadius.circular(25),
@@ -81,7 +81,9 @@ class LiquidGlassDock extends StatelessWidget {
                 height: 50,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(25),
-                  color: Colors.white.withValues(alpha: 0.25), // Translucent white base to allow blur & depth visibility
+                  color: Colors.white.withValues(
+                      alpha:
+                          0.25), // Translucent white base to allow blur & depth visibility
                   boxShadow: [
                     // Inner Shadow #1
                     BoxShadow(
@@ -120,10 +122,14 @@ class LiquidGlassDock extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildDockIcon(Icons.phone_iphone_rounded, Colors.green.shade600),
-                    _buildDockIcon(Icons.chat_bubble_rounded, Colors.blue.shade600),
-                    _buildDockIcon(Icons.explore_rounded, Colors.orange.shade600),
-                    _buildDockIcon(Icons.music_note_rounded, Colors.pink.shade600),
+                    _buildDockIcon(
+                        Icons.phone_iphone_rounded, Colors.green.shade600),
+                    _buildDockIcon(
+                        Icons.chat_bubble_rounded, Colors.blue.shade600),
+                    _buildDockIcon(
+                        Icons.explore_rounded, Colors.orange.shade600),
+                    _buildDockIcon(
+                        Icons.music_note_rounded, Colors.pink.shade600),
                   ],
                 ),
               ),

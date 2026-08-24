@@ -79,7 +79,8 @@ class InEditorLocalSearchController extends ChangeNotifier {
   /// Steps back to the previous match with wrap-around
   void previousMatch() {
     if (_matches.isEmpty) return;
-    _currentMatchIndex = (_currentMatchIndex - 1 + _matches.length) % _matches.length;
+    _currentMatchIndex =
+        (_currentMatchIndex - 1 + _matches.length) % _matches.length;
     notifyListeners();
   }
 

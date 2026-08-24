@@ -252,3 +252,76 @@ None.
 ### Final Result
 
 A production-ready `LoginScreen` with clean architectural separation, standardized header back button UI, robust Google OAuth and offline mode integration, and floating error feedback.
+
+---
+
+## Version
+v1.0.1
+
+---
+
+## Date
+2026-08-24
+
+---
+
+## Author
+Anti Gravity
+
+---
+
+## Type
+- Bug Fix
+- UI
+
+---
+
+## Summary
+Replaced AppHeader back button with a circular back button above the Google Login button.
+
+---
+
+## Detailed Changes
+- Removed AppHeader from LoginScreen.
+- Added Container with a circular back arrow IconButton placed above the "Continue with Google" button.
+
+---
+
+## Why was this change made?
+To improve UI consistency and address visual bugs reported by the user.
+
+---
+
+## Architecture Impact
+No architectural impact.
+
+---
+
+## Files Modified
+- lib/views/screens/login_screen.dart
+
+---
+
+## Breaking Changes
+None.
+
+---
+
+## Migration Notes
+None.
+
+---
+
+## Known Issues
+None.
+
+---
+
+## Testing Status
+- Manual Tests: Verified UI renders correctly.
+- Automated Tests: flutter analyze passes.
+
+---
+
+## Final Result
+Login screen now uses a localized circular back button instead of the global app header.

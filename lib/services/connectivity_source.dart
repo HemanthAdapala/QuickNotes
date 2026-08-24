@@ -32,7 +32,9 @@ class PlatformConnectivitySource implements ConnectivitySource {
         r == ConnectivityResult.vpn ||
         r == ConnectivityResult.bluetooth);
 
-    return hasOnlineType ? ConnectivityStatus.online : ConnectivityStatus.unknown;
+    return hasOnlineType
+        ? ConnectivityStatus.online
+        : ConnectivityStatus.unknown;
   }
 
   @override

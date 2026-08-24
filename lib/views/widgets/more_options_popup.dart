@@ -39,7 +39,8 @@ class MoreOptionsPopup extends StatelessWidget {
                       height: 50,
                       decoration: const ShapeDecoration(
                         shape: RoundedRectangleBorder(
-                          side: BorderSide(width: 0.20, color: Color(0x33000000)),
+                          side:
+                              BorderSide(width: 0.20, color: Color(0x33000000)),
                         ),
                       ),
                     ),
@@ -51,7 +52,8 @@ class MoreOptionsPopup extends StatelessWidget {
                       'assets/icons/trash.svg',
                       width: 16,
                       height: 16,
-                      colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                      colorFilter:
+                          const ColorFilter.mode(Colors.black, BlendMode.srcIn),
                     ),
                   ),
                   Positioned(
@@ -94,7 +96,8 @@ class MoreOptionsPopup extends StatelessWidget {
                       'assets/icons/refresh.svg',
                       width: 16,
                       height: 16,
-                      colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                      colorFilter:
+                          const ColorFilter.mode(Colors.black, BlendMode.srcIn),
                     ),
                   ),
                   Positioned(

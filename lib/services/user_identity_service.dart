@@ -28,7 +28,8 @@ class UserIdentityService {
     String? displayName,
     String? photoUrl,
   }) async {
-    final existingIdentity = await _identityRepository.findIdentity(provider, providerUserId);
+    final existingIdentity =
+        await _identityRepository.findIdentity(provider, providerUserId);
 
     if (existingIdentity != null) {
       await _identityRepository.updateLastAuthenticatedAt(
@@ -72,4 +73,3 @@ class UserIdentityService {
     );
   }
 }
-

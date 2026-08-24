@@ -797,6 +797,7 @@ void main() {
             home: Scaffold(
               body: HomePromptView(
                 date: DateTime(2026, 6, 15, 8, 0),
+                displayName: 'TestUser',
               ),
             ),
           ),
@@ -814,6 +815,7 @@ void main() {
             home: Scaffold(
               body: HomePromptView(
                 date: DateTime(2026, 6, 15, 14, 0),
+                displayName: 'TestUser',
               ),
             ),
           ),
@@ -831,6 +833,7 @@ void main() {
             home: Scaffold(
               body: HomePromptView(
                 date: DateTime(2026, 6, 15, 20, 0),
+                displayName: 'TestUser',
               ),
             ),
           ),
@@ -853,6 +856,7 @@ void main() {
             home: Scaffold(
               body: HomePromptView(
                 date: DateTime(2026, 6, 15, 12, 0),
+                displayName: 'TestUser',
               ),
             ),
           ),
@@ -885,6 +889,7 @@ void main() {
             home: Scaffold(
               body: HomePromptView(
                 date: now,
+                displayName: 'TestUser',
               ),
             ),
           ),
@@ -916,6 +921,7 @@ void main() {
             home: Scaffold(
               body: HomePromptView(
                 date: now,
+                displayName: 'TestUser',
               ),
             ),
           ),

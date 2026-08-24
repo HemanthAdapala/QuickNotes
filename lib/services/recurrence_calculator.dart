@@ -12,7 +12,8 @@ class RecurrenceCalculator {
     DateTime? after,
     int currentOccurrenceCount = 1,
   }) {
-    if (rule.maxOccurrences != null && currentOccurrenceCount >= rule.maxOccurrences!) {
+    if (rule.maxOccurrences != null &&
+        currentOccurrenceCount >= rule.maxOccurrences!) {
       return null;
     }
 
@@ -22,7 +23,8 @@ class RecurrenceCalculator {
       int occurrencesCalculated = currentOccurrenceCount;
       while (!candidate.isAfter(after)) {
         occurrencesCalculated++;
-        if (rule.maxOccurrences != null && occurrencesCalculated >= rule.maxOccurrences!) {
+        if (rule.maxOccurrences != null &&
+            occurrencesCalculated >= rule.maxOccurrences!) {
           return null;
         }
         candidate = _calculateSingleStep(candidate, rule);
@@ -62,8 +64,10 @@ class RecurrenceCalculator {
         final maxDaysInMonth = _daysInMonth(targetYear, targetMonth);
         final targetDay = day > maxDaysInMonth ? maxDaysInMonth : day;
         return isUtc
-            ? DateTime.utc(targetYear, targetMonth, targetDay, hour, minute, second)
-            : DateTime(targetYear, targetMonth, targetDay, hour, minute, second);
+            ? DateTime.utc(
+                targetYear, targetMonth, targetDay, hour, minute, second)
+            : DateTime(
+                targetYear, targetMonth, targetDay, hour, minute, second);
 
       case RecurrenceType.yearly:
         int targetYear = year + rule.interval;

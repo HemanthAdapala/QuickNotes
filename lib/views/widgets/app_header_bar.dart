@@ -125,15 +125,18 @@ class AppHeaderBar extends StatelessWidget {
                   child: BottomBarGlassSurface(
                     width: isExpanded ? expandedWidth : rightWidth,
                     height: isExpanded ? expandedHeight : 44.0,
-                    borderRadius: BorderRadius.circular(isExpanded ? 20.0 : 22.0),
+                    borderRadius:
+                        BorderRadius.circular(isExpanded ? 20.0 : 22.0),
                     useFrost: true,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(isExpanded ? 20.0 : 22.0),
+                      borderRadius:
+                          BorderRadius.circular(isExpanded ? 20.0 : 22.0),
                       child: Stack(
                         children: [
                           // Collapsed state: 3-dots icon
                           AnimatedOpacity(
-                            duration: Duration(milliseconds: isExpanded ? 200 : 250),
+                            duration:
+                                Duration(milliseconds: isExpanded ? 200 : 250),
                             curve: Curves.easeOut,
                             opacity: isExpanded ? 0.0 : 1.0,
                             child: IgnorePointer(
@@ -145,15 +148,19 @@ class AppHeaderBar extends StatelessWidget {
                           // Expanded state: MoreOptionsPopup menu items (staggered fade & subtle slide)
                           if (expandedChild != null)
                             AnimatedOpacity(
-                              duration: Duration(milliseconds: isExpanded ? 420 : 200),
+                              duration: Duration(
+                                  milliseconds: isExpanded ? 420 : 200),
                               curve: Curves.easeOutCubic,
                               opacity: isExpanded ? 1.0 : 0.0,
                               child: IgnorePointer(
                                 ignoring: !isExpanded,
                                 child: AnimatedSlide(
-                                  duration: Duration(milliseconds: isExpanded ? 420 : 200),
+                                  duration: Duration(
+                                      milliseconds: isExpanded ? 420 : 200),
                                   curve: Curves.easeOutCubic,
-                                  offset: isExpanded ? Offset.zero : const Offset(0, 0.08),
+                                  offset: isExpanded
+                                      ? Offset.zero
+                                      : const Offset(0, 0.08),
                                   child: OverflowBox(
                                     minWidth: expandedWidth,
                                     maxWidth: expandedWidth,

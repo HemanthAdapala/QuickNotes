@@ -13,7 +13,8 @@ abstract class DocSegment {
 
 class TextSegment extends DocSegment {
   final int segmentIndex;
-  final String type; // 'paragraph', 'h1', 'h2', 'h3', 'quote', 'checkbox', 'bullet', 'number'
+  final String
+      type; // 'paragraph', 'h1', 'h2', 'h3', 'quote', 'checkbox', 'bullet', 'number'
   final bool checked;
   final int indent;
   final int start;
@@ -76,7 +77,8 @@ class NewSingleDocumentEditor extends StatefulWidget {
   });
 
   @override
-  State<NewSingleDocumentEditor> createState() => NewSingleDocumentEditorState();
+  State<NewSingleDocumentEditor> createState() =>
+      NewSingleDocumentEditorState();
 }
 
 class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
@@ -92,12 +94,14 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
   int _lastKnownNewlineCount = 0;
   int _lastKnownImageCount = 0;
 
-  List<TextSegment> get textSegments => _segments.whereType<TextSegment>().toList();
+  List<TextSegment> get textSegments =>
+      _segments.whereType<TextSegment>().toList();
   List<DocSegment> get allSegments => List.unmodifiable(_segments);
   Map<int, GlobalKey> get imageKeys => _imageKeys;
   Map<int, GlobalKey> get textFieldKeys => _textFieldKeys;
   Map<int, GlobalKey> get segmentContainerKeys => _segmentContainerKeys;
-  RangeTextEditingController? getSegmentController(int segmentIndex) => _controllers[segmentIndex];
+  RangeTextEditingController? getSegmentController(int segmentIndex) =>
+      _controllers[segmentIndex];
 
   @override
   void initState() {
@@ -138,7 +142,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     if (mounted) {
       if (_needsFullRebuild) {
         _needsFullRebuild = false;
-        debugPrint("[SDE FullParse] Rebuild required from explicit parseCurrentSegments. Running setState.");
+        debugPrint(
+            "[SDE FullParse] Rebuild required from explicit parseCurrentSegments. Running setState.");
         setState(() {});
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
@@ -150,7 +155,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
       final bool fastPathSuccess = _tryIncrementalUpdate();
       if (!fastPathSuccess) {
-        debugPrint("[SDE FullParse] Structural edit or fallback detected. Running parseCurrentSegments().");
+        debugPrint(
+            "[SDE FullParse] Structural edit or fallback detected. Running parseCurrentSegments().");
         setState(() {
           parseCurrentSegments();
         });
@@ -178,7 +184,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       if (chars[i].char == '\uFFFC') currentImageCount++;
     }
 
-    if (currentNewlineCount != _lastKnownNewlineCount || currentImageCount != _lastKnownImageCount) {
+    if (currentNewlineCount != _lastKnownNewlineCount ||
+        currentImageCount != _lastKnownImageCount) {
       return false; // Structural edit! Line break or image count changed.
     }
 
@@ -186,7 +193,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     int activeSegmentIdx = -1;
     for (int i = 0; i < _segments.length; i++) {
       final seg = _segments[i];
-      if (seg is TextSegment && focusNodes[seg.segmentIndex]?.hasFocus == true) {
+      if (seg is TextSegment &&
+          focusNodes[seg.segmentIndex]?.hasFocus == true) {
         activeSegmentIdx = i;
         break;
       }
@@ -198,7 +206,9 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       if (parentSel.isValid) {
         for (int i = 0; i < _segments.length; i++) {
           final seg = _segments[i];
-          if (seg is TextSegment && parentSel.baseOffset >= seg.start && parentSel.baseOffset <= seg.end) {
+          if (seg is TextSegment &&
+              parentSel.baseOffset >= seg.start &&
+              parentSel.baseOffset <= seg.end) {
             activeSegmentIdx = i;
             break;
           }
@@ -239,7 +249,10 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     final int newLen = oldLen + delta;
 
     // Quick boundary checks
-    if (oldStart < 0 || oldStart > chars.length || newLen < 0 || (oldStart + newLen) > chars.length) {
+    if (oldStart < 0 ||
+        oldStart > chars.length ||
+        newLen < 0 ||
+        (oldStart + newLen) > chars.length) {
       return false;
     }
 
@@ -328,7 +341,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       }
     }
 
-    debugPrint("[SDE FastPath] Non-structural edit in segment ${targetSeg.segmentIndex} (delta=$delta, newLen=$newLen). Bypassing parseCurrentSegments().");
+    debugPrint(
+        "[SDE FastPath] Non-structural edit in segment ${targetSeg.segmentIndex} (delta=$delta, newLen=$newLen). Bypassing parseCurrentSegments().");
     return true;
   }
 
@@ -405,7 +419,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
   void _syncFocusWithParentSelection() {
     if (_selectedImageGlobalIndex != null) return;
-    if (!widget.focusNode.hasFocus) return; // Prevent focus stealing during search or external focus
+    if (!widget.focusNode.hasFocus)
+      return; // Prevent focus stealing during search or external focus
     final parentSel = widget.controller.selection;
     if (!parentSel.isValid || !parentSel.isCollapsed) return;
 
@@ -414,7 +429,9 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       if (controller == null) continue;
 
       final range = controller.getRange();
-      if (range.isValid && parentSel.baseOffset >= range.start && parentSel.baseOffset <= range.end) {
+      if (range.isValid &&
+          parentSel.baseOffset >= range.start &&
+          parentSel.baseOffset <= range.end) {
         final node = focusNodes[segment.segmentIndex];
         if (node != null && !node.hasFocus) {
           node.requestFocus();
@@ -448,9 +465,9 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
             updated[i] = StyledChar(
               char: i == segment.start ? newSymbol : updated[i].char,
               style: updated[i].style.copyWith(
-                checked: newChecked,
-                strikethrough: newChecked,
-              ),
+                    checked: newChecked,
+                    strikethrough: newChecked,
+                  ),
             );
           }
         }
@@ -511,10 +528,12 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     }
   }
 
-  KeyEventResult _handleEnterKey(int segmentIndex, RangeTextEditingController controller) {
+  KeyEventResult _handleEnterKey(
+      int segmentIndex, RangeTextEditingController controller) {
     final text = controller.text;
     final selection = controller.selection;
-    if (!selection.isValid || !selection.isCollapsed) return KeyEventResult.ignored;
+    if (!selection.isValid || !selection.isCollapsed)
+      return KeyEventResult.ignored;
 
     final behavior = ParagraphBlockRegistry.getBehaviorForText(text);
     if (behavior != null) {
@@ -528,7 +547,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     return KeyEventResult.ignored;
   }
 
-  KeyEventResult _handleKeyEvent(int segmentIndex, FocusNode node, KeyEvent event) {
+  KeyEventResult _handleKeyEvent(
+      int segmentIndex, FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
@@ -540,7 +560,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     final text = controller.text;
     final prefixOffset = _getPrefixOffset(text);
 
-    debugPrint("[SDE] _handleKeyEvent: segmentIndex=$segmentIndex, key=${event.logicalKey.keyLabel}, eventType=${event.runtimeType}, text='$text', selection=$selection");
+    debugPrint(
+        "[SDE] _handleKeyEvent: segmentIndex=$segmentIndex, key=${event.logicalKey.keyLabel}, eventType=${event.runtimeType}, text='$text', selection=$selection");
 
     // Enter: Handle smart list/quote continuation or exit list/quote mode
     if (event.logicalKey == LogicalKeyboardKey.enter) {
@@ -574,7 +595,9 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     // Arrow Up / Left: Move to previous segment if cursor is at or before start of visible text
     if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
         event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-      if (selection.isValid && selection.isCollapsed && selection.baseOffset <= prefixOffset) {
+      if (selection.isValid &&
+          selection.isCollapsed &&
+          selection.baseOffset <= prefixOffset) {
         int prevIndex = segmentIndex - 1;
         while (prevIndex >= 0) {
           final prevController = _controllers[prevIndex];
@@ -597,7 +620,9 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     // Arrow Down / Right: Move to next segment if cursor is at the end of text
     if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
         event.logicalKey == LogicalKeyboardKey.arrowRight) {
-      if (selection.isValid && selection.isCollapsed && selection.baseOffset == text.length) {
+      if (selection.isValid &&
+          selection.isCollapsed &&
+          selection.baseOffset == text.length) {
         int nextIndex = segmentIndex + 1;
         while (nextIndex < _segments.length) {
           final nextController = _controllers[nextIndex];
@@ -620,7 +645,9 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
     // Backspace: Delete image if preceding is image, or merge with previous paragraph
     if (event.logicalKey == LogicalKeyboardKey.backspace) {
-      if (selection.isValid && selection.isCollapsed && selection.baseOffset == prefixOffset) {
+      if (selection.isValid &&
+          selection.isCollapsed &&
+          selection.baseOffset == prefixOffset) {
         if (event is KeyRepeatEvent) {
           return KeyEventResult.handled;
         }
@@ -643,12 +670,14 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
               final imageIndex = currentRange.start - 1;
               final chars = widget.controller.styledChars;
 
-              if (imageIndex < chars.length && chars[imageIndex].char == '\uFFFC') {
+              if (imageIndex < chars.length &&
+                  chars[imageIndex].char == '\uFFFC') {
                 final List<StyledChar> updatedChars = List.from(chars);
                 updatedChars.removeAt(imageIndex);
 
                 int deletionIndex = imageIndex;
-                if (imageIndex > 0 && updatedChars[imageIndex - 1].char == '\n') {
+                if (imageIndex > 0 &&
+                    updatedChars[imageIndex - 1].char == '\n') {
                   updatedChars.removeAt(imageIndex - 1);
                   deletionIndex = imageIndex - 1;
                 }
@@ -674,14 +703,18 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
                 if (prevRange.isValid) {
                   final List<StyledChar> updatedChars = List.from(chars);
                   int newlineIndex = currentRange.start - 1;
-                  
+
                   int charsToRemove = 1;
                   if (behavior != null) {
-                    charsToRemove = 1 + behavior.prefixLen; // remove newline AND prefix characters!
+                    charsToRemove = 1 +
+                        behavior
+                            .prefixLen; // remove newline AND prefix characters!
                   }
 
-                  if (newlineIndex >= 0 && newlineIndex + charsToRemove <= updatedChars.length) {
-                    updatedChars.removeRange(newlineIndex, newlineIndex + charsToRemove);
+                  if (newlineIndex >= 0 &&
+                      newlineIndex + charsToRemove <= updatedChars.length) {
+                    updatedChars.removeRange(
+                        newlineIndex, newlineIndex + charsToRemove);
                   }
 
                   widget.controller.styledChars = updatedChars;
@@ -749,13 +782,18 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     int lineStart = 0;
     while (lineStart < chars.length) {
       int lineEnd = lineStart;
-      while (lineEnd < chars.length && chars[lineEnd].char != '\n' && chars[lineEnd].char != '\uFFFC') {
+      while (lineEnd < chars.length &&
+          chars[lineEnd].char != '\n' &&
+          chars[lineEnd].char != '\uFFFC') {
         lineEnd++;
       }
 
-      if (lineEnd < chars.length && chars[lineEnd].char == '\uFFFC' && chars[lineEnd].style.imageUrl != null) {
+      if (lineEnd < chars.length &&
+          chars[lineEnd].char == '\uFFFC' &&
+          chars[lineEnd].style.imageUrl != null) {
         if (lineEnd > lineStart) {
-          parsed.add(_createTextSegment(lineStart, lineEnd, textSegmentIndex++));
+          parsed
+              .add(_createTextSegment(lineStart, lineEnd, textSegmentIndex++));
         }
         parsed.add(ImageSegment(
           globalIndex: lineEnd,
@@ -786,10 +824,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
     _segments = parsed;
 
-    final activeTextIndices = _segments
-        .whereType<TextSegment>()
-        .map((s) => s.segmentIndex)
-        .toSet();
+    final activeTextIndices =
+        _segments.whereType<TextSegment>().map((s) => s.segmentIndex).toSet();
 
     _controllers.removeWhere((idx, controller) {
       if (!activeTextIndices.contains(idx)) {
@@ -808,12 +844,11 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     });
 
     _textFieldKeys.removeWhere((idx, key) => !activeTextIndices.contains(idx));
-    _segmentContainerKeys.removeWhere((idx, key) => !activeTextIndices.contains(idx));
+    _segmentContainerKeys
+        .removeWhere((idx, key) => !activeTextIndices.contains(idx));
 
-    final activeImageIndices = _segments
-        .whereType<ImageSegment>()
-        .map((s) => s.globalIndex)
-        .toSet();
+    final activeImageIndices =
+        _segments.whereType<ImageSegment>().map((s) => s.globalIndex).toSet();
     _imageKeys.removeWhere((idx, key) => !activeImageIndices.contains(idx));
 
     for (final segment in _segments.whereType<TextSegment>()) {
@@ -838,12 +873,12 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
           return n;
         },
       );
-      
+
       final existingController = _controllers[segment.segmentIndex];
       if (existingController != null) {
         existingController.updateOffsets(segment.start, segment.end);
       }
-      
+
       _controllers.putIfAbsent(
         segment.segmentIndex,
         () => RangeTextEditingController(
@@ -875,10 +910,12 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
   Widget _buildTextSegmentWidget(TextSegment segment) {
     final controller = _controllers[segment.segmentIndex]!;
     final focusNode = focusNodes[segment.segmentIndex]!;
-    final key = _textFieldKeys.putIfAbsent(segment.segmentIndex, () => GlobalKey());
+    final key =
+        _textFieldKeys.putIfAbsent(segment.segmentIndex, () => GlobalKey());
 
     final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
-    final double bottomPadding = keyboardInset + widget.formattingToolbarHeight + 30.0;
+    final double bottomPadding =
+        keyboardInset + widget.formattingToolbarHeight + 30.0;
 
     double fontSize = 16.0;
     FontWeight fontWeight = FontWeight.normal;
@@ -945,8 +982,11 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
     final textFieldWidget = Focus(
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
-          if (segment.segmentIndex == 0 && controller.selection.isCollapsed && controller.selection.start == 0) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.backspace) {
+          if (segment.segmentIndex == 0 &&
+              controller.selection.isCollapsed &&
+              controller.selection.start == 0) {
             if (widget.onBackspaceAtStart != null) {
               widget.onBackspaceAtStart!();
               return KeyEventResult.handled;
@@ -958,7 +998,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       child: textField,
     );
 
-    final double firstLineHeight = fontSize * lineHeight * widget.paperGuideHeight;
+    final double firstLineHeight =
+        fontSize * lineHeight * widget.paperGuideHeight;
 
     Widget resultWidget = textFieldWidget;
 
@@ -1036,7 +1077,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       );
     }
 
-    final containerKey = _segmentContainerKeys.putIfAbsent(segment.segmentIndex, () => GlobalKey());
+    final containerKey = _segmentContainerKeys.putIfAbsent(
+        segment.segmentIndex, () => GlobalKey());
 
     Widget finalWidget = resultWidget;
     if (segment.indent > 0) {
@@ -1054,7 +1096,10 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
   void scrollToMatchOffset(int matchStart) {
     final targetSegIdx = _segments.indexWhere(
-      (seg) => seg is TextSegment && matchStart >= seg.start && matchStart <= seg.end,
+      (seg) =>
+          seg is TextSegment &&
+          matchStart >= seg.start &&
+          matchStart <= seg.end,
     );
     if (targetSegIdx == -1) return;
 
@@ -1068,17 +1113,20 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutCubic,
       );
-    } else if (widget.scrollController != null && widget.scrollController!.hasClients) {
+    } else if (widget.scrollController != null &&
+        widget.scrollController!.hasClients) {
       final maxScroll = widget.scrollController!.position.maxScrollExtent;
       final totalSegs = _segments.isEmpty ? 1 : _segments.length;
       final targetFraction = (targetSegIdx / totalSegs).clamp(0.0, 1.0);
       final approxOffset = maxScroll * targetFraction;
 
-      widget.scrollController!.animateTo(
+      widget.scrollController!
+          .animateTo(
         approxOffset,
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOutCubic,
-      ).then((_) {
+      )
+          .then((_) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final newKey = _segmentContainerKeys[targetSeg.segmentIndex];
           if (newKey?.currentContext != null) {
@@ -1130,8 +1178,10 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
           if (hasActiveSelection) {
             if (segment is TextSegment) {
-              final bool isStart = selStart >= segment.start && selStart <= segment.end;
-              final bool isEnd = selEnd >= segment.start && selEnd <= segment.end;
+              final bool isStart =
+                  selStart >= segment.start && selStart <= segment.end;
+              final bool isEnd =
+                  selEnd >= segment.start && selEnd <= segment.end;
               isSelected = isStart || isEnd;
             } else if (segment is ImageSegment) {
               final bool isStart = selStart == segment.globalIndex;
@@ -1147,7 +1197,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
               isFocused = true;
             }
           } else if (segment is ImageSegment) {
-            final key = _imageKeys.putIfAbsent(segment.globalIndex, () => GlobalKey());
+            final key =
+                _imageKeys.putIfAbsent(segment.globalIndex, () => GlobalKey());
             isFocused = _selectedImageGlobalIndex == segment.globalIndex;
             segmentWidget = KeyedSubtree(
               key: key,
@@ -1165,11 +1216,13 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
                       for (final node in focusNodes.values) {
                         node.unfocus();
                       }
-                      widget.controller.selection = TextSelection.collapsed(offset: segment.globalIndex);
+                      widget.controller.selection =
+                          TextSelection.collapsed(offset: segment.globalIndex);
                     }
                   });
                 },
-                onResize: (newWidth) => _resizeImage(segment.globalIndex, newWidth),
+                onResize: (newWidth) =>
+                    _resizeImage(segment.globalIndex, newWidth),
                 onDelete: () => _deleteImage(segment.globalIndex),
               ),
             );
@@ -1180,9 +1233,14 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
           double bottomSpacing = 0.0;
           if (segmentIndex < _segments.length - 1) {
             final nextSegment = _segments[segmentIndex + 1];
-            final String currentType = segment is ImageSegment ? 'image' : (segment as TextSegment).type;
-            final String nextType = nextSegment is ImageSegment ? 'image' : (nextSegment as TextSegment).type;
-            bottomSpacing = LayoutEngine.getSpacing(prevType: currentType, nextType: nextType);
+            final String currentType = segment is ImageSegment
+                ? 'image'
+                : (segment as TextSegment).type;
+            final String nextType = nextSegment is ImageSegment
+                ? 'image'
+                : (nextSegment as TextSegment).type;
+            bottomSpacing = LayoutEngine.getSpacing(
+                prevType: currentType, nextType: nextType);
           }
 
           final paddedWidget = bottomSpacing > 0
@@ -1232,10 +1290,13 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
           break;
         }
       }
-      if (targetSegIndex != -1 && widget.scrollController != null && widget.scrollController!.hasClients) {
+      if (targetSegIndex != -1 &&
+          widget.scrollController != null &&
+          widget.scrollController!.hasClients) {
         final double estimatedOffset = targetSegIndex * 35.0;
         widget.scrollController!.animateTo(
-          estimatedOffset.clamp(0.0, widget.scrollController!.position.maxScrollExtent),
+          estimatedOffset.clamp(
+              0.0, widget.scrollController!.position.maxScrollExtent),
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
         );

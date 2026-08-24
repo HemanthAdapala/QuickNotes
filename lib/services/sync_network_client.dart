@@ -45,7 +45,8 @@ class SyncPushResult {
     final rawAcks = map['acknowledgements'] as List? ?? [];
     return SyncPushResult(
       acknowledgements: rawAcks
-          .map((a) => SyncMutationAck.fromMap(Map<String, dynamic>.from(a as Map)))
+          .map((a) =>
+              SyncMutationAck.fromMap(Map<String, dynamic>.from(a as Map)))
           .toList(),
     );
   }

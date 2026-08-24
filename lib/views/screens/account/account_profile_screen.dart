@@ -101,7 +101,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
 
       if (activeId != null && activeId.isNotEmpty) {
         try {
-          _existingProfile = await SqliteProfileRepository().getProfileForUser(activeId);
+          _existingProfile =
+              await SqliteProfileRepository().getProfileForUser(activeId);
         } catch (_) {}
       }
 
@@ -111,19 +112,27 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
           _currentUser?.displayName ??
           prefs.getString('profile_username') ??
           prefs.getString('profile_full_name') ??
-          (isGoogle ? 'QuickNotes User' : 'Offline User');
+          (isGoogle ? 'QuickNotes User' : 'Guest');
 
       final effectiveEmail = isGoogle
-          ? (_existingProfile?.email ?? _currentUser?.email ?? prefs.getString('user_email') ?? '')
+          ? (_existingProfile?.email ??
+              _currentUser?.email ??
+              prefs.getString('user_email') ??
+              '')
           : '';
 
-      _photoUrl = isGoogle ? (_existingProfile?.photoUrl ?? _currentUser?.photoUrl) : null;
-      _usesGooglePhoto = _existingProfile?.usesGooglePhoto ?? (_photoUrl != null && _photoUrl!.isNotEmpty);
+      _photoUrl = isGoogle
+          ? (_existingProfile?.photoUrl ?? _currentUser?.photoUrl)
+          : null;
+      _usesGooglePhoto = _existingProfile?.usesGooglePhoto ??
+          (_photoUrl != null && _photoUrl!.isNotEmpty);
       _selectedAvatarId = _existingProfile?.avatarId ?? 'andre';
 
-      if (_selectedAvatarId != null && AvatarRegistry.isValid(_selectedAvatarId)) {
+      if (_selectedAvatarId != null &&
+          AvatarRegistry.isValid(_selectedAvatarId)) {
         _selectedAvatarPath = AvatarRegistry.assetPath(_selectedAvatarId);
-        _selectedAvatarIndex = AvatarRegistry.allIds.indexOf(_selectedAvatarId!);
+        _selectedAvatarIndex =
+            AvatarRegistry.allIds.indexOf(_selectedAvatarId!);
       } else {
         _selectedAvatarPath = 'assets/Profile Icons/andre_transparent.png';
         _selectedAvatarIndex = 0;
@@ -162,11 +171,13 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
 
     final now = DateTime.now();
     final updatedDisplayName = _nameController.text.trim().isEmpty
-        ? (_isGoogleUser ? 'QuickNotes User' : 'Offline User')
+        ? (_isGoogleUser ? 'QuickNotes User' : 'Guest')
         : _nameController.text.trim();
 
     final updatedEmail = _isGoogleUser
-        ? (_existingProfile?.email ?? _currentUser?.email ?? 'user@quicknotes.app')
+        ? (_existingProfile?.email ??
+            _currentUser?.email ??
+            'user@quicknotes.app')
         : 'offline@local.quicknotes';
 
     final profile = UserProfile(
@@ -213,7 +224,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+            const Icon(Icons.check_circle_rounded,
+                color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Text(
               'Profile saved successfully',
@@ -253,19 +265,22 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
         backgroundColor: backgroundColor,
         body: SafeArea(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: primaryTextColor))
+              ? const Center(
+                  child: CircularProgressIndicator(color: primaryTextColor))
               : Column(
                   children: [
                     // Top Navigation Bar
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0, vertical: 16.0),
                       child: Row(
                         children: [
                           TactileButton(
                             useAppleSpring: true,
                             onTap: () {
                               HapticFeedback.lightImpact();
-                              if (widget.isSetupFlow || !Navigator.canPop(context)) {
+                              if (widget.isSetupFlow ||
+                                  !Navigator.canPop(context)) {
                                 _navigateToHome();
                               } else {
                                 Navigator.pop(context);
@@ -290,7 +305,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                   'assets/icons/angle_left.svg',
                                   width: 18,
                                   height: 18,
-                                  colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                                  colorFilter: const ColorFilter.mode(
+                                      primaryTextColor, BlendMode.srcIn),
                                 ),
                               ),
                             ),
@@ -332,349 +348,399 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                       ),
                     ),
 
-                  const SizedBox(height: 8.0),
+                    const SizedBox(height: 8.0),
 
-                  // Content Area (White Rounded Sheet)
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 8),
+                    // Content Area (White Rounded Sheet)
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(32)),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0, vertical: 24.0),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 8),
 
-                            // ── PROFILE PICTURE CIRCLE ──────────────────────
-                            Center(
-                              child: TactileButton(
-                                useAppleSpring: true,
-                                compressionScale: 0.92,
-                                onTap: _toggleAvatarGrid,
-                                child: SizedBox(
-                                  width: 96,
-                                  height: 96,
-                                  child: Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      Container(
-                                        width: 96,
-                                        height: 96,
-                                        decoration: const ShapeDecoration(
-                                          color: Colors.white,
-                                          shape: OvalBorder(
-                                            side: BorderSide(color: Color(0x1F3C3C43), width: 1),
-                                          ),
-                                          shadows: [
-                                            BoxShadow(
-                                              color: Color(0x1A000000),
-                                              blurRadius: 10,
-                                              offset: Offset(0, 4),
-                                            ),
-                                          ],
-                                        ),
-                                        clipBehavior: Clip.antiAlias,
-                                        child: _isGoogleUser &&
-                                                _usesGooglePhoto &&
-                                                _photoUrl != null &&
-                                                _photoUrl!.isNotEmpty
-                                            ? Image.network(
-                                                _photoUrl!,
-                                                width: 96,
-                                                height: 96,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (ctx, _, __) => _buildFallbackAvatar(),
-                                              )
-                                            : _buildFallbackAvatar(),
-                                      ),
-
-                                      // Camera overlay badge (26x26)
-                                      Positioned(
-                                        right: 0,
-                                        bottom: 0,
-                                        child: Container(
-                                          width: 26,
-                                          height: 26,
+                              // ── PROFILE PICTURE CIRCLE ──────────────────────
+                              Center(
+                                child: TactileButton(
+                                  useAppleSpring: true,
+                                  compressionScale: 0.92,
+                                  onTap: _toggleAvatarGrid,
+                                  child: SizedBox(
+                                    width: 96,
+                                    height: 96,
+                                    child: Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        Container(
+                                          width: 96,
+                                          height: 96,
                                           decoration: const ShapeDecoration(
                                             color: Colors.white,
                                             shape: OvalBorder(
-                                              side: BorderSide(color: Color(0x1F3C3C43), width: 0.5),
+                                              side: BorderSide(
+                                                  color: Color(0x1F3C3C43),
+                                                  width: 1),
                                             ),
                                             shadows: [
                                               BoxShadow(
-                                                color: Color(0x3F000000),
-                                                blurRadius: 6,
-                                                offset: Offset(0, 2),
+                                                color: Color(0x1A000000),
+                                                blurRadius: 10,
+                                                offset: Offset(0, 4),
                                               ),
                                             ],
                                           ),
-                                          child: Center(
-                                            child: SvgPicture.asset(
-                                              'assets/icons/camera.svg',
-                                              width: 12,
-                                              height: 12,
-                                              colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: _isGoogleUser &&
+                                                  _usesGooglePhoto &&
+                                                  _photoUrl != null &&
+                                                  _photoUrl!.isNotEmpty
+                                              ? Image.network(
+                                                  _photoUrl!,
+                                                  width: 96,
+                                                  height: 96,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (ctx, _, __) =>
+                                                      _buildFallbackAvatar(),
+                                                )
+                                              : _buildFallbackAvatar(),
+                                        ),
+
+                                        // Camera overlay badge (26x26)
+                                        Positioned(
+                                          right: 0,
+                                          bottom: 0,
+                                          child: Container(
+                                            width: 26,
+                                            height: 26,
+                                            decoration: const ShapeDecoration(
+                                              color: Colors.white,
+                                              shape: OvalBorder(
+                                                side: BorderSide(
+                                                    color: Color(0x1F3C3C43),
+                                                    width: 0.5),
+                                              ),
+                                              shadows: [
+                                                BoxShadow(
+                                                  color: Color(0x3F000000),
+                                                  blurRadius: 6,
+                                                  offset: Offset(0, 2),
+                                                ),
+                                              ],
                                             ),
+                                            child: Center(
+                                              child: SvgPicture.asset(
+                                                'assets/icons/camera.svg',
+                                                width: 12,
+                                                height: 12,
+                                                colorFilter:
+                                                    const ColorFilter.mode(
+                                                        primaryTextColor,
+                                                        BlendMode.srcIn),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              // Change Photo text button
+                              TactileButton(
+                                useAppleSpring: true,
+                                onTap: _toggleAvatarGrid,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 6.0, horizontal: 12.0),
+                                  child: Text(
+                                    'Change Photo',
+                                    style: GoogleFonts.inter(
+                                      color: primaryTextColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // ── EXPANDABLE CHARACTER AVATAR PICKER ──────────
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 350),
+                                curve: Curves.easeOutCubic,
+                                width: double.infinity,
+                                height: _isAvatarGridOpen ? 260 : 0,
+                                margin: EdgeInsets.only(
+                                    top: _isAvatarGridOpen ? 12.0 : 0.0),
+                                clipBehavior: Clip.antiAlias,
+                                decoration: ShapeDecoration(
+                                  color: const Color(0xFFF9F9FB),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: const BorderSide(
+                                        color: Color(0x14000000), width: 1),
+                                  ),
+                                ),
+                                child: _isAvatarGridOpen
+                                    ? Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                top: 10.0, bottom: 6.0),
+                                            child: Text(
+                                              'Choose an Avatar Character',
+                                              style: GoogleFonts.inter(
+                                                color: const Color(0x803C3C43),
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: GridView.builder(
+                                              padding: const EdgeInsets.all(8),
+                                              physics:
+                                                  const BouncingScrollPhysics(),
+                                              gridDelegate:
+                                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 5,
+                                                mainAxisSpacing: 8,
+                                                crossAxisSpacing: 8,
+                                                childAspectRatio: 1.0,
+                                              ),
+                                              itemCount:
+                                                  AvatarRegistry.allIds.length,
+                                              itemBuilder: (context, index) {
+                                                final avatarId = AvatarRegistry
+                                                    .allIds[index];
+                                                final assetPath =
+                                                    AvatarRegistry.assetPath(
+                                                        avatarId);
+                                                final isSelected =
+                                                    !_usesGooglePhoto &&
+                                                        _selectedAvatarIndex ==
+                                                            index;
+
+                                                return TactileButton(
+                                                  useAppleSpring: true,
+                                                  compressionScale: 0.85,
+                                                  onTap: () {
+                                                    HapticFeedback
+                                                        .selectionClick();
+                                                    setState(() {
+                                                      _selectedAvatarId =
+                                                          avatarId;
+                                                      _selectedAvatarPath =
+                                                          assetPath;
+                                                      _selectedAvatarIndex =
+                                                          index;
+                                                      _usesGooglePhoto = false;
+                                                    });
+                                                  },
+                                                  child: AnimatedContainer(
+                                                    duration: const Duration(
+                                                        milliseconds: 200),
+                                                    decoration: ShapeDecoration(
+                                                      color: isSelected
+                                                          ? const Color(
+                                                              0xFFE5E5EA)
+                                                          : Colors.white,
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(12),
+                                                        side: isSelected
+                                                            ? const BorderSide(
+                                                                color:
+                                                                    primaryTextColor,
+                                                                width: 1.5)
+                                                            : const BorderSide(
+                                                                color: Color(
+                                                                    0x14000000),
+                                                                width: 0.5),
+                                                      ),
+                                                    ),
+                                                    child: Center(
+                                                      child: assetPath != null
+                                                          ? Image.asset(
+                                                              assetPath,
+                                                              width: 38,
+                                                              height: 38,
+                                                              fit: BoxFit
+                                                                  .contain,
+                                                            )
+                                                          : null,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // ── FORM TILES ──────────────────────────────────
+                              GroupedListContainer(
+                                width: double.infinity,
+                                children: [
+                                  GroupedTile.input(
+                                    controller: _nameController,
+                                    focusNode: _nameFocusNode,
+                                    hintText: 'User Name',
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.deny(
+                                        RegExp(r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])'),
+                                      ),
+                                    ],
+                                  ),
+                                  if (_isGoogleUser)
+                                    GroupedTile.input(
+                                      controller: _emailController,
+                                      hintText: 'Email Address',
+                                      isReadOnly: true,
+                                      isEnabled: false,
+                                      showVerifiedBadge: true,
+                                      keyboardType: TextInputType.emailAddress,
+                                    )
+                                  else
+                                    GroupedTile.keyValue(
+                                      iconPath:
+                                          'assets/icons/bottom_navigation/settings.svg',
+                                      title: 'Account Type',
+                                      value: 'Offline',
+                                    ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // ── ACCOUNT STATUS & HELPER CARD ────────────────
+                              if (_isGoogleUser)
+                                GroupedListContainer(
+                                  width: double.infinity,
+                                  children: [
+                                    GroupedTile.keyValue(
+                                      iconPath: 'assets/icons/terms-info.svg',
+                                      title: 'Account',
+                                      value: 'Google Connected',
+                                    ),
+                                  ],
+                                )
+                              else
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  decoration: ShapeDecoration(
+                                    color: const Color(0xFFF9F9FB),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      side: const BorderSide(
+                                          color: Color(0x14000000), width: 1),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SvgPicture.asset(
+                                        'assets/icons/terms-info.svg',
+                                        width: 16,
+                                        height: 16,
+                                        colorFilter: const ColorFilter.mode(
+                                            Color(0xFF8E8E93), BlendMode.srcIn),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'Your notes are stored locally on this device.',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w400,
+                                            color: const Color(0xFF8E8E93),
+                                            letterSpacing: -0.2,
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ),
-                            ),
 
-                            const SizedBox(height: 8),
+                              const SizedBox(height: 36),
 
-                            // Change Photo text button
-                            TactileButton(
-                              useAppleSpring: true,
-                              onTap: _toggleAvatarGrid,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-                                child: Text(
-                                  'Change Photo',
-                                  style: GoogleFonts.inter(
+                              // ── SAVE BUTTON ─────────────────────────────────
+                              TactileButton(
+                                useAppleSpring: true,
+                                onTap: _saveProfile,
+                                child: Container(
+                                  width: 160,
+                                  height: 42,
+                                  decoration: ShapeDecoration(
                                     color: primaryTextColor,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: -0.2,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            // ── EXPANDABLE CHARACTER AVATAR PICKER ──────────
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 350),
-                              curve: Curves.easeOutCubic,
-                              width: double.infinity,
-                              height: _isAvatarGridOpen ? 260 : 0,
-                              margin: EdgeInsets.only(top: _isAvatarGridOpen ? 12.0 : 0.0),
-                              clipBehavior: Clip.antiAlias,
-                              decoration: ShapeDecoration(
-                                color: const Color(0xFFF9F9FB),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  side: const BorderSide(color: Color(0x14000000), width: 1),
-                                ),
-                              ),
-                              child: _isAvatarGridOpen
-                                  ? Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 10.0, bottom: 6.0),
-                                          child: Text(
-                                            'Choose an Avatar Character',
-                                            style: GoogleFonts.inter(
-                                              color: const Color(0x803C3C43),
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: GridView.builder(
-                                            padding: const EdgeInsets.all(8),
-                                            physics: const BouncingScrollPhysics(),
-                                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 5,
-                                              mainAxisSpacing: 8,
-                                              crossAxisSpacing: 8,
-                                              childAspectRatio: 1.0,
-                                            ),
-                                            itemCount: AvatarRegistry.allIds.length,
-                                            itemBuilder: (context, index) {
-                                              final avatarId = AvatarRegistry.allIds[index];
-                                              final assetPath = AvatarRegistry.assetPath(avatarId);
-                                              final isSelected = !_usesGooglePhoto && _selectedAvatarIndex == index;
-
-                                              return TactileButton(
-                                                useAppleSpring: true,
-                                                compressionScale: 0.85,
-                                                onTap: () {
-                                                  HapticFeedback.selectionClick();
-                                                  setState(() {
-                                                    _selectedAvatarId = avatarId;
-                                                    _selectedAvatarPath = assetPath;
-                                                    _selectedAvatarIndex = index;
-                                                    _usesGooglePhoto = false;
-                                                  });
-                                                },
-                                                child: AnimatedContainer(
-                                                  duration: const Duration(milliseconds: 200),
-                                                  decoration: ShapeDecoration(
-                                                    color: isSelected ? const Color(0xFFE5E5EA) : Colors.white,
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(12),
-                                                      side: isSelected
-                                                          ? const BorderSide(color: primaryTextColor, width: 1.5)
-                                                          : const BorderSide(color: Color(0x14000000), width: 0.5),
-                                                    ),
-                                                  ),
-                                                  child: Center(
-                                                    child: assetPath != null
-                                                        ? Image.asset(
-                                                            assetPath,
-                                                            width: 38,
-                                                            height: 38,
-                                                            fit: BoxFit.contain,
-                                                          )
-                                                        : null,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : const SizedBox.shrink(),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // ── FORM TILES ──────────────────────────────────
-                            GroupedListContainer(
-                              width: double.infinity,
-                              children: [
-                                GroupedTile.input(
-                                  controller: _nameController,
-                                  focusNode: _nameFocusNode,
-                                  hintText: 'User Name',
-                                ),
-                                if (_isGoogleUser)
-                                  GroupedTile.input(
-                                    controller: _emailController,
-                                    hintText: 'Email Address',
-                                    isReadOnly: true,
-                                    isEnabled: false,
-                                    showVerifiedBadge: true,
-                                    keyboardType: TextInputType.emailAddress,
-                                  )
-                                else
-                                  GroupedTile.keyValue(
-                                    iconPath: 'assets/icons/bottom_navigation/settings.svg',
-                                    title: 'Account Type',
-                                    value: 'Offline',
-                                  ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // ── ACCOUNT STATUS & HELPER CARD ────────────────
-                            if (_isGoogleUser)
-                              GroupedListContainer(
-                                width: double.infinity,
-                                children: [
-                                  GroupedTile.keyValue(
-                                    iconPath: 'assets/icons/terms-info.svg',
-                                    title: 'Account',
-                                    value: 'Google Connected',
-                                  ),
-                                ],
-                              )
-                            else
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                decoration: ShapeDecoration(
-                                  color: const Color(0xFFF9F9FB),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    side: const BorderSide(color: Color(0x14000000), width: 1),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    SvgPicture.asset(
-                                      'assets/icons/terms-info.svg',
-                                      width: 16,
-                                      height: 16,
-                                      colorFilter: const ColorFilter.mode(Color(0xFF8E8E93), BlendMode.srcIn),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(21),
                                     ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        'Your notes are stored locally on this device.',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w400,
-                                          color: const Color(0xFF8E8E93),
-                                          letterSpacing: -0.2,
-                                        ),
+                                    shadows: const [
+                                      BoxShadow(
+                                        color: Color(0x26000000),
+                                        blurRadius: 10,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'Save',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: -0.3,
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
 
-                            const SizedBox(height: 36),
-
-                            // ── SAVE BUTTON ─────────────────────────────────
-                            TactileButton(
-                              useAppleSpring: true,
-                              onTap: _saveProfile,
-                              child: Container(
-                                width: 160,
-                                height: 42,
-                                decoration: ShapeDecoration(
-                                  color: primaryTextColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(21),
-                                  ),
-                                  shadows: const [
-                                    BoxShadow(
-                                      color: Color(0x26000000),
-                                      blurRadius: 10,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
+                              if (widget.isSetupFlow) ...[
+                                const SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: _handleSkip,
                                   child: Text(
-                                    'Save',
-                                    textAlign: TextAlign.center,
+                                    'Skip for now',
                                     style: GoogleFonts.inter(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: -0.3,
+                                      color: const Color(0xFF8E8E93),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
+                              ],
 
-                            if (widget.isSetupFlow) ...[
-                              const SizedBox(height: 12),
-                              TextButton(
-                                onPressed: _handleSkip,
-                                child: Text(
-                                  'Skip for now',
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFF8E8E93),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
+                              const SizedBox(height: 24),
                             ],
-
-                            const SizedBox(height: 24),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
         ),
       ),
     );

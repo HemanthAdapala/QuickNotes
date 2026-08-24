@@ -12,7 +12,8 @@ Future<T?> showAnimatedDialog<T>({
     barrierLabel: 'Dismiss',
     barrierColor: barrierColor ?? Colors.black.withValues(alpha: 0.20),
     transitionDuration: kDurationNormal, // 250ms
-    pageBuilder: (context, animation, secondaryAnimation) => Center(child: child),
+    pageBuilder: (context, animation, secondaryAnimation) =>
+        Center(child: child),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
       final curvedAnimation = CurvedAnimation(
         parent: animation,

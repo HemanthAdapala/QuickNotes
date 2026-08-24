@@ -35,7 +35,8 @@ class SqliteProfileRepository implements ProfileRepository {
   Future<void> saveProfile(UserProfile profile) async {
     final activeId = SessionManager().activeUserId;
     if (activeId != null && activeId.isNotEmpty && profile.userId != activeId) {
-      throw OwnershipException('Ownership violation: Cannot save profile for user ${profile.userId} while active user is $activeId');
+      throw OwnershipException(
+          'Ownership violation: Cannot save profile for user ${profile.userId} while active user is $activeId');
     }
     final db = await _db;
     await db.insert(
@@ -49,7 +50,8 @@ class SqliteProfileRepository implements ProfileRepository {
   Future<void> deleteProfile(String userId) async {
     final activeId = SessionManager().activeUserId;
     if (activeId != null && activeId.isNotEmpty && userId != activeId) {
-      throw OwnershipException('Ownership violation: Cannot delete profile for user $userId while active user is $activeId');
+      throw OwnershipException(
+          'Ownership violation: Cannot delete profile for user $userId while active user is $activeId');
     }
     final db = await _db;
     await db.delete(

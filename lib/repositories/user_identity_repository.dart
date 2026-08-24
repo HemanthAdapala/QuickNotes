@@ -40,7 +40,8 @@ class SqliteUserIdentityRepository implements UserIdentityRepository {
         _uuid = uuid ?? const Uuid();
 
   @override
-  Future<UserIdentity?> findIdentity(String provider, String providerUserId) async {
+  Future<UserIdentity?> findIdentity(
+      String provider, String providerUserId) async {
     final db = await _dbService.database;
     final maps = await db.query(
       'user_identities',
@@ -54,7 +55,8 @@ class SqliteUserIdentityRepository implements UserIdentityRepository {
   }
 
   @override
-  Future<UserIdentity?> findIdentityForUser(String userId, String provider) async {
+  Future<UserIdentity?> findIdentityForUser(
+      String userId, String provider) async {
     final db = await _dbService.database;
     final maps = await db.query(
       'user_identities',
@@ -82,7 +84,8 @@ class SqliteUserIdentityRepository implements UserIdentityRepository {
   }
 
   @override
-  Future<void> updateLastAuthenticatedAt(String identityId, DateTime timestamp) async {
+  Future<void> updateLastAuthenticatedAt(
+      String identityId, DateTime timestamp) async {
     final db = await _dbService.database;
     await db.update(
       'user_identities',
@@ -123,7 +126,10 @@ class SqliteUserIdentityRepository implements UserIdentityRepository {
 
     final userProfile = UserProfile(
       userId: canonicalUserId,
-      displayName: displayName ?? (email != null && email.contains('@') ? email.split('@').first : 'QuickNotes User'),
+      displayName: displayName ??
+          (email != null && email.contains('@')
+              ? email.split('@').first
+              : 'QuickNotes User'),
       email: email ?? 'user@quicknotes.app',
       photoUrl: photoUrl,
       usesGooglePhoto: photoUrl != null && photoUrl.isNotEmpty,
@@ -195,7 +201,7 @@ class SqliteUserIdentityRepository implements UserIdentityRepository {
               'user_profiles',
               {
                 'userId': activeUserId,
-                'displayName': 'Offline User',
+                'displayName': 'Guest',
                 'email': 'offline@local.quicknotes',
                 'photoUrl': null,
                 'usesGooglePhoto': 0,
@@ -220,7 +226,8 @@ class SqliteUserIdentityRepository implements UserIdentityRepository {
       );
 
       if (userExistingIdentities.isNotEmpty) {
-        final existingForUser = UserIdentity.fromMap(userExistingIdentities.first);
+        final existingForUser =
+            UserIdentity.fromMap(userExistingIdentities.first);
         if (existingForUser.providerUserId == providerUserId) {
           // STEP 5: Same Google identity already linked to same user
           await updateLastAuthenticatedAt(existingForUser.id, DateTime.now());
@@ -304,18 +311,23 @@ class SqliteUserIdentityRepository implements UserIdentityRepository {
 
         if (profileMaps.isNotEmpty) {
           final existingProfile = UserProfile.fromMap(profileMaps.first);
-          // Profile rule: If user has a custom name (not default 'Offline User' or empty), preserve it
-          final isDefaultOfflineName =
-              existingProfile.displayName == 'Offline User' ||
+          // Profile rule: If user has a custom name (not default 'Guest' or empty), preserve it
+          final isDefaultOfflineName = existingProfile.displayName == 'Guest' ||
               existingProfile.displayName.trim().isEmpty;
 
           final effectiveDisplayName = isDefaultOfflineName
-              ? (displayName ?? (email != null && email.contains('@') ? email.split('@').first : 'QuickNotes User'))
+              ? (displayName ??
+                  (email != null && email.contains('@')
+                      ? email.split('@').first
+                      : 'QuickNotes User'))
               : existingProfile.displayName;
 
           final effectiveEmail = email ?? existingProfile.email;
           final effectivePhotoUrl = photoUrl ?? existingProfile.photoUrl;
-          final effectiveUsesGooglePhoto = photoUrl != null && photoUrl.isNotEmpty ? true : existingProfile.usesGooglePhoto;
+          final effectiveUsesGooglePhoto =
+              photoUrl != null && photoUrl.isNotEmpty
+                  ? true
+                  : existingProfile.usesGooglePhoto;
 
           updatedProfile = existingProfile.copyWith(
             displayName: effectiveDisplayName,
@@ -334,7 +346,10 @@ class SqliteUserIdentityRepository implements UserIdentityRepository {
         } else {
           updatedProfile = UserProfile(
             userId: activeUserId,
-            displayName: displayName ?? (email != null && email.contains('@') ? email.split('@').first : 'QuickNotes User'),
+            displayName: displayName ??
+                (email != null && email.contains('@')
+                    ? email.split('@').first
+                    : 'QuickNotes User'),
             email: email ?? 'user@quicknotes.app',
             photoUrl: photoUrl,
             usesGooglePhoto: photoUrl != null && photoUrl.isNotEmpty,
@@ -359,4 +374,3 @@ class SqliteUserIdentityRepository implements UserIdentityRepository {
     }
   }
 }
-
