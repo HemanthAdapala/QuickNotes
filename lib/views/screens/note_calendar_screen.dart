@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -52,62 +51,6 @@ class GradientBorderPainter extends CustomPainter {
   bool shouldRepaint(covariant GradientBorderPainter oldDelegate) {
     return oldDelegate.strokeWidth != strokeWidth ||
         oldDelegate.gradient != gradient;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Orbital Ring Painter (Tasks Progress)
-// ─────────────────────────────────────────────────────────────────────────────
-class OrbitalRingPainter extends CustomPainter {
-  final double progress; // 0.0 to 1.0
-  final Color trackColor;
-  final Color progressColor;
-  final double strokeWidth;
-
-  OrbitalRingPainter({
-    required this.progress,
-    required this.trackColor,
-    required this.progressColor,
-    this.strokeWidth = 2.5,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = (size.width / 2) - (strokeWidth / 2);
-
-    // Draw background track
-    final trackPaint = Paint()
-      ..color = trackColor
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    canvas.drawCircle(center, radius, trackPaint);
-
-    // Draw progress arc
-    if (progress > 0) {
-      final progressPaint = Paint()
-        ..color = progressColor
-        ..strokeWidth = strokeWidth
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round;
-
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        -math.pi / 2, // start at top (-90 degrees)
-        2 * math.pi * progress, // sweep angle
-        false,
-        progressPaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant OrbitalRingPainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-           oldDelegate.trackColor != trackColor ||
-           oldDelegate.progressColor != progressColor ||
-           oldDelegate.strokeWidth != strokeWidth;
   }
 }
 
@@ -580,10 +523,8 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                                   // Check if day has habits/vault/tasks/notes
                                   final hasLocked =
                                       dayNotes.any((n) => n.isLocked);
-                                  final taskNotes = dayNotes
-                                      .where((n) => n.title.startsWith("Task:")).toList();
-                                  final totalTasks = taskNotes.length;
-                                  final completedTasks = taskNotes.where((n) => n.isFavorite).length;
+                                  final hasTasks = dayNotes
+                                      .any((n) => n.title.startsWith("Task:"));
                                   final hasHabits =
                                       dayNotes.any((n) => n.isHabit);
                                   final hasStandard = dayNotes.any((n) =>
@@ -627,42 +568,20 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                                           alignment: Alignment.center,
                                           children: [
                                             Center(
-                                              child: totalTasks > 0
-                                                  ? CustomPaint(
-                                                      painter: OrbitalRingPainter(
-                                                        progress: completedTasks / totalTasks,
-                                                        trackColor: AppColors.ink.withOpacity(0.08),
-                                                        progressColor: const Color(0xFFCCFF00),
-                                                      ),
-                                                      child: Container(
-                                                        width: 32,
-                                                        height: 32,
-                                                        alignment: Alignment.center,
-                                                        child: Text(
-                                                          dayNumber.toString(),
-                                                          style: GoogleFonts.inter(
-                                                            fontWeight: isSelected || isToday
-                                                                ? FontWeight.bold
-                                                                : FontWeight.w500,
-                                                            color: AppColors.ink,
-                                                            fontSize: 14,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  : Text(
-                                                      dayNumber.toString(),
-                                                      style: GoogleFonts.inter(
-                                                        fontWeight: isSelected || isToday
-                                                            ? FontWeight.bold
-                                                            : FontWeight.w500,
-                                                        color: AppColors.ink,
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
+                                              child: Text(
+                                                dayNumber.toString(),
+                                                style: GoogleFonts.inter(
+                                                  fontWeight:
+                                                      isSelected || isToday
+                                                          ? FontWeight.bold
+                                                          : FontWeight.w500,
+                                                  color: AppColors.ink,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
                                             ),
                                             // Tiny dot indicator for notes
-                                            if (dayNotes.isNotEmpty && (hasLocked || hasHabits || hasStandard))
+                                            if (dayNotes.isNotEmpty)
                                               Positioned(
                                                 bottom: 4,
                                                 child: Row(
@@ -672,6 +591,9 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                                                     if (hasLocked)
                                                       _buildDot(const Color(
                                                           0xFF6B685B)),
+                                                    if (hasTasks)
+                                                      _buildDot(const Color(
+                                                          0xFFE07A5F)),
                                                     if (hasHabits)
                                                       _buildDot(const Color(
                                                           0xFF81B29A)),
@@ -702,7 +624,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                                   _buildLegendItem(
                                       const Color(0xFF3D5A80), "Notes"),
                                   _buildLegendItem(
-                                      const Color(0xFFCCFF00), "Tasks"), // Updated to match Chartreuse ring
+                                      const Color(0xFFE07A5F), "Tasks"),
                                   _buildLegendItem(
                                       const Color(0xFF81B29A), "Habits"),
                                   _buildLegendItem(
