@@ -10,7 +10,9 @@ import 'home_screen.dart';
 import '../../core/animations/page_transitions.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final SplashController? splashController;
+
+  const SplashScreen({super.key, this.splashController});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -19,11 +21,12 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  final SplashController _splashController = SplashController();
+  late final SplashController _splashController;
 
   @override
   void initState() {
     super.initState();
+    _splashController = widget.splashController ?? SplashController();
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -61,13 +64,25 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           purpose: LockPurpose.appUnlock,
           onSuccess: () {
             Navigator.of(context).pushReplacement(
-              buildPageRoute(const HomeScreen()),
+              buildPageRoute(
+                _splashController.recoveryResult != null &&
+                        _splashController.recoveryResult!.isEligible
+                    ? FirstRunRecoveryFlow(
+                        recoveryResult: _splashController.recoveryResult!,
+                      )
+                    : const HomeScreen(),
+              ),
             );
           },
         );
         break;
       case SplashDestination.profileCompletion:
         nextScreen = const ProfileScreen();
+        break;
+      case SplashDestination.recovery:
+        nextScreen = FirstRunRecoveryFlow(
+          recoveryResult: _splashController.recoveryResult!,
+        );
         break;
       case SplashDestination.home:
         nextScreen = const HomeScreen();
@@ -82,6 +97,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -90,25 +107,34 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFFFFFFF),
-        body: Center(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SizedBox(
-              width: 274,
-              height: 121,
-              child: Text(
-                'Quick Notes',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF333333),
-                  fontSize: 48,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.21,
-                  height: 1.15,
+        body: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              right: 0,
+              top: screenHeight * 0.35,
+              child: Center(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SizedBox(
+                    width: 274,
+                    height: 115,
+                    child: Text(
+                      'Quick\nNotes',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF333333),
+                        fontSize: 48,
+                        fontWeight: FontWeight.w700,
+                        height: 1.12,
+                        letterSpacing: -0.21,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

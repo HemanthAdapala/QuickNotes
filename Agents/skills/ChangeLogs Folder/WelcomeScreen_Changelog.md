@@ -98,6 +98,49 @@ None.
 
 ---
 
+## v1.3.0
+
+### Date
+2026-08-19
+
+### Author
+Anti Gravity
+
+### Type
+- UI
+- Glassmorphism
+- Component Alignment
+
+---
+
+### Summary
+Restored the dedicated glassmorphic **Start** button featuring the project's signature dual-layer liquid glass architecture (Layer 1: `#54999999` translucent backing fill + 4-tier drop shadows; Layer 2: frosted glass surface with 4-tier inner depth shadows and specular white border) with `TactileButton` spring physics and animated pulsing chevron arrow.
+
+---
+
+### Detailed Changes
+- Fixed card image asset paths to point accurately to the registered `DesignCode/Welcome Screens/` directory (`Folder popup.png`, `Welcome Screen Task Widget 01.png`, `Welcome screen Note Widget 02.png`, `Welcome screen Note Widget 01.png`, and `Calender.png`), restoring the 4 floating ambient-glow cards and tilted physics.
+- Dedicated pure frosted glass Start button (`width: 140, height: 50, borderRadius: 25`):
+  - Removed the `#54999999` backing fill layer as requested.
+  - Retained `ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0)`, `0.8px` white specular border (`#FFFFFF` @ 65%), and 4-tier inset depth shadows (`GlassmorphismPresets.innerShadows`) with outer ambient drop shadows.
+- Integrated `TactileButton` (`compressionScale: 0.7`, `settleDuration: 1000ms`, `useAppleSpring: true`) with medium haptic feedback on tap.
+- Re-enabled continuous pulsing arrow micro-animation (`_arrowPulse`).
+- Reverses entrance animation on tap and routes seamlessly into `LoginScreen`.
+
+---
+
+### Why was this change made?
+To eliminate the dark grey backing tint and present a clean, luminous pure frosted glass capsule on the Welcome screen.
+
+---
+
+### Testing Status
+
+- **Automated Tests**:
+  - `flutter analyze lib/views/screens/welcome_screen.dart` $\rightarrow$ **0 issues found**.
+  - `flutter test test/widget_test.dart test/views/splash_screen_recovery_navigation_test.dart` $\rightarrow$ **100% green**.
+
+
 ### Testing Status
 
 - **Manual Tests**:
@@ -114,3 +157,45 @@ None.
 ### Final Result
 
 A state-of-the-art onboarding screen featuring floating ambient-glow cards, fluid entrance and exit physics, and seamless integration with `SessionManager` and `LoginScreen`.
+
+---
+
+## v1.4.0
+
+### Date
+2026-08-20
+
+### Author
+Anti Gravity
+
+### Type
+- UI
+- Glassmorphism
+- Component Alignment
+
+---
+
+### Summary
+
+Updated the glassmorphic button in `WelcomeScreen` (`lib/views/screens/welcome_screen.dart`) to use `BottomBarGlassSurface` with `width: 220, height: 56, borderRadius: BorderRadius.circular(30)` wrapped in `TactileButton`, matching the exact liquid glass aesthetics and 30px corner curvature tested on `TestWelcomeScreen`.
+
+---
+
+### Detailed Changes
+
+- **Button Refinement**: Replaced previous capsule button with `BottomBarGlassSurface` (`width: 220, height: 56, borderRadius: BorderRadius.circular(30)`).
+- **Tactile Integration**: Wrapped `BottomBarGlassSurface` in `TactileButton(useAppleSpring: true, compressionScale: 0.7, settleDuration: 1000ms)` so the whole glass surface compresses seamlessly on tap.
+
+---
+
+### Files Modified
+
+- `lib/views/screens/welcome_screen.dart`
+- `Agents/skills/ChangeLogs Folder/WelcomeScreen_Changelog.md`
+
+---
+
+### Testing Status
+
+- Static analysis: `flutter analyze lib/views/screens/welcome_screen.dart` passed (0 issues).
+- Automated tests: `flutter test test/views/test_welcome_screen_test.dart` passed.

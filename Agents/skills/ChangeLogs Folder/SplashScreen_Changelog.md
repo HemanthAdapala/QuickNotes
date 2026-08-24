@@ -98,6 +98,42 @@ None.
 
 ---
 
+## v1.2.0
+
+### Date
+2026-08-19
+
+### Author
+Anti Gravity
+
+### Type
+- UI
+- Typography
+- Alignment
+
+---
+
+### Summary
+Corrected `SplashScreen` middle title font to `GoogleFonts.inter` and updated the text layout to the two-line stack format (`Quick\nNotes`).
+
+---
+
+### Detailed Changes
+- Replaced font styling with canonical project font `GoogleFonts.inter` (48px, Bold `FontWeight.w700`, `height: 1.12`, `letterSpacing: -0.21`).
+- Changed single-line `'Quick Notes'` to stacked two-line format:
+  ```
+  Quick
+  Notes
+  ```
+- Aligned exact screen position (`Positioned(left: 0, right: 0, top: screenHeight * 0.35)`) and container dimensions (`width: 274, height: 115`) with `WelcomeScreen` for a seamless, jump-free visual transition.
+- Retained smooth 1500ms `FadeTransition` and dark system overlay configuration.
+
+---
+
+### Why was this change made?
+To adhere strictly to the project's design system using **Inter** as the project-wide font, match the requested two-line title presentation, and ensure the title position on `SplashScreen` matches `WelcomeScreen` pixel-for-pixel without jumping during the page transition.
+
+
 ### Testing Status
 
 - **Manual Tests**:

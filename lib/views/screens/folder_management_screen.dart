@@ -99,141 +99,158 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
           final provider = Provider.of<NotesProvider>(context, listen: false);
           final hierarchical = FolderUtils.getHierarchicalFolders(provider.folders);
 
-          return Dialog(
-            backgroundColor: const Color(0xFFFDFDFD),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24.0),
+          final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+          return AnimatedPadding(
+            padding: EdgeInsets.only(
+              bottom: bottomInset > 0 ? bottomInset + 16.0 : 0.0,
             ),
-            child: Container(
-              width: 280.0,
-              padding: const EdgeInsets.only(top: 20.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "New Folder",
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1D1D1D),
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                width: 280.0,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDFDFD),
+                  borderRadius: BorderRadius.circular(24.0),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x3F000000),
+                      blurRadius: 20,
+                      offset: Offset(0, 4),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    "Enter a name for this folder",
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: const Color(0xFF8E8E93),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFEFF4),
-                        borderRadius: BorderRadius.circular(10.0),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                padding: const EdgeInsets.only(top: 20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "New Folder",
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1D1D1D),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _folderController,
-                              autofocus: true,
-                              style: GoogleFonts.inter(
-                                fontSize: 15,
-                                color: const Color(0xFF1C1C1E),
-                              ),
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
-                                hintText: "Folder Name",
-                                hintStyle: GoogleFonts.inter(color: const Color(0xFFAEAEB2)),
-                              ),
-                              onChanged: (_) => setDialogState(() {}),
-                            ),
-                          ),
-                          if (_folderController.text.isNotEmpty)
-                            GestureDetector(
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                setDialogState(() {
-                                  _folderController.clear();
-                                });
-                              },
-                              child: const Icon(
-                                Icons.cancel,
-                                size: 18,
-                                color: Color(0xFFC7C7CC),
-                              ),
-                            ),
-                        ],
-                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Divider(height: 1, color: Color(0xFFD1D1D6)),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TactileButton(
-                          onTap: () {
-                            _folderController.clear();
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            height: 44.0,
-                            alignment: Alignment.center,
-                            child: Text(
-                              "cancel",
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                color: const Color(0xFF8E8E93),
-                                fontWeight: FontWeight.w400,
+                    const SizedBox(height: 6),
+                    Text(
+                      "Enter a name for this folder",
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF8E8E93),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFEFF4),
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _folderController,
+                                autofocus: true,
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  color: const Color(0xFF1C1C1E),
+                                ),
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                                  hintText: "Folder Name",
+                                  hintStyle: GoogleFonts.inter(color: const Color(0xFFAEAEB2)),
+                                ),
+                                onChanged: (_) => setDialogState(() {}),
                               ),
                             ),
-                          ),
+                            if (_folderController.text.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setDialogState(() {
+                                    _folderController.clear();
+                                  });
+                                },
+                                child: const Icon(
+                                  Icons.cancel,
+                                  size: 18,
+                                  color: Color(0xFFC7C7CC),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      Container(
-                        width: 1.0,
-                        height: 44.0,
-                        color: const Color(0xFFD1D1D6),
-                      ),
-                      Expanded(
-                        child: TactileButton(
-                          onTap: () {
-                            final name = _folderController.text.trim();
-                            if (name.isNotEmpty) {
-                              Provider.of<NotesProvider>(context, listen: false).createFolder(
-                                name,
-                                parentId: null,
-                              );
+                    ),
+                    const SizedBox(height: 20),
+                    const Divider(height: 1, color: Color(0xFFD1D1D6)),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TactileButton(
+                            onTap: () {
                               _folderController.clear();
                               Navigator.pop(context);
-                            }
-                          },
-                          child: Container(
-                            height: 44.0,
-                            alignment: Alignment.center,
-                            child: Text(
-                              "save",
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                color: const Color(0xFFFFCC00),
-                                fontWeight: FontWeight.w600,
+                            },
+                            child: Container(
+                              height: 44.0,
+                              alignment: Alignment.center,
+                              child: Text(
+                                "cancel",
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  color: const Color(0xFF8E8E93),
+                                  fontWeight: FontWeight.w400,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        Container(
+                          width: 1.0,
+                          height: 44.0,
+                          color: const Color(0xFFD1D1D6),
+                        ),
+                        Expanded(
+                          child: TactileButton(
+                            onTap: () {
+                              final name = _folderController.text.trim();
+                              if (name.isNotEmpty) {
+                                Provider.of<NotesProvider>(context, listen: false).createFolder(
+                                  name,
+                                  parentId: null,
+                                );
+                                _folderController.clear();
+                                Navigator.pop(context);
+                              }
+                            },
+                            child: Container(
+                              height: 44.0,
+                              alignment: Alignment.center,
+                              child: Text(
+                                "save",
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  color: const Color(0xFFFFCC00),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -701,6 +718,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           if (_isSearchExpanded)

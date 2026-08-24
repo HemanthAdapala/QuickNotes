@@ -1,11 +1,11 @@
 import 'dart:math' as math;
-import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
+import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'home_screen.dart';
 import 'login_screen.dart';
+import '../widgets/tactile_button.dart';
 import '../../services/session_manager.dart';
 import '../../core/animations/page_transitions.dart';
 
@@ -38,7 +38,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
   late Animation<double> _arrowPulse;
 
   final _secureStorage = const FlutterSecureStorage();
-  bool _isButtonPressed = false;
 
   @override
   void initState() {
@@ -250,7 +249,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0x22FFCC00), // Subtle Yellow Glow
+                            color: Color(0x22FFCC00), // Subtle Amber Glow
                             blurRadius: 95,
                             spreadRadius: 45,
                           ),
@@ -385,7 +384,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                                 width: 274,
                                 height: 115,
                                 child: Text(
-                                  'Quick Notes',
+                                  'Quick\nNotes',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
                                     color: const Color(0xFF333333),
@@ -417,7 +416,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                     ),
                   ),
 
-                  // 7. Premium Glassmorphic Start Button
+                  // 7. Dedicated Glassmorphic Start Button
                   Positioned(
                     left: 0,
                     right: 0,
@@ -427,81 +426,59 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                         opacity: _centerFade,
                         child: ScaleTransition(
                           scale: _centerScale,
-                          child: GestureDetector(
-                            onTapDown: (_) {
-                              HapticFeedback.lightImpact();
-                              setState(() => _isButtonPressed = true);
-                            },
-                            onTapUp: (_) {
-                              setState(() => _isButtonPressed = false);
-                              _handleStartPressed();
-                            },
-                            onTapCancel: () => setState(() => _isButtonPressed = false),
-                            child: AnimatedScale(
-                              scale: _isButtonPressed ? 0.92 : 1.0,
-                              duration: const Duration(milliseconds: 100),
-                              curve: Curves.easeOut,
-                              child: Container(
-                                width: 130,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(25),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x18000000),
-                                      blurRadius: 20,
-                                      offset: Offset(0, 8),
-                                      spreadRadius: 0,
+                          child: TactileButton(
+                            useAppleSpring: true,
+                            compressionScale: 0.7,
+                            settleDuration: const Duration(milliseconds: 1000),
+                            onTap: _handleStartPressed,
+                            child: Container(
+                              width: 160,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(25),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E2DF),
+                                  width: 1.0,
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x14000000),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 4),
+                                  ),
+                                  BoxShadow(
+                                    color: Color(0x0A000000),
+                                    blurRadius: 4,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Start',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFF333333),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: -0.3,
+                                      ),
                                     ),
-                                    BoxShadow(
-                                      color: Color(0x50FFFFFF),
-                                      blurRadius: 10,
-                                      offset: Offset(-2, -2),
-                                      spreadRadius: -1,
+                                    const SizedBox(width: 6),
+                                    Transform.translate(
+                                      offset: Offset(_arrowPulse.value, 0),
+                                      child: const Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 18,
+                                        color: Color(0xFF333333),
+                                      ),
                                     ),
                                   ],
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(25),
-                                  child: BackdropFilter(
-                                    filter: ImageFilter.blur(sigmaX: 14.0, sigmaY: 14.0),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(25),
-                                        // Translucent frosted glass surface fill
-                                        color: Colors.white.withValues(alpha: 0.35),
-                                        // Specular glass rim outline
-                                        border: Border.all(
-                                          color: Colors.white.withValues(alpha: 0.70),
-                                          width: 1.2,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Start',
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.inter(
-                                              color: const Color(0xFF222222),
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: -0.3,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Transform.translate(
-                                            offset: Offset(_arrowPulse.value, 0),
-                                            child: const Icon(
-                                              Icons.arrow_forward_rounded,
-                                              size: 18,
-                                              color: Color(0xFF222222),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
                                 ),
                               ),
                             ),

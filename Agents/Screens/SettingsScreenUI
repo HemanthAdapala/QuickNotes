@@ -1,51 +1,167 @@
-Settings Screen UI 
+========================================================
+SETTINGS SCREEN
+========================================================
 
-1. Account         >
-2. Backup & Sync   >
+1. Account                              >
 
-3. Dark Mode 
-4. Storage & Data  >
+2. Backup & Sync                        >
 
-5. FAQ             >
-6. Terms of service>
-7. Privacy Policy  >
-8. Avout           >
+3. Dark Mode                            Toggle
 
+4. Storage & Data                       >
 
-
-1. Account
-
-1A. Profile
-1B. Delete your data and Account
-
-1A. Profile
-
-1AA. User Name
-1AB. Email Address
-
-1B. Delete your data and Account
-
-1BA. (Information)
+5. FAQ                                  >
+6. Terms of Service                     >
+7. Privacy Policy                       >
+8. About                                >
 
 
-2. Backup & Sync
+========================================================
+1. ACCOUNT
+========================================================
 
-2A. Google Drive (Connected or Not Connected)
+STATE A — OFFLINE USER
+--------------------------------------------------------
 
-2B. Create Local Backup
-    (Info)
-    (Button)
+Account
 
-2C. Cloud Backup
-    Google Drive Cloud Backup
-    (Info)
-    (Button - Backup to drive)
-    (View Cloud Backups)
+Offline Account
 
-2D. Restore Data
-    (Info)
-    (Button - Restore Local File)
-    (Button - Restore From Drive)
+Your notes are stored on this device.
 
+Sign in to enable backup and restore
+with Google Drive.
+
+[ Sign in with Google ]
 
 
+1A. Profile                            >
+
+    1AA. User Name
+         Local User
+
+    1AB. Email Address
+         Not connected
+
+
+1B. Delete your data and account       >
+
+    1BA. Information
+         Explain what deleting local
+         data means before confirmation.
+
+
+--------------------------------------------------------
+STATE B — AUTHENTICATED USER
+--------------------------------------------------------
+
+Account
+
+[Avatar]
+
+User Name
+user@gmail.com
+
+Google Account
+Connected
+
+
+1A. Profile                            >
+
+    1AA. User Name
+
+    1AB. Email Address
+
+
+1B. Delete your data and account       >
+
+
+
+========================================================
+2. BACKUP & SYNC
+========================================================
+
+2A. GOOGLE DRIVE
+--------------------------------------------------------
+
+OFFLINE:
+
+Google Drive
+Not Connected
+
+Sign in with Google to enable
+Google Drive backup and restore.
+
+[ Sign in with Google ]
+
+
+AUTHENTICATED:
+
+Google Drive
+Connected
+
+user@gmail.com
+Connected ✓
+
+
+--------------------------------------------------------
+2B. CREATE LOCAL BACKUP
+--------------------------------------------------------
+
+Create Local Backup
+
+Create a backup file of your Quick Notes
+data and save it on this device.
+
+[ Create Local Backup ]
+
+
+--------------------------------------------------------
+2C. CLOUD BACKUP
+--------------------------------------------------------
+
+OFFLINE:
+
+Cloud Backup
+
+Google Drive backup requires
+a connected Google account.
+
+[ Sign in with Google ]
+
+
+AUTHENTICATED:
+
+Cloud Backup
+
+Google Drive
+
+Back up your Quick Notes data
+to your private Google Drive.
+
+[ Backup to Drive ]
+
+View Cloud Backups >
+
+
+--------------------------------------------------------
+2D. RESTORE DATA
+--------------------------------------------------------
+
+Restore Data
+
+Restore your Quick Notes data
+from an existing backup.
+
+[ Restore Local File ]
+
+
+OFFLINE:
+[ Restore From Drive ]
+
+Sign in with Google to access
+your Google Drive backups.
+
+
+AUTHENTICATED:
+[ Restore From Drive ]

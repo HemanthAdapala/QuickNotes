@@ -12,6 +12,7 @@ import 'profile_screen.dart';
 import 'glassmorphism_sandbox_screen.dart';
 import 'account/account_settings_screen.dart';
 import 'backup_restore_screen.dart';
+import 'test_welcome_screen.dart';
 
 import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
@@ -44,6 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _username = 'byhmnth';
   String _email = 'hemanth@example.com';
   String? _imagePath;
+  bool _avatarFileExists = false;
   bool _isDummyDarkMode = true;
   bool _isMoreOptionsOpen = false;
 
@@ -55,21 +57,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      final name = prefs.getString('profile_full_name') ?? prefs.getString('profile_username');
-      final uname = prefs.getString('profile_username');
-      final mail = prefs.getString('profile_email') ?? prefs.getString('user_email');
-      if (name != null && name.trim().isNotEmpty) {
-        _fullName = name.trim();
-      }
-      if (uname != null && uname.trim().isNotEmpty) {
-        _username = uname.trim().replaceAll('@', '');
-      }
-      if (mail != null) {
-        _email = mail.trim();
-      }
-      _imagePath = prefs.getString('profile_avatar_path') ?? prefs.getString('profile_image_path');
-    });
+    final name = prefs.getString('profile_full_name') ?? prefs.getString('profile_username');
+    final uname = prefs.getString('profile_username');
+    final mail = prefs.getString('profile_email') ?? prefs.getString('user_email');
+    final imgPath = prefs.getString('profile_avatar_path') ?? prefs.getString('profile_image_path');
+
+    bool fileExists = false;
+    if (imgPath != null && !imgPath.startsWith('assets/')) {
+      fileExists = await File(imgPath).exists();
+    }
+
+    if (mounted) {
+      setState(() {
+        if (name != null && name.trim().isNotEmpty) {
+          _fullName = name.trim();
+        }
+        if (uname != null && uname.trim().isNotEmpty) {
+          _username = uname.trim().replaceAll('@', '');
+        }
+        if (mail != null) {
+          _email = mail.trim();
+        }
+        _imagePath = imgPath;
+        _avatarFileExists = fileExists;
+      });
+    }
+  }
+
+  Widget _buildAvatarWidget() {
+    if (_imagePath != null && _imagePath!.startsWith('assets/')) {
+      return Padding(
+        padding: const EdgeInsets.all(6.0),
+        child: Image.asset(
+          _imagePath!,
+          width: 78,
+          height: 78,
+          cacheWidth: 156,
+          cacheHeight: 156,
+          fit: BoxFit.contain,
+        ),
+      );
+    }
+    
+    if (_imagePath != null && _avatarFileExists) {
+      return Image.file(
+        File(_imagePath!),
+        width: 90,
+        height: 90,
+        cacheWidth: 180,
+        cacheHeight: 180,
+        fit: BoxFit.cover,
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(6.0),
+      child: Image.asset(
+        'assets/Profile Icons/maxim_transparent.png',
+        width: 78,
+        height: 78,
+        cacheWidth: 156,
+        cacheHeight: 156,
+        fit: BoxFit.contain,
+      ),
+    );
   }
 
   void _showInfoDialog(BuildContext context, String title, String message) {
@@ -118,16 +169,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // 1. Fixed Top Floral Background Banner
+          // 1. Fixed Top Floral Background Banner (Layer Isolated)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             height: 180,
-            child: SvgPicture.asset(
-              'assets/Settings Screen/Background.svg',
-              fit: BoxFit.cover,
-              width: double.infinity,
+            child: RepaintBoundary(
+              child: SvgPicture.asset(
+                'assets/Settings Screen/Background.svg',
+                fit: BoxFit.cover,
+                width: double.infinity,
+              ),
             ),
           ),
 
@@ -186,31 +239,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ],
                             ),
                             clipBehavior: Clip.antiAlias,
-                            child: _imagePath != null && _imagePath!.startsWith('assets/')
-                                ? Padding(
-                                    padding: const EdgeInsets.all(6.0),
-                                    child: Image.asset(
-                                      _imagePath!,
-                                      width: 78,
-                                      height: 78,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  )
-                                : _imagePath != null && File(_imagePath!).existsSync()
-                                    ? Image.file(
-                                        File(_imagePath!),
-                                        width: 90,
-                                        height: 90,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Container(
-                                        color: const Color(0xFFE2E2DF),
-                                        child: SvgPicture.asset(
-                                          "assets/Profile Icons/maxim_transparent.svg",
-                                          width: 90,
-                                          height: 90,
-                                        ),
-                                      ),
+                            child: _buildAvatarWidget(),
                           ),
                         ),
                       ),
@@ -268,10 +297,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Expanded(
                 child: Container(
                   color: Colors.white,
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 100.0),
-                    child: Column(
+                  child: RepaintBoundary(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 100.0),
+                      child: Column(
                       children: [
                         // Section 1 Card (Account, Backup & Sync)
                         GroupedListContainer(
@@ -381,6 +411,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         GroupedListContainer(
                           children: [
                             GroupedTile.navigation(
+                              iconPath: 'assets/icons/bottom_navigation/home.svg',
+                              title: '🧪 Test Welcome Screen',
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                Navigator.push(
+                                  context,
+                                  buildPageRoute(const TestWelcomeScreen()),
+                                );
+                              },
+                            ),
+                            GroupedTile.navigation(
                               iconPath: 'assets/icons/settings-sliders.svg',
                               title: '🧪 Test SDE Drag Selection',
                               onTap: () {
@@ -443,6 +484,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ),
+            ),
             ],
           ),
 

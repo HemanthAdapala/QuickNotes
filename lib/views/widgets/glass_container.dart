@@ -121,13 +121,12 @@ class GlassSurface extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
-        child: RepaintBoundary(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
-              sigmaY: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
-            ),
-            child: CustomPaint(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
+            sigmaY: useBottomBarPreset ? GlassmorphismPresets.blurSigma : activeBlur,
+          ),
+          child: CustomPaint(
               foregroundPainter: useBottomBarPreset
                   ? _InnerGlassBorderPainter(borderRadius: borderRadius)
                   : _GlassRimPainter(
@@ -170,8 +169,7 @@ class GlassSurface extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 

@@ -4,14 +4,15 @@ import 'animation_constants.dart';
 Future<T?> showAnimatedDialog<T>({
   required BuildContext context,
   required Widget child,
+  Color? barrierColor,
 }) {
   return showGeneralDialog<T>(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Dismiss',
-    barrierColor: Colors.black.withValues(alpha: 0.4),
+    barrierColor: barrierColor ?? Colors.black.withValues(alpha: 0.20),
     transitionDuration: kDurationNormal, // 250ms
-    pageBuilder: (context, animation, secondaryAnimation) => child,
+    pageBuilder: (context, animation, secondaryAnimation) => Center(child: child),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
       final curvedAnimation = CurvedAnimation(
         parent: animation,

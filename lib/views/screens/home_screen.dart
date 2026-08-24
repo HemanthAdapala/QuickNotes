@@ -466,6 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           // Dynamic Background (only active/visible behind Home tab)
@@ -797,6 +798,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 _avatarPath!,
                                 width: 28.0,
                                 height: 28.0,
+                                cacheWidth: 56,
+                                cacheHeight: 56,
                                 fit: BoxFit.contain,
                               ),
                             )
@@ -805,12 +808,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                   File(_avatarPath!),
                                   width: 34.0,
                                   height: 34.0,
+                                  cacheWidth: 68,
+                                  cacheHeight: 68,
                                   fit: BoxFit.cover,
                                 )
-                              : SvgPicture.asset(
-                                  "assets/Profile Icons/maxim_transparent.svg",
+                              : Image.asset(
+                                  "assets/Profile Icons/maxim_transparent.png",
                                   width: 34.0,
                                   height: 34.0,
+                                  cacheWidth: 68,
+                                  cacheHeight: 68,
+                                  fit: BoxFit.contain,
                                 ),
                     ),
                     rightWidth: 44.0,

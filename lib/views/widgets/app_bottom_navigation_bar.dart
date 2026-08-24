@@ -65,13 +65,16 @@ class AppBottomNavigationBar extends StatelessWidget {
                           AnimatedPositioned(
                             duration: kDurationNormal,
                             curve: Curves.easeInOutCubic,
-                            left: (40.0 + selectedIndex * (184.0 / 3.0) - 35.0) * scale,
+                            left:
+                                (40.0 + selectedIndex * (184.0 / 3.0) - 35.0) *
+                                    scale,
                             top: scale * (50.0 - 43.0) / 2.0,
                             width: 70.0 * scale,
                             height: 43.0 * scale,
                             child: GlassSurface(
                               borderRadius: BorderRadius.circular(21.5 * scale),
-                              customTintColor: activeColor ?? const Color(0xFFFFCC00),
+                              customTintColor:
+                                  activeColor ?? const Color(0xFFFFCC00),
                               child: const SizedBox.expand(),
                             ),
                           ),
@@ -88,8 +91,10 @@ class AppBottomNavigationBar extends StatelessWidget {
                               selectedIndex: selectedIndex,
                               onDestinationSelected: onDestinationSelected,
                               iconSize: 22 * scale,
-                              selectedColor: Colors.white, // Active icon changes to white
-                              unselectedColor: const Color(0xFF333333), // Inactive is 333333
+                              selectedColor:
+                                  Colors.white, // Active icon changes to white
+                              unselectedColor:
+                                  const Color(0xFF333333), // Inactive is 333333
                             ),
                           ),
                       ],
@@ -107,7 +112,8 @@ class AppBottomNavigationBar extends StatelessWidget {
                       onDestinationSelected: onDestinationSelected,
                       iconSize: 22 * scale,
                       selectedColor: Colors.white, // Active FAB is white
-                      unselectedColor: const Color(0xFF333333), // Inactive FAB is 333333
+                      unselectedColor:
+                          const Color(0xFF333333), // Inactive FAB is 333333
                     ),
                   ),
                 ],
@@ -153,7 +159,7 @@ class AppBottomNavigationDestination {
   ];
 }
 
-class BottomBarGlassSurface extends StatelessWidget {
+class BottomBarGlassSurface extends StatefulWidget {
   const BottomBarGlassSurface({
     super.key,
     required this.width,
@@ -170,59 +176,152 @@ class BottomBarGlassSurface extends StatelessWidget {
   final bool useFrost;
 
   @override
+  State<BottomBarGlassSurface> createState() => _BottomBarGlassSurfaceState();
+}
+
+class _BottomBarGlassSurfaceState extends State<BottomBarGlassSurface>
+    with SingleTickerProviderStateMixin {
+  AnimationController? _refreshController;
+  Animation<double>? _refreshAnimation;
+  Animation<double>? _routeAnimation;
+  bool _hasInvalidatedPostTransition = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 50),
+    );
+    _refreshAnimation = Tween<double>(begin: 0.999, end: 1.0).animate(
+      CurvedAnimation(parent: _refreshController!, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _subscribeToRouteAnimation();
+  }
+
+  void _subscribeToRouteAnimation() {
+    final route = ModalRoute.of(context);
+    final animation = route?.animation;
+
+    if (animation != _routeAnimation) {
+      _removeRouteListener();
+      _routeAnimation = animation;
+      if (_routeAnimation != null) {
+        if (_routeAnimation!.isCompleted) {
+          _triggerBackdropRefresh();
+        } else {
+          _hasInvalidatedPostTransition = false;
+          _routeAnimation!.addStatusListener(_handleAnimationStatusChange);
+        }
+      }
+    }
+  }
+
+  void _removeRouteListener() {
+    if (_routeAnimation != null) {
+      _routeAnimation!.removeStatusListener(_handleAnimationStatusChange);
+      _routeAnimation = null;
+    }
+  }
+
+  void _handleAnimationStatusChange(AnimationStatus status) {
+    if (status == AnimationStatus.completed) {
+      _removeRouteListener();
+      _triggerBackdropRefresh();
+    }
+  }
+
+  void _triggerBackdropRefresh() {
+    if (_hasInvalidatedPostTransition) return;
+    _hasInvalidatedPostTransition = true;
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _refreshController != null) {
+          _refreshController!.forward(from: 0.0);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _removeRouteListener();
+    _refreshController?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return DecoratedBox(
+    return AnimatedBuilder(
+      animation: _refreshAnimation ?? const AlwaysStoppedAnimation(1.0),
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _refreshAnimation?.value ?? 1.0,
+          child: child,
+        );
+      },
+      child: DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: borderRadius,
+        borderRadius: widget.borderRadius,
         boxShadow: GlassmorphismPresets.shadows,
       ),
       child: ClipRRect(
-        borderRadius: borderRadius,
-        child: RepaintBoundary(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: GlassmorphismPresets.blurSigma,
-              sigmaY: GlassmorphismPresets.blurSigma,
+        borderRadius: widget.borderRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: GlassmorphismPresets.blurSigma,
+            sigmaY: GlassmorphismPresets.blurSigma,
+          ),
+          child: CustomPaint(
+            foregroundPainter: _InnerGlassBorderPainter(
+              borderRadius: widget.borderRadius,
             ),
-            child: CustomPaint(
-              foregroundPainter: _InnerGlassBorderPainter(
-                borderRadius: borderRadius,
-              ),
-              child: SizedBox(
-                width: width,
-                height: height,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: GlassmorphismPresets.fillColor,
-                    borderRadius: borderRadius,
-                    boxShadow: GlassmorphismPresets.innerShadows,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: useFrost ? 0.65 : 0.45),
-                      width: 0.8,
+            child: SizedBox(
+              width: widget.width,
+              height: widget.height,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: GlassmorphismPresets.fillColor,
+                  borderRadius: widget.borderRadius,
+                  boxShadow: GlassmorphismPresets.innerShadows,
+                  border: Border.all(
+                    color: Colors.white.withValues(
+                      alpha: widget.useFrost ? 0.65 : 0.45,
                     ),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: useFrost ? 0.85 : 0.72),
-                        Colors.white.withValues(alpha: useFrost ? 0.45 : 0.0),
-                        scheme.surfaceTint.withValues(alpha: 0.08),
-                        Colors.black.withValues(alpha: 0.035),
-                      ],
-                      stops: const [0, 0.42, 0.78, 1],
-                    ),
+                    width: 0.8,
                   ),
-                  child: child,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(
+                        alpha: widget.useFrost ? 0.85 : 0.72,
+                      ),
+                      Colors.white.withValues(
+                        alpha: widget.useFrost ? 0.45 : 0.0,
+                      ),
+                      scheme.surfaceTint.withValues(alpha: 0.08),
+                      Colors.black.withValues(alpha: 0.035),
+                    ],
+                    stops: const [0, 0.42, 0.78, 1],
+                  ),
                 ),
+                child: widget.child,
               ),
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _NavigationButton extends StatefulWidget {
@@ -349,39 +448,40 @@ class _NavigationButtonState extends State<_NavigationButton>
             builder: (context, child) {
               final currentScale = reduceMotion ? 1.0 : _scaleAnimation.value;
               return Center(
-              child: Transform.scale(
-                scale: currentScale,
-                child: AnimatedSwitcher(
-                  duration: kDurationNormal,
-                  transitionBuilder: (child, animation) {
-                    return ScaleTransition(
-                      scale: animation,
-                      child: FadeTransition(
-                        opacity: animation,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: (widget.index == 4 && widget.selectedIndex == 1)
-                      ? Icon(
-                          Icons.add_rounded,
-                          key: const ValueKey('plus_icon'),
-                          size: widget.iconSize,
-                          color: color,
-                        )
-                      : SvgPicture.asset(
-                          widget.destination.iconAsset,
-                          key: ValueKey(isSelected),
-                          width: widget.iconSize,
-                          height: widget.iconSize,
-                          colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                child: Transform.scale(
+                  scale: currentScale,
+                  child: AnimatedSwitcher(
+                    duration: kDurationNormal,
+                    transitionBuilder: (child, animation) {
+                      return ScaleTransition(
+                        scale: animation,
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: child,
                         ),
+                      );
+                    },
+                    child: (widget.index == 4 && widget.selectedIndex == 1)
+                        ? Icon(
+                            Icons.add_rounded,
+                            key: const ValueKey('plus_icon'),
+                            size: widget.iconSize,
+                            color: color,
+                          )
+                        : SvgPicture.asset(
+                            widget.destination.iconAsset,
+                            key: ValueKey(isSelected),
+                            width: widget.iconSize,
+                            height: widget.iconSize,
+                            colorFilter:
+                                ColorFilter.mode(color, BlendMode.srcIn),
+                          ),
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
-      ),
       ),
     );
   }

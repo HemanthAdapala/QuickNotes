@@ -12,6 +12,11 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   exclude:
     - DesignCode/**
+    - Editor_Refactor-Sprints/**
+    - Agents/**
+    - backups/**
+    - conversations_history/**
+    - scratch/**
 
 
 linter:

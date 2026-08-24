@@ -144,4 +144,94 @@ No breaking architectural changes. Improves UX alignment with the application sp
 
 - Static analysis verified via `flutter analyze`.
 
+---
 
+## v3.1.0 — Phase 1.9.8.2
+
+### Date
+2026-08-18
+
+### Author
+Antigravity Engine
+
+### Type
+- Feature
+- UI
+- Integration
+- Testing
+
+---
+
+### Summary
+
+Integrated `AccountController` into `AccountSettingsScreen` (`lib/views/screens/account/account_settings_screen.dart`) allowing offline accounts to link Google identities in-place, handling account conflict modals, and navigating to First-Run Recovery when cloud backups exist.
+
+---
+
+### Detailed Changes
+
+- **Offline / Authenticated State Support**: Added conditional rendering displaying State A (Offline banner + Sign in with Google button) when `sessionType == SessionType.offline`, and State B (Connected avatar, email, and verified badge) when `sessionType == SessionType.google`.
+- **Conflict Resolution Modal**: Added `_showConflictDialog` to present collision details with `[ Cancel ]` (stay offline) and `[ Switch Account ]` (activate existing Google account).
+- **First-Run Recovery Navigation**: On `AccountLinkAction.navigateToRecovery`, routes smoothly to `FirstRunRecoveryFlow`.
+- **Interaction Guards**: Disabled double-tap and action triggers during authentication.
+
+---
+
+### Files Modified
+
+- `lib/views/screens/account/account_settings_screen.dart`
+- `test/views/account_settings_screen_test.dart`
+- `Agents/skills/ChangeLogs Folder/SettingsScreen_Changelog.md`
+
+---
+
+### Testing Status
+
+- 9/9 widget tests in `test/views/account_settings_screen_test.dart` PASS.
+- 16/16 controller unit tests in `test/controllers/account_controller_test.dart` PASS.
+
+---
+
+## v3.2.0
+
+### Date
+2026-08-20
+
+### Author
+Anti Gravity
+
+### Type
+- Feature
+- Testing
+
+---
+
+### Summary
+
+Added `🧪 Test Welcome Screen` navigation tile to Section 4 (Developer & Testing Screens) of `SettingsScreen` (`lib/views/screens/settings_screen.dart`), routing to `TestWelcomeScreen`.
+
+---
+
+### Detailed Changes
+
+- **TestWelcomeScreen Access**: Added a `GroupedTile.navigation` item for `🧪 Test Welcome Screen` in Section 4 of `SettingsScreen` using `assets/icons/bottom_navigation/home.svg`.
+- **Haptic Feedback**: Wired `HapticFeedback.selectionClick()` on tap before pushing `TestWelcomeScreen`.
+
+---
+
+### Architecture Impact
+
+No architectural impact.
+
+---
+
+### Files Modified
+
+- `lib/views/screens/settings_screen.dart`
+- `Agents/skills/ChangeLogs Folder/SettingsScreen_Changelog.md`
+
+---
+
+### Testing Status
+
+- Widget tests in `test/views/test_welcome_screen_test.dart` PASS (100% GREEN).

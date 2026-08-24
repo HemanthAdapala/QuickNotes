@@ -1,3 +1,4 @@
+import '../models/identity_link_result.dart';
 import '../repositories/user_identity_repository.dart';
 
 /// UserIdentityService — Single authority for resolving external provider credentials
@@ -45,4 +46,30 @@ class UserIdentityService {
       photoUrl: photoUrl,
     );
   }
+
+  /// Links an external Google identity to the active offline canonical user in-place.
+  ///
+  /// Core Invariant:
+  /// - Keeps the active user's canonical ID (`usr_local_...`) unchanged.
+  /// - Atomically transitions `users.isOffline: 1 -> 0`.
+  /// - Inserts new `user_identities` row for `(userId: activeUserId, provider: 'google', providerUserId: googleId)`.
+  /// - Updates `user_profiles` with Google metadata, preserving any custom user names.
+  /// - If the Google ID already belongs to a different canonical user, returns [IdentityLinkResult.conflict] with ZERO mutations.
+  Future<IdentityLinkResult> linkGoogleIdentityToActiveUser({
+    required String activeUserId,
+    required String googleId,
+    String? email,
+    String? displayName,
+    String? photoUrl,
+  }) async {
+    return await _identityRepository.linkIdentityToActiveUser(
+      activeUserId: activeUserId,
+      provider: 'google',
+      providerUserId: googleId,
+      email: email,
+      displayName: displayName,
+      photoUrl: photoUrl,
+    );
+  }
 }
+
