@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -33,10 +33,18 @@ class CalendarTaskCard extends StatelessWidget {
     return Container(
       height: 67,
       decoration: ShapeDecoration(
-        color: task.priorityColor,
+        color: Colors.white, // Background is white
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
+        shadows: const [
+          BoxShadow(
+            color: Color(0x15000000), // Soft drop shadow matching design
+            blurRadius: 16,
+            offset: Offset(0, 0),
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -52,7 +60,7 @@ class CalendarTaskCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 8),
+          const SizedBox(width: 14),
 
           // ── Text content ─────────────────────────────────────────────────
           Expanded(
@@ -69,7 +77,7 @@ class CalendarTaskCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: const Color(0xFF333333),
+                      color: const Color(0xFF1C1C1E),
                       fontSize: 16,
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w500,
@@ -77,7 +85,7 @@ class CalendarTaskCard extends StatelessWidget {
                       decoration: task.isCompleted
                           ? TextDecoration.lineThrough
                           : TextDecoration.none,
-                      decorationColor: const Color(0xFF333333),
+                      decorationColor: const Color(0xFF1C1C1E),
                       decorationThickness: 1.5,
                     ),
                   ),
@@ -88,7 +96,7 @@ class CalendarTaskCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Color(0xFF333333),
+                      color: Color(0xFF1C1C1E),
                       fontSize: 12,
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w400,
