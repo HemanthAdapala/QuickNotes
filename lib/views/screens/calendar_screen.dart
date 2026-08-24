@@ -10,6 +10,7 @@ import '../../models/repeat_rule.dart';
 import '../../providers/tasks_provider.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/calendar_grid_widget.dart';
+import '../widgets/calendar_day_cell.dart';
 import '../widgets/celebration_overlay.dart';
 import 'create_task_screen.dart';
 import '../widgets/create_task_bottom_sheet.dart';
@@ -112,14 +113,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
-  // ── Computed: task progress per day (drives orbital rings) ─
-  Map<int, double> get _dayTaskProgress {
-    final result = <int, double>{};
+  // ── Computed: 4-state mapping for days with tasks (drives UI indicators) ──
+  Map<int, DayTaskState> get _monthTaskStates {
+    final result = <int, DayTaskState>{};
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
     for (final entry in _monthTasks.entries) {
-      if (entry.value.isNotEmpty) {
-        final total = entry.value.length;
-        final completed = entry.value.where((t) => t.isCompleted).length;
-        result[entry.key] = completed / total;
+      if (entry.value.isEmpty) continue;
+      
+      final date = DateTime(_currentMonth.year, _currentMonth.month, entry.key);
+      final allCompleted = entry.value.every((t) => t.isCompleted);
+      
+      if (allCompleted) {
+        result[entry.key] = DayTaskState.completed;
+      } else {
+        if (date.isBefore(today)) {
+          result[entry.key] = DayTaskState.notCompleted;
+        } else {
+          result[entry.key] = DayTaskState.task;
+        }
       }
     }
     return result;
@@ -405,7 +418,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                   child: CalendarGridWidget(
                     currentMonth: _currentMonth,
-                    taskProgress: _dayTaskProgress,
+                    taskStates: _monthTaskStates,
                     selectedDay: _selectedDay,
                     onDayTap: (day) => setState(() => _selectedDay = day),
                   ),
