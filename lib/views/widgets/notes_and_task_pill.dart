@@ -69,7 +69,7 @@ class NotesAndTaskPill extends StatelessWidget {
                 child: Text(
                   'Notes',
                   style: GoogleFonts.inter(
-                    color: isNotesActive ? Colors.white : Colors.black,
+                    color: isNotesActive ? Colors.white : Color(0xFF333333),
                     fontSize: 16.0,
                     fontWeight: FontWeight.w600,
                     height: 1.38,
@@ -95,7 +95,7 @@ class NotesAndTaskPill extends StatelessWidget {
                 child: Text(
                   'Tasks',
                   style: GoogleFonts.inter(
-                    color: !isNotesActive ? Colors.white : Colors.black,
+                    color: !isNotesActive ? Colors.white : Color(0xFF333333),
                     fontSize: 16.0,
                     fontWeight: FontWeight.w600,
                     height: 1.38,

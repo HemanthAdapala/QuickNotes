@@ -199,14 +199,14 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
     final cardShadow = isDark
         ? [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Color(0xFF333333).withOpacity(0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             )
           ]
         : [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Color(0xFF333333).withOpacity(0.04),
               blurRadius: 12,
               offset: Offset.lerp(
                 const Offset(0, 4),

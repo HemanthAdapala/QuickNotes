@@ -25,9 +25,9 @@ class QuickNotesTheme {
       dialogTheme: const DialogThemeData(backgroundColor: surface),
       colorScheme: const ColorScheme.dark(
         primary: accent,
-        onPrimary: Color(0xFF000000),
+        onPrimary: Color(0xFF333333),
         secondary: accent,
-        onSecondary: Color(0xFF000000),
+        onSecondary: Color(0xFF333333),
         surface: surface,
         onSurface: textPrimary,
         outline: border,
@@ -116,7 +116,7 @@ class QuickNotesTheme {
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: accent,
-        foregroundColor: Color(0xFF000000),
+        foregroundColor: Color(0xFF333333),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -134,7 +134,7 @@ class QuickNotesTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: accent,
-          foregroundColor: const Color(0xFF000000),
+          foregroundColor: const Color(0xFF333333),
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(

@@ -53,7 +53,7 @@ class MoreOptionsPopup extends StatelessWidget {
                       width: 16,
                       height: 16,
                       colorFilter:
-                          const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                          const ColorFilter.mode(Color(0xFF333333), BlendMode.srcIn),
                     ),
                   ),
                   Positioned(
@@ -67,7 +67,7 @@ class MoreOptionsPopup extends StatelessWidget {
                         child: Text(
                           'Delete Data',
                           style: GoogleFonts.inter(
-                            color: Colors.black,
+                            color: Color(0xFF333333),
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                           ),
@@ -97,7 +97,7 @@ class MoreOptionsPopup extends StatelessWidget {
                       width: 16,
                       height: 16,
                       colorFilter:
-                          const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+                          const ColorFilter.mode(Color(0xFF333333), BlendMode.srcIn),
                     ),
                   ),
                   Positioned(
@@ -111,7 +111,7 @@ class MoreOptionsPopup extends StatelessWidget {
                         child: Text(
                           'Refresh',
                           style: GoogleFonts.inter(
-                            color: Colors.black,
+                            color: Color(0xFF333333),
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                           ),

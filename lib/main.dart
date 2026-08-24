@@ -214,7 +214,7 @@ class QuickNotesApp extends StatelessWidget {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Color(0xFF333333).withOpacity(0.15),
                         blurRadius: 30,
                         offset: const Offset(0, 12),
                       ),

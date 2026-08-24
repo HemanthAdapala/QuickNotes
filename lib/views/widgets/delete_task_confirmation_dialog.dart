@@ -256,7 +256,7 @@ Future<String?> showDeleteTaskDialog(
   return showDialog<String>(
     context: context,
     barrierDismissible: true,
-    barrierColor: Colors.black.withValues(alpha: 0.40),
+    barrierColor: Color(0xFF333333).withValues(alpha: 0.40),
     builder: (ctx) => DeleteTaskConfirmationDialog(
       title: title,
       message: message,

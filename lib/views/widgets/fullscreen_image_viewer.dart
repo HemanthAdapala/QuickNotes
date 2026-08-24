@@ -79,7 +79,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
     final double bgOpacity = 1.0 - dragRatio;
 
     return Scaffold(
-      backgroundColor: Colors.black.withValues(alpha: bgOpacity),
+      backgroundColor: Color(0xFF333333).withValues(alpha: bgOpacity),
       body: Stack(
         children: [
           // Drag-to-dismiss wrapper

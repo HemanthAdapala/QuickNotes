@@ -216,19 +216,19 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
             offset: const Offset(0, 8),
             blurRadius: 15,
             spreadRadius: 0,
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Color(0xFF333333).withValues(alpha: 0.02),
           ),
         ];
       case 'S1':
         return [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Color(0xFF333333).withValues(alpha: 0.08),
             blurRadius: 16,
             spreadRadius: -4,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Color(0xFF333333).withValues(alpha: 0.03),
             blurRadius: 6,
             spreadRadius: -2,
             offset: const Offset(0, 2),
@@ -237,13 +237,13 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
       case 'S2':
         return [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
+            color: Color(0xFF333333).withValues(alpha: 0.15),
             blurRadius: 32,
             spreadRadius: -6,
             offset: const Offset(0, 20),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Color(0xFF333333).withValues(alpha: 0.05),
             blurRadius: 12,
             spreadRadius: -3,
             offset: const Offset(0, 6),
@@ -349,7 +349,7 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w300,
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: Color(0xFF333333).withValues(alpha: 0.6),
                         height: 1.6,
                       ),
                     ),
@@ -359,7 +359,7 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                       style: GoogleFonts.outfit(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black.withValues(alpha: 0.7),
+                        color: Color(0xFF333333).withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -601,7 +601,7 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: Color(0xFF333333).withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -674,7 +674,7 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
                     const BorderRadius.vertical(top: Radius.circular(24)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: Color(0xFF333333).withValues(alpha: 0.15),
                     blurRadius: 16,
                     offset: const Offset(0, -4),
                   ),

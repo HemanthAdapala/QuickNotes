@@ -17,7 +17,7 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
 
   @override
   Color? get barrierColor =>
-      customBarrierColor ?? Colors.black.withValues(alpha: 0.20);
+      customBarrierColor ?? Color(0xFF333333).withValues(alpha: 0.20);
 
   @override
   bool get barrierDismissible => true;

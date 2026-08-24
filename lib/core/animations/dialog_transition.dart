@@ -10,7 +10,7 @@ Future<T?> showAnimatedDialog<T>({
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Dismiss',
-    barrierColor: barrierColor ?? Colors.black.withValues(alpha: 0.20),
+    barrierColor: barrierColor ?? Color(0xFF333333).withValues(alpha: 0.20),
     transitionDuration: kDurationNormal, // 250ms
     pageBuilder: (context, animation, secondaryAnimation) =>
         Center(child: child),

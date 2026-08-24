@@ -114,7 +114,7 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.12),
+                            color: Color(0xFF333333).withValues(alpha: 0.12),
                             blurRadius: 24,
                             offset: const Offset(0, 6),
                           ),

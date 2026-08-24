@@ -174,7 +174,7 @@ class InteractiveCheckbox extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final uncheckedBorderColor =
-        isDark ? Colors.white.withOpacity(0.4) : Colors.black.withOpacity(0.3);
+        isDark ? Colors.white.withOpacity(0.4) : Color(0xFF333333).withOpacity(0.3);
 
     final checkedBgColor = const Color(0xFFFFCC00);
     final checkIconColor = const Color(0xFF333333);
@@ -2274,7 +2274,7 @@ class RichTextEditingController extends TextEditingController {
       final highlightStyle = runStyle.copyWith(
         backgroundColor:
             isActive ? const Color(0xFFFFB74D) : const Color(0xFFFFF59D),
-        color: isActive ? Colors.black : const Color(0xFF1C1C1E),
+        color: isActive ? Color(0xFF333333) : const Color(0xFF1C1C1E),
         fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
       );
 
@@ -2965,7 +2965,7 @@ class RangeTextEditingController extends TextEditingController {
       Color? displayColor = currentStyle.color ?? baseStyle.color;
       if (isCheckedCheckbox) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final defaultColor = isDark ? Colors.white : Colors.black;
+        final defaultColor = isDark ? Colors.white : Color(0xFF333333);
         displayColor = (displayColor ?? defaultColor).withOpacity(0.4);
       }
 

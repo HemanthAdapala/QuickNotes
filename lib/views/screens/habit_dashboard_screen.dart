@@ -455,7 +455,7 @@ class HabitDashboardScreen extends StatelessWidget {
             width: double.infinity,
           ),
           Container(
-            color: Colors.black.withAlpha(40),
+            color: Color(0xFF333333).withAlpha(40),
             height: 160,
             width: double.infinity,
           ),

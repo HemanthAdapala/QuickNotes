@@ -338,7 +338,7 @@ class _AddTaskButton extends StatelessWidget {
               width: 14,
               height: 14,
               colorFilter: const ColorFilter.mode(
-                Colors.black,
+                Color(0xFF333333),
                 BlendMode.srcIn,
               ),
             ),
@@ -346,7 +346,7 @@ class _AddTaskButton extends StatelessWidget {
             const Text(
               'Add Task',
               style: TextStyle(
-                color: Colors.black,
+                color: Color(0xFF333333),
                 fontSize: 15,
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w500,

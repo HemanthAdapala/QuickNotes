@@ -169,7 +169,7 @@ Future<bool?> showDeleteNoteDialog(
   return showDialog<bool>(
     context: context,
     barrierDismissible: true,
-    barrierColor: Colors.black.withValues(alpha: 0.40),
+    barrierColor: Color(0xFF333333).withValues(alpha: 0.40),
     builder: (ctx) => DeleteConfirmationDialog(
       title: title ?? 'Delete Note',
       message: message ??

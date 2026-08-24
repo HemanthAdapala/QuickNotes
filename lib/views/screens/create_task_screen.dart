@@ -329,7 +329,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                         color: Colors.transparent,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
+                            color: Color(0xFF333333).withOpacity(0.06),
                             blurRadius: 20.0,
                             offset: const Offset(0, -4),
                           ),
@@ -693,7 +693,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                               BorderRadius.circular(16),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.black
+                                              color: Color(0xFF333333)
                                                   .withOpacity(0.08),
                                               blurRadius: 10,
                                               offset: const Offset(0, 4),
@@ -1147,7 +1147,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Color(0xFF333333).withOpacity(0.08),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),

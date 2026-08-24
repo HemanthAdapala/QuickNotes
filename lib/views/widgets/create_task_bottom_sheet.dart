@@ -541,7 +541,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Color(0xFF333333).withOpacity(0.08),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -833,7 +833,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
           Text(
             label,
             style: const TextStyle(
-              color: Colors.black,
+              color: Color(0xFF333333),
               fontSize: 15,
               fontFamily: 'Inter',
               fontWeight: FontWeight.w500,

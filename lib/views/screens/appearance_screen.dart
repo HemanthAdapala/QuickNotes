@@ -345,7 +345,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
             child: isSelected
                 ? Icon(
                     Icons.check,
-                    color: color == Colors.white ? Colors.black : Colors.black,
+                    color: color == Colors.white ? Color(0xFF333333) : Color(0xFF333333),
                   )
                 : null,
           ),

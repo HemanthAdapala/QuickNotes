@@ -105,7 +105,7 @@ class _TitleTextEditingController extends TextEditingController {
         final highlightStyle = cleanStyle.copyWith(
           backgroundColor:
               isActive ? const Color(0xFFFFB74D) : const Color(0xFFFFF59D),
-          color: isActive ? Colors.black : const Color(0xFF1C1C1E),
+          color: isActive ? Color(0xFF333333) : const Color(0xFF1C1C1E),
           fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
         );
 
@@ -768,7 +768,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
 
   Color _getPaperGuideColor(bool isDark) {
     if (_paperGuideColor == 0) {
-      return isDark ? Colors.white : Colors.black;
+      return isDark ? Colors.white : Color(0xFF333333);
     }
     return Color(_paperGuideColor);
   }
@@ -1150,7 +1150,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                 decoration: block.isChecked
                     ? const BoxDecoration(color: Color(0xFF222222))
                     : BoxDecoration(
-                        border: Border.all(color: Colors.black, width: 1.0)),
+                        border: Border.all(color: Color(0xFF333333), width: 1.0)),
                 child: block.isChecked
                     ? Center(
                         child: SvgPicture.asset(
@@ -3670,7 +3670,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(20),
+            color: Color(0xFF333333).withAlpha(20),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -3929,7 +3929,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                         color: color,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSelected ? Colors.black : Colors.black12,
+                          color: isSelected ? Color(0xFF333333) : Colors.black12,
                           width: isSelected ? 2 : 1,
                         ),
                       ),
@@ -4207,7 +4207,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                             color: Colors.transparent,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
+                                color: Color(0xFF333333).withOpacity(0.06),
                                 blurRadius: 20.0,
                                 offset: const Offset(0, -4),
                               ),
@@ -4688,7 +4688,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                   onTap: () => setState(() => _isNoteOptionsOpen = false),
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.20),
+                    color: Color(0xFF333333).withValues(alpha: 0.20),
                   ),
                 ),
               ),
@@ -5708,7 +5708,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   Widget _buildDeletePopup() {
     return Positioned.fill(
       child: Container(
-        color: Colors.black.withOpacity(0.4),
+        color: Color(0xFF333333).withOpacity(0.4),
         child: Center(
           child: Container(
             width: 262,
@@ -6221,7 +6221,7 @@ class FullScreenImageViewer extends StatelessWidget {
     final isFile =
         !imagePath.startsWith('http://') && !imagePath.startsWith('https://');
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Color(0xFF333333),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

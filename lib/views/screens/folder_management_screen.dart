@@ -1082,7 +1082,7 @@ class DecorativeNoteCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
+                    color: Color(0xFF333333).withValues(alpha: 0.18),
                     blurRadius: 16.0,
                     offset: Offset.zero,
                     spreadRadius: 0,
@@ -1114,7 +1114,7 @@ class DecorativeNoteCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.10),
+                    color: Color(0xFF333333).withValues(alpha: 0.10),
                     blurRadius: 6.0,
                     offset: const Offset(0, 3),
                   ),
@@ -1162,7 +1162,7 @@ class FolderBgPainter extends CustomPainter {
     );
 
     final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.18)
+      ..color = Color(0xFF333333).withValues(alpha: 0.18)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
     canvas.drawRRect(rrect, shadowPaint);
 
@@ -1215,7 +1215,7 @@ class FolderFgPainter extends CustomPainter {
     final scaledPath = svgPath.transform(matrix.storage);
 
     canvas.drawShadow(
-        scaledPath, Colors.black.withValues(alpha: 0.18), 3.0, true);
+        scaledPath, Color(0xFF333333).withValues(alpha: 0.18), 3.0, true);
 
     final paint = Paint()
       ..color = color
@@ -1588,7 +1588,7 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
     const Color(0xFFC7C7CC),
     const Color(0xFFAEAEB2), const Color(0xFF8E8E93), const Color(0xFF636366),
     const Color(0xFF48484A),
-    const Color(0xFF323235), Colors.black,
+    const Color(0xFF323235), Color(0xFF333333),
     // Reds
     const Color(0xFFFFD6D6), const Color(0xFFFFADAD), const Color(0xFFFF7A7A),
     const Color(0xFFFF4D4D),
@@ -2209,7 +2209,7 @@ class SpectrumPainter extends CustomPainter {
         colors: [
           Colors.white,
           Colors.transparent,
-          Colors.black,
+          Color(0xFF333333),
         ],
       ).createShader(rect)
       ..blendMode = BlendMode.multiply;

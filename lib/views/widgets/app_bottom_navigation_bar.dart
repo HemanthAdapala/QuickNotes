@@ -308,7 +308,7 @@ class _BottomBarGlassSurfaceState extends State<BottomBarGlassSurface>
                           alpha: widget.useFrost ? 0.45 : 0.0,
                         ),
                         scheme.surfaceTint.withValues(alpha: 0.08),
-                        Colors.black.withValues(alpha: 0.035),
+                        Color(0xFF333333).withValues(alpha: 0.035),
                       ],
                       stops: const [0, 0.42, 0.78, 1],
                     ),

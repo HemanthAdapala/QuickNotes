@@ -145,7 +145,7 @@ class RichTextSelectionToolbar extends StatelessWidget {
                   offset: const Offset(0, 6),
                   blurRadius: 16,
                   spreadRadius: 0,
-                  color: Colors.black.withValues(alpha: 0.25),
+                  color: Color(0xFF333333).withValues(alpha: 0.25),
                 ),
               ],
             ),

@@ -76,7 +76,7 @@ class GlassSurface extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               borderRadius: borderRadius,
-              color: (isDark ? Colors.black : Colors.white)
+              color: (isDark ? Color(0xFF333333) : Colors.white)
                   .withValues(alpha: 0.94),
             ),
           ),
@@ -98,10 +98,10 @@ class GlassSurface extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: isDark
                 ? [
-                    Colors.black.withValues(alpha: 0.45),
-                    Colors.black.withValues(alpha: 0.25),
+                    Color(0xFF333333).withValues(alpha: 0.45),
+                    Color(0xFF333333).withValues(alpha: 0.25),
                     scheme.surfaceTint.withValues(alpha: 0.12),
-                    Colors.black.withValues(alpha: 0.50),
+                    Color(0xFF333333).withValues(alpha: 0.50),
                   ]
                 : [
                     Colors.white.withValues(alpha: 0.72),
@@ -109,7 +109,7 @@ class GlassSurface extends StatelessWidget {
                       alpha: activeFrost,
                     ),
                     scheme.surfaceTint.withValues(alpha: 0.08),
-                    Colors.black.withValues(alpha: 0.035),
+                    Color(0xFF333333).withValues(alpha: 0.035),
                   ],
             stops: const [0, 0.42, 0.78, 1],
           ),
@@ -265,7 +265,7 @@ class _GlassRimPainter extends CustomPainter {
         colors: [
           Colors.white.withValues(alpha: 0.38 * bevelIntensity),
           Colors.transparent,
-          Colors.black.withValues(alpha: depthOpacity * bevelIntensity),
+          Color(0xFF333333).withValues(alpha: depthOpacity * bevelIntensity),
         ],
         stops: const [0, 0.48, 1],
       ).createShader(rect);

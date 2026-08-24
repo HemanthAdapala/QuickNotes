@@ -71,12 +71,12 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
           title: Text(
             "New Category",
             style: GoogleFonts.inter(
-                fontWeight: FontWeight.bold, color: Colors.black),
+                fontWeight: FontWeight.bold, color: Color(0xFF333333)),
           ),
           content: TextField(
             controller: _categoryNameController,
             autofocus: true,
-            style: GoogleFonts.inter(color: Colors.black),
+            style: GoogleFonts.inter(color: Color(0xFF333333)),
             decoration: InputDecoration(
               labelText: "Category Name",
               labelStyle: GoogleFonts.inter(color: const Color(0xFF8C8987)),
@@ -220,7 +220,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                           style: GoogleFonts.inter(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Color(0xFF333333),
                             height: 1.1,
                           ),
                         ),
@@ -247,7 +247,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                       child: const Icon(
                         Icons.close,
                         size: 18,
-                        color: Colors.black,
+                        color: Color(0xFF333333),
                       ),
                     ),
                   ),
@@ -429,7 +429,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
-                    color: isSelected ? const Color(0xFFF2F2EE) : Colors.black,
+                    color: isSelected ? const Color(0xFFF2F2EE) : Color(0xFF333333),
                   ),
                 ),
               ],

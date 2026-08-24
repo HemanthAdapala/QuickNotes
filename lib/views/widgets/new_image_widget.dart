@@ -80,12 +80,12 @@ class _NewImageWidgetState extends State<NewImageWidget> {
                 border: Border.all(
                   color: widget.isSelected
                       ? theme.primaryColor
-                      : Colors.black.withOpacity(0.08),
+                      : Color(0xFF333333).withOpacity(0.08),
                   width: widget.isSelected ? 2.5 : 1.0,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Color(0xFF333333).withOpacity(0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

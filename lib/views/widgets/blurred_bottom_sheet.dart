@@ -9,7 +9,7 @@ void showBlurredBottomSheet({
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Dismiss',
-    barrierColor: Colors.black.withValues(alpha: 0.20),
+    barrierColor: Color(0xFF333333).withValues(alpha: 0.20),
     transitionDuration: const Duration(milliseconds: 350),
     pageBuilder: (context, animation, secondaryAnimation) {
       return Align(

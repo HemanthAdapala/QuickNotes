@@ -41,7 +41,7 @@ class GlassPopupPageRoute<T> extends PageRouteBuilder<T> {
                     onTap: () => Navigator.of(context).pop(),
                     behavior: HitTestBehavior.opaque,
                     child: Container(
-                      color: Colors.black.withValues(alpha: 0.20 * curvedT),
+                      color: Color(0xFF333333).withValues(alpha: 0.20 * curvedT),
                     ),
                   ),
                 ),

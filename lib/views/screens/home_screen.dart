@@ -490,7 +490,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return Container(color: const Color(0xFFFFFFFF));
       case 6:
         // B6: Solid Black
-        return Container(color: const Color(0xFF000000));
+        return Container(color: const Color(0xFF333333));
       case 0:
       default:
         // B0: Default Pure White
@@ -882,7 +882,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () => setState(() => _isMoreOptionsOpen = false),
                 behavior: HitTestBehavior.opaque,
                 child: Container(
-                  color: Colors.black.withValues(alpha: 0.20),
+                  color: Color(0xFF333333).withValues(alpha: 0.20),
                 ),
               ),
             ),

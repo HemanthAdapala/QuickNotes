@@ -292,7 +292,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
 
     showAnimatedBottomSheet(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.20),
+      barrierColor: Color(0xFF333333).withValues(alpha: 0.20),
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -761,7 +761,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                     duration: const Duration(milliseconds: 250),
                     opacity: _isFolderOptionsOpen ? 1.0 : 0.0,
                     child: Container(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Color(0xFF333333).withValues(alpha: 0.05),
                     ),
                   ),
                 ),

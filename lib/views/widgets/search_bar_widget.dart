@@ -37,7 +37,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(10),
+            color: Color(0xFF333333).withAlpha(10),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

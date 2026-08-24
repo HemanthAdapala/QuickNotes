@@ -261,7 +261,7 @@ class DecorativeNoteCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
+                    color: Color(0xFF333333).withValues(alpha: 0.18),
                     blurRadius: 16.0,
                     offset: Offset.zero,
                     spreadRadius: 0,
@@ -293,7 +293,7 @@ class DecorativeNoteCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.10),
+                    color: Color(0xFF333333).withValues(alpha: 0.10),
                     blurRadius: 6.0,
                     offset: const Offset(0, 3),
                   ),
@@ -341,7 +341,7 @@ class FolderBgPainter extends CustomPainter {
     );
 
     final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.18)
+      ..color = Color(0xFF333333).withValues(alpha: 0.18)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
     canvas.drawRRect(rrect, shadowPaint);
 
@@ -393,7 +393,7 @@ class FolderFgPainter extends CustomPainter {
     );
 
     final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.12)
+      ..color = Color(0xFF333333).withValues(alpha: 0.12)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6.0);
     canvas.drawPath(path.shift(const Offset(0, -2.0)), shadowPaint);
 

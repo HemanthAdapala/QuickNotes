@@ -649,7 +649,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                           borderRadius: BorderRadius.circular(32),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.03),
+                              color: Color(0xFF333333).withOpacity(0.03),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -837,7 +837,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
             color: _getCardBgColor(type),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.black.withOpacity(0.02),
+              color: Color(0xFF333333).withOpacity(0.02),
               width: 1.0,
             ),
           ),

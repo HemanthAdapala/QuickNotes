@@ -184,7 +184,7 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
         border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Color(0xFF333333).withValues(alpha: 0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -529,7 +529,7 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Color(0xFF333333).withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),

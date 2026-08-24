@@ -333,7 +333,7 @@ class NotesProvider with ChangeNotifier {
   static Color getNoteTextColor(int index, BuildContext context) {
     final brightness = Theme.of(context).brightness;
     if (index == 0) {
-      return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black;
+      return Theme.of(context).textTheme.bodyMedium?.color ?? Color(0xFF333333);
     }
     if (brightness == Brightness.dark) {
       return Colors.white70;
@@ -345,7 +345,7 @@ class NotesProvider with ChangeNotifier {
   static Color getNoteTitleColor(int index, BuildContext context) {
     final brightness = Theme.of(context).brightness;
     if (index == 0) {
-      return Theme.of(context).textTheme.titleMedium?.color ?? Colors.black;
+      return Theme.of(context).textTheme.titleMedium?.color ?? Color(0xFF333333);
     }
     if (brightness == Brightness.dark) {
       return Colors.white;
@@ -362,7 +362,7 @@ class NotesProvider with ChangeNotifier {
     if (brightness == Brightness.dark) {
       return Colors.white.withAlpha(25);
     }
-    return Colors.black.withAlpha(15);
+    return Color(0xFF333333).withAlpha(15);
   }
 
   // Cache folder mappings for folder names
