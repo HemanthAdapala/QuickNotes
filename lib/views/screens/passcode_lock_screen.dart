@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../themes/quick_notes_theme.dart';
 import '../../services/vault_service.dart';
 import '../../providers/notes_provider.dart';
+import '../widgets/app_header_bar.dart';
 
 enum LockPurpose { appUnlock, vaultUnlock, noteUnlock }
 
@@ -126,22 +127,36 @@ class _PasscodeLockScreenState extends State<PasscodeLockScreen> {
     return Scaffold(
       backgroundColor: QuickNotesTheme.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
-          child: Column(
-            children: [
-              // Cancel Button
-              Align(
-                alignment: Alignment.topLeft,
-                child: isCancelable
-                    ? IconButton(
-                        icon: const Icon(Icons.close_rounded,
-                            color: QuickNotesTheme.textPrimary),
-                        onPressed: widget.onCancel,
-                      )
-                    : const SizedBox(height: 48),
+        child: Column(
+          children: [
+            // Header Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
+              child: AppHeaderBar(
+                leftHeroTag: 'hero_passcode_cancel',
+                rightHeroTag: 'hero_passcode_empty',
+                leftWidth: 44.0,
+                rightWidth: 44.0,
+                rightChild: null,
+                leftChild: isCancelable
+                    ? const Icon(Icons.close_rounded,
+                        color: QuickNotesTheme.textPrimary)
+                    : null,
+                onLeftTap: isCancelable
+                    ? () {
+                        HapticFeedback.lightImpact();
+                        widget.onCancel?.call();
+                      }
+                    : null,
               ),
-              const Spacer(),
+            ),
+            
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: Column(
+                  children: [
+                    const Spacer(),
 
               // Lock Icon
               Container(
@@ -228,8 +243,11 @@ class _PasscodeLockScreenState extends State<PasscodeLockScreen> {
                 ],
               ),
               const SizedBox(height: 48),
-            ],
-          ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -334,3 +352,4 @@ class _KeypadButtonState extends State<_KeypadButton> {
     );
   }
 }
+

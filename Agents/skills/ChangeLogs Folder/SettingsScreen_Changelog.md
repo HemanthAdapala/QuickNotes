@@ -235,3 +235,52 @@ No architectural impact.
 ### Testing Status
 
 - Widget tests in `test/views/test_welcome_screen_test.dart` PASS (100% GREEN).
+
+---
+
+## v3.3.0
+
+### Date
+2026-08-25
+
+### Author
+Anti Gravity
+
+### Type
+- UI
+- Feature
+- Refactor
+
+---
+
+### Summary
+
+UI Consistency Pass: Replaced generic basic Dialogs for FAQ, Terms of Service, Privacy Policy, and About with dedicated native screens (`LegalDocumentScreen`) and `AboutBottomSheet` that follow the "White Rounded Sheet" standard.
+
+---
+
+### Detailed Changes
+
+- **Info Tiles Re-routing**: Redirected FAQ, Terms of Service, and Privacy Policy `GroupedTile.navigation` events to push a new `LegalDocumentScreen` with formatted Markdown instead of a simple `AlertDialog`.
+- **About Modal**: Redirected the About tile to show a highly polished custom glassmorphic bottom sheet using `showBlurredBottomSheet`.
+- **Icon Fix**: Restored `assets/icons/terms-info.svg` for the About tile.
+
+---
+
+### Architecture Impact
+
+No major architectural impact. Improved UX coherence and modularity of information screens.
+
+---
+
+### Files Modified
+
+- `lib/views/screens/settings_screen.dart`
+- `lib/views/screens/legal_document_screen.dart` (New)
+- `lib/views/widgets/about_bottom_sheet.dart` (New)
+
+---
+
+### Testing Status
+
+- Manual verification of routing and bottom sheet presentation.

@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/tactile_button.dart';
 import '../../widgets/grouped_list_container.dart';
+import '../../widgets/app_header_bar.dart';
 
 class BackupAndSyncScreen extends StatefulWidget {
   const BackupAndSyncScreen({super.key});
@@ -51,59 +52,37 @@ class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
           children: [
             // Top Navigation Bar
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Row(
-                children: [
-                  TactileButton(
-                    useAppleSpring: true,
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const ShapeDecoration(
-                        color: Colors.white,
-                        shape: OvalBorder(),
-                        shadows: [
-                          BoxShadow(
-                            color: Color(0x0F000000),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/icons/angle_left.svg',
-                          width: 18,
-                          height: 18,
-                          colorFilter: const ColorFilter.mode(
-                              primaryTextColor, BlendMode.srcIn),
-                        ),
-                      ),
-                    ),
+              padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
+              child: AppHeaderBar(
+                leftHeroTag: 'hero_backup_sync_back',
+                rightHeroTag: 'hero_backup_sync_empty',
+                leftWidth: 44.0,
+                rightWidth: 44.0,
+                rightChild: null,
+                onLeftTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.pop(context);
+                },
+                leftChild: SvgPicture.asset(
+                  'assets/icons/angle_left.svg',
+                  width: 22,
+                  height: 22,
+                  colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                ),
+                titleWidget: Text(
+                  "Backup & Sync",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    color: primaryTextColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.43,
                   ),
-                  Expanded(
-                    child: Text(
-                      "Backup & Sync",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                        color: primaryTextColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.43,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 40),
-                ],
+                ),
               ),
             ),
 
-            const SizedBox(height: 8.0),
+            const SizedBox(height: 20.0),
 
             // Content Area (White Rounded Sheet)
             Expanded(
@@ -160,3 +139,5 @@ class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
     );
   }
 }
+
+

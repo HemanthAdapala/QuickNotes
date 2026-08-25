@@ -13,7 +13,10 @@ import 'glassmorphism_sandbox_screen.dart';
 import 'account/account_settings_screen.dart';
 import 'backup_restore_screen.dart';
 import 'test_welcome_screen.dart';
-
+import 'storage_and_data_screen.dart';
+import 'legal_document_screen.dart';
+import '../widgets/about_bottom_sheet.dart';
+import '../widgets/blurred_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/notes_provider.dart';
@@ -23,6 +26,7 @@ import '../widgets/delete_confirmation_dialog.dart';
 import '../../models/note.dart';
 import '../../models/task_item.dart';
 import '../../models/folder.dart';
+import 'storage_and_data_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -126,43 +130,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showInfoDialog(BuildContext context, String title, String message) {
-    HapticFeedback.lightImpact();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          title,
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF333333),
-            fontSize: 18,
-          ),
-        ),
-        content: Text(
-          message,
-          style: GoogleFonts.inter(
-            color: const Color(0xFF333333).withValues(alpha: 0.8),
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              "Dismiss",
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF333333),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Placeholder Markdown Content
+  static const String _faqMarkdown = '''
+# Frequently Asked Questions
+
+## 1. What is QuickNotes?
+QuickNotes is the fastest, most elegant way to capture your thoughts, organize your life, and secure your ideas.
+
+## 2. Is my data secure?
+Yes! Your data is stored locally on your device in a secure SQLite database. If you use the Backup & Sync feature, your data is securely encrypted before being uploaded to the cloud.
+
+## 3. How do I delete my account?
+You can delete your account by navigating to **Account Settings** and tapping on **Delete Account**. Please note that this action is irreversible.
+
+## 4. Does QuickNotes support Markdown?
+Absolutely! QuickNotes supports a rich text editing experience and full Markdown support.
+''';
+
+  static const String _tosMarkdown = '''
+# Terms of Service
+
+**Last Updated: August 2026**
+
+Welcome to QuickNotes. By using our application, you agree to these terms.
+
+## 1. Acceptance of Terms
+By accessing and using QuickNotes, you accept and agree to be bound by the terms and provision of this agreement.
+
+## 2. Privacy Policy
+We value your privacy. Our Privacy Policy explains how we collect, use, and protect your information. 
+
+## 3. User Conduct
+You agree not to use QuickNotes for any unlawful purpose or in any way that might harm, damage, or disparage any other party.
+
+## 4. Modifications
+We reserve the right to modify these terms at any time. Your continued use of the app constitutes acceptance of those changes.
+''';
+
+  static const String _privacyMarkdown = '''
+# Privacy Policy
+
+**Last Updated: August 2026**
+
+## 1. Data Collection
+QuickNotes is designed with privacy in mind. We only collect the data necessary to provide you with the best possible experience.
+
+## 2. Local Storage
+By default, all your notes, tasks, and settings are stored locally on your device. We do not have access to this data unless you explicitly enable cloud sync.
+
+## 3. Cloud Synchronization
+If you choose to use our Backup & Sync feature, your data will be securely transmitted and stored on our servers. All data is encrypted in transit and at rest.
+
+## 4. Third-Party Services
+We do not sell, trade, or otherwise transfer your personally identifiable information to outside parties.
+''';
 
   @override
   Widget build(BuildContext context) {
@@ -359,11 +380,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               GroupedTile.navigation(
                                 iconPath: 'assets/icons/settings-sliders.svg',
                                 title: 'Storage and Data',
-                                onTap: () => _showInfoDialog(
-                                  context,
-                                  "Storage and Data",
-                                  "Storage allocations and offline cache settings.",
-                                ),
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.push(
+                                    context,
+                                    buildPageRoute(
+                                        const StorageAndDataScreen()),
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -376,38 +400,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               GroupedTile.navigation(
                                 iconPath: 'assets/icons/interrogation.svg',
                                 title: 'FAQ',
-                                onTap: () => _showInfoDialog(
-                                  context,
-                                  "FAQ",
-                                  "Frequently asked questions and support resources.",
-                                ),
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.push(
+                                    context,
+                                    buildPageRoute(const LegalDocumentScreen(
+                                      title: 'FAQ',
+                                      markdownContent: _faqMarkdown,
+                                    )),
+                                  );
+                                },
                               ),
                               GroupedTile.navigation(
                                 iconPath: 'assets/icons/terms-info.svg',
                                 title: 'Terms of service',
-                                onTap: () => _showInfoDialog(
-                                  context,
-                                  "Terms of service",
-                                  "Standard Terms of Service for QuickNotes.",
-                                ),
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.push(
+                                    context,
+                                    buildPageRoute(const LegalDocumentScreen(
+                                      title: 'Terms of Service',
+                                      markdownContent: _tosMarkdown,
+                                    )),
+                                  );
+                                },
                               ),
                               GroupedTile.navigation(
                                 iconPath: 'assets/icons/insurance.svg',
                                 title: 'Privacy Policy',
-                                onTap: () => _showInfoDialog(
-                                  context,
-                                  "Privacy Policy",
-                                  "Privacy and Data Protection Policy for QuickNotes.",
-                                ),
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.push(
+                                    context,
+                                    buildPageRoute(const LegalDocumentScreen(
+                                      title: 'Privacy Policy',
+                                      markdownContent: _privacyMarkdown,
+                                    )),
+                                  );
+                                },
                               ),
                               GroupedTile.navigation(
                                 iconPath: 'assets/icons/terms-info.svg',
                                 title: 'About',
-                                onTap: () => _showInfoDialog(
-                                  context,
-                                  "About",
-                                  "QuickNotes v2.9.0 — Clean minimal note-taking experience.",
-                                ),
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  showBlurredBottomSheet(
+                                    context: context,
+                                    child: const AboutBottomSheet(),
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -702,3 +743,4 @@ class ToggleSwitch extends StatelessWidget {
 }
 
 typedef StitchToggleSwitch = ToggleSwitch;
+

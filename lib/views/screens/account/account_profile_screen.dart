@@ -14,6 +14,7 @@ import '../../../services/session_manager.dart';
 import '../../widgets/tactile_button.dart';
 import '../../widgets/grouped_list_container.dart';
 import '../home_screen.dart';
+import '../../widgets/app_header_bar.dart';
 
 /// AccountProfileScreen — Canonical profile management screen for Quick Notes.
 ///
@@ -269,50 +270,32 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                   child: CircularProgressIndicator(color: primaryTextColor))
               : Column(
                   children: [
-                    // Top Navigation Bar
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24.0, vertical: 16.0),
-                      child: Row(
+                      padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
+                      child: Stack(
+                        alignment: Alignment.centerRight,
                         children: [
-                          TactileButton(
-                            useAppleSpring: true,
-                            onTap: () {
+                          AppHeaderBar(
+                            leftHeroTag: 'hero_profile_back',
+                            rightHeroTag: 'hero_profile_empty',
+                            leftWidth: 44.0,
+                            rightWidth: 44.0,
+                            rightChild: null,
+                            onLeftTap: () {
                               HapticFeedback.lightImpact();
-                              if (widget.isSetupFlow ||
-                                  !Navigator.canPop(context)) {
+                              if (widget.isSetupFlow || !Navigator.canPop(context)) {
                                 _navigateToHome();
                               } else {
                                 Navigator.pop(context);
                               }
                             },
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: const ShapeDecoration(
-                                color: Colors.white,
-                                shape: OvalBorder(),
-                                shadows: [
-                                  BoxShadow(
-                                    color: Color(0x0F000000),
-                                    blurRadius: 8,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Center(
-                                child: SvgPicture.asset(
-                                  'assets/icons/angle_left.svg',
-                                  width: 18,
-                                  height: 18,
-                                  colorFilter: const ColorFilter.mode(
-                                      primaryTextColor, BlendMode.srcIn),
-                                ),
-                              ),
+                            leftChild: SvgPicture.asset(
+                              'assets/icons/angle_left.svg',
+                  width: 22,
+                  height: 22,
+                              colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
                             ),
-                          ),
-                          Expanded(
-                            child: Text(
+                            titleWidget: Text(
                               "Profile",
                               textAlign: TextAlign.center,
                               style: GoogleFonts.inter(
@@ -330,7 +313,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                               child: Container(
                                 alignment: Alignment.centerRight,
                                 width: 50,
-                                height: 40,
+                                height: 44, // Match AppHeaderBar height
                                 child: Text(
                                   'Skip',
                                   style: GoogleFonts.inter(
@@ -341,9 +324,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                   ),
                                 ),
                               ),
-                            )
-                          else
-                            const SizedBox(width: 40),
+                            ),
                         ],
                       ),
                     ),
@@ -762,3 +743,5 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
     );
   }
 }
+
+

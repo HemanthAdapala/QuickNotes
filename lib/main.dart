@@ -14,8 +14,8 @@ import 'views/screens/splash_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Disable runtime fetching of Google Fonts to prevent crashes when offline
-  GoogleFonts.config.allowRuntimeFetching = false;
+  // Enable runtime fetching so missing fonts like PlusJakartaSans and Outfit can load
+  GoogleFonts.config.allowRuntimeFetching = true;
 
   // Set preferred orientations and system styling overlays
   SystemChrome.setPreferredOrientations([

@@ -9,6 +9,7 @@ import '../widgets/tactile_button.dart';
 import 'note_editor_screen.dart';
 import '../../core/animations/page_transitions.dart';
 import '../../core/animations/bottom_sheet_transition.dart';
+import '../widgets/app_header_bar.dart';
 
 class VaultScreen extends StatelessWidget {
   final VoidCallback onMenuTap;
@@ -58,68 +59,52 @@ class VaultScreen extends StatelessWidget {
         bottom: false,
         child: Column(
           children: [
-            const SizedBox(height: 24.0),
             // Header Bar
-            Container(
-              height: 38,
-              margin: const EdgeInsets.symmetric(horizontal: 30),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  TactileButton(
-                    onTap: onMenuTap,
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.menu_rounded,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
+              child: AppHeaderBar(
+                leftHeroTag: 'hero_vault_menu',
+                rightHeroTag: 'hero_vault_action',
+                leftWidth: 44.0,
+                rightWidth: 44.0,
+                onLeftTap: onMenuTap,
+                leftChild: Icon(
+                  Icons.menu_rounded,
+                  color: theme.brightness == Brightness.dark
+                      ? Colors.white
+                      : const Color(0xFF1C1C1E),
+                  size: 24,
+                ),
+                titleWidget: Text(
+                  "Vault",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.white
+                        : const Color(0xFF1C1C1E),
+                  ),
+                ),
+                rightChild: isUnlocked
+                    ? Icon(
+                        Icons.lock_open_rounded,
                         color: theme.brightness == Brightness.dark
                             ? Colors.white
                             : const Color(0xFF1C1C1E),
                         size: 24,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        "Vault",
-                        style: GoogleFonts.inter(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: theme.brightness == Brightness.dark
-                              ? Colors.white
-                              : const Color(0xFF1C1C1E),
-                        ),
-                      ),
-                    ),
-                  ),
-                  isUnlocked
-                      ? TactileButton(
-                          onTap: () {
-                            provider.lockVault();
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Vault re-locked")),
-                            );
-                          },
-                          child: Container(
-                            width: 38,
-                            height: 38,
-                            alignment: Alignment.center,
-                            child: Icon(
-                              Icons.lock_open_rounded,
-                              color: theme.brightness == Brightness.dark
-                                  ? Colors.white
-                                  : const Color(0xFF1C1C1E),
-                              size: 24,
-                            ),
-                          ),
-                        )
-                      : const SizedBox(width: 38),
-                ],
+                      )
+                    : null,
+                onRightTap: isUnlocked
+                    ? () {
+                        HapticFeedback.lightImpact();
+                        provider.lockVault();
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Vault re-locked")),
+                        );
+                      }
+                    : null,
               ),
             ),
             const SizedBox(height: 24.0),
@@ -460,3 +445,4 @@ class VaultScreen extends StatelessWidget {
     );
   }
 }
+
