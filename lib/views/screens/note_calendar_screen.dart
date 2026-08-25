@@ -122,7 +122,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
       context: context,
       child: AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           "Select Month",
           style: GoogleFonts.inter(
@@ -149,13 +149,13 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                 onTap: () {
                   Navigator.pop(context, monthDate);
                 },
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(20),
                 child: Container(
                   decoration: BoxDecoration(
                     color: isCurrent
                         ? const Color(0xFF222222)
                         : const Color(0xFFE6E3D2),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -389,7 +389,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFFF3EAC0),
-                          borderRadius: BorderRadius.circular(24.0),
+                          borderRadius: BorderRadius.circular(20.0),
                           border: Border.all(
                             color: AppColors.ink.withOpacity(0.08),
                             width: 1.0,
@@ -646,7 +646,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(32),
+                          borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
                               color: Color(0xFF333333).withOpacity(0.03),
@@ -835,7 +835,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
         child: Container(
           decoration: BoxDecoration(
             color: _getCardBgColor(type),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: Color(0xFF333333).withOpacity(0.02),
               width: 1.0,

@@ -36,7 +36,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
           return AlertDialog(
             backgroundColor: const Color(0xFFF2F2EE),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
               "New Folder",
               style: GoogleFonts.inter(
@@ -92,7 +92,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                   backgroundColor: const Color(0xFF222222),
                   foregroundColor: const Color(0xFFF2F2EE),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(20)),
                 ),
                 child: Text("Create",
                     style: GoogleFonts.plusJakartaSans(
@@ -316,7 +316,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
         padding: EdgeInsets.fromLTRB(paddingLeft, 14, 16, 14),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF222222) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: isSelected
               ? const [
                   BoxShadow(

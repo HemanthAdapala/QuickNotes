@@ -259,7 +259,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
           backgroundColor: const Color(0xFF0088FF),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -690,7 +690,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                           borderRadius:
-                                              BorderRadius.circular(16),
+                                              BorderRadius.circular(20),
                                           boxShadow: [
                                             BoxShadow(
                                               color: Color(0xFF333333)
@@ -828,7 +828,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         decoration: BoxDecoration(
                                           color: const Color(0x1F787880),
                                           borderRadius:
-                                              BorderRadius.circular(16),
+                                              BorderRadius.circular(20),
                                         ),
                                         child: Row(
                                           children: [
@@ -1058,7 +1058,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? color.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? color : Colors.transparent,
             width: 1.5,

@@ -67,7 +67,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
         return AlertDialog(
           backgroundColor: const Color(0xFFF2F2EE),
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             "New Category",
             style: GoogleFonts.inter(
@@ -119,7 +119,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                 backgroundColor: const Color(0xFF222222),
                 foregroundColor: const Color(0xFFF2F2EE),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(20)),
               ),
               child: Text("Create",
                   style:
@@ -382,7 +382,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF222222) : const Color(0xFFF2F2EE),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           border: isSelected
               ? null
               : Border.all(

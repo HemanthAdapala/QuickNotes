@@ -67,7 +67,7 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
                     padding: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEE2E2),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Icon(
                       Icons.delete_forever_outlined,

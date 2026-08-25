@@ -167,7 +167,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                               padding: const EdgeInsets.all(14.0),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFFBEB),
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(20),
                                 border:
                                     Border.all(color: const Color(0xFFFDE68A)),
                               ),
@@ -279,7 +279,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFF2F2F7),
                                           borderRadius:
-                                              BorderRadius.circular(12),
+                                              BorderRadius.circular(20),
                                         ),
                                         child: Column(
                                           crossAxisAlignment:
@@ -346,7 +346,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                               ? const Color(0xFFE5E5EA)
                                               : const Color(0xFF007AFF),
                                           borderRadius:
-                                              BorderRadius.circular(12),
+                                              BorderRadius.circular(20),
                                         ),
                                         child: Center(
                                           child: isCreatingLocal
@@ -411,7 +411,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFE8F5E9),
                                           borderRadius:
-                                              BorderRadius.circular(12),
+                                              BorderRadius.circular(20),
                                         ),
                                         child: Column(
                                           crossAxisAlignment:
@@ -477,7 +477,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                     ? const Color(0xFFE5E5EA)
                                                     : const Color(0xFF34C759),
                                                 borderRadius:
-                                                    BorderRadius.circular(12),
+                                                    BorderRadius.circular(20),
                                               ),
                                               child: Center(
                                                 child: opState ==
@@ -550,7 +550,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                               decoration: BoxDecoration(
                                                 color: const Color(0xFFF2F2F7),
                                                 borderRadius:
-                                                    BorderRadius.circular(12),
+                                                    BorderRadius.circular(20),
                                               ),
                                               child: Center(
                                                 child: Text(
@@ -630,7 +630,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFF2F2F7),
                                               borderRadius:
-                                                  BorderRadius.circular(12),
+                                                  BorderRadius.circular(20),
                                             ),
                                             child: Row(
                                               children: [
@@ -884,7 +884,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                     ? const Color(0xFFE5E5EA)
                                                     : const Color(0xFFFF9500),
                                                 borderRadius:
-                                                    BorderRadius.circular(12),
+                                                    BorderRadius.circular(20),
                                               ),
                                               child: Center(
                                                 child: Padding(
@@ -1014,7 +1014,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                     ? const Color(0xFFE5E5EA)
                                                     : const Color(0xFFD97706),
                                                 borderRadius:
-                                                    BorderRadius.circular(12),
+                                                    BorderRadius.circular(20),
                                               ),
                                               child: Center(
                                                 child: Text(
@@ -1074,7 +1074,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
         color: isError ? const Color(0xFFFFE5E5) : const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isError ? const Color(0xFFFF8080) : const Color(0xFFA5D6A7),
         ),

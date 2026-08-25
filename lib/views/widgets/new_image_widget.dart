@@ -76,7 +76,7 @@ class _NewImageWidgetState extends State<NewImageWidget> {
               constraints: BoxConstraints(maxWidth: maxWidth),
               width: currentWidth,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: widget.isSelected
                       ? theme.primaryColor
@@ -150,7 +150,7 @@ class _NewImageWidgetState extends State<NewImageWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: theme.dividerColor, width: 0.8),
         ),
         child: Row(
@@ -192,7 +192,7 @@ class _NewImageWidgetState extends State<NewImageWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.dividerColor, width: 0.8),
       ),
       child: Row(

@@ -219,7 +219,7 @@ class HabitDashboardScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
@@ -325,7 +325,7 @@ class HabitDashboardScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
@@ -444,7 +444,7 @@ class HabitDashboardScreen extends StatelessWidget {
   // Ambient zen photo section
   Widget _buildAtmosphericQuote(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(20),
       child: Stack(
         alignment: Alignment.center,
         children: [

@@ -1260,7 +1260,7 @@ class _GlassmorphismSandboxScreenState extends State<GlassmorphismSandboxScreen>
               backgroundColor: const Color(0xFFFFA322),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(20)),
             ),
             onPressed: () {
               setState(() {

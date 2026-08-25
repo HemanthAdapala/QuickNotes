@@ -111,7 +111,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           "Existing Account Found",
           style: GoogleFonts.inter(
@@ -160,7 +160,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(20),
               ),
             ),
             child: Text(
@@ -258,7 +258,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           padding: const EdgeInsets.all(20.0),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF9F9FB),
-                            borderRadius: BorderRadius.circular(24),
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                                 color: const Color(0xFFE5E5EA), width: 1),
                           ),
@@ -316,7 +316,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 14),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
                                   ),
                                   child: isSigningIn
@@ -361,7 +361,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           padding: const EdgeInsets.all(20.0),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF9F9FB),
-                            borderRadius: BorderRadius.circular(24),
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                                 color: const Color(0xFFE5E5EA), width: 1),
                           ),

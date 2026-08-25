@@ -112,7 +112,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                 width: 280.0,
                 decoration: BoxDecoration(
                   color: const Color(0xFFFDFDFD),
-                  borderRadius: BorderRadius.circular(24.0),
+                  borderRadius: BorderRadius.circular(20.0),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x3F000000),
@@ -273,7 +273,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
           return AlertDialog(
             backgroundColor: Colors.white,
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
               "Delete Folder?",
               style: GoogleFonts.inter(
@@ -346,7 +346,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
       position: positionRect,
       color: const Color(0xFFF2F2EE),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(20.0),
       ),
       elevation: 8,
       items: [
@@ -1466,7 +1466,7 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFFEFEFF4),
-                              borderRadius: BorderRadius.circular(16.0),
+                              borderRadius: BorderRadius.circular(20.0),
                               border: Border.all(
                                 color: isSelected
                                     ? const Color(0xFF1C1C1E)
@@ -1494,7 +1494,7 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(16.0),
+                            borderRadius: BorderRadius.circular(20.0),
                             border: Border.all(
                               color: isSelected
                                   ? const Color(0xFF1C1C1E)
@@ -1927,7 +1927,7 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
             BottomBarGlassSurface(
               width: double.infinity,
               height: 48.0,
-              borderRadius: BorderRadius.circular(24.0),
+              borderRadius: BorderRadius.circular(20.0),
               useFrost: true,
               child: TactileButton(
                 useAppleSpring: true,
@@ -2058,7 +2058,7 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
           onPanUpdate: (details) => _handleSpectrumTouch(details.localPosition,
               Size(constraints.maxWidth, constraints.maxHeight)),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12.0),
+            borderRadius: BorderRadius.circular(20.0),
             child: SizedBox(
               width: constraints.maxWidth,
               height: constraints.maxHeight,

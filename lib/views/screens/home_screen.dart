@@ -649,7 +649,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   SnackBarBehavior.floating,
                                               shape: RoundedRectangleBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(16),
+                                                    BorderRadius.circular(20),
                                               ),
                                               duration:
                                                   const Duration(seconds: 2),

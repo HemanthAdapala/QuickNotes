@@ -70,7 +70,7 @@ class _ExportDialogState extends State<ExportDialog> {
     final theme = Theme.of(context);
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
       backgroundColor: theme.colorScheme.surface,
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -171,14 +171,14 @@ class _ExportDialogState extends State<ExportDialog> {
             _selectedFormat = format;
           });
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
           decoration: BoxDecoration(
             color: isSelected
                 ? theme.colorScheme.primaryContainer.withAlpha(100)
                 : theme.colorScheme.surfaceContainerHighest.withAlpha(50),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color:
                   isSelected ? theme.colorScheme.primary : Colors.transparent,
@@ -218,7 +218,7 @@ class _ExportDialogState extends State<ExportDialog> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         border:
             Border.all(color: theme.colorScheme.outlineVariant.withAlpha(100)),
       ),

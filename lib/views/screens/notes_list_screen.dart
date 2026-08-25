@@ -325,7 +325,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
                         hintText: "Search notes, tags, or contents...",
                         prefixIcon: const Icon(Icons.search),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(20),
                           borderSide: BorderSide(color: theme.dividerColor),
                         ),
                         filled: true,
@@ -495,12 +495,12 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                   Navigator.pop(context);
                                   _navigateToCreateNote('text', provider);
                                 },
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(20),
                                 child: Container(
                                   padding: const EdgeInsets.all(16.0),
                                   decoration: BoxDecoration(
                                     color: theme.colorScheme.primary,
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
                                       color: theme.brightness == Brightness.dark
                                           ? const Color(0xFFFAF8F5)
@@ -562,12 +562,12 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                   Navigator.pop(context);
                                   _navigateToCreateNote('checklist', provider);
                                 },
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(20),
                                 child: Container(
                                   padding: const EdgeInsets.all(16.0),
                                   decoration: BoxDecoration(
                                     color: theme.cardColor,
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
                                       color: theme.brightness == Brightness.dark
                                           ? const Color(0xFFFAF8F5)
@@ -629,7 +629,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
                     );
                   },
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                     side: BorderSide(
                       color: theme.brightness == Brightness.dark
                           ? const Color(0xFFFAF8F5)
@@ -656,7 +656,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
         color: isLeftSwipe
             ? theme.colorScheme.primaryContainer.withAlpha(80)
             : theme.colorScheme.secondaryContainer.withAlpha(80),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: strokeColor, width: 1.5),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -1088,7 +1088,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
               checkmarkColor: isDark ? const Color(0xFF0B0D17) : Colors.white,
               backgroundColor: theme.cardColor,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
                   color: isSelected ? theme.colorScheme.primary : strokeColor,
                   width: 1.5,

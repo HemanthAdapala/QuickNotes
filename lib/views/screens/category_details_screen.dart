@@ -340,7 +340,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
         color: isSecondary
             ? theme.colorScheme.primaryContainer.withAlpha(80)
             : theme.colorScheme.secondaryContainer.withAlpha(80),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark ? const Color(0xFFFAF8F5) : AppColors.ink,
           width: 1.5,
@@ -946,7 +946,7 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16), // mockup: 16px
+        borderRadius: BorderRadius.circular(20), // mockup: 16px
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.45),
           width: 1.0,

@@ -895,7 +895,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                       border: Border.all(
                           color: Theme.of(context).colorScheme.primary,
                           width: 2.0),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                 ),
@@ -2067,12 +2067,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                   debugPrint("[Stage 3 - Camera] Completed");
                                 }
                               },
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(20),
                               child: Container(
                                 decoration: BoxDecoration(
                                   border: Border.all(
                                       color: theme.colorScheme.outlineVariant),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: const Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -2108,12 +2108,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                   debugPrint("[Stage 3 - Gallery] Completed");
                                 }
                               },
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(20),
                               child: Container(
                                 decoration: BoxDecoration(
                                   border: Border.all(
                                       color: theme.colorScheme.outlineVariant),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: const Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -2147,7 +2147,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                 children: [
                                   Positioned.fill(
                                     child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(20),
                                       child: Image.network(
                                         url,
                                         fit: BoxFit.cover,
@@ -2167,7 +2167,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                         decoration: BoxDecoration(
                                           color: Colors.black26,
                                           borderRadius:
-                                              BorderRadius.circular(12),
+                                              BorderRadius.circular(20),
                                           border: Border.all(
                                               color: theme.colorScheme.primary,
                                               width: 3),
@@ -2374,12 +2374,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                   stackImageIndex: stackImageIndex);
                             }
                           },
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(20),
                           child: Container(
                             decoration: BoxDecoration(
                               border: Border.all(
                                   color: theme.colorScheme.outlineVariant),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -2402,12 +2402,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                   stackImageIndex: stackImageIndex);
                             }
                           },
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(20),
                           child: Container(
                             decoration: BoxDecoration(
                               border: Border.all(
                                   color: theme.colorScheme.outlineVariant),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -2429,7 +2429,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                 stackImageIndex: stackImageIndex);
                           },
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(20),
                             child: Image.network(
                               url,
                               fit: BoxFit.cover,
@@ -3326,7 +3326,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                     : (isDark
                                         ? const Color(0xFF1E1E1E)
                                         : const Color(0xFFF5F3EF)),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: isSelected
                                       ? theme.colorScheme.primary
@@ -3579,7 +3579,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
               selectedColor: Theme.of(context).colorScheme.primary,
               backgroundColor: titleColor.withAlpha(15),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
                   color: isSelected
                       ? Theme.of(context).colorScheme.primary
@@ -5835,7 +5835,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: theme.colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(24.0),
+                borderRadius: BorderRadius.circular(20.0),
                 boxShadow: const [
                   BoxShadow(
                       color: Colors.black26, blurRadius: 10, spreadRadius: 1),
@@ -5980,7 +5980,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           child: Hero(
             tag: 'markdown_img_$path',
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(20),
               child: uri.scheme == 'file'
                   ? Image.file(
                       File(path),

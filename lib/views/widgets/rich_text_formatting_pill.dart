@@ -18,7 +18,7 @@ class RichTextFormattingPillContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = borderRadius ?? BorderRadius.circular(24.0);
+    final radius = borderRadius ?? BorderRadius.circular(20.0);
 
     return BottomBarGlassSurface(
       width: width,

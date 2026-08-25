@@ -115,14 +115,14 @@ class SortFilterSheet extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16.0),
+      borderRadius: BorderRadius.circular(20.0),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         decoration: BoxDecoration(
           color: isSelected
               ? theme.colorScheme.primaryContainer.withAlpha(80)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(16.0),
+          borderRadius: BorderRadius.circular(20.0),
           border: Border.all(
             color: isSelected
                 ? theme.colorScheme.primary.withAlpha(100)

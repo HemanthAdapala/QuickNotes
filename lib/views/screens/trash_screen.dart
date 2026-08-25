@@ -133,7 +133,7 @@ class TrashScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: QuickNotesTheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: QuickNotesTheme.border),
       ),
       child: ListTile(

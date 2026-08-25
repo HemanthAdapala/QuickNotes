@@ -236,7 +236,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         ),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: const Color(0xFF0088FF),
       ),
     );

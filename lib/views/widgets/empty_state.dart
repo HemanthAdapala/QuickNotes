@@ -88,7 +88,7 @@ class EmptyState extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest
                           .withAlpha(150),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
                           color: Color(0xFF333333).withAlpha(20),
@@ -108,7 +108,7 @@ class EmptyState extends StatelessWidget {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: containerColor,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
                           color: theme.colorScheme.shadow.withAlpha(20),

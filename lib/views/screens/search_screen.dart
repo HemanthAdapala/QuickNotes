@@ -1005,7 +1005,7 @@ class _SearchScreenState extends State<SearchScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: const Color(0xFFF0EDD8),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: _kDivider),
               ),
               child: Row(
@@ -1218,7 +1218,7 @@ class _CategoryResultRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: const Color(0xFFFFFDF7),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: _kDivider),
         ),
         child: Row(
@@ -1301,7 +1301,7 @@ class _ShimmerRowState extends State<_ShimmerRow>
             height: 72,
             decoration: BoxDecoration(
               color: _kPillInactive,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
         );

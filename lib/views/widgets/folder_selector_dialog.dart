@@ -89,7 +89,7 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
     final folders = notesProvider.folders;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
       backgroundColor: theme.colorScheme.surface,
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -146,7 +146,7 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
                               color: theme.colorScheme.primary)
                           : null,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(20)),
                       onTap: () {
                         widget.onFolderSelected(null);
                         Navigator.pop(context);
@@ -198,7 +198,7 @@ class _FolderSelectorDialogState extends State<FolderSelectorDialog> {
                                     color: theme.colorScheme.primary)
                                 : null,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                                borderRadius: BorderRadius.circular(20)),
                             onTap: () {
                               widget.onFolderSelected(folder.id);
                               Navigator.pop(context);

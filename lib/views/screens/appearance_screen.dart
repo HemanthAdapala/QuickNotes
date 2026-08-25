@@ -91,7 +91,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: QuickNotesTheme.surface,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                               color: QuickNotesTheme.accent.withAlpha(50),
                               width: 1.5),
@@ -183,7 +183,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: QuickNotesTheme.surface,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: QuickNotesTheme.border),
                         ),
                         child: Column(
@@ -275,7 +275,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: QuickNotesTheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected ? QuickNotesTheme.accent : QuickNotesTheme.border,
             width: selected ? 1.5 : 1.0,

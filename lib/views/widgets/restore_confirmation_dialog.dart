@@ -78,7 +78,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
                     padding: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Icon(
                       Icons.warning_amber_rounded,
@@ -133,7 +133,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
                 padding: const EdgeInsets.all(12.0),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
                 child: Column(
@@ -198,7 +198,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
                 padding: const EdgeInsets.all(10.0),
                 decoration: BoxDecoration(
                   color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFFA7F3D0)),
                 ),
                 child: Row(

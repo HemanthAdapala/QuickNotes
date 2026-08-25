@@ -651,7 +651,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                                   decoration: ShapeDecoration(
                                     color: const Color(0xFFF9F9FB),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
+                                      borderRadius: BorderRadius.circular(20),
                                       side: const BorderSide(
                                           color: Color(0x14000000), width: 1),
                                     ),

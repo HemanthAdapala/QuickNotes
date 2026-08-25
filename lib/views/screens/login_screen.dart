@@ -409,7 +409,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 vertical: 16),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
-                                                  BorderRadius.circular(16),
+                                                  BorderRadius.circular(20),
                                             ),
                                           ),
                                           child: isGoogleLoading

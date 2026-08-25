@@ -367,7 +367,7 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
         backgroundColor:
             (color ?? theme.colorScheme.primary).withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
     );
@@ -493,7 +493,7 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
                         ? Border.all(
                             color: theme.colorScheme.primary, width: 2.0)
                         : Border.all(color: Colors.transparent, width: 2.0),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: _showControls
                         ? [
                             BoxShadow(
@@ -807,10 +807,10 @@ class _DragFeedbackImageState extends State<DragFeedbackImage>
         scale: _scaleAnimation,
         child: Material(
           elevation: 12.0,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           shadowColor: Colors.black54,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
             child: Image(
               image: widget.imageProvider,
               width: widget.width,

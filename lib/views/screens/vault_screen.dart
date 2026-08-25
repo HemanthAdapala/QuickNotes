@@ -323,7 +323,7 @@ class VaultScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20.0),
         decoration: BoxDecoration(
           color: theme.cardColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: theme.dividerColor),
         ),
         child: Column(
@@ -421,7 +421,7 @@ class VaultScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
