@@ -4171,13 +4171,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     final timeStr = DateFormat('hh:mm a').format(noteDate);
 
     final screenWidth = MediaQuery.of(context).size.width;
+    final double maxToolbarWidth = 700.0;
+    final double clampedWidth = screenWidth > (maxToolbarWidth + 48.0)
+        ? maxToolbarWidth
+        : (screenWidth - 48.0);
     final double targetWidth =
-        _isFormattingBarExpanded ? (screenWidth - 48.0) : 48.0;
+        _isFormattingBarExpanded ? clampedWidth : 48.0;
     final double targetHeight = !_isFormattingBarExpanded
         ? 48.0
         : (_activeCategory != _ActiveCategory.none ? 100.0 : 50.0);
-    final double targetLeft =
-        _isFormattingBarExpanded ? 24.0 : (screenWidth - targetWidth - 24.0);
+    final double targetLeft = _isFormattingBarExpanded
+        ? (screenWidth - clampedWidth) / 2.0
+        : (screenWidth - targetWidth - 24.0);
 
     const textColor = Color(0xFF1C1C1E);
     const titleColor = Color(0xFF1C1C1E);
@@ -4294,8 +4299,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: Listener(
-                            behavior: HitTestBehavior.opaque,
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 700.0),
+                              child: Listener(
+                                behavior: HitTestBehavior.opaque,
                             onPointerDown: (event) {
                               _pointerDownPos = event.position;
                               _activeDragImage = null;
@@ -4618,9 +4626,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                         ],
                                       ),
                                     ),
-                            ),
-                          ),
-                        ),
+                                  ), // RepaintBoundary
+                                ), // Listener
+                              ), // ConstrainedBox
+                            ), // Center
+                          ), // Positioned.fill
 
                         // Sticky Yellow Header with Blur
                         Positioned(

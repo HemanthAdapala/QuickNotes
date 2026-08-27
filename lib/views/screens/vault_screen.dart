@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -87,23 +88,28 @@ class VaultScreen extends StatelessWidget {
                   ),
                 ),
                 rightChild: isUnlocked
-                    ? Icon(
-                        Icons.lock_open_rounded,
-                        color: theme.brightness == Brightness.dark
-                            ? Colors.white
-                            : const Color(0xFF1C1C1E),
-                        size: 24,
+                    ? TactileButton(
+                        useAppleSpring: true,
+                        compressionScale: 0.7,
+                        settleDuration: const Duration(milliseconds: 1000),
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          provider.lockVault();
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Vault re-locked")),
+                          );
+                        },
+                        child: Center(
+                          child: Icon(
+                            Icons.lock_open_rounded,
+                            color: theme.brightness == Brightness.dark
+                                ? Colors.white
+                                : const Color(0xFF1C1C1E),
+                            size: 24,
+                          ),
+                        ),
                       )
-                    : null,
-                onRightTap: isUnlocked
-                    ? () {
-                        HapticFeedback.lightImpact();
-                        provider.lockVault();
-                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Vault re-locked")),
-                        );
-                      }
                     : null,
               ),
             ),
@@ -445,4 +451,3 @@ class VaultScreen extends StatelessWidget {
     );
   }
 }
-

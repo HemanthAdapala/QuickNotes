@@ -16,6 +16,7 @@ import '../../core/animations/animated_list_entrance.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/blurred_bottom_sheet.dart';
 import '../widgets/folder_card.dart';
+import '../widgets/primary_screen_surface.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/page_transitions.dart';
 import 'search_screen.dart';
@@ -755,34 +756,24 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
             ),
 
           // White rounded bottom sheet panel for Folders Screen
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Center(
-              child: Container(
-                width: screenWidth.clamp(0.0, 402.0),
-                height: (screenHeight - panelTop).clamp(0.0, 761.0),
-                decoration: ShapeDecoration(
-                  color: Colors.white,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                  ),
-                  shadows: const [
-                    BoxShadow(
-                      color: Color(0x3F000000),
-                      blurRadius: 16,
-                      offset: Offset(0, 0),
-                      spreadRadius: 0,
-                    )
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(20)),
-                  child: folders.isEmpty
+          Positioned.fill(
+            top: panelTop,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x3F000000),
+                    blurRadius: 16,
+                    offset: Offset(0, 0),
+                    spreadRadius: 0,
+                  )
+                ],
+              ),
+              child: PrimaryScreenSurface(
+                child: Center(
+                  child: SizedBox(
+                    width: screenWidth.clamp(0.0, 402.0),
+                    child: folders.isEmpty
                       ? _buildEmptyState()
                       : filteredFolders.isEmpty
                           ? Center(
@@ -851,10 +842,11 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                                 );
                               },
                             ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
 
           SafeArea(
             bottom: false,

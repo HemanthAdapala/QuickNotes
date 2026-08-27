@@ -201,6 +201,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.13"
+  device_preview:
+    dependency: "direct main"
+    description:
+      name: device_preview
+      sha256: "17904a409957093dd31e0b78fbc49df87645ef9e6809f792ee6e2f52b61590cb"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0-prerelease3"
   encrypt:
     dependency: "direct main"
     description:
@@ -1190,13 +1198,13 @@ packages:
     source: hosted
     version: "2.5.11"
   sqflite_common_ffi:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: sqflite_common_ffi
-      sha256: "5ccd38136edb9beb3213f6927775d52db70dfdadcdb28dad1f625ca9f2b9824f"
+      sha256: d5564f1308cafbf064be498f2beb1e993e742985a7cca9e2e228d6cbccd84a05
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.2"
+    version: "2.4.2+1"
   sqflite_darwin:
     dependency: transitive
     description:

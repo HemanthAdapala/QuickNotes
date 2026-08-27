@@ -24,6 +24,7 @@ import '../../core/animations/dialog_transition.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
+import '../widgets/primary_screen_surface.dart';
 import '../widgets/folder_note_card.dart';
 import '../widgets/folder_options_popup.dart';
 import '../widgets/pin_lock_sheet.dart';
@@ -556,34 +557,24 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
         body: Stack(
           children: [
             // White Bottom Sheet Content Panel
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Center(
-                child: Container(
-                  width: screenWidth.clamp(0.0, 402.0),
-                  height: (screenHeight - panelTop).clamp(0.0, 754.0),
-                  decoration: const ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(20),
-                      ),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 16,
-                        offset: Offset(0, 0),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(20)),
-                    child: allFolderNotes.isEmpty
+            Positioned.fill(
+              top: panelTop,
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x3F000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 0),
+                      spreadRadius: 0,
+                    )
+                  ],
+                ),
+                child: PrimaryScreenSurface(
+                  child: Center(
+                    child: SizedBox(
+                      width: screenWidth.clamp(0.0, 402.0),
+                      child: allFolderNotes.isEmpty
                         ? _buildEmptyState()
                         : CustomScrollView(
                             physics: const BouncingScrollPhysics(),
@@ -746,6 +737,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                 ),
                             ],
                           ),
+                    ),
                   ),
                 ),
               ),

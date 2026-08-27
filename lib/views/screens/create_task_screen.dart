@@ -379,8 +379,11 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 700.0),
+                              child: SingleChildScrollView(
+                                physics: const BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(
                               left: 20.0,
                               right: 20.0,
@@ -951,7 +954,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                               ],
                             ),
                           ),
-                        ),
+                        ), // ConstrainedBox
+                      ), // Center
+                    ),
 
                         // Sticky Blue Date-Time Header with Blur — mirrors NoteEditorScreen's sticky amber bar
                         Positioned(

@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/tactile_button.dart';
+import '../widgets/primary_screen_surface.dart';
 import '../../themes/glassmorphism_presets.dart';
 
 import '../../providers/notes_provider.dart';
@@ -351,7 +352,9 @@ class _HomeScreenState extends State<HomeScreen> {
       bottom: false, // bottom handled by nav bar + system padding
       child: HomePromptView(
         date: DateTime.now(),
-        displayName: _username.split(' ').where((e) => e.isNotEmpty).firstOrNull ?? _username,
+        displayName:
+            _username.split(' ').where((e) => e.isNotEmpty).firstOrNull ??
+                _username,
         isNotesActive: _isNotesActive,
         isMoreOptionsOpen: _isMoreOptionsOpen,
         interactive: false,
@@ -508,18 +511,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final selectedBgIndex = notesProvider.selectedBgIndex;
     _updatePresetsForBackground(selectedBgIndex);
     final double screenHeight = MediaQuery.of(context).size.height;
-    final bool isShortScreen = screenHeight < 780.0;
 
-    // Panel & Pill positions
-    final double panelTop =
-        MediaQuery.paddingOf(context).top + (isShortScreen ? 136.0 : 172.0);
-    final double filterTop = panelTop + (isShortScreen ? 12.0 : 20.0);
-    final double switcherTop = filterTop + 48.0 + (isShortScreen ? 10.0 : 16.0);
-
-    // Card stack bottom position
-    final double bottomGap = isShortScreen ? 4.0 : 24.0;
-    final double stackBottom =
-        58.0 + MediaQuery.paddingOf(context).bottom + bottomGap;
+    // Panel position (fixed design spacing from top safe area)
+    final double panelTop = MediaQuery.paddingOf(context).top + 172.0;
 
     final int numCards =
         (_isNotesActive ? _filteredNotes.length : _filteredTasks.length)
@@ -552,295 +546,323 @@ class _HomeScreenState extends State<HomeScreen> {
           // White rounded background sheet covering the bottom part, containing all interactive widgets
           if (_activeNavIndex == 0)
             Positioned(
+              top: panelTop,
               left: 0,
               right: 0,
               bottom: 0,
-              child: Center(
-                child: Container(
-                  width: screenWidth.clamp(0.0, 398.0),
-                  height: (screenHeight - panelTop).clamp(0.0, 658.0),
-                  clipBehavior: Clip.antiAlias,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    shadows: const [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 16,
-                        offset: Offset(0, 0),
-                        spreadRadius: 0,
-                      )
-                    ],
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(32),
+                    topRight: Radius.circular(32),
                   ),
-                  child: Column(
-                    children: [
-                      SizedBox(height: isShortScreen ? 12.0 : 20.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x3F000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 0),
+                      spreadRadius: 0,
+                    )
+                  ],
+                ),
+                child: PrimaryScreenSurface(
+                  child: CustomScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 20.0),
 
-                      // 1. Scrollable filter bar
-                      if (Platform.environment.containsKey('FLUTTER_TEST')
-                          ? !_isNotesActive
-                          : true)
-                        Builder(
-                          builder: (context) {
-                            final filters = _isNotesActive
-                                ? ['All', 'Today', 'Weekly', 'Monthly']
-                                : [
-                                    'All',
-                                    'Missed',
-                                    'Today',
-                                    'Weekly',
-                                    'Monthly'
-                                  ];
-                            return SizedBox(
-                              height: 52.0,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24.0),
-                                itemCount: filters.length,
-                                itemBuilder: (context, index) {
-                                  final filter = filters[index];
-                                  final bool isSelected =
-                                      _activeFilter == filter;
+                              // 1. Scrollable filter bar
+                              if (Platform.environment
+                                      .containsKey('FLUTTER_TEST')
+                                  ? !_isNotesActive
+                                  : true)
+                                Builder(
+                                  builder: (context) {
+                                    final filters = _isNotesActive
+                                        ? ['All', 'Today', 'Weekly', 'Monthly']
+                                        : [
+                                            'All',
+                                            'Missed',
+                                            'Today',
+                                            'Weekly',
+                                            'Monthly'
+                                          ];
+                                    return SizedBox(
+                                      height: 52.0,
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 24.0),
+                                        itemCount: filters.length,
+                                        itemBuilder: (context, index) {
+                                          final filter = filters[index];
+                                          final bool isSelected =
+                                              _activeFilter == filter;
 
-                                  final String text;
-                                  if (filter == 'All') {
-                                    text = 'All';
-                                  } else {
-                                    final labelText =
-                                        _isNotesActive ? 'Notes' : 'Tasks';
-                                    text = filter == 'Missed'
-                                        ? "Missed $labelText ${_countForFilter(filter)}"
-                                        : "${filter}'s $labelText ${_countForFilter(filter)}";
-                                  }
+                                          final String text;
+                                          if (filter == 'All') {
+                                            text = 'All';
+                                          } else {
+                                            final labelText = _isNotesActive
+                                                ? 'Notes'
+                                                : 'Tasks';
+                                            text = filter == 'Missed'
+                                                ? "Missed $labelText ${_countForFilter(filter)}"
+                                                : "${filter}'s $labelText ${_countForFilter(filter)}";
+                                          }
 
-                                  return Padding(
-                                    padding: EdgeInsets.only(
-                                        right: index == filters.length - 1
-                                            ? 0.0
-                                            : 12.0),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        HapticFeedback.selectionClick();
-                                        if (_activeFilter == filter) {
-                                          // Toggle sort direction on active filter tap (both Notes & Tasks)
-                                          _isSortAscending = !_isSortAscending;
-                                          final sortLabel = _isSortAscending
-                                              ? 'Oldest to Newest'
-                                              : 'Newest to Oldest';
-                                          ScaffoldMessenger.of(context)
-                                              .hideCurrentSnackBar();
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Sorted: $sortLabel',
-                                                style: GoogleFonts.inter(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
+                                          return Padding(
+                                            padding: EdgeInsets.only(
+                                                right:
+                                                    index == filters.length - 1
+                                                        ? 0.0
+                                                        : 12.0),
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                HapticFeedback.selectionClick();
+                                                if (_activeFilter == filter) {
+                                                  // Toggle sort direction on active filter tap (both Notes & Tasks)
+                                                  _isSortAscending =
+                                                      !_isSortAscending;
+                                                  final sortLabel =
+                                                      _isSortAscending
+                                                          ? 'Oldest to Newest'
+                                                          : 'Newest to Oldest';
+                                                  ScaffoldMessenger.of(context)
+                                                      .hideCurrentSnackBar();
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        'Sorted: $sortLabel',
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                      backgroundColor:
+                                                          _isNotesActive
+                                                              ? const Color(
+                                                                  0xFFFFCC00)
+                                                              : const Color(
+                                                                  0xFF0088FF),
+                                                      behavior: SnackBarBehavior
+                                                          .floating,
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(20),
+                                                      ),
+                                                      duration: const Duration(
+                                                          seconds: 2),
+                                                    ),
+                                                  );
+                                                } else {
+                                                  _activeFilter = filter;
+                                                  _isSortAscending =
+                                                      false; // Default to Newest to Oldest on filter switch
+                                                }
+                                                setState(() {});
+                                              },
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  Container(
+                                                    height: 40.0,
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 20.0),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                          0x33787878),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20.0),
+                                                    ),
+                                                    alignment: Alignment.center,
+                                                    child: Text(
+                                                      text,
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 16.0,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: isSelected
+                                                            ? const Color(
+                                                                0xFF333333)
+                                                            : const Color(
+                                                                0x80333333),
+                                                        height: 1.38,
+                                                        letterSpacing: -0.43,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4.0),
+                                                  Opacity(
+                                                    opacity:
+                                                        isSelected ? 1.0 : 0.0,
+                                                    child: Container(
+                                                      width: 5.0,
+                                                      height: 5.0,
+                                                      decoration:
+                                                          ShapeDecoration(
+                                                        color: _isNotesActive
+                                                            ? const Color(
+                                                                0xFFFFCC00)
+                                                            : const Color(
+                                                                0xFF0088FF),
+                                                        shape:
+                                                            const OvalBorder(),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              backgroundColor: _isNotesActive
-                                                  ? const Color(0xFFFFCC00)
-                                                  : const Color(0xFF0088FF),
-                                              behavior:
-                                                  SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
-                                              duration:
-                                                  const Duration(seconds: 2),
                                             ),
                                           );
-                                        } else {
-                                          _activeFilter = filter;
-                                          _isSortAscending =
-                                              false; // Default to Newest to Oldest on filter switch
-                                        }
-                                        setState(() {});
-                                      },
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Container(
-                                            height: 40.0,
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 20.0),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0x33787878),
-                                              borderRadius:
-                                                  BorderRadius.circular(20.0),
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              text,
-                                              style: GoogleFonts.inter(
-                                                fontSize: 16.0,
-                                                fontWeight: FontWeight.w600,
-                                                color: isSelected
-                                                    ? const Color(0xFF333333)
-                                                    : const Color(0x80333333),
-                                                height: 1.38,
-                                                letterSpacing: -0.43,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4.0),
-                                          Opacity(
-                                            opacity: isSelected ? 1.0 : 0.0,
-                                            child: Container(
-                                              width: 5.0,
-                                              height: 5.0,
-                                              decoration: ShapeDecoration(
-                                                color: _isNotesActive
-                                                    ? const Color(0xFFFFCC00)
-                                                    : const Color(0xFF0088FF),
-                                                shape: const OvalBorder(),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                        },
                                       ),
-                                    ),
-                                  );
+                                    );
+                                  },
+                                ),
+
+                              const SizedBox(height: 16.0),
+
+                              // 2. Segmented Control Pill (Switcher Tab)
+                              NotesAndTaskPill(
+                                isNotesActive: _isNotesActive,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _isNotesActive = val;
+                                    if (_isNotesActive &&
+                                        _activeFilter == 'Missed') {
+                                      _activeFilter = 'Today';
+                                    }
+                                  });
                                 },
                               ),
-                            );
-                          },
-                        ),
-
-                      SizedBox(height: isShortScreen ? 10.0 : 16.0),
-
-                      // 2. Segmented Control Pill (Switcher Tab)
-                      NotesAndTaskPill(
-                        isNotesActive: _isNotesActive,
-                        onChanged: (val) {
-                          setState(() {
-                            _isNotesActive = val;
-                            if (_isNotesActive && _activeFilter == 'Missed') {
-                              _activeFilter = 'Today';
-                            }
-                          });
-                        },
-                      ),
-
-                      // 3. Card Stack Area centered dynamically in remaining space
-                      Expanded(
-                        child: Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              // Add bottom spacing to prevent overlapping the floating nav bar
-                              bottom: 58.0 +
-                                  MediaQuery.paddingOf(context).bottom +
-                                  (isShortScreen ? 4.0 : 12.0) -
-                                  (isShortScreen ? 12.0 : 0.0),
-                            ),
-                            child: (Platform.environment
-                                        .containsKey('FLUTTER_TEST')
-                                    ? !_isNotesActive
-                                    : true)
-                                ? TweenAnimationBuilder<double>(
-                                    key: ValueKey(
-                                        '${_isNotesActive ? "notes" : "tasks"}_${_activeFilter}_${_isSortAscending}_${_filteredTasks.length}_${_filteredTasks.isNotEmpty ? _filteredTasks.first.id : ""}'),
-                                    tween: Tween<double>(begin: 0.0, end: 1.0),
-                                    duration: const Duration(milliseconds: 500),
-                                    curve: Curves.easeOutCubic,
-                                    builder: (context, value, child) {
-                                      return Opacity(
-                                        opacity: value,
-                                        child: Transform.translate(
-                                          offset: Offset(0, 15 * (1 - value)),
-                                          child: child,
-                                        ),
-                                      );
-                                    },
-                                    child: _isNotesActive
-                                        ? NotesStackWidget(
-                                            width:
-                                                screenWidth.clamp(0.0, 398.0) -
-                                                    48.0,
-                                            notes: _filteredNotes,
-                                            onEdit: (note) =>
-                                                _openNote(note.id),
-                                          )
-                                        : TaskWidget(
-                                            width:
-                                                screenWidth.clamp(0.0, 398.0) -
-                                                    48.0,
-                                            tasks: _filteredTasks,
-                                            onEdit: _openEditTask,
-                                            onComplete: (taskId) async {
-                                              final tasksProvider =
-                                                  Provider.of<TasksProvider>(
-                                                      context,
-                                                      listen: false);
-                                              TaskItem? currentTask;
-                                              for (final t
-                                                  in tasksProvider.tasks) {
-                                                if (t.id == taskId ||
-                                                    t.id.startsWith(taskId) ||
-                                                    taskId.startsWith(t.id)) {
-                                                  currentTask = t;
-                                                  break;
-                                                }
-                                              }
-                                              if (currentTask != null) {
-                                                await tasksProvider
-                                                    .toggleTaskCompletionOnDate(
-                                                        currentTask.id,
-                                                        currentTask.dueDate);
-                                              } else {
-                                                await tasksProvider
-                                                    .toggleTaskCompletion(
-                                                        taskId);
-                                              }
-
-                                              final bool allDone = tasksProvider
-                                                  .activeTasks.isEmpty;
-                                              final String msg;
-                                              if (allDone) {
-                                                msg = '🎉 All tasks are done!';
-                                                _triggerCelebration(msg);
-                                              } else if (_activeFilter ==
-                                                  'Missed') {
-                                                msg =
-                                                    '🎉 Missed task completed!';
-                                                _triggerCelebration(msg);
-                                              } else if (_activeFilter ==
-                                                  'Today') {
-                                                msg =
-                                                    "🎉 Today's task is done!";
-                                                _triggerCelebration(msg);
-                                              } else if (_activeFilter ==
-                                                  'Weekly') {
-                                                msg = '🎉 Weekly task is done!';
-                                                _triggerCelebration(msg);
-                                              } else if (_activeFilter ==
-                                                  'Monthly') {
-                                                msg =
-                                                    '🎉 Monthly task is done!';
-                                                _triggerCelebration(msg);
-                                              } else {
-                                                msg = '🎉 Task is done!';
-                                                _triggerCelebration(msg);
-                                              }
-                                            },
-                                          ),
-                                  )
-                                : const SizedBox.shrink(),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+
+                        // 3. Card Stack Area centered dynamically in remaining space or scrolling
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                // Add bottom spacing to prevent overlapping the floating nav bar
+                                bottom: 58.0 +
+                                    MediaQuery.paddingOf(context).bottom +
+                                    24.0,
+                              ),
+                              child: (Platform.environment
+                                          .containsKey('FLUTTER_TEST')
+                                      ? !_isNotesActive
+                                      : true)
+                                  ? TweenAnimationBuilder<double>(
+                                      key: ValueKey(
+                                          '${_isNotesActive ? "notes" : "tasks"}_${_activeFilter}_${_isSortAscending}_${_filteredTasks.length}_${_filteredTasks.isNotEmpty ? _filteredTasks.first.id : ""}'),
+                                      tween:
+                                          Tween<double>(begin: 0.0, end: 1.0),
+                                      duration:
+                                          const Duration(milliseconds: 500),
+                                      curve: Curves.easeOutCubic,
+                                      builder: (context, value, child) {
+                                        return Opacity(
+                                          opacity: value,
+                                          child: Transform.translate(
+                                            offset: Offset(0, 15 * (1 - value)),
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                      child: _isNotesActive
+                                          ? NotesStackWidget(
+                                              notes: _filteredNotes,
+                                              onEdit: (note) =>
+                                                  _openNote(note.id),
+                                            )
+                                          : TaskWidget(
+                                              tasks: _filteredTasks,
+                                              onEdit: _openEditTask,
+                                              onComplete: (taskId) async {
+                                                final tasksProvider =
+                                                    Provider.of<TasksProvider>(
+                                                        context,
+                                                        listen: false);
+                                                TaskItem? currentTask;
+                                                for (final t
+                                                    in tasksProvider.tasks) {
+                                                  if (t.id == taskId ||
+                                                      t.id.startsWith(taskId) ||
+                                                      taskId.startsWith(t.id)) {
+                                                    currentTask = t;
+                                                    break;
+                                                  }
+                                                }
+                                                if (currentTask != null) {
+                                                  await tasksProvider
+                                                      .toggleTaskCompletionOnDate(
+                                                          currentTask.id,
+                                                          currentTask.dueDate);
+                                                } else {
+                                                  await tasksProvider
+                                                      .toggleTaskCompletion(
+                                                          taskId);
+                                                }
+
+                                                final bool allDone =
+                                                    tasksProvider
+                                                        .activeTasks.isEmpty;
+                                                final String msg;
+                                                if (allDone) {
+                                                  msg =
+                                                      '🎉 All tasks are done!';
+                                                  _triggerCelebration(msg);
+                                                } else if (_activeFilter ==
+                                                    'Missed') {
+                                                  msg =
+                                                      '🎉 Missed task completed!';
+                                                  _triggerCelebration(msg);
+                                                } else if (_activeFilter ==
+                                                    'Today') {
+                                                  msg =
+                                                      "🎉 Today's task is done!";
+                                                  _triggerCelebration(msg);
+                                                } else if (_activeFilter ==
+                                                    'Weekly') {
+                                                  msg =
+                                                      '🎉 Weekly task is done!';
+                                                  _triggerCelebration(msg);
+                                                } else if (_activeFilter ==
+                                                    'Monthly') {
+                                                  msg =
+                                                      '🎉 Monthly task is done!';
+                                                  _triggerCelebration(msg);
+                                                } else {
+                                                  msg = '🎉 Task is done!';
+                                                  _triggerCelebration(msg);
+                                                }
+                                              },
+                                            ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
 
           // ── AppBottomNavigationBar (at bottom: 0) ──────────────────────────
           Positioned(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -215,6 +216,15 @@ class NotesProvider with ChangeNotifier {
 
   // Initialize notifications helper
   Future<void> _initNotifications() async {
+    try {
+      if (kIsWeb || Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        return;
+      }
+    } catch (e) {
+      // Fallback in case Platform getters fail on web
+      return;
+    }
+    
     if (Platform.environment.containsKey('FLUTTER_TEST')) {
       debugPrint(
           "Skipping local notifications initialization in testing environment.");

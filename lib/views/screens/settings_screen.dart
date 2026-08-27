@@ -17,6 +17,7 @@ import 'storage_and_data_screen.dart';
 import 'legal_document_screen.dart';
 import '../widgets/about_bottom_sheet.dart';
 import '../widgets/blurred_bottom_sheet.dart';
+import '../widgets/primary_screen_surface.dart';
 import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/notes_provider.dart';
@@ -208,29 +209,25 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
             ),
           ),
 
-          // 2. Fixed Upper Header Block + Scrollable Cards Column
+          // 2. Primary Screen Surface Background
+          const Positioned(
+            top: 140,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: PrimaryScreenSurface(
+              child: SizedBox.expand(),
+            ),
+          ),
+
+          // 3. Fixed Upper Header Block + Scrollable Cards Column
           Column(
             children: [
-              // Fixed Top Header Area (Height: 285px) — Floral background + white curved top + Avatar + User info
+              // Fixed Top Header Area (Height: 285px) — Avatar + User info
               SizedBox(
                 height: 285,
                 child: Stack(
                   children: [
-                    // White rounded sheet top
-                    Positioned(
-                      top: 140,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius:
-                              BorderRadius.vertical(top: Radius.circular(32)),
-                        ),
-                      ),
-                    ),
-
                     // Overlapping Profile Avatar Circle
                     Positioned(
                       top: 95,
@@ -320,10 +317,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
 
               // Scrollable Cards Only (GroupedListContainer Section 1, 2, 3, 4)
               Expanded(
-                child: Container(
-                  color: Colors.white,
-                  child: RepaintBoundary(
-                    child: SingleChildScrollView(
+                child: RepaintBoundary(
+                  child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.only(
                           left: 24.0, right: 24.0, top: 12.0, bottom: 100.0),
@@ -544,11 +539,10 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                     ),
                   ),
                 ),
-              ),
             ],
           ),
 
-          // 3. Header Bar Overlay
+          // 4. Header Bar Overlay
           Positioned(
             top: 0,
             left: 0,
