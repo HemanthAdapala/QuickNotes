@@ -42,7 +42,7 @@ class SearchTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayDate = task.reminderTime ?? task.dueDate;
     final formattedDate =
-        DateFormat('EEE, d MMMM yyyy').format(displayDate.toLocal());
+        DateFormat('EEE, d MMMM').format(displayDate.toLocal());
     final formattedTime = DateFormat('hh:mm a').format(displayDate.toLocal());
 
     final titleText = task.title.isEmpty ? 'Untitled Task' : task.title;

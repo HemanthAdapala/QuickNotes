@@ -34,7 +34,7 @@ class SearchNoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('EEE, d MMMM yyyy').format(note.updatedAt);
+    final formattedDate = DateFormat('EEE, d MMMM').format(note.updatedAt);
     final formattedTime = DateFormat('hh:mm a').format(note.updatedAt);
 
     final titleText = note.title.isEmpty ? 'Untitled Note' : note.title;

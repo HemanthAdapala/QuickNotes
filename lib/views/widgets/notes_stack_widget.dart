@@ -190,7 +190,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
 
     final note = _currentNotesList[totalCards - 1 - index];
     final formattedDate =
-        DateFormat('EEE, d MMMM yyyy').format(note.createdAt.toLocal());
+        DateFormat('EEE, d MMMM').format(note.createdAt.toLocal());
     final formattedTime =
         DateFormat('hh:mm a').format(note.createdAt.toLocal());
 
@@ -384,7 +384,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
 
     final note = _currentNotesList.first;
     final formattedDate =
-        DateFormat('EEE, d MMMM yyyy').format(note.createdAt.toLocal());
+        DateFormat('EEE, d MMMM').format(note.createdAt.toLocal());
     final formattedTime =
         DateFormat('hh:mm a').format(note.createdAt.toLocal());
 
