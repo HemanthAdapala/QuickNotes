@@ -12,7 +12,6 @@ import 'package:home_widget/home_widget.dart' as home_widget;
 import '../models/note.dart';
 import '../models/folder.dart';
 import '../models/note_summary.dart';
-import '../services/database_service.dart';
 import '../services/session_manager.dart';
 import '../services/vault_service.dart';
 import '../repositories/notes_repository.dart';

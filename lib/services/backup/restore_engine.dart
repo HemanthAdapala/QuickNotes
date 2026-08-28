@@ -7,23 +7,15 @@ import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../models/folder.dart';
-import '../../models/note.dart';
-import '../../models/task_item.dart';
-import '../../repositories/folders_repository.dart';
-import '../../repositories/notes_repository.dart';
-import '../../repositories/tasks_repository.dart';
-import '../../repositories/user_identity_repository.dart';
 import '../database_service.dart';
 import '../session_manager.dart';
 import 'backup_engine.dart';
 import 'backup_format.dart';
 import 'backup_integrity.dart';
-import 'backup_manifest.dart';
 import 'backup_serializer.dart';
 import 'backup_validation_result.dart';
 import 'backup_validator.dart';
 import 'restore_result.dart';
-import 'zip_decoder.dart';
 
 /// RestoreEngine — Hardened orchestrator for multi-resource atomic restore operations.
 ///

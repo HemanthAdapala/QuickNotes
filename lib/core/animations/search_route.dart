@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'search_transition_routes.dart';
 
 /// Unified SearchRoute delegating to PixelAlignedSearchRoute for smooth HomeScreen transition consistency.

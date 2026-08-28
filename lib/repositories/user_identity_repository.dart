@@ -5,7 +5,6 @@ import '../models/user.dart';
 import '../models/user_identity.dart';
 import '../models/user_profile.dart';
 import '../services/database_service.dart';
-import '../services/session_manager.dart';
 
 abstract class UserIdentityRepository {
   Future<UserIdentity?> findIdentity(String provider, String providerUserId);

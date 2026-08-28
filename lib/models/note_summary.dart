@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'note.dart';
 
 class NoteSummary {

@@ -9,8 +9,6 @@ import 'package:uuid/uuid.dart';
 import '../models/note.dart';
 import '../models/folder.dart';
 import '../models/task_item.dart';
-import '../models/user.dart';
-import '../models/user_identity.dart';
 import '../models/database_integrity_result.dart';
 import 'database_exceptions.dart';
 
@@ -695,7 +693,7 @@ class DatabaseService {
           zoneValues: {_txnZoneKey: txn},
         );
       });
-    } catch (e, stackTrace) {
+    } catch (e) {
       if (e is DatabaseServiceException || e is OwnershipException) {
         rethrow;
       }

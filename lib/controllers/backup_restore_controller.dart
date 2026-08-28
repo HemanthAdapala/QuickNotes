@@ -3,10 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../services/backup/backup_engine.dart';
-import '../services/backup/backup_manifest.dart';
 import '../services/backup/backup_result.dart';
 import '../services/backup/backup_storage_adapter.dart';
-import '../services/backup/backup_validation_result.dart';
 import '../services/backup/backup_validator.dart';
 import '../services/backup/drive_storage_exception.dart';
 import '../services/backup/remote_backup_metadata.dart';
@@ -312,7 +310,7 @@ class BackupRestoreController extends ChangeNotifier {
         backupId: manifest.backupId,
         formatVersion: manifest.formatVersion,
         databaseSchemaVersion: manifest.databaseSchemaVersion,
-        appVersion: manifest.appVersion ?? '1.0.0',
+        appVersion: manifest.appVersion,
         noteCount: manifest.contents.notes,
         folderCount: manifest.contents.folders,
         taskCount: manifest.contents.tasks,

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:path/path.dart' as p;
 import '../../models/note.dart';
 import '../../models/folder.dart';

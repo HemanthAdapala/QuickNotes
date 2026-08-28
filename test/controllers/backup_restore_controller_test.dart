@@ -203,7 +203,6 @@ void main() {
       foldersRepo: foldersRepo,
       notesRepo: notesRepo,
       tasksRepo: tasksRepo,
-      identityRepo: identityRepo,
       sessionManager: sessionManager,
       dbService: dbService,
     );

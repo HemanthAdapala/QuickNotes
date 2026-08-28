@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'backup_format.dart';
 import 'backup_integrity.dart';
 import 'backup_manifest.dart';

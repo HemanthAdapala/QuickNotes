@@ -38,7 +38,6 @@ class BackupEngine {
   final FoldersRepository _foldersRepo;
   final NotesRepository _notesRepo;
   final TasksRepository _tasksRepo;
-  final UserIdentityRepository _identityRepo;
   final SessionManager _sessionManager;
   final DatabaseService _dbService;
 
@@ -46,13 +45,11 @@ class BackupEngine {
     FoldersRepository? foldersRepo,
     NotesRepository? notesRepo,
     TasksRepository? tasksRepo,
-    UserIdentityRepository? identityRepo,
     SessionManager? sessionManager,
     DatabaseService? dbService,
   })  : _foldersRepo = foldersRepo ?? SqliteFoldersRepository(),
         _notesRepo = notesRepo ?? SqliteNotesRepository(),
         _tasksRepo = tasksRepo ?? SqliteTasksRepository(),
-        _identityRepo = identityRepo ?? SqliteUserIdentityRepository(),
         _sessionManager = sessionManager ?? SessionManager(),
         _dbService = dbService ?? DatabaseService.instance;
 
@@ -73,7 +70,6 @@ class BackupEngine {
       var providerUserIdHash = BackupIntegrity.sha256String(activeUserId);
       String? userEmail;
 
-      final sessionType = _sessionManager.activeSessionType;
       final db = await _dbService.database;
 
       final identityMaps = await db.query(

@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/foundation.dart'
     show kIsWeb, kReleaseMode, defaultTargetPlatform, TargetPlatform;
-import 'package:device_preview/device_preview.dart';
 import 'providers/notes_provider.dart';
 import 'providers/tasks_provider.dart';
 import 'services/task_engine.dart';
