@@ -85,6 +85,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
         return Scaffold(
           backgroundColor: backgroundColor,
           body: SafeArea(
+        bottom: false,
             child: Column(
               children: [
                 // Top Navigation Bar (Matching Account Section)
@@ -132,10 +133,14 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                           BorderRadius.vertical(top: Radius.circular(32)),
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: SingleChildScrollView(
+                    child: Align(
+                   alignment: Alignment.topCenter,
+                   child: ConstrainedBox(
+                         constraints: const BoxConstraints(maxWidth: 402.0),
+                         child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.only(
-                          left: 24.0, right: 24.0, top: 24.0, bottom: 40.0),
+                      padding: EdgeInsets.only(
+                          left: 24.0, right: 24.0, top: 24.0, bottom: 40.0 + MediaQuery.paddingOf(context).bottom),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1023,6 +1028,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                         ],
                       ),
                     ),
+                       ),
+                     ),
                   ),
                 ),
               ],

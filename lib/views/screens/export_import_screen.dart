@@ -143,11 +143,14 @@ class ExportImportScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12.0),
             Expanded(
-              child: SingleChildScrollView(
+              child: Align(
+                   alignment: Alignment.topCenter,
+                   child: ConstrainedBox(
+                   constraints: const BoxConstraints(maxWidth: 402.0),
+                   child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0, vertical: 8.0),
+                  padding: EdgeInsets.only(left: 24.0, right: 24.0, top: 8.0, bottom: 8.0 + MediaQuery.paddingOf(context).bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -208,6 +211,8 @@ class ExportImportScreen extends StatelessWidget {
                   ),
                 ),
               ),
+                 ),
+               ),
             ),
           ],
         ),

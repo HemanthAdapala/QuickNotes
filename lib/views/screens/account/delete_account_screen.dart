@@ -56,6 +56,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // Top Navigation Bar
@@ -101,10 +102,13 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: SingleChildScrollView(
+                child: Align(
+                   alignment: Alignment.topCenter,
+                   child: ConstrainedBox(
+                     constraints: const BoxConstraints(maxWidth: 402.0),
+                     child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32.0, vertical: 36.0),
+                  padding: EdgeInsets.only(left: 32.0, right: 32.0, top: 36.0, bottom: 36.0 + MediaQuery.paddingOf(context).bottom),
                   child: Column(
                     children: [
                       Text(
@@ -240,6 +244,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     ],
                   ),
                 ),
+                   ),
+                 ),
               ),
             ),
           ],

@@ -23,6 +23,7 @@ class LegalDocumentScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // Top Navigation Bar
@@ -67,10 +68,14 @@ class LegalDocumentScreen extends StatelessWidget {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: Markdown(
+                child: Align(
+                   alignment: Alignment.topCenter,
+                   child: ConstrainedBox(
+                     constraints: const BoxConstraints(maxWidth: 402.0),
+                     child: Markdown(
                   data: markdownContent,
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                  padding: EdgeInsets.only(left: 24.0, right: 24.0, top: 32.0, bottom: 32.0 + MediaQuery.paddingOf(context).bottom),
                   styleSheet: MarkdownStyleSheet(
                     h1: GoogleFonts.inter(
                       fontSize: 24,
@@ -113,6 +118,8 @@ class LegalDocumentScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                   ),
+                 ),
               ),
             ),
           ],

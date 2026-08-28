@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
 import '../../themes/quick_notes_theme.dart';
 
@@ -75,11 +73,14 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
             ),
             const SizedBox(height: 12.0),
             Expanded(
-              child: SingleChildScrollView(
+              child: Align(
+                   alignment: Alignment.topCenter,
+                   child: ConstrainedBox(
+                   constraints: const BoxConstraints(maxWidth: 402.0),
+                   child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0, vertical: 8.0),
+                  padding: EdgeInsets.only(left: 24.0, right: 24.0, top: 8.0, bottom: 8.0 + MediaQuery.paddingOf(context).bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -242,6 +243,8 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   ),
                 ),
               ),
+                 ),
+               ),
             ),
           ],
         ),

@@ -265,6 +265,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
       child: Scaffold(
         backgroundColor: backgroundColor,
         body: SafeArea(
+        bottom: false,
           child: _isLoading
               ? const Center(
                   child: CircularProgressIndicator(color: primaryTextColor))
@@ -341,7 +342,11 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                               BorderRadius.vertical(top: Radius.circular(32)),
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: SingleChildScrollView(
+                        child: Align(
+                   alignment: Alignment.topCenter,
+                   child: ConstrainedBox(
+                             constraints: const BoxConstraints(maxWidth: 402.0),
+                             child: SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 24.0, vertical: 24.0),
@@ -718,6 +723,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                             ],
                           ),
                         ),
+                           ),
+                         ),
                       ),
                     ),
                   ],

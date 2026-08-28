@@ -4,8 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../controllers/account_controller.dart';
 import '../../../core/animations/page_transitions.dart';
-import '../../widgets/tactile_button.dart';
-import '../../widgets/app_bottom_navigation_bar.dart';
 import '../../widgets/grouped_list_container.dart';
 import '../login_screen.dart';
 import 'account_profile_screen.dart';
@@ -187,6 +185,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // Top Navigation Bar
@@ -232,10 +231,13 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: SingleChildScrollView(
+                child: Align(
+                   alignment: Alignment.topCenter,
+                   child: ConstrainedBox(
+                     constraints: const BoxConstraints(maxWidth: 402.0),
+                     child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0, vertical: 24.0),
+                  padding: EdgeInsets.only(left: 24.0, right: 24.0, top: 24.0, bottom: 24.0 + MediaQuery.paddingOf(context).bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -484,6 +486,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                     ],
                   ),
                 ),
+                   ),
+                 ),
               ),
             ),
           ],

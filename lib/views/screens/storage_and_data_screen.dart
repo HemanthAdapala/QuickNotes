@@ -171,6 +171,7 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // App Header Bar (Liquid Glass)
@@ -218,10 +219,13 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
                 clipBehavior: Clip.antiAlias,
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : ListView(
+                    : Align(
+                       alignment: Alignment.topCenter,
+                       child: ConstrainedBox(
+                         constraints: const BoxConstraints(maxWidth: 402.0),
+                         child: ListView(
                         physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.only(
-                            left: 24.0, right: 24.0, top: 32.0, bottom: 100.0),
+                        padding: EdgeInsets.only(left: 24.0, right: 24.0, top: 32.0, bottom: 100.0 + MediaQuery.paddingOf(context).bottom),
                         children: [
                           // Storage Visualizer
                           _buildStorageVisualizer(),
@@ -279,6 +283,8 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
                           ),
                         ],
                       ),
+                       ),
+                     ),
               ),
             ),
           ],

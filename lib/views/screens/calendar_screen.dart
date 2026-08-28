@@ -22,6 +22,7 @@ import '../../core/animations/page_transitions.dart';
 import 'search_screen.dart';
 import '../../core/animations/search_transition_routes.dart';
 import '../../themes/app_theme.dart';
+import '../widgets/primary_screen_surface.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CalendarScreen
@@ -313,162 +314,155 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     Provider.of<TasksProvider>(context);
-    final double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // ── 1. Header Row (floating on stone background) ──────────────────
-            Center(
-              child: SizedBox(
-                width: screenWidth.clamp(0.0, 402.0),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 12.0,
-                  ),
-                  child: Row(
-                    children: [
-                      // ─ Back / home-tab button ─────────────────────────────────
-                      BottomBarGlassSurface(
-                        width: 44.0,
-                        height: 44.0,
-                        borderRadius: BorderRadius.circular(22.0),
-                        child: TactileButton(
-                          useAppleSpring: true,
-                          compressionScale: 0.7,
-                          settleDuration: const Duration(milliseconds: 1000),
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            if (widget.onBack != null) {
-                              widget.onBack!();
-                            } else {
-                              Navigator.of(context).pop();
-                            }
-                          },
+      body: PrimaryScreenSurface(
+        child: SafeArea(
+          bottom: false,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 402.0),
+              child: Column(
+                children: [
+                  // ── 1. Header Row (floating on stone background) ──────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 12.0,
+                    ),
+                    child: Row(
+                      children: [
+                        // ─ Back / home-tab button ─────────────────────────────────
+                        BottomBarGlassSurface(
+                          width: 44.0,
+                          height: 44.0,
+                          borderRadius: BorderRadius.circular(22.0),
+                          child: TactileButton(
+                            useAppleSpring: true,
+                            compressionScale: 0.7,
+                            settleDuration: const Duration(milliseconds: 1000),
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              if (widget.onBack != null) {
+                                widget.onBack!();
+                              } else {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            child: Center(
+                              child: SvgPicture.asset(
+                                'assets/icons/angle_left.svg',
+                                width: 22,
+                                height: 22,
+                                colorFilter: const ColorFilter.mode(
+                                  Color(0xFF1C1C1E),
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // ─ MonthContainer pill ──────────────────────────────────
+                        Expanded(
                           child: Center(
-                            child: SvgPicture.asset(
-                              'assets/icons/angle_left.svg',
-                              width: 22,
-                              height: 22,
-                              colorFilter: const ColorFilter.mode(
-                                Color(0xFF1C1C1E),
-                                BlendMode.srcIn,
+                            child: MonthContainer(
+                              label: _monthLabel,
+                              onPrevious: _previousMonth,
+                              onNext: _nextMonth,
+                            ),
+                          ),
+                        ),
+
+                        // ─ Search button ───────────────────────────────────────────
+                        BottomBarGlassSurface(
+                          width: 44.0,
+                          height: 44.0,
+                          borderRadius: BorderRadius.circular(22.0),
+                          child: TactileButton(
+                            useAppleSpring: true,
+                            compressionScale: 0.7,
+                            settleDuration: const Duration(milliseconds: 1000),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              Navigator.of(context)
+                                  .push(buildSearchTransitionRoute(
+                                builder: (_) => const SearchScreen(
+                                  initialScope: 'tasks',
+                                ),
+                              ));
+                            },
+                            child: const Center(
+                              child: Icon(
+                                Icons.search_rounded,
+                                color: Color(0xFF1C1C1E),
+                                size: 22,
                               ),
                             ),
                           ),
                         ),
-                      ),
-
-                      // ─ MonthContainer pill ──────────────────────────────────
-                      Expanded(
-                        child: Center(
-                          child: MonthContainer(
-                            label: _monthLabel,
-                            onPrevious: _previousMonth,
-                            onNext: _nextMonth,
-                          ),
-                        ),
-                      ),
-
-                      // ─ Search button ───────────────────────────────────────────
-                      BottomBarGlassSurface(
-                        width: 44.0,
-                        height: 44.0,
-                        borderRadius: BorderRadius.circular(22.0),
-                        child: TactileButton(
-                          useAppleSpring: true,
-                          compressionScale: 0.7,
-                          settleDuration: const Duration(milliseconds: 1000),
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            Navigator.of(context)
-                                .push(buildSearchTransitionRoute(
-                              builder: (_) => const SearchScreen(
-                                initialScope: 'tasks',
-                              ),
-                            ));
-                          },
-                          child: const Center(
-                            child: Icon(
-                              Icons.search_rounded,
-                              color: Color(0xFF1C1C1E),
-                              size: 22,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // ── 2. Calendar Grid (sitting on background) ──────────────────────
-            Center(
-              child: SizedBox(
-                width: screenWidth.clamp(0.0, 402.0),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 8.0,
-                  ),
-                  child: CalendarGridWidget(
-                    currentMonth: _currentMonth,
-                    taskStates: _monthTaskStates,
-                    selectedDay: _selectedDay,
-                    onDayTap: (day) => setState(() => _selectedDay = day),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12.0),
-
-            // ── 3. White Bottom Sheet Panel (ONLY wrapping Tasks Preview!) ────
-            Expanded(
-              child: Center(
-                child: Container(
-                  width: screenWidth.clamp(0.0, 402.0),
-                  decoration: const ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(24),
-                      ),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x1F000000),
-                        blurRadius: 20,
-                        offset: Offset(0, -4),
-                        spreadRadius: 0,
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(24)),
-                    child: TaskWidgetsContainer(
-                      selectedDate: DateTime(
-                        _currentMonth.year,
-                        _currentMonth.month,
-                        _selectedDay,
-                      ),
-                      tasks: _selectedDayTasks,
-                      onToggleTask: _toggleTask,
-                      onDismissTask: _removeTask,
-                      onTapTask: _editTask,
-                      onAddTask: _showAddTaskSheet,
+                      ],
                     ),
                   ),
-                ),
+
+                  // ── 2. Calendar Grid (sitting on background) ──────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 8.0,
+                    ),
+                    child: CalendarGridWidget(
+                      currentMonth: _currentMonth,
+                      taskStates: _monthTaskStates,
+                      selectedDay: _selectedDay,
+                      onDayTap: (day) => setState(() => _selectedDay = day),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12.0),
+
+                  // ── 3. White Bottom Sheet Panel (ONLY wrapping Tasks Preview!) ────
+                  Expanded(
+                    child: Container(
+                      decoration: const ShapeDecoration(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(24),
+                          ),
+                        ),
+                        shadows: [
+                          BoxShadow(
+                            color: Color(0x1F000000),
+                            blurRadius: 20,
+                            offset: Offset(0, -4),
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius:
+                            const BorderRadius.vertical(top: Radius.circular(24)),
+                        child: TaskWidgetsContainer(
+                          selectedDate: DateTime(
+                            _currentMonth.year,
+                            _currentMonth.month,
+                            _selectedDay,
+                          ),
+                          tasks: _selectedDayTasks,
+                          onToggleTask: _toggleTask,
+                          onDismissTask: _removeTask,
+                          onTapTask: _editTask,
+                          onAddTask: _showAddTaskSheet,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
