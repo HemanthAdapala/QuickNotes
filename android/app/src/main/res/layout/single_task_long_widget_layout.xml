@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_single_task_long_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_task_blue_bg"
+    android:paddingTop="6dp">
+
+    <!-- Top Blue Header Section: Date (Left) & Time (Right) -->
+    <LinearLayout
+        android:id="@+id/widget_task_long_header_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:paddingBottom="5dp">
+
+        <TextView
+            android:id="@+id/widget_task_long_date_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Tue, 1 June 2026"
+            android:textColor="#FFFFFF"
+            android:textSize="9.5sp"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/widget_task_long_time_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="02:00 AM"
+            android:textColor="#FFFFFF"
+            android:textSize="9.5sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- White Task Body Container -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/widget_white_card_body"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <!-- Active Task Content (Horizontal Flow) -->
+        <LinearLayout
+            android:id="@+id/widget_task_long_content_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Badges Column: Priority & Recurrence -->
+            <LinearLayout
+                android:id="@+id/widget_task_long_badges_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_vertical">
+
+                <!-- Priority Badge -->
+                <LinearLayout
+                    android:id="@+id/widget_task_long_priority_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingLeft="5dp"
+                    android:paddingRight="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:background="@drawable/widget_task_priority_high_bg">
+
+                    <ImageView
+                        android:id="@+id/widget_task_long_priority_icon"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:src="@drawable/ic_task_flag_red" />
+
+                    <TextView
+                        android:id="@+id/widget_task_long_priority_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="3dp"
+                        android:text="High"
+                        android:textColor="#FF3B30"
+                        android:textSize="9.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Recurrence Badge -->
+                <LinearLayout
+                    android:id="@+id/widget_task_long_repeat_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp"
+                    android:paddingLeft="5dp"
+                    android:paddingRight="5dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:background="@drawable/widget_task_repeat_bg">
+
+                    <TextView
+                        android:id="@+id/widget_task_long_repeat_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Everyday"
+                        android:textColor="#555555"
+                        android:textSize="9.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Task Title with natural wrapping (takes primary horizontal space) -->
+            <TextView
+                android:id="@+id/widget_task_long_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_gravity="center_vertical"
+                android:text="Things to do today"
+                android:textColor="#222222"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:lineSpacingExtra="1dp"
+                android:singleLine="false"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <!-- Status Pill (Right Side) -->
+            <LinearLayout
+                android:id="@+id/widget_task_long_status_pill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/widget_task_status_bg"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <ImageView
+                    android:id="@+id/widget_task_long_status_icon"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_task_clock_pending" />
+
+                <TextView
+                    android:id="@+id/widget_task_long_status_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="4dp"
+                    android:text="Pending"
+                    android:textColor="#555555"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Fallback / Unconfigured State -->
+        <LinearLayout
+            android:id="@+id/widget_task_long_fallback_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/widget_task_long_fallback_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quick Notes"
+                android:textColor="#1E1E1E"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_task_long_fallback_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Tap to choose a task"
+                android:textColor="#757575"
+                android:textSize="9.5sp" />
+        </LinearLayout>
+
+    </FrameLayout>
+
+</LinearLayout>

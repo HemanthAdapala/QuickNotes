@@ -1,63 +1,191 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="16dp">
+    android:padding="14dp">
 
-    <TextView
-        android:id="@+id/widget_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Quick Notes"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/widget_notes_count"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0 Pinned Notes"
-        android:textColor="#B3FFFFFF"
-        android:textSize="12sp"
-        android:layout_marginTop="4dp" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#33FFFFFF"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="12dp" />
-
+    <!-- Top Header Row: App Label + Day & Date -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center">
+        android:gravity="center_vertical">
 
-        <!-- Quick add note button -->
-        <ImageButton
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_app_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="QUICK NOTES"
+                android:textColor="#818CF8"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_day_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Today"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="1dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/widget_date_formatted"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#D1D5DB"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:gravity="end" />
+    </LinearLayout>
+
+    <!-- Metrics Row (Visible when session is active) -->
+    <LinearLayout
+        android:id="@+id/widget_metrics_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <!-- Pinned Notes Stat Pill -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:background="@drawable/widget_pill_background"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/widget_pinned_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#818CF8"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" Pinned"
+                android:textColor="#9CA3AF"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Due Today Tasks Stat Pill (with layout_marginStart for spacing) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:orientation="horizontal"
+            android:background="@drawable/widget_pill_background"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/widget_tasks_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#2DD4BF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" Due Today"
+                android:textColor="#9CA3AF"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Signed-out State Banner (Visible when has_active_session is false) -->
+    <LinearLayout
+        android:id="@+id/widget_signed_out_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/widget_pill_background"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="7dp"
+        android:paddingBottom="7dp"
+        android:gravity="center"
+        android:layout_marginTop="10dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/widget_signed_out_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sign in to Quick Notes"
+            android:textColor="#9CA3AF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Spacer to push action buttons to bottom (FrameLayout supported by RemoteViews) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:minHeight="8dp" />
+
+    <!-- Action Buttons Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="6dp">
+
+        <!-- New Note Action -->
+        <TextView
             android:id="@+id/btn_add_note"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="38dp"
             android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:src="@android:drawable/ic_menu_add"
-            android:contentDescription="New Note"
-            android:tint="#FFFFFF" />
+            android:background="@drawable/widget_button_background"
+            android:gravity="center"
+            android:text="+ New Note"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
-        <!-- Quick add checklist button -->
-        <ImageButton
+        <!-- New Checklist Action (with layout_marginStart for spacing) -->
+        <TextView
             android:id="@+id/btn_add_checklist"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="38dp"
             android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:src="@android:drawable/ic_menu_agenda"
-            android:contentDescription="New Checklist"
-            android:tint="#FFFFFF" />
+            android:layout_marginStart="8dp"
+            android:background="@drawable/widget_button_background"
+            android:gravity="center"
+            android:text="☑ Checklist"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
 </LinearLayout>

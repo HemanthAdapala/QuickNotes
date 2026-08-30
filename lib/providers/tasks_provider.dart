@@ -10,6 +10,7 @@ import '../models/recurrence_rule.dart';
 import '../models/task_engine_state.dart';
 import '../services/task_engine.dart';
 import '../repositories/tasks_repository.dart';
+import '../services/widget_data_adapter.dart';
 
 class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
   final TaskEngine _engine;
@@ -33,12 +34,22 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
   Future<void> refresh() async {
     await _ensureEngineReady();
     await _engine.reloadFromRepository();
+    _updateWidgetData();
     notifyListeners();
   }
 
   void clearLocalState() {
     _engine.clearLocalState();
+    WidgetDataAdapter.instance.clearSnapshot();
     notifyListeners();
+  }
+
+  void _updateWidgetData() {
+    try {
+      WidgetDataAdapter.instance.sync(tasks: _engine.tasks);
+    } catch (e) {
+      debugPrint('Error updating widget data in TasksProvider: $e');
+    }
   }
 
   TaskEngine get engine => _engine;
@@ -68,6 +79,7 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     try {
       await _engine.initialize();
       _eventSubscription = _engine.eventStream.listen((_) {
+        _updateWidgetData();
         notifyListeners();
       });
 

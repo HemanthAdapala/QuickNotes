@@ -9,12 +9,19 @@ import 'providers/tasks_provider.dart';
 import 'services/task_engine.dart';
 import 'services/reminder_scheduler.dart';
 import 'services/android_reminder_scheduler.dart';
+import 'services/widget_data_adapter.dart';
+import 'services/deep_link_coordinator.dart';
 import 'views/screens/splash_screen.dart';
 
 void main() {
-  
+  WidgetsFlutterBinding.ensureInitialized();
+
   // Enable runtime fetching so missing fonts like PlusJakartaSans and Outfit can load
   GoogleFonts.config.allowRuntimeFetching = true;
+
+  // Initialize Home Screen Widget Platform Bridge & Deep-Link Listeners
+  WidgetDataAdapter.instance.initializeAppGroup();
+  DeepLinkCoordinator.instance.initialize();
 
   // Set preferred orientations and system styling overlays
   SystemChrome.setPreferredOrientations([

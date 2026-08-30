@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_task_card_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/task_configure_card_bg"
+    android:paddingLeft="14dp"
+    android:paddingRight="14dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp">
+
+    <!-- Radio Indicator -->
+    <ImageView
+        android:id="@+id/item_task_radio"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="12dp"
+        android:src="@drawable/task_configure_radio_unchecked"
+        android:contentDescription="Select Task" />
+
+    <!-- Task Details Column -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Task Title -->
+        <TextView
+            android:id="@+id/item_task_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Task Title"
+            android:textColor="#111827"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="end" />
+
+        <!-- Due Date & Time -->
+        <TextView
+            android:id="@+id/item_task_datetime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Sun, 30 August • 04:00 PM"
+            android:textColor="#64748B"
+            android:textSize="12sp" />
+
+        <!-- Badges Row -->
+        <LinearLayout
+            android:id="@+id/item_task_badges_row"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Priority Badge -->
+            <TextView
+                android:id="@+id/item_task_priority_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/widget_task_priority_high_bg"
+                android:text="High"
+                android:textColor="#FF3B30"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:paddingLeft="6dp"
+                android:paddingRight="6dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp" />
+
+            <!-- Recurrence Badge -->
+            <TextView
+                android:id="@+id/item_task_repeat_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/widget_task_repeat_bg"
+                android:text="Weekly"
+                android:textColor="#555555"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:paddingLeft="6dp"
+                android:paddingRight="6dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp" />
+
+            <!-- Status Badge -->
+            <TextView
+                android:id="@+id/item_task_status_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pending"
+                android:textColor="#0088FF"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

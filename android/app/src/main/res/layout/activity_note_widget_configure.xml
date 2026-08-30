@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/configure_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0F1117"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingTop="24dp"
+    android:paddingBottom="20dp">
+
+    <!-- Top App Bar & Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="QUICK NOTES"
+            android:textColor="#FBBF24"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Choose a note for your widget"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Select an existing note to display on your Home Screen."
+            android:textColor="#94A3B8"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Search Filter Bar -->
+    <EditText
+        android:id="@+id/search_notes_input"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@drawable/configure_search_bg"
+        android:hint="Search notes..."
+        android:textColorHint="#64748B"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:singleLine="true"
+        android:imeOptions="actionDone"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Notes List -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/notes_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="10dp"
+            android:scrollbars="vertical" />
+
+        <!-- Empty State View -->
+        <LinearLayout
+            android:id="@+id/empty_notes_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No Available Notes"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Create or unlock a note in Quick Notes first."
+                android:textColor="#64748B"
+                android:textSize="12sp"
+                android:gravity="center" />
+        </LinearLayout>
+    </FrameLayout>
+
+</LinearLayout>

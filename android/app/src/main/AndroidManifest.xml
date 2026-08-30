@@ -30,15 +30,94 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- Deep-Link Intent Filter for Quick Notes Widget -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="quicknotes" />
+            </intent-filter>
+
+            <!-- HomeWidget Click Launch Action -->
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.LAUNCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="quicknotes" />
+            </intent-filter>
         </activity>
         
-        <!-- Home Screen Widget Receiver -->
+        <!-- Home Screen Widget Receiver (Aggregate Overview) -->
         <receiver android:name="com.quicknotes.app.QuickCaptureWidget" android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info" />
         </receiver>
+
+        <!-- Configurable Single Note Home Screen Widget Receiver -->
+        <receiver
+            android:name="com.quicknotes.app.SingleNoteWidget"
+            android:label="Single Note"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/single_note_widget_info" />
+        </receiver>
+
+        <!-- Configurable Single Task Home Screen Widget Receiver (Short) -->
+        <receiver
+            android:name="com.quicknotes.app.SingleTaskWidget"
+            android:label="Single Task"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/single_task_widget_info" />
+        </receiver>
+
+        <!-- Configurable Single Task Home Screen Widget Receiver (Long) -->
+        <receiver
+            android:name="com.quicknotes.app.SingleTaskLongWidget"
+            android:label="Single Task — Long"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/single_task_long_widget_info" />
+        </receiver>
+
+        <!-- Multi-Task Home Screen Widget Receiver (Tasks Overview) -->
+        <receiver
+            android:name="com.quicknotes.app.MultiTaskWidget"
+            android:label="Tasks"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/multi_task_widget_info" />
+        </receiver>
+
+        <!-- Note Selection / Configuration Activity for SingleNoteWidget -->
+        <activity
+            android:name="com.quicknotes.app.NoteWidgetConfigureActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
+            </intent-filter>
+        </activity>
+
+        <!-- Task Selection / Configuration Activity for SingleTaskWidget & SingleTaskLongWidget -->
+        <activity
+            android:name="com.quicknotes.app.TaskWidgetConfigureActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
+            </intent-filter>
+        </activity>
 
         <!-- Flutter Local Notifications Receivers for Background Alarms and Action Buttons -->
         <receiver android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" android:exported="false" />

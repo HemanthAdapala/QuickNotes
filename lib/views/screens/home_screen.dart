@@ -17,6 +17,7 @@ import '../../providers/notes_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../services/app_statistics_service.dart';
 import '../../services/notification_action_handler.dart';
+import '../../services/deep_link_coordinator.dart';
 import '../../models/notification_payload.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/page_transitions.dart';
@@ -87,10 +88,26 @@ class _HomeScreenState extends State<HomeScreen> {
     final initialIndex = notesProvider.selectedBgIndex;
     _updatePresetsForBackground(initialIndex);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Wire DeepLinkCoordinator listener for warm-launch clicks
+    DeepLinkCoordinator.instance.initialize(
+      onActionDispatched: (action) {
+        if (mounted) {
+          DeepLinkCoordinator.instance.executeAction(context, action);
+        }
+      },
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
-        notesProvider.loadFolders();
-        notesProvider.loadNotes();
+        await notesProvider.loadFolders();
+        await notesProvider.loadNotes();
+        if (mounted) {
+          final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+          await tasksProvider.loadTasks();
+        }
+        if (mounted) {
+          await DeepLinkCoordinator.instance.markNavigationReady(context: context);
+        }
       }
     });
 

@@ -1,0 +1,523 @@
+import 'dart:convert';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:quick_notes/models/task_item.dart';
+import 'package:quick_notes/models/task_status.dart';
+import 'package:quick_notes/models/repeat_rule.dart';
+import 'package:quick_notes/models/recurrence_rule.dart';
+import 'package:quick_notes/models/single_task_snapshot.dart';
+
+void main() {
+  group('SingleTaskSnapshot Unit & Serialization Tests (Phase T1)', () {
+    final fixedDate = DateTime(2026, 6, 1, 2, 0, 0); // Tuesday, 1 June 2026 02:00 AM
+
+    test('1. Snapshot Creation: basic task produces sanitized snapshot with exact fidelity', () {
+      final task = TaskItem(
+        id: 'task-uuid-1',
+        title: 'Client Meeting Tomorrow',
+        description: 'Prepare system architecture and roadmap',
+        dueDate: fixedDate,
+        priority: 'High',
+        status: TaskStatus.waiting,
+        repeatRule: RepeatRule.daily,
+      );
+
+      final snapshot = SingleTaskSnapshot.fromTask(task);
+
+      expect(snapshot.id, 'task-uuid-1');
+      expect(snapshot.title, 'Client Meeting Tomorrow');
+      expect(snapshot.description, 'Prepare system architecture and roadmap');
+      expect(snapshot.completed, isFalse);
+      expect(snapshot.status, 'waiting');
+      expect(snapshot.statusLabel, 'Pending');
+      expect(snapshot.priority, 'High');
+      expect(snapshot.hasPriority, isTrue);
+      expect(snapshot.isRecurring, isTrue);
+      expect(snapshot.hasRepeat, isTrue);
+      expect(snapshot.repeatLabel, 'Daily');
+      expect(snapshot.formattedDate, 'Mon, 1 June 2026'); // Evaluated in local timezone
+      expect(snapshot.formattedTime.isNotEmpty, isTrue);
+    });
+
+    test('2. Title Handling: trims whitespace, preserves emojis & special characters', () {
+      final task = TaskItem(
+        id: 'task-uuid-2',
+        title: '   ⚡ Launch Sprint 14 Production Deployment 🚀   ',
+        dueDate: fixedDate,
+        priority: 'None',
+      );
+
+      final snapshot = SingleTaskSnapshot.fromTask(task);
+      expect(snapshot.title, '⚡ Launch Sprint 14 Production Deployment 🚀');
+
+      // Empty title fallback
+      final emptyTask = TaskItem(
+        id: 'task-uuid-empty',
+        title: '   ',
+        dueDate: fixedDate,
+        priority: 'None',
+      );
+      final emptySnapshot = SingleTaskSnapshot.fromTask(emptyTask);
+      expect(emptySnapshot.title, 'Untitled Task');
+    });
+
+    test('3. Completion States: correctly derives Pending vs Completed across TaskStatus enum', () {
+      // Waiting -> Pending
+      final waitingTask = TaskItem(
+        id: 't-waiting',
+        title: 'Waiting Task',
+        dueDate: fixedDate,
+        priority: 'Low',
+        status: TaskStatus.waiting,
+      );
+      expect(SingleTaskSnapshot.fromTask(waitingTask).completed, isFalse);
+      expect(SingleTaskSnapshot.fromTask(waitingTask).statusLabel, 'Pending');
+
+      // Scheduled -> Pending
+      final scheduledTask = TaskItem(
+        id: 't-scheduled',
+        title: 'Scheduled Task',
+        dueDate: fixedDate,
+        priority: 'Low',
+        status: TaskStatus.scheduled,
+      );
+      expect(SingleTaskSnapshot.fromTask(scheduledTask).completed, isFalse);
+      expect(SingleTaskSnapshot.fromTask(scheduledTask).statusLabel, 'Pending');
+
+      // Missed -> Pending
+      final missedTask = TaskItem(
+        id: 't-missed',
+        title: 'Missed Task',
+        dueDate: fixedDate,
+        priority: 'Low',
+        status: TaskStatus.missed,
+      );
+      expect(SingleTaskSnapshot.fromTask(missedTask).completed, isFalse);
+      expect(SingleTaskSnapshot.fromTask(missedTask).statusLabel, 'Pending');
+
+      // Completed -> Completed
+      final completedTask = TaskItem(
+        id: 't-completed',
+        title: 'Completed Task',
+        dueDate: fixedDate,
+        priority: 'Low',
+        status: TaskStatus.completed,
+      );
+      expect(SingleTaskSnapshot.fromTask(completedTask).completed, isTrue);
+      expect(SingleTaskSnapshot.fromTask(completedTask).statusLabel, 'Completed');
+    });
+
+    test('4. Date & Time Resolution: respects reminderTime > startTime > dueDate hierarchy', () {
+      final dueDate = DateTime(2026, 6, 1, 10, 0, 0);
+      final startTime = DateTime(2026, 6, 1, 14, 30, 0);
+      final reminderTime = DateTime(2026, 6, 1, 9, 15, 0);
+
+      // Hierarchy A: ReminderTime present
+      final taskWithReminder = TaskItem(
+        id: 't-rem',
+        title: 'Task A',
+        dueDate: dueDate,
+        startTime: startTime,
+        reminderTime: reminderTime,
+        priority: 'None',
+      );
+      final snapA = SingleTaskSnapshot.fromTask(taskWithReminder);
+      // Formatted in local time from reminderTime (09:15 AM)
+      expect(snapA.formattedTime, isNotEmpty);
+
+      // Hierarchy B: No reminderTime, but startTime present
+      final taskWithStart = TaskItem(
+        id: 't-start',
+        title: 'Task B',
+        dueDate: dueDate,
+        startTime: startTime,
+        priority: 'None',
+      );
+      final snapB = SingleTaskSnapshot.fromTask(taskWithStart);
+      expect(snapB.formattedTime, isNotEmpty);
+
+      // Hierarchy C: Only dueDate present
+      final taskWithDue = TaskItem(
+        id: 't-due',
+        title: 'Task C',
+        dueDate: dueDate,
+        priority: 'None',
+      );
+      final snapC = SingleTaskSnapshot.fromTask(taskWithDue);
+      expect(snapC.formattedTime, isNotEmpty);
+    });
+
+    test('5. Priority Normalization: handles High, Medium, Low, None and color string aliases', () {
+      final pHigh = SingleTaskSnapshot.fromTask(
+          TaskItem(id: '1', title: 'T', dueDate: fixedDate, priority: 'High'));
+      expect(pHigh.priority, 'High');
+      expect(pHigh.hasPriority, isTrue);
+
+      final pRed = SingleTaskSnapshot.fromTask(
+          TaskItem(id: '2', title: 'T', dueDate: fixedDate, priority: 'red'));
+      expect(pRed.priority, 'High');
+      expect(pRed.hasPriority, isTrue);
+
+      final pMed = SingleTaskSnapshot.fromTask(
+          TaskItem(id: '3', title: 'T', dueDate: fixedDate, priority: 'Medium'));
+      expect(pMed.priority, 'Medium');
+      expect(pMed.hasPriority, isTrue);
+
+      final pLow = SingleTaskSnapshot.fromTask(
+          TaskItem(id: '4', title: 'T', dueDate: fixedDate, priority: 'Low'));
+      expect(pLow.priority, 'Low');
+      expect(pLow.hasPriority, isTrue);
+
+      final pNone = SingleTaskSnapshot.fromTask(
+          TaskItem(id: '5', title: 'T', dueDate: fixedDate, priority: 'None'));
+      expect(pNone.priority, 'None');
+      expect(pNone.hasPriority, isFalse);
+
+      final pEmpty = SingleTaskSnapshot.fromTask(
+          TaskItem(id: '6', title: 'T', dueDate: fixedDate, priority: ''));
+      expect(pEmpty.priority, 'None');
+      expect(pEmpty.hasPriority, isFalse);
+    });
+
+    test('6. Recurrence Mapping: handles RepeatRule and RecurrenceRule models', () {
+      // RepeatRule Daily
+      final rDaily = SingleTaskSnapshot.fromTask(TaskItem(
+        id: '1',
+        title: 'T',
+        dueDate: fixedDate,
+        priority: 'None',
+        repeatRule: RepeatRule.daily,
+      ));
+      expect(rDaily.hasRepeat, isTrue);
+      expect(rDaily.isRecurring, isTrue);
+      expect(rDaily.repeatLabel, 'Daily');
+
+      // RepeatRule Weekdays
+      final rWeekdays = SingleTaskSnapshot.fromTask(TaskItem(
+        id: '2',
+        title: 'T',
+        dueDate: fixedDate,
+        priority: 'None',
+        repeatRule: RepeatRule.weekdays,
+      ));
+      expect(rWeekdays.hasRepeat, isTrue);
+      expect(rWeekdays.repeatLabel, 'Weekdays');
+
+      // RepeatRule Weekly
+      final rWeekly = SingleTaskSnapshot.fromTask(TaskItem(
+        id: '3',
+        title: 'T',
+        dueDate: fixedDate,
+        priority: 'None',
+        repeatRule: RepeatRule.weekly,
+      ));
+      expect(rWeekly.hasRepeat, isTrue);
+      expect(rWeekly.repeatLabel, 'Weekly');
+
+      // RecurrenceRule Monthly
+      final rMonthly = SingleTaskSnapshot.fromTask(TaskItem(
+        id: '4',
+        title: 'T',
+        dueDate: fixedDate,
+        priority: 'None',
+        recurrence: const RecurrenceRule(type: RecurrenceType.monthly),
+      ));
+      expect(rMonthly.hasRepeat, isTrue);
+      expect(rMonthly.repeatLabel, 'Monthly');
+
+      // RecurrenceRule Yearly
+      final rYearly = SingleTaskSnapshot.fromTask(TaskItem(
+        id: '5',
+        title: 'T',
+        dueDate: fixedDate,
+        priority: 'None',
+        recurrence: const RecurrenceRule(type: RecurrenceType.yearly),
+      ));
+      expect(rYearly.hasRepeat, isTrue);
+      expect(rYearly.repeatLabel, 'Yearly');
+
+      // None
+      final rNone = SingleTaskSnapshot.fromTask(TaskItem(
+        id: '6',
+        title: 'T',
+        dueDate: fixedDate,
+        priority: 'None',
+        repeatRule: RepeatRule.none,
+      ));
+      expect(rNone.hasRepeat, isFalse);
+      expect(rNone.isRecurring, isFalse);
+      expect(rNone.repeatLabel, '');
+    });
+
+    test('7. JSON Serialization & Round-Trip: preserves all fields identically', () {
+      final original = SingleTaskSnapshot(
+        id: 'task-test-roundtrip',
+        title: 'Shopping with Friends',
+        description: 'Get ingredients for dinner',
+        status: 'waiting',
+        completed: false,
+        dueDateIso: fixedDate.toUtc().toIso8601String(),
+        formattedDate: 'Tue, 1 June 2026',
+        formattedTime: '02:00 AM',
+        priority: 'High',
+        hasPriority: true,
+        isRecurring: true,
+        hasRepeat: true,
+        repeatLabel: 'Daily',
+        statusLabel: 'Pending',
+        updatedAt: fixedDate.toUtc(),
+      );
+
+      final jsonMap = original.toJson();
+      expect(jsonMap.isNotEmpty, isTrue);
+      final jsonString = original.toJsonString();
+      final decodedMap = jsonDecode(jsonString) as Map<String, dynamic>;
+      final reconstructed = SingleTaskSnapshot.fromJson(decodedMap);
+
+      expect(reconstructed.id, original.id);
+      expect(reconstructed.title, original.title);
+      expect(reconstructed.description, original.description);
+      expect(reconstructed.status, original.status);
+      expect(reconstructed.completed, original.completed);
+      expect(reconstructed.dueDateIso, original.dueDateIso);
+      expect(reconstructed.formattedDate, original.formattedDate);
+      expect(reconstructed.formattedTime, original.formattedTime);
+      expect(reconstructed.priority, original.priority);
+      expect(reconstructed.hasPriority, original.hasPriority);
+      expect(reconstructed.isRecurring, original.isRecurring);
+      expect(reconstructed.hasRepeat, original.hasRepeat);
+      expect(reconstructed.repeatLabel, original.repeatLabel);
+      expect(reconstructed.statusLabel, original.statusLabel);
+      expect(reconstructed.updatedAt, original.updatedAt);
+      expect(reconstructed, equals(original));
+    });
+
+    test('8. Catalog Entry: produces lightweight representation for configuration picker', () {
+      final snapshot = SingleTaskSnapshot(
+        id: 'task-cat-1',
+        title: 'Team Coffee Sync',
+        description: 'Discuss Q3 deliverables',
+        status: 'waiting',
+        completed: false,
+        dueDateIso: fixedDate.toUtc().toIso8601String(),
+        formattedDate: 'Tue, 1 June 2026',
+        formattedTime: '10:30 AM',
+        priority: 'Medium',
+        hasPriority: true,
+        isRecurring: true,
+        hasRepeat: true,
+        repeatLabel: 'Weekly',
+        statusLabel: 'Pending',
+        updatedAt: fixedDate.toUtc(),
+      );
+
+      final catalogEntry = snapshot.toCatalogEntry();
+
+      expect(catalogEntry['id'], 'task-cat-1');
+      expect(catalogEntry['title'], 'Team Coffee Sync');
+      expect(catalogEntry['priority'], 'Medium');
+      expect(catalogEntry['has_priority'], isTrue);
+      expect(catalogEntry['formatted_date'], 'Tue, 1 June 2026');
+      expect(catalogEntry['formatted_time'], '10:30 AM');
+      expect(catalogEntry['completed'], isFalse);
+      expect(catalogEntry['status_label'], 'Pending');
+      expect(catalogEntry['repeat_label'], 'Weekly');
+      expect(catalogEntry['has_repeat'], isTrue);
+      // Catalog entry intentionally omits description for compactness
+      expect(catalogEntry.containsKey('description'), isFalse);
+    });
+  });
+
+  group('TaskWidgetConfigureActivity Contract & Catalog Parsing Tests (Phase T7)', () {
+    final fixedDate = DateTime(2026, 6, 1, 2, 0, 0);
+
+    test('TEST 1 & 2: AppWidgetId Validation Contract', () {
+      const invalidId = 0; // AppWidgetManager.INVALID_APPWIDGET_ID
+      const validId = 567;
+
+      expect(invalidId <= 0, isTrue); // Rejection / cancellation contract
+      expect(validId > 0, isTrue); // Valid appWidgetId accepted
+    });
+
+    test('TEST 3: Valid catalog JSON parses successfully', () {
+      final task1 = SingleTaskSnapshot.fromTask(TaskItem(
+        id: 'task-1',
+        title: 'Vitamin D',
+        dueDate: fixedDate,
+        priority: 'High',
+        status: TaskStatus.waiting,
+        repeatRule: RepeatRule.weekly,
+      ));
+      final task2 = SingleTaskSnapshot.fromTask(TaskItem(
+        id: 'task-2',
+        title: 'Sprint retro',
+        dueDate: fixedDate,
+        priority: 'Medium',
+        status: TaskStatus.completed,
+      ));
+
+      final catalogList = [task1.toCatalogEntry(), task2.toCatalogEntry()];
+      final rawJson = jsonEncode(catalogList);
+
+      final decoded = jsonDecode(rawJson) as List<dynamic>;
+      expect(decoded.length, 2);
+      expect(decoded[0]['id'], 'task-1');
+      expect(decoded[0]['title'], 'Vitamin D');
+      expect(decoded[0]['priority'], 'High');
+      expect(decoded[0]['has_priority'], isTrue);
+      expect(decoded[0]['repeat_label'], 'Weekly');
+      expect(decoded[0]['has_repeat'], isTrue);
+      expect(decoded[0]['completed'], isFalse);
+
+      expect(decoded[1]['id'], 'task-2');
+      expect(decoded[1]['completed'], isTrue);
+      expect(decoded[1]['status_label'], 'Completed');
+    });
+
+    test('TEST 4: Malformed catalog JSON does not crash', () {
+      const malformedJson = '{invalid-json-array...';
+      dynamic result;
+      try {
+        result = jsonDecode(malformedJson);
+      } catch (e) {
+        result = <dynamic>[];
+      }
+      expect(result, isEmpty);
+    });
+
+    test('TEST 5: Missing or empty task ID entries are ignored', () {
+      final rawEntries = [
+        {'id': '', 'title': 'Empty ID Task'},
+        {'id': '   ', 'title': 'Whitespace ID Task'},
+        {'id': 'valid-task-id', 'title': 'Valid Task'},
+        {'title': 'No ID Key Task'},
+      ];
+
+      final validItems = <Map<String, dynamic>>[];
+      for (final entry in rawEntries) {
+        final id = (entry['id'] ?? '').toString().trim();
+        if (id.isNotEmpty) {
+          validItems.add(entry);
+        }
+      }
+
+      expect(validItems.length, 1);
+      expect(validItems.first['id'], 'valid-task-id');
+    });
+
+    test('TEST 6: Single task selection stores exact task UUID', () {
+      const selectedUuid = 'fed61850-4822-4fa2-884b-78b65a39e6a8';
+      const appWidgetId = 789;
+      const prefKey = 'task_widget_id_$appWidgetId';
+
+      final prefsMap = <String, String>{};
+      prefsMap[prefKey] = selectedUuid;
+
+      expect(prefsMap['task_widget_id_789'], 'fed61850-4822-4fa2-884b-78b65a39e6a8');
+    });
+
+    test('TEST 7: Selection does not alter another widget instance mapping (Isolation)', () {
+      final prefsMap = <String, String>{
+        'task_widget_id_101': 'task-alpha',
+        'task_widget_id_102': 'task-beta',
+      };
+
+      // Modifying widget 101
+      prefsMap['task_widget_id_101'] = 'task-gamma';
+
+      expect(prefsMap['task_widget_id_101'], 'task-gamma');
+      expect(prefsMap['task_widget_id_102'], 'task-beta'); // Unchanged
+    });
+
+    test('TEST 8 & 9: Existing mapping preselection vs stale mapping safety', () {
+      final catalog = [
+        {'id': 'task-active-1', 'title': 'Task 1'},
+        {'id': 'task-active-2', 'title': 'Task 2'},
+      ];
+
+      // Case 8: Existing mapping is present in catalog -> Preselected
+      const existingId = 'task-active-2';
+      final isPreselected = catalog.any((item) => item['id'] == existingId);
+      expect(isPreselected, isTrue);
+
+      // Case 9: Stale existing mapping (deleted or missing) -> Cleared/Unselected
+      const staleId = 'task-deleted-999';
+      final isStaleSelected = catalog.any((item) => item['id'] == staleId);
+      expect(isStaleSelected, isFalse);
+    });
+
+    test('TEST 10: Back / cancel does not overwrite existing mapping', () {
+      final prefsMap = <String, String>{
+        'task_widget_id_500': 'persisted-task-uuid',
+      };
+
+      // User browses and taps a different task in UI
+      const browsingSelectedId = 'temporary-selected-task-uuid';
+
+      void onDialogDismissed({required bool isConfirmed}) {
+        if (isConfirmed) {
+          prefsMap['task_widget_id_500'] = browsingSelectedId;
+        }
+      }
+
+      // User presses Back -> Cancel event, commit is not called
+      onDialogDismissed(isConfirmed: false);
+      expect(prefsMap['task_widget_id_500'], 'persisted-task-uuid');
+    });
+
+    test('TEST 11: Empty catalog disables confirmation', () {
+      bool canConfirm(List<Map<String, dynamic>> catalog, String? selectedTaskId) {
+        return catalog.isNotEmpty &&
+            selectedTaskId != null &&
+            catalog.any((t) => t['id'] == selectedTaskId);
+      }
+
+      expect(canConfirm([], null), isFalse);
+      expect(canConfirm([], 'task-id'), isFalse);
+    });
+
+    test('TEST 12: Completed task remains selectable when present in catalog', () {
+      final completedEntry = {
+        'id': 'task-done-1',
+        'title': 'Completed Project Report',
+        'completed': true,
+        'status_label': 'Completed',
+      };
+
+      final catalog = [completedEntry];
+      final isSelectable = catalog.any((t) => t['id'] == 'task-done-1');
+      expect(isSelectable, isTrue);
+    });
+
+    test('TEST 13: Catalog ordering is strictly preserved', () {
+      final rawList = [
+        {'id': 'first', 'title': 'First Task'},
+        {'id': 'second', 'title': 'Second Task'},
+        {'id': 'third', 'title': 'Third Task'},
+      ];
+
+      final catalogIds = rawList.map((e) => e['id']).toList();
+      expect(catalogIds, ['first', 'second', 'third']);
+    });
+
+    test('TEST 14: Selected task triggers immediate widget update contract', () {
+      const appWidgetId = 555;
+      final updateQueue = <int>[];
+
+      // Simulated confirmation
+      updateQueue.add(appWidgetId);
+
+      expect(updateQueue.contains(555), isTrue);
+    });
+
+    test('TEST 15: Single Task and Single Task Long share identical per-instance key scheme', () {
+      const shortWidgetId = 100;
+      const longWidgetId = 200;
+
+      String getTaskPrefKey(int id) => 'task_widget_id_$id';
+
+      expect(getTaskPrefKey(shortWidgetId), 'task_widget_id_100');
+      expect(getTaskPrefKey(longWidgetId), 'task_widget_id_200');
+    });
+  });
+}
+

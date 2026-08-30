@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="270dp"
+    android:minHeight="200dp"
+    android:minResizeWidth="200dp"
+    android:minResizeHeight="120dp"
+    android:maxResizeWidth="600dp"
+    android:maxResizeHeight="800dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="3"
+    android:updatePeriodMillis="86400000"
+    android:initialLayout="@layout/multi_task_widget_layout"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen" />

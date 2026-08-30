@@ -8,7 +8,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:home_widget/home_widget.dart' as home_widget;
+import '../services/widget_data_adapter.dart';
 import '../models/note.dart';
 import '../models/folder.dart';
 import '../models/note_summary.dart';
@@ -45,6 +45,7 @@ class NotesProvider with ChangeNotifier {
     _currentPage = 0;
     _hasMoreNotes = true;
     _selectedFolderId = null;
+    WidgetDataAdapter.instance.clearSnapshot();
     notifyListeners();
   }
 
@@ -216,14 +217,17 @@ class NotesProvider with ChangeNotifier {
   // Initialize notifications helper
   Future<void> _initNotifications() async {
     try {
-      if (kIsWeb || Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      if (kIsWeb ||
+          Platform.isWindows ||
+          Platform.isLinux ||
+          Platform.isMacOS) {
         return;
       }
     } catch (e) {
       // Fallback in case Platform getters fail on web
       return;
     }
-    
+
     if (Platform.environment.containsKey('FLUTTER_TEST')) {
       debugPrint(
           "Skipping local notifications initialization in testing environment.");
@@ -354,7 +358,8 @@ class NotesProvider with ChangeNotifier {
   static Color getNoteTitleColor(int index, BuildContext context) {
     final brightness = Theme.of(context).brightness;
     if (index == 0) {
-      return Theme.of(context).textTheme.titleMedium?.color ?? Color(0xFF333333);
+      return Theme.of(context).textTheme.titleMedium?.color ??
+          Color(0xFF333333);
     }
     if (brightness == Brightness.dark) {
       return Colors.white;
@@ -1116,13 +1121,7 @@ class NotesProvider with ChangeNotifier {
   // --- Home Screen Widget Synchronization ---
   Future<void> _updateWidgetData() async {
     try {
-      final pinnedCount = _notes.where((n) => n.isPinned).length;
-      await home_widget.HomeWidget.saveWidgetData<String>(
-          'pinned_count', pinnedCount.toString());
-      await home_widget.HomeWidget.updateWidget(
-        name: 'QuickCaptureWidget',
-        androidName: 'QuickCaptureWidget',
-      );
+      await WidgetDataAdapter.instance.sync(notes: _notes);
     } catch (e) {
       debugPrint("Error updating home widget data: $e");
     }
