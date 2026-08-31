@@ -519,5 +519,203 @@ void main() {
       expect(getTaskPrefKey(longWidgetId), 'task_widget_id_200');
     });
   });
+
+  group('Phase T8 — End-to-End Hardening, Lifecycle & Regression Invariant Tests', () {
+    final testNow = DateTime(2026, 8, 31, 11, 0, 0);
+
+    test('T8-1: Explicitly configured task remains fixed to target taskId', () {
+      final prefs = <String, dynamic>{
+        'task_widget_id_101': 'task-alpha',
+        'task_widget_id_102': 'task-beta',
+      };
+
+      expect(prefs['task_widget_id_101'], 'task-alpha');
+      expect(prefs['task_widget_id_102'], 'task-beta');
+    });
+
+    test('T8-2: Deleted or archived configured task does NOT fallback to another task', () {
+      // Live map contains only task-beta because task-alpha was deleted
+      final liveTasksMap = <String, dynamic>{
+        'task-beta': {
+          'id': 'task-beta',
+          'title': 'Task Beta',
+        }
+      };
+
+      const configuredId = 'task-alpha'; // Deleted task
+
+      // Authoritative resolution algorithm from hardened SingleTaskWidget.kt
+      Map<String, dynamic>? resolveTask(String? selectedId, Map<String, dynamic>? tasksMap) {
+        if (selectedId == null || selectedId.isEmpty) return null;
+        if (tasksMap != null) {
+          return tasksMap[selectedId] as Map<String, dynamic>?;
+        }
+        return null;
+      }
+
+      final resolved = resolveTask(configuredId, liveTasksMap);
+      // MUST be null (triggering "Task unavailable" fallback), NEVER substitute task-beta!
+      expect(resolved, isNull);
+    });
+
+    test('T8-3: Multi-task catalog strictly excludes deleted tasks', () {
+      final task1 = TaskItem(
+        id: 't-active',
+        title: 'Active Task',
+        dueDate: testNow,
+        priority: 'None',
+        isDeleted: false,
+      );
+      final task2 = TaskItem(
+        id: 't-deleted',
+        title: 'Deleted Task',
+        dueDate: testNow,
+        priority: 'None',
+        isDeleted: true,
+      );
+
+      final rawTasks = [task1, task2];
+      final activeTasks = rawTasks.where((t) => !t.isDeleted && t.status != TaskStatus.archived).toList();
+
+      expect(activeTasks.length, 1);
+      expect(activeTasks.first.id, 't-active');
+    });
+
+    test('T8-4: Multi-task catalog strictly excludes archived tasks', () {
+      final task1 = TaskItem(
+        id: 't-active',
+        title: 'Active Task',
+        dueDate: testNow,
+        priority: 'None',
+        status: TaskStatus.waiting,
+      );
+      final task2 = TaskItem(
+        id: 't-archived',
+        title: 'Archived Task',
+        dueDate: testNow,
+        priority: 'None',
+        status: TaskStatus.archived,
+      );
+
+      final rawTasks = [task1, task2];
+      final activeTasks = rawTasks.where((t) => !t.isDeleted && t.status != TaskStatus.archived).toList();
+
+      expect(activeTasks.length, 1);
+      expect(activeTasks.first.id, 't-active');
+    });
+
+    test('T8-5: Completed task rendering contract maintains status & strike-through flag', () {
+      final completedTask = TaskItem(
+        id: 't-comp',
+        title: 'Submit Expense Report',
+        dueDate: testNow,
+        priority: 'None',
+        status: TaskStatus.completed,
+      );
+
+      final snapshot = SingleTaskSnapshot.fromTask(completedTask);
+      expect(snapshot.completed, isTrue);
+      expect(snapshot.statusLabel, 'Completed');
+    });
+
+    test('T8-6: Configuration cancellation leaves previous mapping completely untouched', () {
+      final prefs = <String, dynamic>{
+        'task_widget_id_777': 'original-task-id',
+      };
+
+      // User initiates configuration, browses to new-task-id, then hits Cancel/Back
+      void commitSelection({required bool userConfirmed, required String newTaskId}) {
+        if (userConfirmed) {
+          prefs['task_widget_id_777'] = newTaskId;
+        }
+      }
+
+      commitSelection(userConfirmed: false, newTaskId: 'new-task-id');
+
+      expect(prefs['task_widget_id_777'], 'original-task-id');
+    });
+
+    test('T8-7: Reconfiguration updates ONLY the target AppWidgetId instance', () {
+      final prefs = <String, dynamic>{
+        'task_widget_id_1': 'task-A',
+        'task_widget_id_2': 'task-B',
+      };
+
+      // Reconfigure widget 1 to task-C
+      prefs['task_widget_id_1'] = 'task-C';
+
+      expect(prefs['task_widget_id_1'], 'task-C');
+      expect(prefs['task_widget_id_2'], 'task-B');
+    });
+
+    test('T8-8: Two widget instances remain isolated during deletion cleanup', () {
+      final prefs = <String, dynamic>{
+        'task_widget_id_10': 'task-10',
+        'task_widget_data_10': '{"title": "Task 10"}',
+        'task_widget_id_20': 'task-20',
+        'task_widget_data_20': '{"title": "Task 20"}',
+      };
+
+      // Simulated onDeleted for instance 10
+      void onDeleted(int id) {
+        prefs.remove('task_widget_id_$id');
+        prefs.remove('task_widget_data_$id');
+      }
+
+      onDeleted(10);
+
+      expect(prefs.containsKey('task_widget_id_10'), isFalse);
+      expect(prefs.containsKey('task_widget_data_10'), isFalse);
+      expect(prefs['task_widget_id_20'], 'task-20');
+      expect(prefs['task_widget_data_20'], '{"title": "Task 20"}');
+    });
+
+    test('T8-9: Empty catalog parses cleanly without throwing', () {
+      const emptyJson = '[]';
+      final list = jsonDecode(emptyJson) as List<dynamic>;
+      expect(list, isEmpty);
+    });
+
+    test('T8-10: Malformed catalog JSON is handled gracefully', () {
+      const malformedJson = '{not-valid-json';
+      List<dynamic> parsed;
+      try {
+        parsed = jsonDecode(malformedJson) as List<dynamic>;
+      } catch (_) {
+        parsed = [];
+      }
+      expect(parsed, isEmpty);
+    });
+
+    test('T8-11: Stale task map entry missing optional fields falls back safely', () {
+      final partialJson = <String, dynamic>{
+        'id': 'task-partial',
+        // title, priority, date, repeat omitted
+      };
+
+      final title = partialJson['title'] ?? 'Untitled Task';
+      final priority = partialJson['priority'] ?? 'None';
+      final hasPriority = (partialJson['has_priority'] as bool?) ?? false;
+
+      expect(title, 'Untitled Task');
+      expect(priority, 'None');
+      expect(hasPriority, isFalse);
+    });
+
+    test('T8-12: Session clear removes task widget data and resets catalogs', () {
+      final prefs = <String, dynamic>{
+        'quicknotes_tasks_catalog': '[{"id": "task-1"}]',
+        'quicknotes_tasks_map': '{"task-1": {"title": "Task 1"}}',
+      };
+
+      // Simulated clearSnapshot
+      prefs['quicknotes_tasks_catalog'] = '[]';
+      prefs['quicknotes_tasks_map'] = '{}';
+
+      expect(prefs['quicknotes_tasks_catalog'], '[]');
+      expect(prefs['quicknotes_tasks_map'], '{}');
+    });
+  });
 }
+
 

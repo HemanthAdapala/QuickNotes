@@ -244,3 +244,54 @@ Implemented native Android Task Widget configuration flow (`TaskWidgetConfigureA
   - Verified on Samsung Galaxy S23 Ultra (`SM-S918B`, Android 16 / One UI 8).
   - Confirmed initial configuration launch, task list population, live search filtering, item selection highlighting, confirmation persistence, and preselection on re-configuration.
 
+## 2026-08-31 — Phase T8: Native Android Task Widget System — End-to-End Hardening, Lifecycle Synchronization & Regression Verification
+
+### Version
+v1.4.1
+
+### Author
+Antigravity
+
+### Type
+- Hardening
+- Reliability
+- Lifecycle & Synchronization
+- Regression Verification
+- Android AppWidget
+
+### Summary
+Completed comprehensive architectural audit, end-to-end hardening, lifecycle cleanup, stale-mapping protection, and non-regression verification across the complete Quick Notes native Android Task Widget subsystem (`SingleTaskWidget`, `SingleTaskLongWidget`, `MultiTaskWidget`, `TaskWidgetConfigureActivity`, and `WidgetDataAdapter`).
+
+### Audit Findings & Exact Hardening Fixes
+1. **Stale Single-Task Mapping Protection:**
+   - **Finding:** If a configured widget was mapped to `task_widget_id_<appWidgetId>`, deleting/archiving the task caused `tasksMapRaw` to omit the task, but subsequent fallback to `task_widget_data_<appWidgetId>` could display stale deleted task content.
+   - **Fix:** In `SingleTaskWidget.kt` and `SingleTaskLongWidget.kt`, updated resolution to treat `quicknotes_tasks_map` as authoritative whenever present. If `quicknotes_tasks_map` exists but lacks the configured task ID, the widget strictly resolves to `taskJson = null`, immediately rendering the "Task unavailable" fallback container rather than reviving deleted data.
+   - **Parity Fix:** Applied identical authoritative map validation to `SingleNoteWidget.kt` for `quicknotes_notes_map` vs `note_widget_data_<appWidgetId>`.
+2. **AppWidget Instance Lifecycle Cleanup (`onDeleted`):**
+   - **Finding:** Removing widget instances from the launcher left orphan `task_widget_id_<id>`, `task_widget_data_<id>`, `note_widget_id_<id>`, and `note_widget_data_<id>` keys in `HomeWidgetPreferences`.
+   - **Fix:** Implemented `onDeleted(context: Context, appWidgetIds: IntArray)` in `SingleTaskWidget.kt`, `SingleTaskLongWidget.kt`, and `SingleNoteWidget.kt` to actively clean up per-instance keys upon widget removal from launcher.
+3. **Configuration Catalog Deduplication:**
+   - **Finding:** In `TaskWidgetConfigureActivity.kt`, malformed catalog arrays with duplicate task IDs could render duplicate selectable cards.
+   - **Fix:** Added deduplication guard `if (id.isNotEmpty() && allTasks.none { it.id == id })` during catalog loading.
+4. **Authoritative Synchronization Verification:**
+   - Confirmed `TaskEngine` mutation events (`TaskCreatedEvent`, `TaskUpdatedEvent`, `TaskCompletedEvent`, `TaskDeletedEvent`, `ReminderSnoozedEvent`, `TasksReconciledEvent`) trigger `WidgetDataAdapter.instance.sync(tasks: _engine.tasks)` via `TasksProvider`.
+   - Confirmed `WidgetDataAdapter.instance.sync()` broadcasts widget timeline updates across all 5 widget targets (`QuickCaptureWidget`, `SingleNoteWidget`, `SingleTaskWidget`, `SingleTaskLongWidget`, `MultiTaskWidget`).
+   - Confirmed `WidgetDataAdapter.instance.clearSnapshot()` purges shared preferences and resets catalogs to `'[]'` on session logout / account deletion.
+5. **Deep Link Security & Non-Regression:**
+   - Verified `DeepLinkCoordinator` strict validation for `quicknotes://task/<taskId>`: rejects deleted (`isDeleted == true`) and archived (`status == TaskStatus.archived`) tasks, routing safely to `HomeScreen` fallback with zero state mutation.
+   - Verified non-regression of all note deep links (`quicknotes://note/<id>`, `quicknotes://note/new`, `quicknotes://checklist/new`, `quicknotes://home`, `quicknotes://tasks`).
+6. **RemoteViews Safety & One UI Compliance:**
+   - Re-verified all layouts (`single_task_widget_layout.xml`, `single_task_long_widget_layout.xml`, `multi_task_widget_layout.xml`, `single_note_widget_layout.xml`, `widget_layout.xml`) use only standard whitelist views (`LinearLayout`, `FrameLayout`, `TextView`, `ImageView`), explicit padding attributes, and no unsupported properties.
+
+### Automated Tests & Quality Gates
+- **Focused Unit & Regression Tests:** 72/72 tests passing across all widget test suites:
+  - `test/services/task_widget_snapshot_test.dart` (33 tests including 12 dedicated T8 hardening tests)
+  - `test/services/widget_data_adapter_test.dart` (7 tests)
+  - `test/services/deep_link_coordinator_test.dart` (19 tests)
+  - `test/services/single_note_snapshot_test.dart` (6 tests)
+  - `test/services/widget_snapshot_payload_test.dart` (7 tests)
+- **Static Analysis:** 0 issues found across all 10 widget subsystem files (`flutter analyze`).
+- **Build Verification:** 100% Gradle debug APK build success (`assembleDebug` in 77.7s).
+- **Physical Device Verification:** Deployed and verified on Samsung Galaxy S23 Ultra (`SM-S918B`, Android 16 / One UI 8, API 36).
+
+

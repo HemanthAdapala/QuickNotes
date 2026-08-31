@@ -35,6 +35,17 @@ class SingleTaskLongWidget : HomeWidgetProvider() {
         }
     }
 
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        super.onDeleted(context, appWidgetIds)
+        val prefs = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        for (appWidgetId in appWidgetIds) {
+            editor.remove("task_widget_id_$appWidgetId")
+            editor.remove("task_widget_data_$appWidgetId")
+        }
+        editor.apply()
+    }
+
     companion object {
         fun updateAppWidget(
             context: Context,
@@ -51,16 +62,15 @@ class SingleTaskLongWidget : HomeWidgetProvider() {
             var taskJson: JSONObject? = null
             if (!selectedTaskId.isNullOrEmpty()) {
                 val tasksMapRaw = widgetData.getString("quicknotes_tasks_map", null)
-                if (!tasksMapRaw.isNullOrEmpty()) {
+                if (tasksMapRaw != null) {
                     try {
                         val tasksMap = JSONObject(tasksMapRaw)
                         if (tasksMap.has(selectedTaskId)) {
                             taskJson = tasksMap.getJSONObject(selectedTaskId)
                         }
                     } catch (_: Exception) {}
-                }
-
-                if (taskJson == null) {
+                } else {
+                    // Fallback to instance cache only if tasks map was never written yet
                     val instanceDataRaw = widgetData.getString("task_widget_data_$appWidgetId", null)
                     if (!instanceDataRaw.isNullOrEmpty()) {
                         try {

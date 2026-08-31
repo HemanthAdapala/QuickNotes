@@ -159,7 +159,7 @@ class TaskWidgetConfigureActivity : Activity() {
                         obj
                     }
 
-                    if (id.isNotEmpty()) {
+                    if (id.isNotEmpty() && allTasks.none { it.id == id }) {
                         allTasks.add(
                             TaskCatalogItem(
                                 id = id,

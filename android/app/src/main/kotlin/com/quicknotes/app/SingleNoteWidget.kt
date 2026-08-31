@@ -38,6 +38,17 @@ class SingleNoteWidget : HomeWidgetProvider() {
         }
     }
 
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        super.onDeleted(context, appWidgetIds)
+        val prefs = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        for (appWidgetId in appWidgetIds) {
+            editor.remove("note_widget_id_$appWidgetId")
+            editor.remove("note_widget_data_$appWidgetId")
+        }
+        editor.apply()
+    }
+
     companion object {
         private val LINE_IDS = intArrayOf(
             R.id.note_line_1,
@@ -67,16 +78,15 @@ class SingleNoteWidget : HomeWidgetProvider() {
             var noteJson: JSONObject? = null
             if (!selectedNoteId.isNullOrEmpty()) {
                 val notesMapRaw = widgetData.getString("quicknotes_notes_map", null)
-                if (!notesMapRaw.isNullOrEmpty()) {
+                if (notesMapRaw != null) {
                     try {
                         val notesMap = JSONObject(notesMapRaw)
                         if (notesMap.has(selectedNoteId)) {
                             noteJson = notesMap.getJSONObject(selectedNoteId)
                         }
                     } catch (_: Exception) {}
-                }
-
-                if (noteJson == null) {
+                } else {
+                    // Fallback to instance cache only if notes map was never written yet
                     val instanceDataRaw = widgetData.getString("note_widget_data_$appWidgetId", null)
                     if (!instanceDataRaw.isNullOrEmpty()) {
                         try {
