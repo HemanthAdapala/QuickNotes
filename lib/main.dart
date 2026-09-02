@@ -36,9 +36,16 @@ void main() async {
   final settingsProvider = SettingsProvider();
   await settingsProvider.initialize();
 
-  // Pre-initialize PremiumEntitlementManager to load cached entitlement state
+  // Pre-initialize PremiumEntitlementManager to load cached entitlement state offline
   final entitlementManager = PremiumEntitlementManager();
   await entitlementManager.initialize();
+
+  // Initialize PurchaseProvider asynchronously without blocking app launch
+  final purchaseProvider = InAppPurchaseProvider(
+    entitlementManager: entitlementManager,
+  );
+  // Asynchronous non-blocking store initialization
+  purchaseProvider.initialize();
 
   final ReminderScheduler scheduler =
       (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
@@ -52,6 +59,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider.value(value: settingsProvider),
         ChangeNotifierProvider.value(value: entitlementManager),
+        Provider<PurchaseProvider>.value(value: purchaseProvider),
         Provider<FeatureAccess>(
           create: (_) => DefaultFeatureAccess(entitlementManager),
         ),

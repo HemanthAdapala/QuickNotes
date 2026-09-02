@@ -5,3 +5,6 @@ export 'feature_access.dart';
 export 'purchase_provider_interface.dart';
 export 'premium_feature_presentation.dart';
 export 'premium_gate_sheet.dart';
+export 'premium_product.dart';
+export 'purchase_verifier.dart';
+export 'in_app_purchase_provider.dart';

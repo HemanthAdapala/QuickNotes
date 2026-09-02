@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,8 +8,10 @@ import '../views/widgets/blurred_bottom_sheet.dart';
 import 'premium_feature.dart';
 import 'premium_feature_presentation.dart';
 import 'feature_access.dart';
+import 'purchase_provider_interface.dart';
+import 'premium_entitlement_manager.dart';
 
-/// Launches the presentation-only Premium Gate Bottom Sheet.
+/// Launches the presentation & purchase-connected Premium Gate Bottom Sheet.
 ///
 /// If the current user already has active Premium access, the sheet gracefully returns
 /// without presenting a redundant paywall.
@@ -41,12 +44,12 @@ Future<void> showPremiumGate({
   );
 }
 
-/// PremiumGateSheet — Presentation-only bottom sheet for introducing Quick Notes Premium.
+/// PremiumGateSheet — Production bottom sheet for introducing Quick Notes Premium
+/// and executing native in-app purchases / restorations.
 ///
-/// Adheres strictly to the project's Liquid Glass, typography, and tactile standards.
-/// Contains zero real or fake purchasing logic; all actions delegate cleanly to
-/// future platform purchase boundaries (Phase P4).
-class PremiumGateSheet extends StatelessWidget {
+/// Connects to [PurchaseProvider] for real non-consumable store purchases while
+/// preserving custom callback overrides for testing and test doubles.
+class PremiumGateSheet extends StatefulWidget {
   final PremiumFeature? feature;
   final VoidCallback? onUnlockPressed;
   final VoidCallback? onRestorePressed;
@@ -61,10 +64,125 @@ class PremiumGateSheet extends StatelessWidget {
   });
 
   @override
+  State<PremiumGateSheet> createState() => _PremiumGateSheetState();
+}
+
+class _PremiumGateSheetState extends State<PremiumGateSheet> {
+  bool _isPurchasing = false;
+  bool _isRestoring = false;
+  StreamSubscription<PurchaseStateUpdate>? _stateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _listenToPurchaseUpdates();
+    });
+  }
+
+  void _listenToPurchaseUpdates() {
+    try {
+      final purchaseProvider =
+          Provider.of<PurchaseProvider>(context, listen: false);
+      _stateSubscription = purchaseProvider.stateStream.listen((state) {
+        if (!mounted) return;
+
+        if (state.status == PurchaseActionStatus.purchasing) {
+          setState(() => _isPurchasing = true);
+        } else if (state.status == PurchaseActionStatus.restoring) {
+          setState(() => _isRestoring = true);
+        } else {
+          setState(() {
+            _isPurchasing = false;
+            _isRestoring = false;
+          });
+        }
+
+        if (state.status == PurchaseActionStatus.error &&
+            state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                state.errorMessage!,
+                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else if (state.status == PurchaseActionStatus.success) {
+          _handleSuccessClose();
+        }
+      });
+    } catch (_) {}
+
+    try {
+      final entitlementManager =
+          Provider.of<PremiumEntitlementManager>(context, listen: false);
+      entitlementManager.addListener(_onEntitlementChanged);
+    } catch (_) {}
+  }
+
+  void _onEntitlementChanged() {
+    if (!mounted) return;
+    try {
+      final entitlementManager =
+          Provider.of<PremiumEntitlementManager>(context, listen: false);
+      if (entitlementManager.isPremiumActive) {
+        _handleSuccessClose();
+      }
+    } catch (_) {}
+  }
+
+  void _handleSuccessClose() {
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Quick Notes Premium Unlocked!',
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: const Color(0xFF6366F1),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _stateSubscription?.cancel();
+    try {
+      final entitlementManager =
+          Provider.of<PremiumEntitlementManager>(context, listen: false);
+      entitlementManager.removeListener(_onEntitlementChanged);
+    } catch (_) {}
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final presentation = PremiumFeaturePresentation.forFeature(feature);
+    final presentation = PremiumFeaturePresentation.forFeature(widget.feature);
+
+    // Resolve localized price from provider if available
+    String? storePrice;
+    try {
+      final purchaseProvider =
+          Provider.of<PurchaseProvider>(context, listen: false);
+      storePrice = purchaseProvider.formattedPrice;
+    } catch (_) {}
+
+    final dynamicPricingNote = widget.customPriceSubtitle ??
+        (storePrice != null
+            ? '$storePrice • Lifetime access'
+            : presentation.pricingNote);
 
     // Dynamic color tokens
     final sheetBg = isDark ? const Color(0xFF141414) : const Color(0xFFFFFFFF);
@@ -232,15 +350,25 @@ class PremiumGateSheet extends StatelessWidget {
               // ── Primary Unlock CTA Button ─────────────────────────────────
               TactileButton(
                 useAppleSpring: true,
-                onTap: () {
-                  HapticFeedback.mediumImpact();
-                  if (onUnlockPressed != null) {
-                    onUnlockPressed!();
-                  } else {
-                    // Informative non-purchasing placeholder
-                    _showPurchasePlaceholderInfo(context);
-                  }
-                },
+                onTap: _isPurchasing || _isRestoring
+                    ? () {}
+                    : () async {
+                        HapticFeedback.mediumImpact();
+                        if (widget.onUnlockPressed != null) {
+                          widget.onUnlockPressed!();
+                          return;
+                        }
+
+                        try {
+                          final purchaseProvider = Provider.of<PurchaseProvider>(
+                            context,
+                            listen: false,
+                          );
+                          await purchaseProvider.purchasePremium();
+                        } catch (_) {
+                          _showPurchaseUnavailableInfo();
+                        }
+                      },
                 child: Container(
                   width: double.infinity,
                   height: 52,
@@ -256,15 +384,25 @@ class PremiumGateSheet extends StatelessWidget {
                     ],
                   ),
                   child: Center(
-                    child: Text(
-                      'Unlock Premium',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
+                    child: _isPurchasing
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            'Unlock Premium',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -272,7 +410,7 @@ class PremiumGateSheet extends StatelessWidget {
 
               // ── Pricing / Lifetime Subtitle ───────────────────────────────
               Text(
-                customPriceSubtitle ?? presentation.pricingNote,
+                dynamicPricingNote,
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
@@ -284,26 +422,61 @@ class PremiumGateSheet extends StatelessWidget {
               // ── Secondary Action: Restore Purchases ───────────────────────
               TactileButton(
                 useAppleSpring: true,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  if (onRestorePressed != null) {
-                    onRestorePressed!();
-                  } else {
-                    _showRestorePlaceholderInfo(context);
-                  }
-                },
+                onTap: _isPurchasing || _isRestoring
+                    ? () {}
+                    : () async {
+                        HapticFeedback.selectionClick();
+                        if (widget.onRestorePressed != null) {
+                          widget.onRestorePressed!();
+                          return;
+                        }
+
+                        try {
+                          final purchaseProvider = Provider.of<PurchaseProvider>(
+                            context,
+                            listen: false,
+                          );
+                          await purchaseProvider.restorePurchases();
+                        } catch (_) {
+                          _showRestoreUnavailableInfo();
+                        }
+                      },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: Text(
-                    'Restore Purchases',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: textMuted,
-                      decoration: TextDecoration.underline,
-                      decorationColor: textMuted.withValues(alpha: 0.6),
-                    ),
-                  ),
+                  child: _isRestoring
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(textMuted),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Restoring purchases...',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: textMuted,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          'Restore Purchases',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: textMuted,
+                            decoration: TextDecoration.underline,
+                            decorationColor: textMuted.withValues(alpha: 0.6),
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -335,28 +508,30 @@ class PremiumGateSheet extends StatelessWidget {
     );
   }
 
-  void _showPurchasePlaceholderInfo(BuildContext context) {
+  void _showPurchaseUnavailableInfo() {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Store purchases will be available in Phase P4.',
+          'Store purchase service is currently unavailable. Please try again.',
           style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
         ),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
 
-  void _showRestorePlaceholderInfo(BuildContext context) {
+  void _showRestoreUnavailableInfo() {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Purchase restoration will connect to platform stores in Phase P4.',
+          'Purchase restoration is currently unavailable. Please check your connection.',
           style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
         ),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
