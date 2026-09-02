@@ -3,3 +3,5 @@ export 'premium_entitlement.dart';
 export 'premium_entitlement_manager.dart';
 export 'feature_access.dart';
 export 'purchase_provider_interface.dart';
+export 'premium_feature_presentation.dart';
+export 'premium_gate_sheet.dart';
