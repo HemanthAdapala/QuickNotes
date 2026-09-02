@@ -27,18 +27,20 @@ import '../widgets/delete_confirmation_dialog.dart';
 import '../../models/note.dart';
 import '../../models/task_item.dart';
 import '../../models/folder.dart';
+import 'appearance_screen.dart';
+import '../../providers/settings_provider.dart';
 import 'storage_and_data_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
-  final bool isDarkMode;
-  final VoidCallback onThemeToggle;
-  final VoidCallback onMenuTap;
+  final bool? isDarkMode;
+  final VoidCallback? onThemeToggle;
+  final VoidCallback? onMenuTap;
 
   const SettingsScreen({
     super.key,
-    required this.isDarkMode,
-    required this.onThemeToggle,
-    required this.onMenuTap,
+    this.isDarkMode,
+    this.onThemeToggle,
+    this.onMenuTap,
   });
 
   @override
@@ -51,7 +53,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _email = 'Not connected';
   String? _imagePath;
   bool _avatarFileExists = false;
-  bool _isDummyDarkMode = true;
   bool _isMoreOptionsOpen = false;
 
   @override
@@ -189,6 +190,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
   @override
   Widget build(BuildContext context) {
     const primaryTextColor = Color(0xFF333333);
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+    final isCurrentDark = settingsProvider.isDarkMode;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -356,19 +359,33 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
 
                           const SizedBox(height: 16.0),
 
-                          // Section 2 Card (Dark Mode, Storage and Data)
+                          // Section 2 Card (Appearance, Dark Mode, Storage and Data)
                           GroupedListContainer(
                             children: [
+                              GroupedTile.navigation(
+                                iconPath: 'assets/icons/highlighter.svg',
+                                title: 'Appearance',
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.push(
+                                    context,
+                                    buildPageRoute(
+                                        const AppearanceScreen()),
+                                  );
+                                },
+                              ),
                               GroupedTile.toggle(
                                 iconPath: 'assets/icons/night-day.svg',
                                 title: 'Dark Mode',
                                 trailingSwitch: ToggleSwitch(
-                                  value: _isDummyDarkMode,
+                                  value: isCurrentDark,
                                   onChanged: (val) {
                                     HapticFeedback.selectionClick();
-                                    setState(() {
-                                      _isDummyDarkMode = val;
-                                    });
+                                    settingsProvider.setThemeMode(
+                                        val ? ThemeMode.dark : ThemeMode.light);
+                                    if (widget.onThemeToggle != null) {
+                                      widget.onThemeToggle!();
+                                    }
                                   },
                                 ),
                               ),

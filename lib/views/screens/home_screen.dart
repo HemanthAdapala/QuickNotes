@@ -178,9 +178,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       onBack: () => setState(() => _activeNavIndex = 0),
     );
     _settingsBody = SettingsScreen(
-      isDarkMode: Provider.of<NotesProvider>(context, listen: false).isDarkMode,
-      onThemeToggle:
-          Provider.of<NotesProvider>(context, listen: false).toggleTheme,
       onMenuTap: () {
         HapticFeedback.lightImpact();
         setState(() => _activeNavIndex = 0);

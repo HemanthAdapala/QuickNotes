@@ -284,3 +284,47 @@ No major architectural impact. Improved UX coherence and modularity of informati
 ### Testing Status
 
 - Manual verification of routing and bottom sheet presentation.
+
+---
+
+## v3.4.0
+
+### Date
+2026-09-02
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- Architecture
+- Refactor
+- Feature
+
+---
+
+### Summary
+Connected `SettingsScreen` to the centralized `SettingsProvider` for reactive Dark Mode control and added navigation to the newly interactive `AppearanceScreen`.
+
+---
+
+### Detailed Changes
+- **Removed Screen-Local State**: Removed `_isDummyDarkMode` variable.
+- **Centralized Dark Mode Toggle**: Wired Dark Mode `ToggleSwitch` directly to `SettingsProvider.isDarkMode` and `SettingsProvider.setThemeMode(...)`.
+- **Added Appearance Navigation Tile**: Added an `Appearance` tile in Section 2 providing direct access to `AppearanceScreen` (Theme styles, layout density, font scale, accent color).
+- **Decoupled NotesProvider**: Removed dependency on `NotesProvider.isDarkMode` and `NotesProvider.toggleTheme`.
+
+---
+
+### Architecture Impact
+- `SettingsScreen` now consumes the single authoritative `SettingsProvider` from `MultiProvider`.
+- Eliminates stale UI state when appearance mode is changed from other entry points.
+
+---
+
+### Files Modified
+- `lib/views/screens/settings_screen.dart`
+
+---
+
+### Testing Status
+- Validated via `test/views/settings_and_appearance_theme_test.dart` (Dark Mode toggle updates SettingsProvider and ThemeMode).

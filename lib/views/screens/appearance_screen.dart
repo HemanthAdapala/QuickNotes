@@ -1,52 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import '../widgets/app_header_bar.dart';
 import '../../themes/quick_notes_theme.dart';
+import '../../providers/settings_provider.dart';
 
-class AppearanceScreen extends StatefulWidget {
+class AppearanceScreen extends StatelessWidget {
   const AppearanceScreen({super.key});
-
-  @override
-  State<AppearanceScreen> createState() => _AppearanceScreenState();
-}
-
-class _AppearanceScreenState extends State<AppearanceScreen> {
-  final _secureStorage = const FlutterSecureStorage();
-  String _layoutDensity = "grid"; // grid or list
-  double _fontSizeScale = 1.0; // 0.8, 1.0, 1.2
-  String _selectedAccent = "yellow"; // yellow, white, gray
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSettings();
-  }
-
-  Future<void> _loadSettings() async {
-    final density = await _secureStorage.read(key: 'layout_density') ?? 'grid';
-    final scaleStr = await _secureStorage.read(key: 'font_scale') ?? '1.0';
-    final accent =
-        await _secureStorage.read(key: 'accent_preference') ?? 'yellow';
-
-    setState(() {
-      _layoutDensity = density;
-      _fontSizeScale = double.tryParse(scaleStr) ?? 1.0;
-      _selectedAccent = accent;
-    });
-  }
-
-  Future<void> _saveSetting(String key, String value) async {
-    await _secureStorage.write(key: key, value: value);
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+    final isDark = settingsProvider.isDarkMode;
+
+    final backgroundColor = isDark ? QuickNotesTheme.background : const Color(0xFFF2F2F7);
+    final surfaceColor = isDark ? QuickNotesTheme.surface : Colors.white;
+    final textPrimaryColor = isDark ? QuickNotesTheme.textPrimary : const Color(0xFF333333);
+    final textSecondaryColor = isDark ? QuickNotesTheme.textSecondary : const Color(0xFF8E8E93);
+    final borderColor = isDark ? QuickNotesTheme.border : const Color(0x14333333);
 
     return Scaffold(
-      backgroundColor: QuickNotesTheme.background,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -65,186 +41,224 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   width: 22,
                   height: 22,
                   colorFilter:
-                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                      ColorFilter.mode(textPrimaryColor, BlendMode.srcIn),
                 ),
                 title: "Appearance",
-                titleColor: Colors.white,
+                titleColor: textPrimaryColor,
               ),
             ),
             const SizedBox(height: 12.0),
             Expanded(
               child: Align(
-                   alignment: Alignment.topCenter,
-                   child: ConstrainedBox(
-                   constraints: const BoxConstraints(maxWidth: 402.0),
-                   child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: EdgeInsets.only(left: 24.0, right: 24.0, top: 8.0, bottom: 8.0 + MediaQuery.paddingOf(context).bottom),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle("THEME STYLE"),
-                      const SizedBox(height: 12),
-
-                      // Obsidian Dark display tile (Non-toggleable premium default)
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: QuickNotesTheme.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: QuickNotesTheme.accent.withAlpha(50),
-                              width: 1.5),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 24,
-                              height: 24,
-                              decoration: const BoxDecoration(
-                                color: QuickNotesTheme.background,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Center(
-                                child: Icon(Icons.circle,
-                                    color: QuickNotesTheme.accent, size: 12),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Obsidian Night (Default)",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: QuickNotesTheme.textPrimary),
-                                  ),
-                                  Text(
-                                    "Luxury machined dark aluminum canvas",
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: QuickNotesTheme.textSecondary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.check_circle_rounded,
-                                color: QuickNotesTheme.accent),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      _buildSectionTitle("LAYOUT DENSITY"),
-                      const SizedBox(height: 12),
-
-                      Row(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 402.0),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                          left: 24.0,
+                          right: 24.0,
+                          top: 8.0,
+                          bottom: 8.0 + MediaQuery.paddingOf(context).bottom),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: _buildChoiceCard(
-                              title: "Bento Grid",
-                              description: "Masonry card view",
-                              selected: _layoutDensity == "grid",
-                              icon: Icons.dashboard_outlined,
-                              onTap: () {
-                                setState(() {
-                                  _layoutDensity = "grid";
-                                });
-                                _saveSetting('layout_density', 'grid');
-                              },
+                          _buildSectionTitle("THEME STYLE", textSecondaryColor),
+                          const SizedBox(height: 12),
+
+                          // Interactive Theme Style Choices (Light & Dark)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildThemeChoiceCard(
+                                  title: "Light Paper",
+                                  description: "Warm stone minimal canvas",
+                                  selected: !isDark,
+                                  icon: Icons.light_mode_rounded,
+                                  surfaceColor: surfaceColor,
+                                  borderColor: borderColor,
+                                  textPrimary: textPrimaryColor,
+                                  textSecondary: textSecondaryColor,
+                                  accentColor: const Color(0xFF6366F1),
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    settingsProvider.setThemeMode(ThemeMode.light);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildThemeChoiceCard(
+                                  title: "Obsidian Night",
+                                  description: "Luxury machined dark canvas",
+                                  selected: isDark,
+                                  icon: Icons.dark_mode_rounded,
+                                  surfaceColor: surfaceColor,
+                                  borderColor: borderColor,
+                                  textPrimary: textPrimaryColor,
+                                  textSecondary: textSecondaryColor,
+                                  accentColor: QuickNotesTheme.accent,
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    settingsProvider.setThemeMode(ThemeMode.dark);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+
+                          _buildSectionTitle("LAYOUT DENSITY", textSecondaryColor),
+                          const SizedBox(height: 12),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildChoiceCard(
+                                  title: "Bento Grid",
+                                  description: "Masonry card view",
+                                  selected: settingsProvider.layoutDensity == "grid",
+                                  icon: Icons.dashboard_outlined,
+                                  surfaceColor: surfaceColor,
+                                  borderColor: borderColor,
+                                  textPrimary: textPrimaryColor,
+                                  textSecondary: textSecondaryColor,
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    settingsProvider.setLayoutDensity("grid");
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildChoiceCard(
+                                  title: "Quiet List",
+                                  description: "High visual density",
+                                  selected: settingsProvider.layoutDensity == "list",
+                                  icon: Icons.view_headline_rounded,
+                                  surfaceColor: surfaceColor,
+                                  borderColor: borderColor,
+                                  textPrimary: textPrimaryColor,
+                                  textSecondary: textSecondaryColor,
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    settingsProvider.setLayoutDensity("list");
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+
+                          _buildSectionTitle("TYPOGRAPHY SCALE", textSecondaryColor),
+                          const SizedBox(height: 12),
+
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: surfaceColor,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: borderColor),
+                            ),
+                            child: Column(
+                              children: [
+                                Slider(
+                                  value: settingsProvider.fontSizeScale,
+                                  min: 0.8,
+                                  max: 1.2,
+                                  divisions: 2,
+                                  activeColor: isDark
+                                      ? QuickNotesTheme.accent
+                                      : const Color(0xFF6366F1),
+                                  inactiveColor: borderColor,
+                                  onChanged: (val) {
+                                    HapticFeedback.selectionClick();
+                                    settingsProvider.setFontSizeScale(val);
+                                  },
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Compact",
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                  color: textSecondaryColor)),
+                                      Text("Regular",
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: textPrimaryColor)),
+                                      Text("Large",
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                  color: textSecondaryColor)),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildChoiceCard(
-                              title: "Quiet List",
-                              description: "High visual density",
-                              selected: _layoutDensity == "list",
-                              icon: Icons.view_headline_rounded,
-                              onTap: () {
-                                setState(() {
-                                  _layoutDensity = "list";
-                                });
-                                _saveSetting('layout_density', 'list');
-                              },
-                            ),
+                          const SizedBox(height: 32),
+
+                          _buildSectionTitle("ACCENT COLOR", textSecondaryColor),
+                          const SizedBox(height: 12),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildAccentOption(
+                                name: "yellow",
+                                color: isDark
+                                    ? QuickNotesTheme.accent
+                                    : const Color(0xFFFFCC00),
+                                label: "Amber",
+                                isSelected:
+                                    settingsProvider.selectedAccent == "yellow",
+                                textPrimary: textPrimaryColor,
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  settingsProvider.setSelectedAccent("yellow");
+                                },
+                              ),
+                              _buildAccentOption(
+                                name: "indigo",
+                                color: const Color(0xFF6366F1),
+                                label: "Indigo",
+                                isSelected:
+                                    settingsProvider.selectedAccent == "indigo",
+                                textPrimary: textPrimaryColor,
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  settingsProvider.setSelectedAccent("indigo");
+                                },
+                              ),
+                              _buildAccentOption(
+                                name: "gray",
+                                color: const Color(0xFF8E8E93),
+                                label: "Muted",
+                                isSelected:
+                                    settingsProvider.selectedAccent == "gray",
+                                textPrimary: textPrimaryColor,
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  settingsProvider.setSelectedAccent("gray");
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 32),
-
-                      _buildSectionTitle("TYPOGRAPHY SCALE"),
-                      const SizedBox(height: 12),
-
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: QuickNotesTheme.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: QuickNotesTheme.border),
-                        ),
-                        child: Column(
-                          children: [
-                            Slider(
-                              value: _fontSizeScale,
-                              min: 0.8,
-                              max: 1.2,
-                              divisions: 2,
-                              activeColor: QuickNotesTheme.accent,
-                              inactiveColor: QuickNotesTheme.border,
-                              onChanged: (val) {
-                                setState(() {
-                                  _fontSizeScale = val;
-                                });
-                                _saveSetting('font_scale', val.toString());
-                              },
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("Compact",
-                                      style: theme.textTheme.bodySmall),
-                                  Text("Regular",
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                              fontWeight: FontWeight.bold)),
-                                  Text("Large",
-                                      style: theme.textTheme.bodySmall),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      _buildSectionTitle("ACCENT COLOR"),
-                      const SizedBox(height: 12),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildAccentOption(
-                              "yellow", QuickNotesTheme.accent, "Chartreuse"),
-                          _buildAccentOption("white", Colors.white, "White"),
-                          _buildAccentOption("gray", Colors.grey, "Muted"),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-                 ),
-               ),
             ),
           ],
         ),
@@ -252,15 +266,90 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, Color color) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'JetBrains Mono',
         fontSize: 11,
         fontWeight: FontWeight.bold,
-        color: QuickNotesTheme.textSecondary,
+        color: color,
         letterSpacing: 1.5,
+      ),
+    );
+  }
+
+  Widget _buildThemeChoiceCard({
+    required String title,
+    required String description,
+    required bool selected,
+    required IconData icon,
+    required Color surfaceColor,
+    required Color borderColor,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color accentColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? accentColor : borderColor,
+            width: selected ? 2.0 : 1.0,
+          ),
+          boxShadow: [
+            if (selected)
+              BoxShadow(
+                color: accentColor.withValues(alpha: 0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(
+                  icon,
+                  color: selected ? accentColor : textSecondary,
+                  size: 24,
+                ),
+                if (selected)
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: accentColor,
+                    size: 20,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 11,
+                color: textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -270,18 +359,25 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
     required String description,
     required bool selected,
     required IconData icon,
+    required Color surfaceColor,
+    required Color borderColor,
+    required Color textPrimary,
+    required Color textSecondary,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: QuickNotesTheme.surface,
+          color: surfaceColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? QuickNotesTheme.accent : QuickNotesTheme.border,
-            width: selected ? 1.5 : 1.0,
+            color: selected
+                ? const Color(0xFF6366F1)
+                : borderColor,
+            width: selected ? 2.0 : 1.0,
           ),
         ),
         child: Column(
@@ -290,24 +386,24 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
             Icon(
               icon,
               color: selected
-                  ? QuickNotesTheme.accent
-                  : QuickNotesTheme.textSecondary,
+                  ? const Color(0xFF6366F1)
+                  : textSecondary,
               size: 24,
             ),
             const SizedBox(height: 16),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: QuickNotesTheme.textPrimary,
+                color: textPrimary,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               description,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: QuickNotesTheme.textSecondary,
+                color: textSecondary,
               ),
             ),
           ],
@@ -316,15 +412,16 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
     );
   }
 
-  Widget _buildAccentOption(String name, Color color, String label) {
-    final isSelected = _selectedAccent == name;
+  Widget _buildAccentOption({
+    required String name,
+    required Color color,
+    required String label,
+    required bool isSelected,
+    required Color textPrimary,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedAccent = name;
-        });
-        _saveSetting('accent_preference', name);
-      },
+      onTap: onTap,
       child: Column(
         children: [
           Container(
@@ -340,23 +437,25 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
               boxShadow: [
                 if (isSelected)
                   BoxShadow(
-                    color: color.withAlpha(80),
+                    color: color.withValues(alpha: 0.4),
                     blurRadius: 10,
                   ),
               ],
             ),
             child: isSelected
-                ? Icon(
+                ? const Icon(
                     Icons.check,
-                    color: color == Colors.white ? Color(0xFF333333) : Color(0xFF333333),
+                    color: Colors.white,
                   )
                 : null,
           ),
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
-                fontSize: 12, color: QuickNotesTheme.textPrimary),
+            style: TextStyle(
+              fontSize: 12,
+              color: textPrimary,
+            ),
           ),
         ],
       ),
