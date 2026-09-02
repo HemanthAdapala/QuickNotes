@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart' as hw;
 import 'package:provider/provider.dart';
 
@@ -22,6 +23,7 @@ enum DeepLinkActionType {
   newChecklist,
   openTasks,
   openTask,
+  newTask,
 }
 
 /// Immutable representation of a parsed and validated deep link action.
@@ -39,6 +41,7 @@ class DeepLinkAction {
   static DeepLinkAction? parse(Uri? uri) {
     if (uri == null) return null;
     if (uri.scheme.toLowerCase() != 'quicknotes') return null;
+    if (uri.path.contains('//')) return null;
 
     final host = uri.host.toLowerCase();
     final path = uri.path.toLowerCase();
@@ -84,26 +87,38 @@ class DeepLinkAction {
       return DeepLinkAction(DeepLinkActionType.newChecklist, params);
     }
 
-    // quicknotes://task/<taskId>
+    // quicknotes://task/new or quicknotes://task/<taskId>
     if (host == 'task') {
       final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
       if (segments.length == 1) {
-        final taskId = segments.first.trim();
-        if (taskId.isNotEmpty) {
+        final firstSegment = segments.first.trim();
+        if (firstSegment == 'new') {
+          return DeepLinkAction(DeepLinkActionType.newTask, params);
+        } else if (firstSegment.isNotEmpty) {
           final mergedParams = Map<String, String>.from(params);
-          mergedParams['taskId'] = taskId;
+          mergedParams['taskId'] = firstSegment;
           return DeepLinkAction(DeepLinkActionType.openTask, mergedParams);
         }
       }
       return null;
     }
 
-    // quicknotes://tasks or quicknotes:///tasks
+    // quicknotes://tasks or quicknotes:///tasks or quicknotes://tasks/new
     if (host == 'tasks' || path == '/tasks') {
-      return DeepLinkAction(DeepLinkActionType.openTasks, params);
+      if (host == 'tasks') {
+        final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+        if (segments.length == 1 && segments.first == 'new') {
+          return DeepLinkAction(DeepLinkActionType.newTask, params);
+        }
+        if (segments.isEmpty) {
+          return DeepLinkAction(DeepLinkActionType.openTasks, params);
+        }
+      } else if (path == '/tasks') {
+        return DeepLinkAction(DeepLinkActionType.openTasks, params);
+      }
+      return null;
     }
 
-    // Strictly reject any unknown action
     return null;
   }
 
@@ -116,22 +131,18 @@ class DeepLinkAction {
           mapEquals(queryParameters, other.queryParameters);
 
   @override
-  int get hashCode => Object.hash(
-        type,
-        Object.hashAllUnordered(
-          queryParameters.entries.map((e) => Object.hash(e.key, e.value)),
-        ),
-      );
+  int get hashCode => type.hashCode ^ queryParameters.hashCode;
 
   @override
-  String toString() => 'DeepLinkAction($type, params: $queryParameters)';
+  String toString() =>
+      'DeepLinkAction($type, params: $queryParameters)';
 }
 
 /// DeepLinkCoordinator — Orchestrates widget deep-link events across the app lifecycle.
 ///
-/// **Lifecycle & Readiness Guarantees:**
-/// 1. Captures cold-launch URIs on app startup without race conditions.
-/// 2. Listens for warm widget click events while the app is running in the background.
+/// Ensures:
+/// 1. Cold-launch URIs (`initiallyLaunchedFromHomeWidget`) are captured and cleared once consumed.
+/// 2. Warm-launch URIs (`widgetClicked`) are captured during foreground/background runtime.
 /// 3. Buffers pending actions while the app is booting, in onboarding, or behind PasscodeLock.
 /// 4. Dispatches the buffered action ONLY once the app is unlocked and navigation-ready.
 class DeepLinkCoordinator {
@@ -141,7 +152,11 @@ class DeepLinkCoordinator {
 
   DeepLinkCoordinator._internal();
 
+  static const MethodChannel _clearChannel =
+      MethodChannel('com.quicknotes.app/deep_link_clear');
+
   DeepLinkAction? _pendingAction;
+  String? _consumedInitialUri;
   bool _isInitialized = false;
   bool _isNavigationReady = false;
   StreamSubscription<Uri?>? _widgetClickedSubscription;
@@ -155,6 +170,14 @@ class DeepLinkCoordinator {
 
   /// Whether the app UI has settled and is ready to process navigations.
   bool get isNavigationReady => _isNavigationReady;
+
+  Future<void> _clearNativeInitialIntent() async {
+    try {
+      await _clearChannel.invokeMethod('clearInitialIntent');
+    } catch (_) {
+      // Ignored in tests or unsupported environments
+    }
+  }
 
   /// Initializes the coordinator for both cold-launch and warm-launch listeners.
   Future<void> initialize({
@@ -174,12 +197,14 @@ class DeepLinkCoordinator {
           initialUriProvider ?? hw.HomeWidget.initiallyLaunchedFromHomeWidget;
       final initialUri = await initialUriFetcher();
       debugPrint('DeepLinkCoordinator: initiallyLaunchedFromHomeWidget = $initialUri');
-      if (initialUri != null) {
+      if (initialUri != null && initialUri.toString() != _consumedInitialUri) {
         final action = DeepLinkAction.parse(initialUri);
         debugPrint('DeepLinkCoordinator: parsed cold action = $action');
         if (action != null) {
           _pendingAction = action;
+          _consumedInitialUri = initialUri.toString();
         }
+        await _clearNativeInitialIntent();
       }
     } catch (e) {
       debugPrint(
@@ -261,9 +286,15 @@ class DeepLinkCoordinator {
         );
         break;
 
+      case DeepLinkActionType.newTask:
+        Navigator.of(context).push(
+          buildPageRoute(const TaskEditorScreen()),
+        );
+        break;
+
       case DeepLinkActionType.openTasks:
         Navigator.of(context).pushAndRemoveUntil(
-          buildPageRoute(const HomeScreen()),
+          buildPageRoute(const HomeScreen(initialShowTasks: true)),
           (route) => false,
         );
         break;
@@ -343,12 +374,13 @@ class DeepLinkCoordinator {
                 !targetTask.isDeleted &&
                 targetTask.status != TaskStatus.archived) {
               if (context.mounted) {
-                debugPrint('DeepLinkCoordinator: pushing TaskEditorScreen for ${targetTask.title}');
-                Navigator.of(context).push(
-                  buildPageRoute(TaskEditorScreen(
-                    initialDate: targetTask.dueDate,
-                    taskToEdit: targetTask,
+                debugPrint('DeepLinkCoordinator: navigating to HomeScreen with focused task ${targetTask.title}');
+                Navigator.of(context).pushAndRemoveUntil(
+                  buildPageRoute(HomeScreen(
+                    initialShowTasks: true,
+                    focusedTaskId: targetTask.id,
                   )),
+                  (route) => false,
                 );
               }
               break;
@@ -359,11 +391,11 @@ class DeepLinkCoordinator {
             debugPrint('DeepLinkCoordinator: Failed to find task $taskId: $e');
           }
         }
-        // Fallback to HomeScreen if task is not found, archived, or deleted
+        // Fallback to HomeScreen(initialShowTasks: true) if task is not found, archived, or deleted
         if (context.mounted) {
-          debugPrint('DeepLinkCoordinator: Falling back to HomeScreen');
+          debugPrint('DeepLinkCoordinator: Falling back to HomeScreen with tasks view');
           Navigator.of(context).pushAndRemoveUntil(
-            buildPageRoute(const HomeScreen()),
+            buildPageRoute(const HomeScreen(initialShowTasks: true)),
             (route) => false,
           );
         }
@@ -385,6 +417,7 @@ class DeepLinkCoordinator {
     _isInitialized = false;
     _isNavigationReady = false;
     _pendingAction = null;
+    _consumedInitialUri = null;
     _onActionDispatched = null;
   }
 }

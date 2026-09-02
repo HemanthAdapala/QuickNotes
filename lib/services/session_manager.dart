@@ -20,6 +20,8 @@ class SessionManager {
   bool _isInitialized = false;
   SharedPreferences? _prefs;
 
+  bool get isInitialized => _isInitialized;
+
   Future<void> init() async {
     if (_isInitialized) return;
     _prefs = await SharedPreferences.getInstance();

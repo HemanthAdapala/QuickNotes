@@ -9,6 +9,7 @@ import '../../providers/tasks_provider.dart';
 import '../../models/task_item.dart';
 import '../../models/reminder_mode.dart';
 import '../../models/recurrence_rule.dart';
+import '../../models/repeat_rule.dart';
 import '../models/calendar_task.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/tactile_button.dart';
@@ -175,6 +176,9 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
     final recurrenceRule = _selectedRecurrence != null
         ? RecurrenceRule(type: _selectedRecurrence!, interval: 1)
         : null;
+    final repeatRule = _selectedRecurrence != null
+        ? RepeatRuleExtension.fromDbString(_selectedRecurrence!.toDbString())
+        : RepeatRule.none;
 
     if (isEditing) {
       final updated = widget.taskToEdit!.copyWith(
@@ -185,8 +189,11 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         reminderTime: reminderDateTime,
         reminderEnabled: isReminderActive,
         reminderMode: _selectedReminderMode,
+        repeatRule: repeatRule,
         isRecurring: _selectedRecurrence != null,
         recurrence: recurrenceRule,
+        clearRecurrence: _selectedRecurrence == null,
+        clearReminderTime: !isReminderActive,
         updatedAt: DateTime.now(),
       );
       tasksProvider.updateTask(updated);

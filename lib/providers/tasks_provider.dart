@@ -83,6 +83,8 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         notifyListeners();
       });
 
+      _updateWidgetData();
+
       _foregroundActionSubscription ??=
           NotificationActionHandler.foregroundStream.listen((payload) {
         if (payload.action == NotificationAction.done) {
@@ -124,6 +126,7 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
       await _ensureEngineReady();
     } else {
       await _engine.reconcileTaskStates();
+      _updateWidgetData();
       notifyListeners();
     }
   }
@@ -264,6 +267,100 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
       notifyListeners();
     } catch (e) {
       debugPrint('Error deleting task occurrence in TasksProvider: $e');
+      rethrow;
+    }
+  }
+
+  /// Explicitly completes a task occurrence on [targetDate].
+  ///
+  /// This operation is idempotent: if [targetDate] is already completed, it remains
+  /// completed and is NEVER toggled back to incomplete.
+  Future<void> completeTaskOccurrence(
+      String id, DateTime targetDate) async {
+    await _ensureEngineReady();
+    try {
+      final String realId = _getBaseId(id);
+      final task = _engine.tasks.firstWhere(
+        (t) => t.id == realId || t.id == id || id.startsWith(t.id),
+        orElse: () => _engine.tasks.firstWhere((t) => t.id.startsWith(realId)),
+      );
+
+      final bool isRecurring = task.isRecurring ||
+          task.recurrence != null ||
+          task.repeatRule != RepeatRule.none;
+
+      if (!isRecurring) {
+        if (!task.completed && task.status != TaskStatus.completed) {
+          final updated = task.copyWith(
+            completed: true,
+            status: TaskStatus.completed,
+            updatedAt: DateTime.now(),
+          );
+          await updateTask(updated);
+        }
+      } else {
+        final dateStr =
+            '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+        final newDates = List<String>.from(task.completedDates);
+        if (!newDates.contains(dateStr)) {
+          newDates.add(dateStr);
+          final updated = task.copyWith(
+            completedDates: newDates,
+            updatedAt: DateTime.now(),
+          );
+          await updateTask(updated);
+        }
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error completing task occurrence in TasksProvider: $e');
+      rethrow;
+    }
+  }
+
+  /// Explicitly uncompletes a task occurrence on [targetDate].
+  ///
+  /// This operation is idempotent: if [targetDate] was completed, it is removed
+  /// from [completedDates] (or marked waiting for non-recurring) and NEVER toggled back.
+  Future<void> uncompleteTaskOccurrence(
+      String id, DateTime targetDate) async {
+    await _ensureEngineReady();
+    try {
+      final String realId = _getBaseId(id);
+      final task = _engine.tasks.firstWhere(
+        (t) => t.id == realId || t.id == id || id.startsWith(t.id),
+        orElse: () => _engine.tasks.firstWhere((t) => t.id.startsWith(realId)),
+      );
+
+      final bool isRecurring = task.isRecurring ||
+          task.recurrence != null ||
+          task.repeatRule != RepeatRule.none;
+
+      if (!isRecurring) {
+        if (task.completed || task.status == TaskStatus.completed) {
+          final updated = task.copyWith(
+            completed: false,
+            status: TaskStatus.waiting,
+            updatedAt: DateTime.now(),
+          );
+          await updateTask(updated);
+        }
+      } else {
+        final dateStr =
+            '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+        final newDates = List<String>.from(task.completedDates);
+        if (newDates.contains(dateStr)) {
+          newDates.remove(dateStr);
+          final updated = task.copyWith(
+            completedDates: newDates,
+            updatedAt: DateTime.now(),
+          );
+          await updateTask(updated);
+        }
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error uncompleting task occurrence in TasksProvider: $e');
       rethrow;
     }
   }

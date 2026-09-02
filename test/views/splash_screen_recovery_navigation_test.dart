@@ -95,6 +95,9 @@ class FakeSessionManager implements SessionManager {
   String? activeUserIdToReturn = 'usr_test_123';
 
   @override
+  bool get isInitialized => true;
+
+  @override
   SessionState get currentSessionState => sessionStateToReturn;
 
   @override

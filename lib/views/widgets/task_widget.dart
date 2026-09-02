@@ -6,22 +6,27 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import '../../models/task_item.dart';
+import '../../models/task_status.dart';
 import '../../models/recurrence_rule.dart';
 import '../../models/repeat_rule.dart';
 import 'tactile_button.dart';
 
 class TaskWidget extends StatefulWidget {
   final ValueChanged<String>? onComplete;
+  final ValueChanged<TaskItem>? onUndo;
   final ValueChanged<TaskItem>? onEdit;
   final List<TaskItem> tasks;
   final double width;
+  final GlobalKey? frontCardKey;
 
   const TaskWidget({
     super.key,
     required this.tasks,
     this.onComplete,
+    this.onUndo,
     this.onEdit,
     this.width = 322.0,
+    this.frontCardKey,
   });
 
   @override
@@ -654,6 +659,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                     child: Transform.scale(
                       scale: cardScale,
                       child: SizedBox(
+                        key: widget.frontCardKey,
                         width: 322.0,
                         height: 339.0,
                         child: Container(
@@ -869,161 +875,279 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
-                              // Slider Track Container
+                              // Slider Track Container OR Completed Bar
                               Positioned(
                                 left: 8.0,
                                 top: 282.0,
                                 width: 251.0,
                                 height: 50.0,
-                                child: GestureDetector(
-                                  onHorizontalDragDown: (_) {
-                                    setState(() {
-                                      _isDraggingSlider = true;
-                                    });
-                                  },
-                                  onHorizontalDragStart: _handleDragStart,
-                                  onHorizontalDragUpdate: _handleDragUpdate,
-                                  onHorizontalDragEnd: (details) {
-                                    _handleDragEnd(details);
-                                    setState(() {
-                                      _isDraggingSlider = false;
-                                    });
-                                  },
-                                  onHorizontalDragCancel: () {
-                                    _handleDragCancel();
-                                    setState(() {
-                                      _isDraggingSlider = false;
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 251.0,
-                                    height: 50.0,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0x33787878),
-                                      borderRadius: BorderRadius.circular(25.0),
-                                    ),
-                                    child: Stack(
-                                      children: [
-                                        // Blue Slide Fill
-                                        if (progress > 0)
-                                          Positioned(
-                                            left: 0,
-                                            top: 0,
-                                            bottom: 0,
-                                            width: _dragX + 40.0,
-                                            child: Opacity(
-                                              opacity: progress.clamp(0.0, 1.0),
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  gradient:
-                                                      const LinearGradient(
-                                                    colors: [
-                                                      Color(0xFF0088FF),
-                                                      Color(0xFF66B2FF),
-                                                    ],
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          25.0),
+                                child: (task.completed ||
+                                        task.status == TaskStatus.completed)
+                                    ? Container(
+                                        width: 251.0,
+                                        height: 50.0,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 14.0),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF0088FF)
+                                              .withValues(alpha: 0.10),
+                                          borderRadius:
+                                              BorderRadius.circular(25.0),
+                                          border: Border.all(
+                                            color: const Color(0xFF0088FF)
+                                                .withValues(alpha: 0.25),
+                                            width: 1.0,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 26.0,
+                                              height: 26.0,
+                                              decoration: const BoxDecoration(
+                                                color: Color(0xFF0088FF),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: SvgPicture.asset(
+                                                "assets/New Icons/fi-rr-check.svg",
+                                                width: 14.0,
+                                                height: 14.0,
+                                                colorFilter:
+                                                    const ColorFilter.mode(
+                                                  Colors.white,
+                                                  BlendMode.srcIn,
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                        // Text
-                                        Center(
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              const SizedBox(width: 32.0),
-                                              Flexible(
+                                            const SizedBox(width: 8.0),
+                                            Expanded(
+                                              child: Text(
+                                                (task.isRecurring ||
+                                                        task.recurrence !=
+                                                            null ||
+                                                        task.repeatRule !=
+                                                            RepeatRule.none)
+                                                    ? "Done for today"
+                                                    : "Completed",
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 14.0,
+                                                  fontWeight: FontWeight.w600,
+                                                  color:
+                                                      const Color(0xFF0088FF),
+                                                  letterSpacing: -0.2,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6.0),
+                                            TactileButton(
+                                              onTap: () {
+                                                HapticFeedback.mediumImpact();
+                                                widget.onUndo?.call(task);
+                                              },
+                                              useAppleSpring: true,
+                                              compressionScale: 0.85,
+                                              settleDuration: const Duration(
+                                                  milliseconds: 600),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 12.0,
+                                                        vertical: 6.0),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          14.0),
+                                                  boxShadow: const [
+                                                    BoxShadow(
+                                                      color: Color(0x1A000000),
+                                                      blurRadius: 4.0,
+                                                      offset: Offset(0, 1),
+                                                    ),
+                                                  ],
+                                                ),
                                                 child: Text(
-                                                  "Drag to mark done",
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
+                                                  "Undo",
                                                   style: GoogleFonts.inter(
-                                                    fontSize: 16.0,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: progress > 0.5
-                                                        ? Colors.white
-                                                        : const Color(
-                                                            0xFF333333),
-                                                    height: 1.0,
-                                                    letterSpacing: -0.43,
+                                                    fontSize: 13.0,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: const Color(
+                                                        0xFF0088FF),
+                                                    letterSpacing: -0.2,
                                                   ),
                                                 ),
                                               ),
-                                              const SizedBox(width: 4.0),
-                                              SvgPicture.asset(
-                                                "assets/New Icons/fi-rr-angle-double-small-right.svg",
-                                                width: 14.0,
-                                                height: 14.0,
-                                                colorFilter: ColorFilter.mode(
-                                                  progress > 0.5
-                                                      ? Colors.white
-                                                      : const Color(0xFF333333),
-                                                  BlendMode.srcIn,
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : GestureDetector(
+                                        onHorizontalDragDown: (_) {
+                                          setState(() {
+                                            _isDraggingSlider = true;
+                                          });
+                                        },
+                                        onHorizontalDragStart: _handleDragStart,
+                                        onHorizontalDragUpdate:
+                                            _handleDragUpdate,
+                                        onHorizontalDragEnd: (details) {
+                                          _handleDragEnd(details);
+                                          setState(() {
+                                            _isDraggingSlider = false;
+                                          });
+                                        },
+                                        onHorizontalDragCancel: () {
+                                          _handleDragCancel();
+                                          setState(() {
+                                            _isDraggingSlider = false;
+                                          });
+                                        },
+                                        child: Container(
+                                          width: 251.0,
+                                          height: 50.0,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0x33787878),
+                                            borderRadius:
+                                                BorderRadius.circular(25.0),
+                                          ),
+                                          child: Stack(
+                                            children: [
+                                              // Blue Slide Fill
+                                              if (progress > 0)
+                                                Positioned(
+                                                  left: 0,
+                                                  top: 0,
+                                                  bottom: 0,
+                                                  width: _dragX + 40.0,
+                                                  child: Opacity(
+                                                    opacity: progress.clamp(
+                                                        0.0, 1.0),
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        gradient:
+                                                            const LinearGradient(
+                                                          colors: [
+                                                            Color(0xFF0088FF),
+                                                            Color(0xFF66B2FF),
+                                                          ],
+                                                        ),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(25.0),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              // Text
+                                              Center(
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    const SizedBox(
+                                                        width: 32.0),
+                                                    Flexible(
+                                                      child: Text(
+                                                        "Drag to mark done",
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                          fontSize: 16.0,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: progress > 0.5
+                                                              ? Colors.white
+                                                              : const Color(
+                                                                  0xFF333333),
+                                                          height: 1.0,
+                                                          letterSpacing: -0.43,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 4.0),
+                                                    SvgPicture.asset(
+                                                      "assets/New Icons/fi-rr-angle-double-small-right.svg",
+                                                      width: 14.0,
+                                                      height: 14.0,
+                                                      colorFilter:
+                                                          ColorFilter.mode(
+                                                        progress > 0.5
+                                                            ? Colors.white
+                                                            : const Color(
+                                                                0xFF333333),
+                                                        BlendMode.srcIn,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              // Checkmark Circular Button
+                                              Positioned(
+                                                left: _dragX,
+                                                top: 5.0,
+                                                width: 40.0,
+                                                height: 40.0,
+                                                child: ScaleTransition(
+                                                  scale:
+                                                      _successScaleAnimation,
+                                                  child: Stack(
+                                                    clipBehavior: Clip.none,
+                                                    children: [
+                                                      Positioned.fill(
+                                                        child: CustomPaint(
+                                                          painter:
+                                                              _ParticlePainter(
+                                                            particles:
+                                                                _particles,
+                                                            animVal:
+                                                                _particleAnimation
+                                                                    .value,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Container(
+                                                        decoration:
+                                                            const BoxDecoration(
+                                                          color: Colors.white,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: Color(
+                                                                  0x20000000),
+                                                              blurRadius: 4.0,
+                                                              offset:
+                                                                  Offset(0, 2),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        alignment:
+                                                            Alignment.center,
+                                                        child: SvgPicture.asset(
+                                                          "assets/New Icons/fi-rr-check.svg",
+                                                          width: 22.0,
+                                                          height: 22.0,
+                                                          colorFilter:
+                                                              const ColorFilter
+                                                                  .mode(
+                                                            Color(0xFF0088FF),
+                                                            BlendMode.srcIn,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
                                             ],
                                           ),
                                         ),
-                                        // Checkmark Circular Button
-                                        Positioned(
-                                          left: _dragX,
-                                          top: 5.0,
-                                          width: 40.0,
-                                          height: 40.0,
-                                          child: ScaleTransition(
-                                            scale: _successScaleAnimation,
-                                            child: Stack(
-                                              clipBehavior: Clip.none,
-                                              children: [
-                                                Positioned.fill(
-                                                  child: CustomPaint(
-                                                    painter: _ParticlePainter(
-                                                      particles: _particles,
-                                                      animVal:
-                                                          _particleAnimation
-                                                              .value,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Container(
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                    color: Colors.white,
-                                                    shape: BoxShape.circle,
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color:
-                                                            Color(0x20000000),
-                                                        blurRadius: 4.0,
-                                                        offset: Offset(0, 2),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  alignment: Alignment.center,
-                                                  child: SvgPicture.asset(
-                                                    "assets/New Icons/fi-rr-check.svg",
-                                                    width: 22.0,
-                                                    height: 22.0,
-                                                    colorFilter:
-                                                        const ColorFilter.mode(
-                                                      Color(0xFF0088FF),
-                                                      BlendMode.srcIn,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                                      ),
                               ),
                               // Floating Edit Button
                               Positioned(

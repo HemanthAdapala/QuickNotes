@@ -259,6 +259,26 @@ class TaskItem {
                 : ReminderMode.off)
             : this.reminderMode);
 
+    final bool shouldClearRecurrence = clearRecurrence ||
+        (isRecurring == false && recurrence == null) ||
+        (repeatRule == RepeatRule.none && recurrence == null && isRecurring != true);
+
+    final resolvedRecurrence = shouldClearRecurrence
+        ? null
+        : (recurrence ?? this.recurrence);
+
+    final resolvedRepeatRule = shouldClearRecurrence
+        ? (repeatRule ?? RepeatRule.none)
+        : (repeatRule ??
+            (resolvedRecurrence != null
+                ? RepeatRuleExtension.fromDbString(
+                    resolvedRecurrence.type.toDbString())
+                : this.repeatRule));
+
+    final resolvedIsRecurring = shouldClearRecurrence
+        ? false
+        : (isRecurring ?? (resolvedRecurrence != null || this.isRecurring));
+
     return TaskItem(
       id: id ?? this.id,
       userId: userId ?? this.userId,
@@ -279,9 +299,9 @@ class TaskItem {
       reminderTime:
           clearReminderTime ? null : (reminderTime ?? this.reminderTime),
       notificationId: notificationId ?? this.notificationId,
-      repeatRule: repeatRule ?? this.repeatRule,
-      isRecurring: isRecurring ?? this.isRecurring,
-      recurrence: clearRecurrence ? null : (recurrence ?? this.recurrence),
+      repeatRule: resolvedRepeatRule,
+      isRecurring: resolvedIsRecurring,
+      recurrence: resolvedRecurrence,
       recurringSeriesId: recurringSeriesId ?? this.recurringSeriesId,
       timezone: timezone ?? this.timezone,
       completedDates: completedDates ?? this.completedDates,

@@ -207,6 +207,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
         repeatRule: repeatRule,
         isRecurring: _selectedRecurrence != null,
         recurrence: recurrenceRule,
+        clearRecurrence: _selectedRecurrence == null,
+        clearReminderTime: !isReminderActive,
         updatedAt: DateTime.now(),
       );
       await tasksProvider.updateTask(updated);

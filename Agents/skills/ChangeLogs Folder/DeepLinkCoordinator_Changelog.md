@@ -78,3 +78,112 @@ Implemented safe, unidirectional task deep linking from native Android Task Home
 
 ### Final Result
 Safe, reliable, and secure deep linking from all native Android task widgets into the authoritative Flutter `TaskEditorScreen`.
+
+## 2026-08-31 — Phase T10: Task Creation Deep Linking & Multi-Widget Interaction Completion
+
+### Version
+v1.3.0
+
+### Author
+Antigravity
+
+### Type
+- Feature
+- Navigation
+- Hardening
+
+### Summary
+Completed the remaining widget interaction routes by implementing dedicated `quicknotes://task/new` (and alias `quicknotes://tasks/new`) task creation deep linking into `TaskEditorScreen()` (creation mode), wiring the Multi-Task widget `+ Add Task` card, and routing the QuickCapture widget tasks stat pill (`@id/widget_tasks_count` / `@id/widget_tasks_pill`) directly to `quicknotes://tasks` (Tasks tab).
+
+### Detailed Changes
+- **New Task Deep Link Parsing (`quicknotes://task/new`):**
+  - Added `newTask` to `DeepLinkActionType` enum in `lib/services/deep_link_coordinator.dart`.
+  - Updated `DeepLinkAction.parse` to cleanly differentiate `quicknotes://task/new` from `quicknotes://task/<taskId>`, ensuring literal `"new"` is never treated as a task UUID.
+  - Added alias support for `quicknotes://tasks/new`.
+  - Added double-slash guard rejecting malformed paths like `quicknotes://task//new`.
+- **New Task Execution:**
+  - In `DeepLinkCoordinator.executeAction`, handled `DeepLinkActionType.newTask` by pushing `TaskEditorScreen()` (with `taskToEdit: null`) to open pristine blank task creation mode without touching SQLite or creating premature entities.
+  - Updated `DeepLinkActionType.openTasks` to route to `HomeScreen(initialShowTasks: true)` to highlight the Tasks tab directly.
+- **Automated Tests:**
+  - Added 9 unit tests (TEST A to TEST I) in `test/services/deep_link_coordinator_test.dart` verifying canonical parsing, UUID differentiation, non-regression, malformed rejection, warm-launch dispatch, cold-launch buffering, action clearing, alias parsing, and sequential deep link state hygiene.
+  - 81/81 focused tests passing across all 5 widget test suites.
+- **Physical Device Verification:**
+  - Verified on Samsung Galaxy S23 Ultra (`SM-S918B` / API 36 / One UI 8):
+    - Cold-launch & warm-launch `quicknotes://task/new` ➔ opens `TaskEditorScreen` in creation mode.
+    - Cold-launch & warm-launch `quicknotes://tasks` ➔ opens `HomeScreen` in Tasks tab.
+    - Existing task deep link `quicknotes://task/<id>` ➔ opens `TaskEditorScreen` with preloaded task.
+    - Sequential launches maintain clean non-stale state.
+
+### Final Result
+Unidirectional navigation loop between native widgets and Flutter task creation/overview is 100% complete and verified.
+
+## 2026-08-31 — Phase T14: Task Deep-Link Routing Migration (Widget Task Tap → HomeScreen Focused Task Overlay)
+
+### Version
+v1.4.0
+
+### Author
+Antigravity
+
+### Type
+- Migration
+- Navigation
+- Architecture
+
+### Summary
+Migrated task deep-link routing (`quicknotes://task/<taskId>`) from automatically opening `TaskEditorScreen` to navigating directly to `HomeScreen(initialShowTasks: true, focusedTaskId: targetTask.id)`, mounting the Focused Task Overlay with the mature "Drag to mark done" slider.
+
+### Detailed Changes
+- **Routing Migration in DeepLinkCoordinator:**
+  - Updated `DeepLinkCoordinator.executeAction` for `DeepLinkActionType.openTask`:
+    - Previous destination: `Navigator.push(TaskEditorScreen(taskToEdit: targetTask))`
+    - New destination: `Navigator.pushAndRemoveUntil(HomeScreen(initialShowTasks: true, focusedTaskId: targetTask.id))`
+    - Fallback on deleted, archived, or unknown task: `HomeScreen(initialShowTasks: true)` with `focusedTaskId: null`.
+- **Architectural Invariants Preserved:**
+  - Authoritative task resolution through `TasksProvider` / `TaskEngine` without native task reconstruction.
+  - Zero changes to native Android Kotlin or XML layouts.
+  - `quicknotes://task/new` and `quicknotes://tasks/new` continue to route to `TaskEditorScreen()` in creation mode.
+  - `quicknotes://tasks` continues to route to `HomeScreen(initialShowTasks: true)`.
+  - Note deep links (`quicknotes://note/<id>`, `quicknotes://note/new`, `quicknotes://checklist/new`, `quicknotes://home`) remain 100% untouched.
+  - Zero task mutation occurs on widget tap.
+- **Automated Tests:**
+  - Added 11 tests (TEST T14-1 through TEST T14-11) in `test/services/deep_link_coordinator_test.dart` covering valid active tasks, completed tasks, deleted/archived fallback, unknown task fallback, creation regression, tasks overview regression, note deep link regression, sequential task isolation, and mutation immutability.
+  - 97 / 97 tests passing across all 6 test suites (100% green).
+- **Verification:**
+  - Static analysis: 0 issues (`flutter analyze` clean).
+  - APK build: `flutter build apk --debug` succeeded in 32.3s.
+
+### Final Result
+Phase T14 completed and verified green. Task widget tap navigates seamlessly to the Focused Task Overlay.
+
+---
+
+## 2026-09-02 — Phase T15: Focused Task Overlay Viewport Centering, Launcher Intent Sanitization & Dismiss UX
+
+### Version
+v1.5.0
+
+### Author
+Antigravity
+
+### Type
+- UI / UX Enhancement
+- Bug Fix
+- Architecture
+
+### Summary
+Enhanced the Focused Task Overlay with consistent viewport vertical centering, relocated the dismiss badge above the card for effortless thumb reachability, and implemented Android launcher intent clearing (`clearInitialIntent`) to prevent unwanted overlay re-popping when returning to the app from the home launcher.
+
+### Detailed Changes
+- **Viewport Centering & Relocated Dismiss Badge (`home_screen.dart`):**
+  - Converted the Focused Task Overlay position from scroll-dependent coordinate matching to fixed viewport vertical centering (`MainAxisAlignment.center`).
+  - Positioned the dismiss helper badge (`"Tap anywhere or swipe to close"`) floating above the card instead of below, maintaining optimal thumb reachability and visual clarity.
+- **Launcher Intent Sanitization (`MainActivity.kt` & `DeepLinkCoordinator.dart`):**
+  - Added MethodChannel `com.quicknotes.app/deep_link_clear` and native intent sanitization in `MainActivity.kt`.
+  - When the app is opened normally via the home launcher, lingering widget deep-link URLs are cleared so the app opens directly to the normal note/task lists without mounting a stale overlay.
+- **Automated Tests:**
+  - Expanded `test/views/home_screen_focused_task_overlay_test.dart` and `test/services/deep_link_coordinator_test.dart` with full coverage for overlay centering, dismiss lifecycle, and intent replay prevention.
+  - 143/143 tests passing.
+
+### Architecture Impact
+- **Navigation**: Deterministic overlay mounting and clean lifecycle transitions between home launcher and home screen.

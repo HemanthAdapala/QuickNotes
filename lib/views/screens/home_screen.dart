@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 import 'package:flutter/services.dart';
@@ -37,6 +38,8 @@ import '../widgets/notes_and_task_pill.dart';
 import '../widgets/task_widget.dart';
 import '../widgets/notes_stack_widget.dart';
 import '../../models/task_item.dart';
+import '../../models/task_status.dart';
+import '../../models/single_task_snapshot.dart';
 import '../../models/note.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,22 +58,31 @@ import '../../models/note.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool initialShowTasks;
+  final String? focusedTaskId;
+
+  const HomeScreen({
+    super.key,
+    this.initialShowTasks = false,
+    this.focusedTaskId,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _activeNavIndex = 0;
   bool _isNotesActive = true;
   bool _isMoreOptionsOpen = false;
+  String? _focusedTaskId;
   String _activeFilter = 'Today';
   bool _isSortAscending = false;
   String _username = 'Guest';
   String? _avatarPath;
   final GlobalKey<FolderManagementScreenState> _foldersKey =
       GlobalKey<FolderManagementScreenState>();
+  final GlobalKey _frontTaskCardKey = GlobalKey();
   final List<OverlayEntry> _overlayEntries = [];
   StreamSubscription<NotificationPayload>? _notificationSub;
 
@@ -81,8 +93,28 @@ class _HomeScreenState extends State<HomeScreen> {
   late final Widget _settingsBody;
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.inactive) {
+      if (_focusedTaskId != null && mounted) {
+        setState(() {
+          _focusedTaskId = null;
+        });
+      }
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    if (widget.initialShowTasks || widget.focusedTaskId != null) {
+      _isNotesActive = false;
+    }
+    if (widget.focusedTaskId != null) {
+      _focusedTaskId = widget.focusedTaskId;
+    }
     _loadUserData();
     final notesProvider = Provider.of<NotesProvider>(context, listen: false);
     final initialIndex = notesProvider.selectedBgIndex;
@@ -92,6 +124,17 @@ class _HomeScreenState extends State<HomeScreen> {
     DeepLinkCoordinator.instance.initialize(
       onActionDispatched: (action) {
         if (mounted) {
+          if (action.type == DeepLinkActionType.openTask) {
+            final taskId = action.queryParameters['taskId'];
+            if (taskId != null && taskId.isNotEmpty) {
+              setState(() {
+                _activeNavIndex = 0;
+                _isNotesActive = false;
+                _focusedTaskId = taskId;
+              });
+              return;
+            }
+          }
           DeepLinkCoordinator.instance.executeAction(context, action);
         }
       },
@@ -102,11 +145,13 @@ class _HomeScreenState extends State<HomeScreen> {
         await notesProvider.loadFolders();
         await notesProvider.loadNotes();
         if (mounted) {
-          final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+          final tasksProvider =
+              Provider.of<TasksProvider>(context, listen: false);
           await tasksProvider.loadTasks();
         }
         if (mounted) {
-          await DeepLinkCoordinator.instance.markNavigationReady(context: context);
+          await DeepLinkCoordinator.instance
+              .markNavigationReady(context: context);
         }
       }
     });
@@ -143,6 +188,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.focusedTaskId != oldWidget.focusedTaskId &&
+        widget.focusedTaskId != null) {
+      setState(() {
+        _isNotesActive = false;
+        _focusedTaskId = widget.focusedTaskId;
+      });
+    }
+  }
+
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
@@ -158,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _notificationSub?.cancel();
     for (final entry in _overlayEntries) {
       entry.remove();
@@ -537,53 +595,76 @@ class _HomeScreenState extends State<HomeScreen> {
             .clamp(1, 3);
     final double stackOffset = (3 - numCards) * 22.0;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          // Dynamic Background (only active/visible behind Home tab)
-          if (_activeNavIndex == 0) _buildBackground(selectedBgIndex),
+    TaskItem? focusedTask;
+    if (_focusedTaskId != null) {
+      final tasks = tasksProvider.tasks;
+      for (final t in tasks) {
+        if (t.id == _focusedTaskId) {
+          if (!t.isDeleted && t.status != TaskStatus.archived) {
+            focusedTask = t;
+          }
+          break;
+        }
+      }
+    }
 
-          // Tab content — IndexedStack keeps all tabs alive.
-          // Home and Folders use builder methods (Home depends on selectedBgIndex
-          // which can change; Folders has a GlobalKey for identity).
-          // Calendar and Settings are pre-built stable widgets so switching
-          // to them is instant — their State is never torn down.
-          IndexedStack(
-            index: _activeNavIndex,
-            children: [
-              _buildHomeBody(selectedBgIndex),
-              _buildFoldersBody(),
-              _calendarBody,
-              _settingsBody,
-            ],
-          ),
+    return PopScope(
+      canPop: _focusedTaskId == null,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_focusedTaskId != null) {
+          setState(() {
+            _focusedTaskId = null;
+          });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          children: [
+            // Dynamic Background (only active/visible behind Home tab)
+            if (_activeNavIndex == 0) _buildBackground(selectedBgIndex),
 
-          // White rounded background sheet covering the bottom part, containing all interactive widgets
-          if (_activeNavIndex == 0)
-            Positioned(
-              top: panelTop,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(32),
-                    topRight: Radius.circular(32),
+            // Tab content — IndexedStack keeps all tabs alive.
+            // Home and Folders use builder methods (Home depends on selectedBgIndex
+            // which can change; Folders has a GlobalKey for identity).
+            // Calendar and Settings are pre-built stable widgets so switching
+            // to them is instant — their State is never torn down.
+            IndexedStack(
+              index: _activeNavIndex,
+              children: [
+                _buildHomeBody(selectedBgIndex),
+                _buildFoldersBody(),
+                _calendarBody,
+                _settingsBody,
+              ],
+            ),
+
+            // White rounded background sheet covering the bottom part, containing all interactive widgets
+            if (_activeNavIndex == 0)
+              Positioned(
+                top: panelTop,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      topRight: Radius.circular(32),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x3F000000),
+                        blurRadius: 16,
+                        offset: Offset(0, 0),
+                        spreadRadius: 0,
+                      )
+                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x3F000000),
-                      blurRadius: 16,
-                      offset: Offset(0, 0),
-                      spreadRadius: 0,
-                    )
-                  ],
-                ),
-                child: PrimaryScreenSurface(
-                  child: CustomScrollView(
+                  child: PrimaryScreenSurface(
+                    child: CustomScrollView(
                       physics: const BouncingScrollPhysics(),
                       slivers: [
                         SliverToBoxAdapter(
@@ -808,6 +889,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   _openNote(note.id),
                                             )
                                           : TaskWidget(
+                                              frontCardKey: _frontTaskCardKey,
                                               tasks: _filteredTasks,
                                               onEdit: _openEditTask,
                                               onComplete: (taskId) async {
@@ -817,7 +899,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                         listen: false);
                                                 TaskItem? currentTask;
                                                 for (final t
-                                                    in tasksProvider.tasks) {
+                                                    in _filteredTasks) {
                                                   if (t.id == taskId ||
                                                       t.id.startsWith(taskId) ||
                                                       taskId.startsWith(t.id)) {
@@ -825,6 +907,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     break;
                                                   }
                                                 }
+                                                currentTask ??= tasksProvider
+                                                    .tasks
+                                                    .where(
+                                                        (t) => t.id == taskId)
+                                                    .firstOrNull;
                                                 if (currentTask != null) {
                                                   await tasksProvider
                                                       .toggleTaskCompletionOnDate(
@@ -881,145 +968,309 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-          // ── AppBottomNavigationBar (at bottom: 0) ──────────────────────────
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: AppBottomNavigationBar(
-              selectedIndex: _activeNavIndex,
-              activeColor: _isNotesActive
-                  ? const Color(0xFFFFCC00)
-                  : const Color(0xFF0088FF),
-              onDestinationSelected: (i) {
-                if (i == 4) {
-                  if (_activeNavIndex == 1) {
-                    _foldersKey.currentState?.showCreateFolderDialog();
-                  } else {
-                    if (_isNotesActive) {
-                      _openNewNote();
-                    } else {
-                      _openNewTask();
-                    }
-                  }
-                } else {
-                  HapticFeedback.lightImpact();
-                  setState(() => _activeNavIndex = i);
-                }
-              },
-            ),
-          ),
-
-          // ── Backdrop Overlay (OverlayScreen.txt: black @ 0.20 opacity) ──────
-          IgnorePointer(
-            ignoring: !_isMoreOptionsOpen,
-            child: AnimatedOpacity(
-              duration: Duration(milliseconds: _isMoreOptionsOpen ? 500 : 415),
-              curve: Curves.easeOutCubic,
-              opacity: _isMoreOptionsOpen ? 1.0 : 0.0,
-              child: GestureDetector(
-                onTap: () => setState(() => _isMoreOptionsOpen = false),
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  color: Color(0xFF333333).withValues(alpha: 0.20),
-                ),
-              ),
-            ),
-          ),
-
-          // ── AppHeaderBar (Rendered as overlay so it sits on top of backdrop and is fully tap-interactive) ──
-          if (_activeNavIndex == 0)
+            // ── AppBottomNavigationBar (at bottom: 0) ──────────────────────────
             Positioned(
               left: 0,
               right: 0,
-              top: 0,
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
-                  child: AppHeaderBar(
-                    rightHeroTag: 'hero_home_search',
-                    leftWidth: 44.0,
-                    onLeftTap: () async {
-                      HapticFeedback.selectionClick();
-                      await Navigator.push(
-                        context,
-                        buildPageRoute(const ProfileScreen()),
-                      );
-                      _loadUserData();
-                    },
-                    leftChild: Container(
-                      width: 34.0,
-                      height: 34.0,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE2E2DF),
-                        shape: BoxShape.circle,
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: _avatarPath != null &&
-                              _avatarPath!.startsWith('assets/')
-                          ? Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child: Image.asset(
-                                _avatarPath!,
-                                width: 28.0,
-                                height: 28.0,
-                                cacheWidth: 56,
-                                cacheHeight: 56,
-                                fit: BoxFit.contain,
-                              ),
-                            )
-                          : _avatarPath != null &&
-                                  File(_avatarPath!).existsSync()
-                              ? Image.file(
-                                  File(_avatarPath!),
-                                  width: 34.0,
-                                  height: 34.0,
-                                  cacheWidth: 68,
-                                  cacheHeight: 68,
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.asset(
-                                  "assets/Profile Icons/maxim_transparent.png",
-                                  width: 34.0,
-                                  height: 34.0,
-                                  cacheWidth: 68,
-                                  cacheHeight: 68,
+              bottom: 0,
+              child: AppBottomNavigationBar(
+                selectedIndex: _activeNavIndex,
+                activeColor: _isNotesActive
+                    ? const Color(0xFFFFCC00)
+                    : const Color(0xFF0088FF),
+                onDestinationSelected: (i) {
+                  if (i == 4) {
+                    if (_activeNavIndex == 1) {
+                      _foldersKey.currentState?.showCreateFolderDialog();
+                    } else {
+                      if (_isNotesActive) {
+                        _openNewNote();
+                      } else {
+                        _openNewTask();
+                      }
+                    }
+                  } else {
+                    HapticFeedback.lightImpact();
+                    setState(() => _activeNavIndex = i);
+                  }
+                },
+              ),
+            ),
+
+            // ── Backdrop Overlay (OverlayScreen.txt: black @ 0.20 opacity) ──────
+            IgnorePointer(
+              ignoring: !_isMoreOptionsOpen,
+              child: AnimatedOpacity(
+                duration:
+                    Duration(milliseconds: _isMoreOptionsOpen ? 500 : 415),
+                curve: Curves.easeOutCubic,
+                opacity: _isMoreOptionsOpen ? 1.0 : 0.0,
+                child: GestureDetector(
+                  onTap: () => setState(() => _isMoreOptionsOpen = false),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    color: Color(0xFF333333).withValues(alpha: 0.20),
+                  ),
+                ),
+              ),
+            ),
+
+            // ── AppHeaderBar (Rendered as overlay so it sits on top of backdrop and is fully tap-interactive) ──
+            if (_activeNavIndex == 0)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
+                    child: AppHeaderBar(
+                      rightHeroTag: 'hero_home_search',
+                      leftWidth: 44.0,
+                      onLeftTap: () async {
+                        HapticFeedback.selectionClick();
+                        await Navigator.push(
+                          context,
+                          buildPageRoute(const ProfileScreen()),
+                        );
+                        _loadUserData();
+                      },
+                      leftChild: Container(
+                        width: 34.0,
+                        height: 34.0,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE2E2DF),
+                          shape: BoxShape.circle,
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: _avatarPath != null &&
+                                _avatarPath!.startsWith('assets/')
+                            ? Padding(
+                                padding: const EdgeInsets.all(3.0),
+                                child: Image.asset(
+                                  _avatarPath!,
+                                  width: 28.0,
+                                  height: 28.0,
+                                  cacheWidth: 56,
+                                  cacheHeight: 56,
                                   fit: BoxFit.contain,
                                 ),
-                    ),
-                    rightWidth: 44.0,
-                    rightChild: TactileButton(
-                      useAppleSpring: true,
-                      compressionScale: 0.7,
-                      settleDuration: const Duration(milliseconds: 1000),
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        Navigator.push(
-                          context,
-                          buildSearchTransitionRoute(
-                            builder: (_) =>
-                                const SearchScreen(initialScope: 'all'),
+                              )
+                            : _avatarPath != null &&
+                                    File(_avatarPath!).existsSync()
+                                ? Image.file(
+                                    File(_avatarPath!),
+                                    width: 34.0,
+                                    height: 34.0,
+                                    cacheWidth: 68,
+                                    cacheHeight: 68,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.asset(
+                                    "assets/Profile Icons/maxim_transparent.png",
+                                    width: 34.0,
+                                    height: 34.0,
+                                    cacheWidth: 68,
+                                    cacheHeight: 68,
+                                    fit: BoxFit.contain,
+                                  ),
+                      ),
+                      rightWidth: 44.0,
+                      rightChild: TactileButton(
+                        useAppleSpring: true,
+                        compressionScale: 0.7,
+                        settleDuration: const Duration(milliseconds: 1000),
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          Navigator.push(
+                            context,
+                            buildSearchTransitionRoute(
+                              builder: (_) =>
+                                  const SearchScreen(initialScope: 'all'),
+                            ),
+                          );
+                        },
+                        child: Center(
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: (selectedBgIndex == 1 ||
+                                    selectedBgIndex == 2 ||
+                                    selectedBgIndex == 6)
+                                ? Colors.white
+                                : const Color(0xFF1C1C1E),
+                            size: 22,
                           ),
-                        );
-                      },
-                      child: Center(
-                        child: Icon(
-                          Icons.search_rounded,
-                          color: (selectedBgIndex == 1 ||
-                                  selectedBgIndex == 2 ||
-                                  selectedBgIndex == 6)
-                              ? Colors.white
-                              : const Color(0xFF1C1C1E),
-                          size: 22,
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
+
+            // ── Focused Task Overlay (Rendered above all content when a task is focused) ──
+            if (_focusedTaskId != null && focusedTask != null)
+              _buildFocusedTaskOverlay(focusedTask),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Focused Task Overlay Builder ──────────────────────────────────────────
+
+  Widget _buildDismissHelperBadge(double animationValue) {
+    return IgnorePointer(
+      child: Opacity(
+        opacity: (animationValue * 1.5 - 0.5).clamp(0.0, 1.0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 7.0),
+          decoration: ShapeDecoration(
+            color: Colors.white.withValues(alpha: 0.16),
+            shape: const StadiumBorder(
+              side: BorderSide(
+                color: Color(0x38FFFFFF),
+                width: 1.0,
+              ),
             ),
-        ],
+            shadows: const [
+              BoxShadow(
+                color: Color(0x2A000000),
+                blurRadius: 8.0,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.touch_app_outlined,
+                size: 14.0,
+                color: Colors.white.withValues(alpha: 0.85),
+              ),
+              const SizedBox(width: 6.0),
+              Text(
+                'Tap anywhere on the screen to dismiss',
+                style: GoogleFonts.inter(
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.90),
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFocusedTaskOverlay(TaskItem task) {
+    final snapshot = SingleTaskSnapshot.fromTask(task);
+    final projectedDue = DateTime.parse(snapshot.dueDateIso).toLocal();
+    final presentationTask = task.copyWith(
+      dueDate: projectedDue,
+      completed: snapshot.completed,
+      status: snapshot.completed ? TaskStatus.completed : TaskStatus.waiting,
+    );
+
+    final double topSafeArea = MediaQuery.paddingOf(context).top;
+    final double bottomNavPadding =
+        58.0 + MediaQuery.paddingOf(context).bottom + 24.0;
+
+    return Positioned.fill(
+      child: TweenAnimationBuilder<double>(
+        key: ValueKey('focused_task_overlay_${task.id}'),
+        tween: Tween<double>(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Stack(
+            children: [
+              // 1. Semi-transparent backdrop capturing outside taps
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _focusedTaskId = null;
+                    });
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.40 * value),
+                  ),
+                ),
+              ),
+
+              // 2. Focused Task Card & Dismiss Badge — Perfectly centered consistently in the viewport
+              Positioned.fill(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: topSafeArea + 16.0,
+                    bottom: bottomNavPadding,
+                  ),
+                  child: Center(
+                    child: SingleChildScrollView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildDismissHelperBadge(value),
+                          const SizedBox(height: 16.0),
+                          Opacity(
+                            opacity: value.clamp(0.0, 1.0),
+                            child: Transform.scale(
+                              scale: 0.90 + (0.10 * value),
+                              child: TaskWidget(
+                                key: ValueKey('focused_task_widget_${task.id}'),
+                                tasks: [presentationTask],
+                                width: 322.0,
+                                onEdit: (taskToEdit) {
+                                  setState(() {
+                                    _focusedTaskId = null;
+                                  });
+                                  _openEditTask(taskToEdit);
+                                },
+                                onUndo: (taskToUndo) async {
+                                  final tasksProvider =
+                                      Provider.of<TasksProvider>(context,
+                                          listen: false);
+                                  await tasksProvider.uncompleteTaskOccurrence(
+                                    task.id,
+                                    projectedDue,
+                                  );
+                                },
+                                onComplete: (taskId) async {
+                                  final tasksProvider =
+                                      Provider.of<TasksProvider>(context,
+                                          listen: false);
+                                  await tasksProvider.completeTaskOccurrence(
+                                    task.id,
+                                    projectedDue,
+                                  );
+
+                                  if (mounted) {
+                                    setState(() {
+                                      _focusedTaskId = null;
+                                    });
+                                    _triggerCelebration(
+                                        "🎉 Task is done!");
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

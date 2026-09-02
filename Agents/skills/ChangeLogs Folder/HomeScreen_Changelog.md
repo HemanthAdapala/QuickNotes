@@ -161,3 +161,38 @@ Connected the character-picker Edit Profile screen to the main Homescreen top-le
 
 - **UI presentation**: `HomeScreen` header reflects active user profile state reactively without full app reload.
 - **Navigation**: Left header pill opens `ProfileScreen` directly and refreshes state on return.
+
+---
+
+## v3.0.0
+
+### Date
+2026-09-02
+
+### Author
+Anti Gravity
+
+### Type
+- UI / UX
+- Feature
+- Architecture
+
+---
+
+### Summary
+Added the Focused Task Overlay with full-screen glass backdrop blur and tactile slide-to-complete interaction when navigating from Android Task Home Screen Widgets, centered the card vertically in the viewport with an overhead dismiss helper badge, and added seamless task state synchronization without scroll coordinate drift.
+
+---
+
+### Detailed Changes
+- Added `focusedTaskId` and `initialShowTasks` parameters to `HomeScreen`.
+- Built `FocusedTaskOverlay` presenting a centered interactive `TaskCard` wrapped in `BackdropFilter` glass blur (sigma 16.0).
+- Positioned the helper text pill (`"Tap anywhere or swipe to close"`) floating above the task card for effortless reachability.
+- Added animated slide-to-complete integration with `TasksProvider.toggleTaskCompletion()` and celebratory snackbars on completion.
+- Implemented clean overlay dismiss on background tap or swipe-down gesture without page jitter.
+
+---
+
+### Architecture Impact
+- **Navigation**: `HomeScreen` acts as the host presentation surface for widget deep-link focus actions while maintaining complete decoupling from external widget logic.
+
