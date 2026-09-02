@@ -59,120 +59,130 @@
             android:background="@drawable/widget_white_card_body"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp">
 
-            <!-- Badges Column -->
+            <!-- Left Column: Title (Top) & Badges Row (Bottom) -->
             <LinearLayout
-                android:id="@+id/multi_task_1_badges_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_vertical"
-                android:visibility="gone">
-
-                <!-- Priority Badge -->
-                <LinearLayout
-                    android:id="@+id/multi_task_1_priority_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:background="@drawable/widget_task_priority_high_bg">
-
-                    <ImageView
-                        android:id="@+id/multi_task_1_priority_icon"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:src="@drawable/ic_task_flag_red" />
-
-                    <TextView
-                        android:id="@+id/multi_task_1_priority_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="3dp"
-                        android:text="High"
-                        android:textColor="#FF3B30"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <!-- Recurrence Badge -->
-                <LinearLayout
-                    android:id="@+id/multi_task_1_repeat_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="3dp"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:background="@drawable/widget_task_repeat_bg">
-
-                    <TextView
-                        android:id="@+id/multi_task_1_repeat_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Daily"
-                        android:textColor="#555555"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Task Title -->
-            <TextView
-                android:id="@+id/multi_task_1_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginLeft="8dp"
-                android:layout_marginRight="8dp"
-                android:layout_gravity="center_vertical"
-                android:text="Task Title"
-                android:textColor="#222222"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:lineSpacingExtra="1dp"
-                android:singleLine="false"
-                android:maxLines="2"
-                android:ellipsize="end" />
+                android:orientation="vertical"
+                android:gravity="center_vertical">
 
-            <!-- Status Pill -->
+                <!-- Task Title -->
+                <TextView
+                    android:id="@+id/multi_task_1_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Task Title"
+                    android:textColor="#222222"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:lineSpacingExtra="1dp"
+                    android:singleLine="true"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- Badges Row: Priority & Recurrence -->
+                <LinearLayout
+                    android:id="@+id/multi_task_1_badges_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone">
+
+                    <!-- Priority Badge -->
+                    <LinearLayout
+                        android:id="@+id/multi_task_1_priority_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="7dp"
+                        android:paddingRight="7dp"
+                        android:paddingTop="2.5dp"
+                        android:paddingBottom="2.5dp"
+                        android:background="@drawable/widget_task_priority_high_bg">
+
+                        <ImageView
+                            android:id="@+id/multi_task_1_priority_icon"
+                            android:layout_width="9.5dp"
+                            android:layout_height="9.5dp"
+                            android:src="@drawable/ic_task_flag_red" />
+
+                        <TextView
+                            android:id="@+id/multi_task_1_priority_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="3dp"
+                            android:text="High"
+                            android:textColor="#FF3B30"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Recurrence Badge -->
+                    <LinearLayout
+                        android:id="@+id/multi_task_1_repeat_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginLeft="6dp"
+                        android:paddingLeft="7dp"
+                        android:paddingRight="7dp"
+                        android:paddingTop="2.5dp"
+                        android:paddingBottom="2.5dp"
+                        android:background="@drawable/widget_task_repeat_bg">
+
+                        <TextView
+                            android:id="@+id/multi_task_1_repeat_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Daily"
+                            android:textColor="#333333"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Right Column: Status Pill -->
             <LinearLayout
                 android:id="@+id/multi_task_1_status_pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="10dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"
                 android:background="@drawable/widget_task_status_bg"
-                android:paddingLeft="7dp"
-                android:paddingRight="7dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp">
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp">
 
-                <ImageView
-                    android:id="@+id/multi_task_1_status_icon"
-                    android:layout_width="11dp"
-                    android:layout_height="11dp"
-                    android:src="@drawable/ic_task_clock_pending" />
-
+                <!-- Text on Left -->
                 <TextView
                     android:id="@+id/multi_task_1_status_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="3dp"
                     android:text="Pending"
-                    android:textColor="#555555"
-                    android:textSize="10sp"
+                    android:textColor="#222222"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
+
+                <!-- Icon on Right -->
+                <ImageView
+                    android:id="@+id/multi_task_1_status_icon"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginLeft="5dp"
+                    android:src="@drawable/ic_task_clock_pending" />
             </LinearLayout>
 
         </LinearLayout>
@@ -183,7 +193,7 @@
         android:id="@+id/multi_task_card_2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         android:orientation="vertical"
         android:background="@drawable/widget_task_blue_bg"
         android:paddingTop="5dp"
@@ -232,120 +242,130 @@
             android:background="@drawable/widget_white_card_body"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp">
 
-            <!-- Badges Column -->
+            <!-- Left Column: Title (Top) & Badges Row (Bottom) -->
             <LinearLayout
-                android:id="@+id/multi_task_2_badges_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_vertical"
-                android:visibility="gone">
-
-                <!-- Priority Badge -->
-                <LinearLayout
-                    android:id="@+id/multi_task_2_priority_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:background="@drawable/widget_task_priority_high_bg">
-
-                    <ImageView
-                        android:id="@+id/multi_task_2_priority_icon"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:src="@drawable/ic_task_flag_red" />
-
-                    <TextView
-                        android:id="@+id/multi_task_2_priority_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="3dp"
-                        android:text="High"
-                        android:textColor="#FF3B30"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <!-- Recurrence Badge -->
-                <LinearLayout
-                    android:id="@+id/multi_task_2_repeat_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="3dp"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:background="@drawable/widget_task_repeat_bg">
-
-                    <TextView
-                        android:id="@+id/multi_task_2_repeat_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Daily"
-                        android:textColor="#555555"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Task Title -->
-            <TextView
-                android:id="@+id/multi_task_2_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginLeft="8dp"
-                android:layout_marginRight="8dp"
-                android:layout_gravity="center_vertical"
-                android:text="Task Title"
-                android:textColor="#222222"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:lineSpacingExtra="1dp"
-                android:singleLine="false"
-                android:maxLines="2"
-                android:ellipsize="end" />
+                android:orientation="vertical"
+                android:gravity="center_vertical">
 
-            <!-- Status Pill -->
+                <!-- Task Title -->
+                <TextView
+                    android:id="@+id/multi_task_2_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Task Title"
+                    android:textColor="#222222"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:lineSpacingExtra="1dp"
+                    android:singleLine="true"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- Badges Row: Priority & Recurrence -->
+                <LinearLayout
+                    android:id="@+id/multi_task_2_badges_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone">
+
+                    <!-- Priority Badge -->
+                    <LinearLayout
+                        android:id="@+id/multi_task_2_priority_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="7dp"
+                        android:paddingRight="7dp"
+                        android:paddingTop="2.5dp"
+                        android:paddingBottom="2.5dp"
+                        android:background="@drawable/widget_task_priority_high_bg">
+
+                        <ImageView
+                            android:id="@+id/multi_task_2_priority_icon"
+                            android:layout_width="9.5dp"
+                            android:layout_height="9.5dp"
+                            android:src="@drawable/ic_task_flag_red" />
+
+                        <TextView
+                            android:id="@+id/multi_task_2_priority_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="3dp"
+                            android:text="High"
+                            android:textColor="#FF3B30"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Recurrence Badge -->
+                    <LinearLayout
+                        android:id="@+id/multi_task_2_repeat_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginLeft="6dp"
+                        android:paddingLeft="7dp"
+                        android:paddingRight="7dp"
+                        android:paddingTop="2.5dp"
+                        android:paddingBottom="2.5dp"
+                        android:background="@drawable/widget_task_repeat_bg">
+
+                        <TextView
+                            android:id="@+id/multi_task_2_repeat_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Daily"
+                            android:textColor="#333333"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Right Column: Status Pill -->
             <LinearLayout
                 android:id="@+id/multi_task_2_status_pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="10dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"
                 android:background="@drawable/widget_task_status_bg"
-                android:paddingLeft="7dp"
-                android:paddingRight="7dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp">
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp">
 
-                <ImageView
-                    android:id="@+id/multi_task_2_status_icon"
-                    android:layout_width="11dp"
-                    android:layout_height="11dp"
-                    android:src="@drawable/ic_task_clock_pending" />
-
+                <!-- Text on Left -->
                 <TextView
                     android:id="@+id/multi_task_2_status_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="3dp"
                     android:text="Pending"
-                    android:textColor="#555555"
-                    android:textSize="10sp"
+                    android:textColor="#222222"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
+
+                <!-- Icon on Right -->
+                <ImageView
+                    android:id="@+id/multi_task_2_status_icon"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginLeft="5dp"
+                    android:src="@drawable/ic_task_clock_pending" />
             </LinearLayout>
 
         </LinearLayout>
@@ -356,7 +376,7 @@
         android:id="@+id/multi_task_card_3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         android:orientation="vertical"
         android:background="@drawable/widget_task_blue_bg"
         android:paddingTop="5dp"
@@ -405,120 +425,130 @@
             android:background="@drawable/widget_white_card_body"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp">
 
-            <!-- Badges Column -->
+            <!-- Left Column: Title (Top) & Badges Row (Bottom) -->
             <LinearLayout
-                android:id="@+id/multi_task_3_badges_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_vertical"
-                android:visibility="gone">
-
-                <!-- Priority Badge -->
-                <LinearLayout
-                    android:id="@+id/multi_task_3_priority_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:background="@drawable/widget_task_priority_high_bg">
-
-                    <ImageView
-                        android:id="@+id/multi_task_3_priority_icon"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:src="@drawable/ic_task_flag_red" />
-
-                    <TextView
-                        android:id="@+id/multi_task_3_priority_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="3dp"
-                        android:text="High"
-                        android:textColor="#FF3B30"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <!-- Recurrence Badge -->
-                <LinearLayout
-                    android:id="@+id/multi_task_3_repeat_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="3dp"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:background="@drawable/widget_task_repeat_bg">
-
-                    <TextView
-                        android:id="@+id/multi_task_3_repeat_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Daily"
-                        android:textColor="#555555"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Task Title -->
-            <TextView
-                android:id="@+id/multi_task_3_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginLeft="8dp"
-                android:layout_marginRight="8dp"
-                android:layout_gravity="center_vertical"
-                android:text="Task Title"
-                android:textColor="#222222"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:lineSpacingExtra="1dp"
-                android:singleLine="false"
-                android:maxLines="2"
-                android:ellipsize="end" />
+                android:orientation="vertical"
+                android:gravity="center_vertical">
 
-            <!-- Status Pill -->
+                <!-- Task Title -->
+                <TextView
+                    android:id="@+id/multi_task_3_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Task Title"
+                    android:textColor="#222222"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:lineSpacingExtra="1dp"
+                    android:singleLine="true"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- Badges Row: Priority & Recurrence -->
+                <LinearLayout
+                    android:id="@+id/multi_task_3_badges_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone">
+
+                    <!-- Priority Badge -->
+                    <LinearLayout
+                        android:id="@+id/multi_task_3_priority_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="7dp"
+                        android:paddingRight="7dp"
+                        android:paddingTop="2.5dp"
+                        android:paddingBottom="2.5dp"
+                        android:background="@drawable/widget_task_priority_high_bg">
+
+                        <ImageView
+                            android:id="@+id/multi_task_3_priority_icon"
+                            android:layout_width="9.5dp"
+                            android:layout_height="9.5dp"
+                            android:src="@drawable/ic_task_flag_red" />
+
+                        <TextView
+                            android:id="@+id/multi_task_3_priority_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="3dp"
+                            android:text="High"
+                            android:textColor="#FF3B30"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Recurrence Badge -->
+                    <LinearLayout
+                        android:id="@+id/multi_task_3_repeat_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginLeft="6dp"
+                        android:paddingLeft="7dp"
+                        android:paddingRight="7dp"
+                        android:paddingTop="2.5dp"
+                        android:paddingBottom="2.5dp"
+                        android:background="@drawable/widget_task_repeat_bg">
+
+                        <TextView
+                            android:id="@+id/multi_task_3_repeat_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Daily"
+                            android:textColor="#333333"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Right Column: Status Pill -->
             <LinearLayout
                 android:id="@+id/multi_task_3_status_pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="10dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"
                 android:background="@drawable/widget_task_status_bg"
-                android:paddingLeft="7dp"
-                android:paddingRight="7dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp">
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp">
 
-                <ImageView
-                    android:id="@+id/multi_task_3_status_icon"
-                    android:layout_width="11dp"
-                    android:layout_height="11dp"
-                    android:src="@drawable/ic_task_clock_pending" />
-
+                <!-- Text on Left -->
                 <TextView
                     android:id="@+id/multi_task_3_status_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="3dp"
                     android:text="Pending"
-                    android:textColor="#555555"
-                    android:textSize="10sp"
+                    android:textColor="#222222"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
+
+                <!-- Icon on Right -->
+                <ImageView
+                    android:id="@+id/multi_task_3_status_icon"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginLeft="5dp"
+                    android:src="@drawable/ic_task_clock_pending" />
             </LinearLayout>
 
         </LinearLayout>
@@ -529,7 +559,7 @@
         android:id="@+id/multi_task_card_4"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         android:orientation="vertical"
         android:background="@drawable/widget_task_blue_bg"
         android:paddingTop="5dp"
@@ -578,120 +608,130 @@
             android:background="@drawable/widget_white_card_body"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp">
 
-            <!-- Badges Column -->
+            <!-- Left Column: Title (Top) & Badges Row (Bottom) -->
             <LinearLayout
-                android:id="@+id/multi_task_4_badges_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_vertical"
-                android:visibility="gone">
-
-                <!-- Priority Badge -->
-                <LinearLayout
-                    android:id="@+id/multi_task_4_priority_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:background="@drawable/widget_task_priority_high_bg">
-
-                    <ImageView
-                        android:id="@+id/multi_task_4_priority_icon"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:src="@drawable/ic_task_flag_red" />
-
-                    <TextView
-                        android:id="@+id/multi_task_4_priority_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="3dp"
-                        android:text="High"
-                        android:textColor="#FF3B30"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <!-- Recurrence Badge -->
-                <LinearLayout
-                    android:id="@+id/multi_task_4_repeat_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="3dp"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:background="@drawable/widget_task_repeat_bg">
-
-                    <TextView
-                        android:id="@+id/multi_task_4_repeat_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Daily"
-                        android:textColor="#555555"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Task Title -->
-            <TextView
-                android:id="@+id/multi_task_4_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginLeft="8dp"
-                android:layout_marginRight="8dp"
-                android:layout_gravity="center_vertical"
-                android:text="Task Title"
-                android:textColor="#222222"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:lineSpacingExtra="1dp"
-                android:singleLine="false"
-                android:maxLines="2"
-                android:ellipsize="end" />
+                android:orientation="vertical"
+                android:gravity="center_vertical">
 
-            <!-- Status Pill -->
+                <!-- Task Title -->
+                <TextView
+                    android:id="@+id/multi_task_4_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Task Title"
+                    android:textColor="#222222"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:lineSpacingExtra="1dp"
+                    android:singleLine="true"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- Badges Row: Priority & Recurrence -->
+                <LinearLayout
+                    android:id="@+id/multi_task_4_badges_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone">
+
+                    <!-- Priority Badge -->
+                    <LinearLayout
+                        android:id="@+id/multi_task_4_priority_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="7dp"
+                        android:paddingRight="7dp"
+                        android:paddingTop="2.5dp"
+                        android:paddingBottom="2.5dp"
+                        android:background="@drawable/widget_task_priority_high_bg">
+
+                        <ImageView
+                            android:id="@+id/multi_task_4_priority_icon"
+                            android:layout_width="9.5dp"
+                            android:layout_height="9.5dp"
+                            android:src="@drawable/ic_task_flag_red" />
+
+                        <TextView
+                            android:id="@+id/multi_task_4_priority_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="3dp"
+                            android:text="High"
+                            android:textColor="#FF3B30"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Recurrence Badge -->
+                    <LinearLayout
+                        android:id="@+id/multi_task_4_repeat_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginLeft="6dp"
+                        android:paddingLeft="7dp"
+                        android:paddingRight="7dp"
+                        android:paddingTop="2.5dp"
+                        android:paddingBottom="2.5dp"
+                        android:background="@drawable/widget_task_repeat_bg">
+
+                        <TextView
+                            android:id="@+id/multi_task_4_repeat_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Daily"
+                            android:textColor="#333333"
+                            android:textSize="9.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Right Column: Status Pill -->
             <LinearLayout
                 android:id="@+id/multi_task_4_status_pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="10dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"
                 android:background="@drawable/widget_task_status_bg"
-                android:paddingLeft="7dp"
-                android:paddingRight="7dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp">
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp">
 
-                <ImageView
-                    android:id="@+id/multi_task_4_status_icon"
-                    android:layout_width="11dp"
-                    android:layout_height="11dp"
-                    android:src="@drawable/ic_task_clock_pending" />
-
+                <!-- Text on Left -->
                 <TextView
                     android:id="@+id/multi_task_4_status_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="3dp"
                     android:text="Pending"
-                    android:textColor="#555555"
-                    android:textSize="10sp"
+                    android:textColor="#222222"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
+
+                <!-- Icon on Right -->
+                <ImageView
+                    android:id="@+id/multi_task_4_status_icon"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginLeft="5dp"
+                    android:src="@drawable/ic_task_clock_pending" />
             </LinearLayout>
 
         </LinearLayout>
@@ -734,16 +774,16 @@
     <LinearLayout
         android:id="@+id/multi_task_add_card"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="6dp"
         android:orientation="horizontal"
         android:gravity="center"
         android:background="@drawable/widget_white_card_body">
 
         <ImageView
             android:id="@+id/multi_task_add_icon"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:src="@drawable/ic_task_add_circle"
             android:contentDescription="Add Task" />
     </LinearLayout>

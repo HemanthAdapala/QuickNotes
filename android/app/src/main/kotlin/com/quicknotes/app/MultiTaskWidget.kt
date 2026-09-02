@@ -198,16 +198,15 @@ class MultiTaskWidget : HomeWidgetProvider() {
                 for (i in 0..3) {
                     if (i < countToRender) {
                         val task = taskList[i]
+                        val resolvedState = TaskWidgetDateHelper.resolveTaskState(task)
                         val title = task.optString("title", "Untitled Task")
-                        val formattedDate = task.optString("formatted_date", "")
-                        val formattedTime = task.optString("formatted_time", "")
+                        val formattedDate = resolvedState.formattedDate
+                        val formattedTime = resolvedState.formattedTime
                         val priority = task.optString("priority", "None")
                         val hasPriority = task.optBoolean("has_priority", false) && !priority.equals("None", ignoreCase = true)
                         val hasRepeat = task.optBoolean("has_repeat", false)
                         val repeatLabel = task.optString("repeat_label", "")
-                        val isCompleted = task.optBoolean("completed", false) ||
-                                task.optBoolean("is_completed", false) ||
-                                task.optString("status") == "completed"
+                        val isCompleted = resolvedState.isCompleted
 
                         views.setViewVisibility(cardIds[i], View.VISIBLE)
                         views.setTextViewText(dateIds[i], formattedDate)
@@ -271,11 +270,11 @@ class MultiTaskWidget : HomeWidgetProvider() {
                         if (isCompleted) {
                             views.setImageViewResource(statusIconIds[i], R.drawable.ic_task_check_completed)
                             views.setTextViewText(statusTextIds[i], "Completed")
-                            views.setTextColor(statusTextIds[i], Color.parseColor("#111111"))
+                            views.setTextColor(statusTextIds[i], Color.parseColor("#222222"))
                         } else {
                             views.setImageViewResource(statusIconIds[i], R.drawable.ic_task_clock_pending)
                             views.setTextViewText(statusTextIds[i], "Pending")
-                            views.setTextColor(statusTextIds[i], Color.parseColor("#555555"))
+                            views.setTextColor(statusTextIds[i], Color.parseColor("#222222"))
                         }
 
                         // Per-Card Task Deep Link: quicknotes://task/<taskId>
@@ -301,16 +300,24 @@ class MultiTaskWidget : HomeWidgetProvider() {
                 views.setViewVisibility(R.id.multi_task_add_card, View.VISIBLE)
             }
 
-            // 4. Safe App Launch Intent (Root, Empty Card, Add Card)
+            // 4. Safe App Launch Intent (Root, Empty Card)
             val defaultLaunchIntent = HomeWidgetLaunchIntent.getActivity(
                 context,
                 MainActivity::class.java
             )
             views.setOnClickPendingIntent(R.id.widget_multi_task_root, defaultLaunchIntent)
-            views.setOnClickPendingIntent(R.id.multi_task_add_card, defaultLaunchIntent)
             views.setOnClickPendingIntent(R.id.multi_task_empty_card, defaultLaunchIntent)
 
+            // 5. Direct New Task Intent (Add Task Card) -> quicknotes://task/new
+            val newTaskIntent = HomeWidgetLaunchIntent.getActivity(
+                context,
+                MainActivity::class.java,
+                Uri.parse("quicknotes://task/new")
+            )
+            views.setOnClickPendingIntent(R.id.multi_task_add_card, newTaskIntent)
+
             appWidgetManager.updateAppWidget(appWidgetId, views)
+            MidnightWidgetUpdateReceiver.scheduleMidnightAlarm(context)
         }
     }
 }

@@ -177,5 +177,56 @@ void main() {
       expect(newOccurrence.recurringSeriesId, equals('series-reading-1'));
       expect(newOccurrence.dueDate, equals(DateTime(2026, 7, 25, 9, 0, 0)));
     });
+
+    test('Mutating recurrence cycle between Never, Daily, Weekly, and back to Never', () async {
+      // 1. Create a non-recurring task
+      final task = await engine.createTask(
+        title: 'Recurrence Mutation Task',
+        dueDate: DateTime(2026, 8, 31, 10, 0),
+      );
+      expect(task.isRecurring, isFalse);
+      expect(task.recurrence, isNull);
+
+      // 2. Edit from Never -> Daily
+      final updatedDaily = task.copyWith(
+        isRecurring: true,
+        recurrence: const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+      );
+      final savedDaily = await engine.updateTask(updatedDaily);
+      expect(savedDaily.isRecurring, isTrue);
+      expect(savedDaily.recurrence?.type, RecurrenceType.daily);
+      expect(savedDaily.toMap()['recurrenceRule'], isNotNull);
+
+      // 3. Edit from Daily -> Never
+      final updatedNever = savedDaily.copyWith(
+        isRecurring: false,
+        recurrence: null,
+        clearRecurrence: true,
+      );
+      final savedNever = await engine.updateTask(updatedNever);
+      expect(savedNever.isRecurring, isFalse);
+      expect(savedNever.recurrence, isNull);
+      expect(savedNever.toMap()['recurrenceRule'], isNull);
+
+      // 4. Edit from Never -> Weekly
+      final updatedWeekly = savedNever.copyWith(
+        isRecurring: true,
+        recurrence: const RecurrenceRule(type: RecurrenceType.weekly, interval: 1),
+      );
+      final savedWeekly = await engine.updateTask(updatedWeekly);
+      expect(savedWeekly.isRecurring, isTrue);
+      expect(savedWeekly.recurrence?.type, RecurrenceType.weekly);
+      expect(savedWeekly.toMap()['recurrenceRule'], isNotNull);
+
+      // 5. Edit from Weekly -> Never without explicit clearRecurrence (isRecurring: false, recurrence: null)
+      final updatedNeverImplicit = savedWeekly.copyWith(
+        isRecurring: false,
+        recurrence: null,
+      );
+      final savedNeverImplicit = await engine.updateTask(updatedNeverImplicit);
+      expect(savedNeverImplicit.isRecurring, isFalse);
+      expect(savedNeverImplicit.recurrence, isNull);
+      expect(savedNeverImplicit.toMap()['recurrenceRule'], isNull);
+    });
   });
 }

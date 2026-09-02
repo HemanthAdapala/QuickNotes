@@ -21,7 +21,7 @@ void main() {
         repeatRule: RepeatRule.daily,
       );
 
-      final snapshot = SingleTaskSnapshot.fromTask(task);
+      final snapshot = SingleTaskSnapshot.fromTask(task, now: fixedDate);
 
       expect(snapshot.id, 'task-uuid-1');
       expect(snapshot.title, 'Client Meeting Tomorrow');
@@ -714,6 +714,248 @@ void main() {
 
       expect(prefs['quicknotes_tasks_catalog'], '[]');
       expect(prefs['quicknotes_tasks_map'], '{}');
+    });
+  });
+
+  group('Phase T15B — Recurring Task Completion & Occurrence Projection Tests', () {
+    final fixedNow = DateTime.utc(2026, 8, 31, 10, 0, 0); // Monday, 31 August 2026
+
+    test('T15B-1: Non-recurring pending task remains pending with original due date', () {
+      final task = TaskItem(
+        id: 't15b-1',
+        title: 'Non-recurring Pending',
+        dueDate: DateTime.utc(2026, 8, 31, 15, 0, 0),
+        status: TaskStatus.waiting,
+        priority: 'High',
+      );
+
+      final snapshot = SingleTaskSnapshot.fromTask(task, now: fixedNow);
+      expect(snapshot.completed, isFalse);
+      expect(snapshot.statusLabel, 'Pending');
+      expect(snapshot.status, 'waiting');
+      expect(snapshot.dueDateIso, '2026-08-31T15:00:00.000Z');
+      expect(snapshot.formattedDate.contains('2026'), isTrue);
+    });
+
+    test('T15B-2: Non-recurring completed task remains completed with original due date', () {
+      final task = TaskItem(
+        id: 't15b-2',
+        title: 'Non-recurring Completed',
+        dueDate: DateTime.utc(2026, 8, 31, 15, 0, 0),
+        status: TaskStatus.completed,
+        priority: 'Medium',
+      );
+
+      final snapshot = SingleTaskSnapshot.fromTask(task, now: fixedNow);
+      expect(snapshot.completed, isTrue);
+      expect(snapshot.statusLabel, 'Completed');
+      expect(snapshot.status, 'completed');
+      expect(snapshot.dueDateIso, '2026-08-31T15:00:00.000Z');
+      expect(snapshot.formattedDate.contains('2026'), isTrue);
+    });
+
+    test('T15B-3: Weekly recurring task with current occurrence pending projects correct date', () {
+      // Created last week (Aug 24), recurrence weekly, Aug 31 is pending
+      final task = TaskItem(
+        id: 't15b-3',
+        title: 'Weekly Team Sync',
+        dueDate: DateTime.utc(2026, 8, 24, 10, 0, 0),
+        repeatRule: RepeatRule.weekly,
+        completedDates: ['2026-08-24'],
+        status: TaskStatus.waiting,
+        priority: 'High',
+      );
+
+      final snapshot = SingleTaskSnapshot.fromTask(task, now: fixedNow);
+      expect(snapshot.completed, isFalse);
+      expect(snapshot.statusLabel, 'Pending');
+      expect(snapshot.formattedDate.contains('August 2026') || snapshot.formattedDate.contains('Aug 2026') || snapshot.formattedDate.contains('31'), isTrue);
+      expect(snapshot.dueDateIso, '2026-08-31T10:00:00.000Z');
+      expect(snapshot.repeatLabel, 'Weekly');
+      expect(snapshot.hasRepeat, isTrue);
+    });
+
+    test('T15B-4: Weekly recurring task with current occurrence completed shows Completed today and Pending next week', () {
+      // Aug 24 and Aug 31 both completed.
+      final task = TaskItem(
+        id: 't15b-4',
+        title: 'Weekly Grocery Shopping',
+        dueDate: DateTime.utc(2026, 8, 24, 9, 30, 0),
+        repeatRule: RepeatRule.weekly,
+        completedDates: ['2026-08-24', '2026-08-31'],
+        status: TaskStatus.waiting,
+        priority: 'Low',
+      );
+
+      // On Aug 31 (today), it shows Completed for Aug 31
+      final snapToday = SingleTaskSnapshot.fromTask(task, now: fixedNow);
+      expect(snapToday.completed, isTrue);
+      expect(snapToday.statusLabel, 'Completed');
+      expect(snapToday.dueDateIso, '2026-08-31T09:30:00.000Z');
+
+      // On Sep 1 (tomorrow), it rolls over to next occurrence (Sep 7) as Pending
+      final snapNextDay = SingleTaskSnapshot.fromTask(task, now: DateTime.utc(2026, 9, 1, 9, 0, 0));
+      expect(snapNextDay.completed, isFalse);
+      expect(snapNextDay.statusLabel, 'Pending');
+      expect(snapNextDay.dueDateIso, '2026-09-07T09:30:00.000Z');
+    });
+
+    test('T15B-5: Recurring task with multiple completed occurrences shows Completed today and Pending tomorrow', () {
+      final task = TaskItem(
+        id: 't15b-5',
+        title: 'Daily Standup',
+        dueDate: DateTime.utc(2026, 8, 28, 9, 0, 0),
+        repeatRule: RepeatRule.daily,
+        completedDates: ['2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31'],
+        status: TaskStatus.waiting,
+        priority: 'Medium',
+      );
+
+      // On Aug 31 (today), shows Aug 31 as Completed
+      final snapToday = SingleTaskSnapshot.fromTask(task, now: fixedNow);
+      expect(snapToday.completed, isTrue);
+      expect(snapToday.statusLabel, 'Completed');
+      expect(snapToday.dueDateIso, '2026-08-31T09:00:00.000Z');
+
+      // On Sep 1 (tomorrow), rolls over to Sep 1 as Pending
+      final snapNextDay = SingleTaskSnapshot.fromTask(task, now: DateTime.utc(2026, 9, 1, 8, 0, 0));
+      expect(snapNextDay.completed, isFalse);
+      expect(snapNextDay.statusLabel, 'Pending');
+      expect(snapNextDay.dueDateIso, '2026-09-01T09:00:00.000Z');
+    });
+
+    test('T15B-6: Recurring task base TaskItem.dueDate is NOT mutated during snapshot generation', () {
+      final originalDueDate = DateTime.utc(2026, 8, 24, 10, 0, 0);
+      final task = TaskItem(
+        id: 't15b-6',
+        title: 'Immutability Check DueDate',
+        dueDate: originalDueDate,
+        repeatRule: RepeatRule.weekly,
+        completedDates: ['2026-08-24', '2026-08-31'],
+        status: TaskStatus.waiting,
+        priority: 'None',
+      );
+
+      final snapshot = SingleTaskSnapshot.fromTask(task, now: fixedNow);
+      expect(task.dueDate, originalDueDate);
+      expect(task.dueDate, isNot(DateTime.parse(snapshot.dueDateIso)));
+    });
+
+    test('T15B-7: Recurring task completedDates list is NOT mutated during snapshot generation', () {
+      final originalCompletedDates = ['2026-08-24', '2026-08-31'];
+      final task = TaskItem(
+        id: 't15b-7',
+        title: 'Immutability Check CompletedDates',
+        dueDate: DateTime.utc(2026, 8, 24, 10, 0, 0),
+        repeatRule: RepeatRule.weekly,
+        completedDates: List.unmodifiable(originalCompletedDates),
+        status: TaskStatus.waiting,
+        priority: 'None',
+      );
+
+      SingleTaskSnapshot.fromTask(task, now: fixedNow);
+      expect(task.completedDates, ['2026-08-24', '2026-08-31']);
+    });
+
+    test('T15B-8: Recurring task status is NOT mutated during snapshot generation', () {
+      final task = TaskItem(
+        id: 't15b-8',
+        title: 'Immutability Check Status',
+        dueDate: DateTime.utc(2026, 8, 24, 10, 0, 0),
+        repeatRule: RepeatRule.weekly,
+        completedDates: ['2026-08-24', '2026-08-31'],
+        status: TaskStatus.waiting,
+        priority: 'None',
+      );
+
+      SingleTaskSnapshot.fromTask(task, now: fixedNow);
+      expect(task.status, TaskStatus.waiting);
+      expect(task.completed, isFalse);
+    });
+
+    test('T15B-9: Recurring task reaching max occurrences marks snapshot Completed', () {
+      final task = TaskItem(
+        id: 't15b-9',
+        title: 'Limited Recurrence',
+        dueDate: DateTime.utc(2026, 8, 24, 10, 0, 0),
+        recurrence: const RecurrenceRule(
+          type: RecurrenceType.weekly,
+          interval: 1,
+          maxOccurrences: 2,
+        ),
+        completedDates: ['2026-08-24', '2026-08-31'],
+        status: TaskStatus.waiting,
+        priority: 'None',
+      );
+
+      final snapshot = SingleTaskSnapshot.fromTask(task, now: fixedNow);
+      expect(snapshot.completed, isTrue);
+      expect(snapshot.statusLabel, 'Completed');
+      expect(snapshot.status, 'completed');
+    });
+
+    test('T15B-10: Date-boundary behavior is deterministic using injected time parameter', () {
+      final task = TaskItem(
+        id: 't15b-10',
+        title: 'Boundary Check',
+        dueDate: DateTime.utc(2026, 8, 31, 10, 0, 0),
+        repeatRule: RepeatRule.daily,
+        status: TaskStatus.waiting,
+        priority: 'None',
+      );
+
+      // Evaluated on Aug 31
+      final snapAug31 = SingleTaskSnapshot.fromTask(task, now: DateTime.utc(2026, 8, 31, 12, 0, 0));
+      expect(snapAug31.dueDateIso, '2026-08-31T10:00:00.000Z');
+
+      // Evaluated on Sep 1 with Aug 31 completed
+      final completedAug31Task = task.copyWith(completedDates: ['2026-08-31']);
+      final snapSep1 = SingleTaskSnapshot.fromTask(completedAug31Task, now: DateTime.utc(2026, 9, 1, 8, 0, 0));
+      expect(snapSep1.dueDateIso, '2026-09-01T10:00:00.000Z');
+    });
+
+    test('T15B-11 (Section 15 & 17): Explicit before/after completion transition verification & pure observation', () {
+      final taskBefore = TaskItem(
+        id: 't15b-11',
+        title: 'Weekly Status Report',
+        dueDate: DateTime.utc(2026, 8, 24, 14, 0, 0),
+        repeatRule: RepeatRule.weekly,
+        completedDates: ['2026-08-24'],
+        status: TaskStatus.waiting,
+        priority: 'High',
+      );
+
+      // 1. Before completing Aug 31 occurrence:
+      final snapBefore = SingleTaskSnapshot.fromTask(taskBefore, now: fixedNow);
+      expect(snapBefore.dueDateIso, '2026-08-31T14:00:00.000Z');
+      expect(snapBefore.completed, isFalse);
+      expect(snapBefore.statusLabel, 'Pending');
+
+      // 2. User completes Aug 31 (adds '2026-08-31' to completedDates without mutating TaskItem.dueDate or status):
+      final taskAfter = taskBefore.copyWith(
+        completedDates: ['2026-08-24', '2026-08-31'],
+      );
+
+      // 3. After completing Aug 31 occurrence on Aug 31:
+      final snapAfter = SingleTaskSnapshot.fromTask(taskAfter, now: fixedNow);
+      expect(snapAfter.dueDateIso, '2026-08-31T14:00:00.000Z');
+      expect(snapAfter.completed, isTrue);
+      expect(snapAfter.statusLabel, 'Completed');
+
+      // 4. On next week/day (Sep 1): rolls over to next occurrence (Sep 7) as Pending
+      final snapNextWeek = SingleTaskSnapshot.fromTask(taskAfter, now: DateTime.utc(2026, 9, 1, 10, 0, 0));
+      expect(snapNextWeek.dueDateIso, '2026-09-07T14:00:00.000Z');
+      expect(snapNextWeek.completed, isFalse);
+      expect(snapNextWeek.statusLabel, 'Pending');
+
+      // 5. Assert observational purity:
+      expect(taskBefore.dueDate, DateTime.utc(2026, 8, 24, 14, 0, 0));
+      expect(taskBefore.status, TaskStatus.waiting);
+      expect(taskBefore.completedDates, ['2026-08-24']);
+
+      expect(taskAfter.dueDate, DateTime.utc(2026, 8, 24, 14, 0, 0));
+      expect(taskAfter.status, TaskStatus.waiting);
+      expect(taskAfter.completedDates, ['2026-08-24', '2026-08-31']);
     });
   });
 }

@@ -148,7 +148,13 @@ class WidgetDataAdapter {
     );
   }
 
+  Future<void>? _syncQueue;
+
   /// Synchronizes the latest widget snapshot with platform shared storage (HomeWidget).
+  ///
+  /// Sequential queue guarantees that asynchronous widget updates execute in
+  /// deterministic order and an older sync transaction can never finish after
+  /// or overwrite a newer sync transaction.
   ///
   /// This method isolates all errors to ensure a widget update failure NEVER
   /// interferes with primary note or task saving in the database.
@@ -157,9 +163,53 @@ class WidgetDataAdapter {
     List<TaskItem>? tasks,
     DateTime? now,
     bool? hasActiveSession,
+  }) {
+    final completer = Completer<bool>();
+
+    _syncQueue = (_syncQueue ?? Future<void>.value()).then((_) async {
+      try {
+        final result = await _performSync(
+          notes: notes,
+          tasks: tasks,
+          now: now,
+          hasActiveSession: hasActiveSession,
+        );
+        if (!completer.isCompleted) {
+          completer.complete(result);
+        }
+      } catch (e, st) {
+        debugPrint('WidgetDataAdapter.sync error (isolated): $e\n$st');
+        if (!completer.isCompleted) {
+          completer.complete(false);
+        }
+      }
+    }).catchError((e, st) {
+      debugPrint('WidgetDataAdapter._syncQueue error: $e\n$st');
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
+    });
+
+    return completer.future;
+  }
+
+  Future<bool> _performSync({
+    List<Note>? notes,
+    List<TaskItem>? tasks,
+    DateTime? now,
+    bool? hasActiveSession,
   }) async {
     if (notes != null) _lastNotes = List.unmodifiable(notes);
     if (tasks != null) _lastTasks = List.unmodifiable(tasks);
+
+    // Ensure session manager is initialized before checking login state
+    if (hasActiveSession == null && !_sessionManager.isInitialized) {
+      try {
+        await _sessionManager.init();
+      } catch (e) {
+        debugPrint('WidgetDataAdapter: SessionManager.init error: $e');
+      }
+    }
 
     try {
       final payload = buildSnapshot(
@@ -180,48 +230,61 @@ class WidgetDataAdapter {
 
       final sessionActive = hasActiveSession ?? _sessionManager.isLoggedIn;
 
-      // 1. Write SingleNoteWidget catalog and snapshots for active unlocked notes
-      if (sessionActive && _lastNotes.isNotEmpty) {
-        final activeUnlockedNotes = _lastNotes
-            .where((n) => !n.isLocked && !n.isDeleted && !n.isArchived)
-            .toList();
-
-        final catalogList = <Map<String, dynamic>>[];
-        final noteMap = <String, Map<String, dynamic>>{};
-
-        for (final note in activeUnlockedNotes) {
-          final snapshot = SingleNoteSnapshot.fromNote(note, now: now);
-          catalogList.add(snapshot.toCatalogEntry());
-          noteMap[note.id] = snapshot.toJson();
-        }
-
-        await _saveData(notesCatalogKey, jsonEncode(catalogList));
-        await _saveData(notesMapKey, jsonEncode(noteMap));
-      } else {
+      if (!sessionActive) {
+        _lastNotes = const [];
+        _lastTasks = const [];
         await _saveData(notesCatalogKey, '[]');
         await _saveData(notesMapKey, '{}');
-      }
-
-      // 2. Write Task Widgets catalog and snapshots for active non-deleted/non-archived tasks
-      if (sessionActive && _lastTasks.isNotEmpty) {
-        final activeTasks = _lastTasks
-            .where((t) => !t.isDeleted && t.status != TaskStatus.archived)
-            .toList();
-
-        final taskCatalogList = <Map<String, dynamic>>[];
-        final taskMap = <String, Map<String, dynamic>>{};
-
-        for (final task in activeTasks) {
-          final snapshot = SingleTaskSnapshot.fromTask(task, now: now);
-          taskCatalogList.add(snapshot.toCatalogEntry());
-          taskMap[task.id] = snapshot.toJson();
-        }
-
-        await _saveData(tasksCatalogKey, jsonEncode(taskCatalogList));
-        await _saveData(tasksMapKey, jsonEncode(taskMap));
-      } else {
         await _saveData(tasksCatalogKey, '[]');
         await _saveData(tasksMapKey, '{}');
+      } else {
+        // 1. Write SingleNoteWidget catalog and snapshots for active unlocked notes (only if notes explicitly provided)
+        if (notes != null) {
+          if (notes.isNotEmpty) {
+            final activeUnlockedNotes = notes
+                .where((n) => !n.isLocked && !n.isDeleted && !n.isArchived)
+                .toList();
+
+            final catalogList = <Map<String, dynamic>>[];
+            final noteMap = <String, Map<String, dynamic>>{};
+
+            for (final note in activeUnlockedNotes) {
+              final snapshot = SingleNoteSnapshot.fromNote(note, now: now);
+              catalogList.add(snapshot.toCatalogEntry());
+              noteMap[note.id] = snapshot.toJson();
+            }
+
+            await _saveData(notesCatalogKey, jsonEncode(catalogList));
+            await _saveData(notesMapKey, jsonEncode(noteMap));
+          } else {
+            await _saveData(notesCatalogKey, '[]');
+            await _saveData(notesMapKey, '{}');
+          }
+        }
+
+        // 2. Write Task Widgets catalog and snapshots for active non-deleted/non-archived tasks (only if tasks explicitly provided)
+        if (tasks != null) {
+          if (tasks.isNotEmpty) {
+            final activeTasks = tasks
+                .where((t) => !t.isDeleted && t.status != TaskStatus.archived)
+                .toList();
+
+            final taskCatalogList = <Map<String, dynamic>>[];
+            final taskMap = <String, Map<String, dynamic>>{};
+
+            for (final task in activeTasks) {
+              final snapshot = SingleTaskSnapshot.fromTask(task, now: now);
+              taskCatalogList.add(snapshot.toCatalogEntry());
+              taskMap[task.id] = snapshot.toJson();
+            }
+
+            await _saveData(tasksCatalogKey, jsonEncode(taskCatalogList));
+            await _saveData(tasksMapKey, jsonEncode(taskMap));
+          } else {
+            await _saveData(tasksCatalogKey, '[]');
+            await _saveData(tasksMapKey, '{}');
+          }
+        }
       }
 
       // Request native widget timeline reloads
@@ -259,7 +322,32 @@ class WidgetDataAdapter {
   }
 
   /// Clears the widget snapshot on logout or account deletion.
-  Future<bool> clearSnapshot({DateTime? now}) async {
+  Future<bool> clearSnapshot({DateTime? now}) {
+    final completer = Completer<bool>();
+
+    _syncQueue = (_syncQueue ?? Future<void>.value()).then((_) async {
+      try {
+        final result = await _performClearSnapshot(now: now);
+        if (!completer.isCompleted) {
+          completer.complete(result);
+        }
+      } catch (e, st) {
+        debugPrint('WidgetDataAdapter.clearSnapshot error: $e\n$st');
+        if (!completer.isCompleted) {
+          completer.complete(false);
+        }
+      }
+    }).catchError((e, st) {
+      debugPrint('WidgetDataAdapter._syncQueue clear error: $e\n$st');
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
+    });
+
+    return completer.future;
+  }
+
+  Future<bool> _performClearSnapshot({DateTime? now}) async {
     _lastNotes = const [];
     _lastTasks = const [];
 

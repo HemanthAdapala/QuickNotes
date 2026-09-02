@@ -99,6 +99,19 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/multi_task_widget_info" />
         </receiver>
 
+        <!-- Midnight & Date-Change Receiver for Live Rollover & Widget Redraws -->
+        <receiver
+            android:name="com.quicknotes.app.MidnightWidgetUpdateReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="com.quicknotes.app.ACTION_MIDNIGHT_WIDGET_TICK" />
+            </intent-filter>
+        </receiver>
+
         <!-- Note Selection / Configuration Activity for SingleNoteWidget -->
         <activity
             android:name="com.quicknotes.app.NoteWidgetConfigureActivity"

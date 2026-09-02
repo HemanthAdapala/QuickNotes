@@ -81,16 +81,15 @@ class SingleTaskWidget : HomeWidgetProvider() {
 
             // 3. Render either Active Task Content or Safe Fallback State
             if (taskJson != null && !selectedTaskId.isNullOrEmpty()) {
+                val resolvedState = TaskWidgetDateHelper.resolveTaskState(taskJson)
                 val title = taskJson.optString("title", "Untitled Task")
-                val formattedDate = taskJson.optString("formatted_date", "")
-                val formattedTime = taskJson.optString("formatted_time", "")
+                val formattedDate = resolvedState.formattedDate
+                val formattedTime = resolvedState.formattedTime
                 val priority = taskJson.optString("priority", "None")
                 val hasPriority = taskJson.optBoolean("has_priority", false) && !priority.equals("None", ignoreCase = true)
                 val hasRepeat = taskJson.optBoolean("has_repeat", false)
                 val repeatLabel = taskJson.optString("repeat_label", "")
-                val isCompleted = taskJson.optBoolean("completed", false) ||
-                        taskJson.optBoolean("is_completed", false) ||
-                        taskJson.optString("status") == "completed"
+                val isCompleted = resolvedState.isCompleted
 
                 views.setViewVisibility(R.id.widget_task_content_container, View.VISIBLE)
                 views.setViewVisibility(R.id.widget_task_fallback_container, View.GONE)
@@ -144,11 +143,11 @@ class SingleTaskWidget : HomeWidgetProvider() {
                 if (isCompleted) {
                     views.setImageViewResource(R.id.widget_task_status_icon, R.drawable.ic_task_check_completed)
                     views.setTextViewText(R.id.widget_task_status_text, "Completed")
-                    views.setTextColor(R.id.widget_task_status_text, Color.parseColor("#111111"))
+                    views.setTextColor(R.id.widget_task_status_text, Color.parseColor("#222222"))
                 } else {
                     views.setImageViewResource(R.id.widget_task_status_icon, R.drawable.ic_task_clock_pending)
                     views.setTextViewText(R.id.widget_task_status_text, "Pending")
-                    views.setTextColor(R.id.widget_task_status_text, Color.parseColor("#555555"))
+                    views.setTextColor(R.id.widget_task_status_text, Color.parseColor("#222222"))
                 }
 
                 // Safe Task Deep Link Intent: quicknotes://task/<taskId>
@@ -185,6 +184,7 @@ class SingleTaskWidget : HomeWidgetProvider() {
             }
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
+            MidnightWidgetUpdateReceiver.scheduleMidnightAlarm(context)
         }
     }
 }

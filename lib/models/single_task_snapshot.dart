@@ -4,12 +4,13 @@ import 'task_item.dart';
 import 'task_status.dart';
 import 'repeat_rule.dart';
 import 'recurrence_rule.dart';
+import '../services/recurrence_calculator.dart';
 
 /// SingleTaskSnapshot — Sanitized, immutable snapshot of an individual task for Native Android Home Screen Task Widgets.
 ///
 /// **Design & Data Integrity Contract:**
 /// 1. Preserves exact task title and content without reinterpretation or lossy formatting.
-/// 2. Canonical completion state derived strictly from domain [TaskStatus].
+/// 2. Canonical completion state derived strictly from domain [TaskStatus] and projected occurrence [completedDates].
 /// 3. Device-local formatted date ("Tue, 1 June 2026") and time ("02:00 AM").
 /// 4. Normalized priority ('High', 'Medium', 'Low', 'None') and human-readable recurrence labels.
 /// 5. Privacy & Data Minimization: Excludes deleted (`isDeleted == true`) and archived (`status == TaskStatus.archived`) tasks.
@@ -48,9 +49,103 @@ class SingleTaskSnapshot {
     required this.updatedAt,
   });
 
+  static RecurrenceRule? _resolveRecurrenceRule(TaskItem task) {
+    if (task.recurrence != null) {
+      return task.recurrence;
+    }
+    if (task.repeatRule != RepeatRule.none) {
+      switch (task.repeatRule) {
+        case RepeatRule.daily:
+        case RepeatRule.weekdays:
+          return const RecurrenceRule(type: RecurrenceType.daily, interval: 1);
+        case RepeatRule.weekly:
+          return const RecurrenceRule(type: RecurrenceType.weekly, interval: 1);
+        case RepeatRule.monthly:
+          return const RecurrenceRule(type: RecurrenceType.monthly, interval: 1);
+        case RepeatRule.yearly:
+          return const RecurrenceRule(type: RecurrenceType.yearly, interval: 1);
+        case RepeatRule.none:
+          return null;
+      }
+    }
+    return null;
+  }
+
+  static (DateTime projectedDue, bool isCompleted) _resolveOccurrence({
+    required TaskItem task,
+    required DateTime now,
+    required RecurrenceRule? rule,
+  }) {
+    final baseDue = task.dueDate.toLocal();
+    if (rule == null ||
+        (!task.isRecurring &&
+            task.recurrence == null &&
+            task.repeatRule == RepeatRule.none)) {
+      final isCompleted =
+          task.completed || task.status == TaskStatus.completed;
+      return (baseDue, isCompleted);
+    }
+
+    if (task.completed || task.status == TaskStatus.completed) {
+      return (baseDue, true);
+    }
+
+    final localNow = now.toLocal();
+    final today = DateTime(localNow.year, localNow.month, localNow.day);
+    final taskStart = DateTime(baseDue.year, baseDue.month, baseDue.day);
+
+    DateTime currentCandidate = baseDue;
+    int occurrenceCount = 1;
+    DateTime? lastCompletedCandidate;
+
+    while (occurrenceCount <= 500) {
+      final candLocal = currentCandidate.toLocal();
+      final candDate = DateTime(candLocal.year, candLocal.month, candLocal.day);
+      final dateStr =
+          '${candDate.year}-${candDate.month.toString().padLeft(2, '0')}-${candDate.day.toString().padLeft(2, '0')}';
+      final isCompletedOnDay = task.completedDates.contains(dateStr);
+
+      if (candDate.isAtSameMomentAs(today)) {
+        return (currentCandidate, isCompletedOnDay);
+      } else if (candDate.isAfter(today)) {
+        return (currentCandidate, isCompletedOnDay);
+      }
+
+      if (isCompletedOnDay) {
+        lastCompletedCandidate = currentCandidate;
+      }
+
+      final next = RecurrenceCalculator.nextOccurrence(
+        currentCandidate,
+        rule,
+        currentOccurrenceCount: occurrenceCount,
+      );
+
+      if (next == null) {
+        if (lastCompletedCandidate != null) {
+          return (lastCompletedCandidate, true);
+        }
+        return (currentCandidate, isCompletedOnDay);
+      }
+
+      currentCandidate = next;
+      occurrenceCount++;
+    }
+
+    return (lastCompletedCandidate ?? currentCandidate, false);
+  }
+
   /// Factory creating a sanitized [SingleTaskSnapshot] from a domain [TaskItem].
   factory SingleTaskSnapshot.fromTask(TaskItem task, {DateTime? now}) {
-    final localDue = task.dueDate.toLocal();
+    final effectiveNow = now ?? DateTime.now();
+    final rule = _resolveRecurrenceRule(task);
+    final (projectedDue, isProjectedCompleted) = _resolveOccurrence(
+      task: task,
+      now: effectiveNow,
+      rule: rule,
+    );
+
+    final localDue = projectedDue.toLocal();
     final formattedDate = DateFormat('EEE, d MMMM yyyy').format(localDue);
 
     // Resolve time: reminderTime > startTime > dueDate
@@ -125,8 +220,7 @@ class SingleTaskSnapshot {
     }
 
     final bool isRepeatActive = resolvedRepeatLabel.isNotEmpty;
-    final bool isTaskCompleted =
-        task.completed || task.status == TaskStatus.completed;
+    final bool isTaskCompleted = isProjectedCompleted;
     final String statusLabel = isTaskCompleted ? 'Completed' : 'Pending';
 
     final cleanTitle =
@@ -136,9 +230,11 @@ class SingleTaskSnapshot {
       id: task.id,
       title: cleanTitle,
       description: task.description.trim(),
-      status: task.status.toDbString(),
+      status: isTaskCompleted
+          ? TaskStatus.completed.toDbString()
+          : task.status.toDbString(),
       completed: isTaskCompleted,
-      dueDateIso: task.dueDate.toUtc().toIso8601String(),
+      dueDateIso: projectedDue.toUtc().toIso8601String(),
       formattedDate: formattedDate,
       formattedTime: formattedTime,
       priority: resolvedPriority,

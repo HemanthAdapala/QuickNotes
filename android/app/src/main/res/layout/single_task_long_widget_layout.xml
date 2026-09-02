@@ -51,7 +51,7 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
-        <!-- Active Task Content (Horizontal Flow) -->
+        <!-- Active Task Content (Horizontal Flow: Left Column [Title + Badges], Right Column [Status Pill]) -->
         <LinearLayout
             android:id="@+id/widget_task_long_content_container"
             android:layout_width="match_parent"
@@ -59,117 +59,127 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- Badges Column: Priority & Recurrence -->
+            <!-- Left Column: Title (Top) and Badges Row (Bottom) -->
             <LinearLayout
-                android:id="@+id/widget_task_long_badges_container"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center_vertical">
 
-                <!-- Priority Badge -->
+                <!-- 1. Task Title -->
+                <TextView
+                    android:id="@+id/widget_task_long_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Shopping with Friends"
+                    android:textColor="#222222"
+                    android:textSize="16.5sp"
+                    android:textStyle="bold"
+                    android:lineSpacingExtra="1dp"
+                    android:singleLine="true"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- 2. Badges Row: Priority & Recurrence -->
                 <LinearLayout
-                    android:id="@+id/widget_task_long_priority_badge"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/widget_task_long_badges_container"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:background="@drawable/widget_task_priority_high_bg">
+                    android:layout_marginTop="6dp">
 
-                    <ImageView
-                        android:id="@+id/widget_task_long_priority_icon"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:src="@drawable/ic_task_flag_red" />
-
-                    <TextView
-                        android:id="@+id/widget_task_long_priority_text"
+                    <!-- Priority Badge -->
+                    <LinearLayout
+                        android:id="@+id/widget_task_long_priority_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="3dp"
-                        android:text="High"
-                        android:textColor="#FF3B30"
-                        android:textSize="9.5sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="8dp"
+                        android:paddingRight="8dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        android:background="@drawable/widget_task_priority_high_bg">
 
-                <!-- Recurrence Badge -->
-                <LinearLayout
-                    android:id="@+id/widget_task_long_repeat_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="4dp"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp"
-                    android:background="@drawable/widget_task_repeat_bg">
+                        <ImageView
+                            android:id="@+id/widget_task_long_priority_icon"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_task_flag_red" />
 
-                    <TextView
-                        android:id="@+id/widget_task_long_repeat_text"
+                        <TextView
+                            android:id="@+id/widget_task_long_priority_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="4dp"
+                            android:text="High"
+                            android:textColor="#FF3B30"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Recurrence Badge -->
+                    <LinearLayout
+                        android:id="@+id/widget_task_long_repeat_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Everyday"
-                        android:textColor="#555555"
-                        android:textSize="9.5sp"
-                        android:textStyle="bold" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginLeft="6dp"
+                        android:paddingLeft="8dp"
+                        android:paddingRight="8dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        android:background="@drawable/widget_task_repeat_bg">
+
+                        <TextView
+                            android:id="@+id/widget_task_long_repeat_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Everyday"
+                            android:textColor="#333333"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
                 </LinearLayout>
 
             </LinearLayout>
 
-            <!-- Task Title with natural wrapping (takes primary horizontal space) -->
-            <TextView
-                android:id="@+id/widget_task_long_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:layout_gravity="center_vertical"
-                android:text="Things to do today"
-                android:textColor="#222222"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:lineSpacingExtra="1dp"
-                android:singleLine="false"
-                android:maxLines="2"
-                android:ellipsize="end" />
-
-            <!-- Status Pill (Right Side) -->
+            <!-- Right Column: Status Pill (Pending vs Completed) -->
             <LinearLayout
                 android:id="@+id/widget_task_long_status_pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="12dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"
                 android:background="@drawable/widget_task_status_bg"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp">
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingTop="7dp"
+                android:paddingBottom="7dp">
 
-                <ImageView
-                    android:id="@+id/widget_task_long_status_icon"
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:src="@drawable/ic_task_clock_pending" />
-
+                <!-- Text on the Left -->
                 <TextView
                     android:id="@+id/widget_task_long_status_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="4dp"
-                    android:text="Pending"
-                    android:textColor="#555555"
-                    android:textSize="10.5sp"
+                    android:text="Completed"
+                    android:textColor="#222222"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
+
+                <!-- Icon on the Right -->
+                <ImageView
+                    android:id="@+id/widget_task_long_status_icon"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginLeft="6dp"
+                    android:src="@drawable/ic_task_check_completed" />
             </LinearLayout>
 
         </LinearLayout>

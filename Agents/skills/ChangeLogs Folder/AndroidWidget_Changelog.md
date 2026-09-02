@@ -294,4 +294,110 @@ Completed comprehensive architectural audit, end-to-end hardening, lifecycle cle
 - **Build Verification:** 100% Gradle debug APK build success (`assembleDebug` in 77.7s).
 - **Physical Device Verification:** Deployed and verified on Samsung Galaxy S23 Ultra (`SM-S918B`, Android 16 / One UI 8, API 36).
 
+## 2026-08-31 — Phase T10: Task Creation Deep Linking & Multi-Widget Interaction Completion
 
+### Version
+v1.5.0
+
+### Author
+Antigravity
+
+### Type
+- Feature
+- Widget Interaction
+- Navigation
+- Hardening
+
+### Summary
+Completed the remaining widget interaction routes across native Android widgets and Flutter navigation:
+1. Wired the `+ Add Task` card on `MultiTaskWidget` (`@id/multi_task_add_card`) to launch `quicknotes://task/new`, directly opening the authoritative Flutter `TaskEditorScreen` in task creation mode.
+2. Routed the QuickCapture widget tasks stat pill (`@id/widget_tasks_pill` & `@id/widget_tasks_count`) to launch `quicknotes://tasks`, opening `HomeScreen` with the Tasks tab directly active.
+3. Expanded `DeepLinkCoordinator` with `DeepLinkActionType.newTask` to safely parse and execute `quicknotes://task/new` and `quicknotes://tasks/new` without premature database or state mutations.
+
+### Detailed Changes
+- **Multi-Task Widget Add Task Interaction (`MultiTaskWidget.kt`):**
+  - Replaced generic launch intent on `R.id.multi_task_add_card` with `HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, Uri.parse("quicknotes://task/new"))`.
+  - Maintained safe generic launch intent for root container and empty "All Caught Up" card.
+- **QuickCapture Widget Tasks Stat Pill Interaction (`QuickCaptureWidget.kt` & `widget_layout.xml`):**
+  - Added `@id/widget_tasks_pill` to the Due Today tasks stat pill container in `widget_layout.xml`.
+  - Attached `quicknotes://tasks` PendingIntent to `R.id.widget_tasks_pill` and `R.id.widget_tasks_count` in `QuickCaptureWidget.kt`.
+- **Flutter Navigation & Deep Link Execution (`DeepLinkCoordinator.dart` & `HomeScreen.dart`):**
+  - Added `newTask` to `DeepLinkActionType` enum.
+  - In `DeepLinkAction.parse`, cleanly differentiated `quicknotes://task/new` from task UUIDs (`quicknotes://task/<id>`).
+  - Added `initialShowTasks` parameter to `HomeScreen` to toggle `_isNotesActive = false` when deep-linked via `quicknotes://tasks`.
+  - In `DeepLinkCoordinator.executeAction`, routed `newTask` to `TaskEditorScreen()` (with `taskToEdit: null`) and `openTasks` to `HomeScreen(initialShowTasks: true)`.
+- **Automated Tests:**
+  - Added 9 new unit tests in `test/services/deep_link_coordinator_test.dart` (TEST A through TEST I).
+  - 81/81 focused tests passing across all 5 widget test suites.
+- **Static Analysis & Build:**
+  - 0 analyzer issues found (`flutter analyze`).
+  - Debug APK built and installed to physical device (`assembleDebug` in 86.6s).
+- **Physical Device Verification (Samsung Galaxy S23 Ultra / SM-S918B / API 36 / One UI 8):**
+  - Verified cold-launch & warm-launch `quicknotes://task/new` ➔ opens blank `TaskEditorScreen`.
+  - Verified cold-launch & warm-launch `quicknotes://tasks` ➔ opens `HomeScreen` with Tasks tab.
+  - Verified non-regression of existing task deep links (`quicknotes://task/<id>`).
+
+---
+
+## 2026-09-02 — Phase T16: Widget Visual Redesign, 2x2 Grid Compliance, Uniform Heights & Native Midnight Rollover
+
+### Version
+v1.6.0
+
+### Author
+Antigravity
+
+### Type
+- UI / Visual Redesign
+- Bug Fix
+- Architecture
+- Android Native
+
+### Summary
+Redesigned the entire suite of Android Task Widgets (2x2 Short Task, 4x1 Long Task, and 4x3 Multi-Task) to match updated modern design specifications, resolved Android RemoteViews inflation crash on home screens, fixed grid dimension metadata for strict 2x2 display on Samsung One UI, enforced uniform card heights across multi-task cards, and implemented native offline midnight task rollover with exact `AlarmManager` ticks.
+
+### Detailed Changes
+- **2x2 Short Task Widget Redesign (`single_task_widget_layout.xml` & `SingleTaskWidget.kt`):**
+  - Reordered visual hierarchy inside the white card body to Title-First (`[Title -> Badges -> Centered Status Pill]`).
+  - Positioned Task Title at the top in bold 16sp high-contrast typography (`#222222`).
+  - Arranged Priority (`High` with red flag) and Recurrence (`Everyday`/`Daily`) chips horizontally below the title.
+  - Anchored a stadium status pill at the bottom (`#F2F4F7`, 20dp radius) with `Pending` (history clock icon) vs `Completed` (solid `#0088FF` blue circle with white checkmark).
+- **4x1 Long Task Widget Redesign (`single_task_long_widget_layout.xml` & `SingleTaskLongWidget.kt`):**
+  - Implemented horizontal split layout with Title (top) and Badges (bottom) in the left column.
+  - Placed centered status pill vertically aligned on the right column.
+- **4x3 Multi-Task Widget Uniform Height Fix (`multi_task_widget_layout.xml` & `MultiTaskWidget.kt`):**
+  - Updated all 4 task card slots to use the new horizontal split card architecture.
+  - Eliminated height discrepancies by placing badges in a horizontal row rather than vertically stacked, ensuring every card in the vertical stack maintains an identical, uniform height.
+  - Standardized margins and padding across all cards and the bottom Add Task action card.
+- **Android RemoteViews Compliance & 2x2 Sizing Fix:**
+  - Replaced illegal `<View>` flexible spacers with compliant `<FrameLayout>` across widget layouts, resolving the `InflateException` / *"Couldn't add widget"* error.
+  - Updated `minWidth` and `minHeight` in `single_task_widget_info.xml` and `single_note_widget_info.xml` to `110dp`, preventing Samsung One UI from mapping 2x2 widgets to 2x3.
+- **Native Dynamic Day Rollover & Midnight Alarms (`TaskWidgetDateHelper.kt` & `MidnightWidgetUpdateReceiver.kt`):**
+  - Created `TaskWidgetDateHelper.resolveTaskState()` in Kotlin to dynamically evaluate recurring task rollover directly during widget rendering if `currentDate > taskDate`.
+  - Implemented `MidnightWidgetUpdateReceiver` registered for `ACTION_DATE_CHANGED`, `ACTION_TIME_SET`, `ACTION_TIMEZONE_CHANGED`, `ACTION_BOOT_COMPLETED`, and scheduled exact alarms via `AlarmManager.setExactAndAllowWhileIdle()` at `00:00:01 AM` every night.
+  - Guaranteed live midnight widget rollover without requiring the Flutter app to be opened.
+
+### Architecture Impact
+- **Native Android**: Autonomous offline widget rendering and live midnight date evaluation independent of Dart isolate lifecycle.
+- **Zero Battery Impact**: AlarmManager only wakes briefly at midnight for a lightweight widget refresh.
+
+### Files Created
+- `android/app/src/main/kotlin/com/quicknotes/app/TaskWidgetDateHelper.kt`
+- `android/app/src/main/kotlin/com/quicknotes/app/MidnightWidgetUpdateReceiver.kt`
+
+### Files Modified
+- `android/app/src/main/AndroidManifest.xml`
+- `android/app/src/main/kotlin/com/quicknotes/app/MainActivity.kt`
+- `android/app/src/main/kotlin/com/quicknotes/app/SingleTaskWidget.kt`
+- `android/app/src/main/kotlin/com/quicknotes/app/SingleTaskLongWidget.kt`
+- `android/app/src/main/kotlin/com/quicknotes/app/MultiTaskWidget.kt`
+- `android/app/src/main/res/layout/single_task_widget_layout.xml`
+- `android/app/src/main/res/layout/single_task_long_widget_layout.xml`
+- `android/app/src/main/res/layout/multi_task_widget_layout.xml`
+- `android/app/src/main/res/xml/single_task_widget_info.xml`
+- `android/app/src/main/res/xml/single_note_widget_info.xml`
+- `android/app/src/main/res/drawable/ic_task_clock_pending.xml`
+- `android/app/src/main/res/drawable/ic_task_check_completed.xml`
+
+### Breaking Changes
+None. Fully backwards-compatible.

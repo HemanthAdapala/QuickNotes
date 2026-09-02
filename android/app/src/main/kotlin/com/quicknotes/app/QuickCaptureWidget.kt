@@ -104,6 +104,15 @@ class QuickCaptureWidget : HomeWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.btn_add_checklist, pendingNewChecklist)
 
+            // Tasks due today stat pill tap -> quicknotes://tasks
+            val pendingTasks = HomeWidgetLaunchIntent.getActivity(
+                context,
+                MainActivity::class.java,
+                Uri.parse("quicknotes://tasks")
+            )
+            views.setOnClickPendingIntent(R.id.widget_tasks_pill, pendingTasks)
+            views.setOnClickPendingIntent(R.id.widget_tasks_count, pendingTasks)
+
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }

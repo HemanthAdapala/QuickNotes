@@ -91,6 +91,7 @@
 
         <!-- Due Today Tasks Stat Pill (with layout_marginStart for spacing) -->
         <LinearLayout
+            android:id="@+id/widget_tasks_pill"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
