@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart'
 import 'providers/notes_provider.dart';
 import 'providers/tasks_provider.dart';
 import 'providers/settings_provider.dart';
+import 'premium/premium.dart';
 import 'services/task_engine.dart';
 import 'services/reminder_scheduler.dart';
 import 'services/android_reminder_scheduler.dart';
@@ -35,6 +36,10 @@ void main() async {
   final settingsProvider = SettingsProvider();
   await settingsProvider.initialize();
 
+  // Pre-initialize PremiumEntitlementManager to load cached entitlement state
+  final entitlementManager = PremiumEntitlementManager();
+  await entitlementManager.initialize();
+
   final ReminderScheduler scheduler =
       (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
           ? AndroidReminderScheduler()
@@ -46,6 +51,10 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: settingsProvider),
+        ChangeNotifierProvider.value(value: entitlementManager),
+        Provider<FeatureAccess>(
+          create: (_) => DefaultFeatureAccess(entitlementManager),
+        ),
         ChangeNotifierProvider(create: (_) => NotesProvider()),
         ChangeNotifierProvider(
             create: (_) => TasksProvider(engine: taskEngine)),
