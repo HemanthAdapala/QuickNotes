@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import '../../core/motion/motion_constants.dart';
+import '../../core/motion/quick_notes_haptics.dart';
 import '../../models/task_item.dart';
 import '../../models/task_status.dart';
 import '../../models/recurrence_rule.dart';
@@ -44,6 +46,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   double _swipeX = 0.0;
   double _swipeY = 0.0;
   bool _isAnimatingSwipe = false;
+  bool _hasCrossedThreshold = false;
 
   // Animation Controllers
   late AnimationController _resetController;
@@ -51,6 +54,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   late AnimationController _cycleController;
   late AnimationController _successController;
   late AnimationController _entranceController;
+  late AnimationController _touchController;
+  late Animation<double> _touchScaleAnimation;
   late List<Animation<double>> _cardEntranceAnimations;
   late Animation<double> _successScaleAnimation;
   late Animation<double> _particleAnimation;
@@ -71,12 +76,26 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
     _cardResetController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: QuickNotesMotion.kMotionSelection,
     );
 
     _cycleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: QuickNotesMotion.kMotionSelection,
+    );
+
+    _touchController = AnimationController(
+      vsync: this,
+      duration: QuickNotesMotion.kMotionMicro,
+      reverseDuration: QuickNotesMotion.kMotionRelease,
+    );
+
+    _touchScaleAnimation = Tween<double>(begin: 1.0, end: 0.985).animate(
+      CurvedAnimation(
+        parent: _touchController,
+        curve: Curves.easeIn,
+        reverseCurve: Curves.easeOutCubic,
+      ),
     );
 
     _successController = AnimationController(
@@ -134,6 +153,14 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _entranceController.value = 1.0;
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant TaskWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.tasks.length != oldWidget.tasks.length) {
@@ -158,6 +185,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     _cycleController.dispose();
     _successController.dispose();
     _entranceController.dispose();
+    _touchController.dispose();
     super.dispose();
   }
 
@@ -245,6 +273,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     final tween = Tween<double>(begin: startVal, end: _minDrag);
 
     void listener() {
+      if (!mounted) return;
       setState(() {
         _dragX = tween.evaluate(_resetController);
       });
@@ -254,23 +283,57 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
     _resetController.forward(from: 0.0).then((_) {
       _resetController.removeListener(listener);
+      if (!mounted) return;
       _resetController.reset();
     });
   }
 
+  bool _isPointerCancelled = false;
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    _isPointerCancelled = true;
+    _handleCardPanCancel();
+  }
+
   // ── Card Swiping Gestures ──────────────────────────────────────────────────
-  void _handleCardPanUpdate(DragUpdateDetails details) {
-    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider)
+  void _handleCardPanDown(DragDownDetails details) {
+    _isPointerCancelled = false;
+    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider) {
       return;
+    }
+    if (MediaQuery.of(context).disableAnimations) return;
+
+    QuickNotesHaptics.buttonPress();
+    _touchController.forward();
+  }
+
+  void _handleCardPanUpdate(DragUpdateDetails details) {
+    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider) {
+      return;
+    }
     setState(() {
       _swipeX += details.delta.dx;
       _swipeY += details.delta.dy;
     });
+
+    final distance = sqrt(_swipeX * _swipeX + _swipeY * _swipeY);
+    if (distance >= 120.0 && !_hasCrossedThreshold) {
+      _hasCrossedThreshold = true;
+      QuickNotesHaptics.subtleSettle();
+    } else if (distance < 120.0 && _hasCrossedThreshold) {
+      _hasCrossedThreshold = false;
+    }
   }
 
   void _handleCardPanEnd(DragEndDetails details) {
-    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider)
+    if (_isPointerCancelled) {
+      _isPointerCancelled = false;
       return;
+    }
+    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider) {
+      return;
+    }
+    _touchController.reverse();
 
     final distance = sqrt(_swipeX * _swipeX + _swipeY * _swipeY);
     if (distance > 120.0) {
@@ -280,18 +343,50 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     }
   }
 
+  void _handleCardPanCancel() {
+    if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider) {
+      return;
+    }
+    _touchController.reverse();
+    _hasCrossedThreshold = false;
+    _triggerCardReset();
+  }
+
   void _triggerSwipeAway() {
+    _hasCrossedThreshold = false;
+    final disableAnimations = MediaQuery.of(context).disableAnimations;
+
+    if (disableAnimations) {
+      if (_currentTasksList.isNotEmpty) {
+        final topTask = _currentTasksList.removeAt(0);
+        _currentTasksList.add(topTask);
+      }
+      setState(() {
+        _swipeX = 0.0;
+        _swipeY = 0.0;
+        _isAnimatingSwipe = false;
+      });
+      QuickNotesHaptics.selection();
+      return;
+    }
+
     _isAnimatingSwipe = true;
     final double targetX = _swipeX.sign * 450.0;
     final double targetY = _swipeY.sign * 250.0;
+    final double startX = _swipeX;
+    final double startY = _swipeY;
 
-    final tweenX = Tween<double>(begin: _swipeX, end: targetX);
-    final tweenY = Tween<double>(begin: _swipeY, end: targetY);
+    final curve = CurvedAnimation(
+      parent: _cycleController,
+      curve: QuickNotesMotion.kMotionAppleEase,
+    );
 
     void listener() {
+      if (!mounted) return;
       setState(() {
-        _swipeX = tweenX.evaluate(_cycleController);
-        _swipeY = tweenY.evaluate(_cycleController);
+        final t = curve.value;
+        _swipeX = startX + (targetX - startX) * t;
+        _swipeY = startY + (targetY - startY) * t;
       });
     }
 
@@ -299,9 +394,10 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
     _cycleController.forward(from: 0.0).then((_) {
       _cycleController.removeListener(listener);
+      if (!mounted) return;
       _cycleController.reset();
 
-      if (mounted && _currentTasksList.isNotEmpty) {
+      if (_currentTasksList.isNotEmpty) {
         setState(() {
           // Cycle top task to the back of the deck
           final topTask = _currentTasksList.removeAt(0);
@@ -310,20 +406,45 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
           _swipeY = 0.0;
           _isAnimatingSwipe = false;
         });
-        HapticFeedback.lightImpact();
+        QuickNotesHaptics.selection();
+      } else {
+        setState(() {
+          _swipeX = 0.0;
+          _swipeY = 0.0;
+          _isAnimatingSwipe = false;
+        });
       }
     });
   }
 
   void _triggerCardReset() {
+    _hasCrossedThreshold = false;
+    final disableAnimations = MediaQuery.of(context).disableAnimations;
+
+    if (disableAnimations) {
+      setState(() {
+        _swipeX = 0.0;
+        _swipeY = 0.0;
+        _isAnimatingSwipe = false;
+      });
+      return;
+    }
+
     _isAnimatingSwipe = true;
-    final tweenX = Tween<double>(begin: _swipeX, end: 0.0);
-    final tweenY = Tween<double>(begin: _swipeY, end: 0.0);
+    final startX = _swipeX;
+    final startY = _swipeY;
+
+    final curve = CurvedAnimation(
+      parent: _cardResetController,
+      curve: QuickNotesMotion.kMotionSpring,
+    );
 
     void listener() {
+      if (!mounted) return;
       setState(() {
-        _swipeX = tweenX.evaluate(_cardResetController);
-        _swipeY = tweenY.evaluate(_cardResetController);
+        final t = curve.value;
+        _swipeX = (1.0 - t) * startX;
+        _swipeY = (1.0 - t) * startY;
       });
     }
 
@@ -331,8 +452,13 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
     _cardResetController.forward(from: 0.0).then((_) {
       _cardResetController.removeListener(listener);
+      if (!mounted) return;
       _cardResetController.reset();
-      _isAnimatingSwipe = false;
+      setState(() {
+        _swipeX = 0.0;
+        _swipeY = 0.0;
+        _isAnimatingSwipe = false;
+      });
     });
   }
 
@@ -463,14 +589,16 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     return AnimatedBuilder(
       animation: anim,
       builder: (context, child) {
-        final double slideOffset = 60.0 * (1.0 - anim.value);
+        final disableAnimations = MediaQuery.of(context).disableAnimations;
+        final double slideOffset =
+            disableAnimations ? 0.0 : 60.0 * (1.0 - anim.value);
         return Positioned(
           top: offset + slideOffset,
           left: 0,
           right: 0,
           height: 339.0,
           child: Opacity(
-            opacity: anim.value.clamp(0.0, 1.0),
+            opacity: disableAnimations ? 1.0 : anim.value.clamp(0.0, 1.0),
             child: Transform.scale(
               scale: scale,
               child: Center(
@@ -638,26 +766,39 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
             right: -_swipeX,
             height: 339.0,
             child: AnimatedBuilder(
-              animation: _cardEntranceAnimations[0],
+              animation: Listenable.merge(
+                  [_cardEntranceAnimations[0], _touchController]),
               builder: (context, child) {
                 final anim = _cardEntranceAnimations[0];
-                final double slideOffset = 60.0 * (1.0 - anim.value);
+                final disableAnimations =
+                    MediaQuery.of(context).disableAnimations;
+                final double slideOffset =
+                    disableAnimations ? 0.0 : 60.0 * (1.0 - anim.value);
                 return Transform.translate(
                   offset: Offset(0, slideOffset),
                   child: Opacity(
-                    opacity: anim.value.clamp(0.0, 1.0),
+                    opacity:
+                        disableAnimations ? 1.0 : anim.value.clamp(0.0, 1.0),
                     child: child,
                   ),
                 );
               },
-              child: GestureDetector(
-                onPanUpdate: _handleCardPanUpdate,
-                onPanEnd: _handleCardPanEnd,
+              child: Listener(
+                onPointerCancel: _handlePointerCancel,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onPanDown: _handleCardPanDown,
+                  onPanUpdate: _handleCardPanUpdate,
+                  onPanEnd: _handleCardPanEnd,
+                  onPanCancel: _handleCardPanCancel,
                 child: Center(
                   child: Transform.rotate(
                     angle: (_swipeX / widget.width) * (pi / 12),
                     child: Transform.scale(
-                      scale: cardScale,
+                      scale: cardScale *
+                          (MediaQuery.of(context).disableAnimations
+                              ? 1.0
+                              : _touchScaleAnimation.value),
                       child: SizedBox(
                         key: widget.frontCardKey,
                         width: 322.0,
@@ -989,6 +1130,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                           setState(() {
                                             _isDraggingSlider = true;
                                           });
+                                          _touchController.reverse();
                                         },
                                         onHorizontalDragStart: _handleDragStart,
                                         onHorizontalDragUpdate:
@@ -1196,6 +1338,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../themes/glassmorphism_presets.dart';
+import '../../core/motion/motion_constants.dart';
+import '../../core/motion/quick_notes_haptics.dart';
 
 class TactileButton extends StatefulWidget {
   final Widget child;
@@ -11,17 +11,19 @@ class TactileButton extends StatefulWidget {
   final Duration settleDuration;
   final bool useAppleSpring;
   final bool playSelectionHaptic;
+  final bool enabled;
 
   const TactileButton({
     super.key,
     required this.child,
     required this.onTap,
     this.onLongPressStart,
-    this.compressionScale = MotionPresets.compressionScale,
-    this.pressDuration = MotionPresets.pressDuration,
-    this.settleDuration = MotionPresets.settleDuration,
+    this.compressionScale = 0.94,
+    this.pressDuration = QuickNotesMotion.kMotionMicro,
+    this.settleDuration = QuickNotesMotion.kMotionRelease,
     this.useAppleSpring = true,
     this.playSelectionHaptic = true,
+    this.enabled = true,
   });
 
   @override
@@ -29,7 +31,7 @@ class TactileButton extends StatefulWidget {
 }
 
 class _TactileButtonState extends State<TactileButton>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -44,12 +46,18 @@ class _TactileButtonState extends State<TactileButton>
     if (widget.useAppleSpring) {
       _scaleAnimation =
           Tween<double>(begin: 1.0, end: widget.compressionScale).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+        CurvedAnimation(
+          parent: _controller,
+          curve: QuickNotesMotion.kMotionAppleEase,
+        ),
       );
     } else {
       _scaleAnimation =
           Tween<double>(begin: 1.0, end: widget.compressionScale).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+        CurvedAnimation(
+          parent: _controller,
+          curve: Curves.easeOutCubic,
+        ),
       );
     }
   }
@@ -70,8 +78,10 @@ class _TactileButtonState extends State<TactileButton>
   }
 
   void _handleTapDown() {
+    if (!widget.enabled) return;
+
     if (widget.playSelectionHaptic) {
-      HapticFeedback.selectionClick();
+      QuickNotesHaptics.buttonPress();
     }
     _controller.stop();
     _controller.duration = widget.pressDuration;
@@ -79,50 +89,62 @@ class _TactileButtonState extends State<TactileButton>
   }
 
   void _handleTapUp() {
+    if (!widget.enabled) return;
+
     _controller.stop();
+    _controller.duration = widget.settleDuration;
     if (widget.useAppleSpring) {
-      _controller.duration = widget.settleDuration;
       setState(() {
         _scaleAnimation =
-            Tween<double>(begin: widget.compressionScale, end: 1.0).animate(
-          CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+            Tween<double>(begin: _scaleAnimation.value, end: 1.0).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: QuickNotesMotion.kMotionSpring,
+          ),
         );
       });
       _controller.forward(from: 0.0);
     } else {
-      _controller.duration = widget.settleDuration;
       _controller.reverse();
     }
     widget.onTap();
   }
 
   void _handleTapCancel() {
+    if (!widget.enabled) return;
+
     _controller.stop();
+    _controller.duration = widget.settleDuration;
     if (widget.useAppleSpring) {
-      _controller.duration = widget.settleDuration;
       setState(() {
         _scaleAnimation =
-            Tween<double>(begin: widget.compressionScale, end: 1.0).animate(
-          CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+            Tween<double>(begin: _scaleAnimation.value, end: 1.0).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: QuickNotesMotion.kMotionSpring,
+          ),
         );
       });
       _controller.forward(from: 0.0);
     } else {
-      _controller.duration = widget.settleDuration;
       _controller.reverse();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool disableAnimations = MediaQuery.of(context).disableAnimations;
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: (_) => _handleTapDown(),
       onTapUp: (_) => _handleTapUp(),
       onTapCancel: () => _handleTapCancel(),
-      onLongPressStart: widget.onLongPressStart,
+      onLongPressStart: widget.enabled ? widget.onLongPressStart : null,
       child: ScaleTransition(
-        scale: _scaleAnimation,
+        scale: disableAnimations
+            ? const AlwaysStoppedAnimation<double>(1.0)
+            : _scaleAnimation,
         child: widget.child,
       ),
     );
