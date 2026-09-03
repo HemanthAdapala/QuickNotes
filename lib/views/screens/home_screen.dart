@@ -346,7 +346,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   // ── FAB / prompt → new note ───────────────────────────────────────────────
 
-  /// Opens an existing note by [noteId] using the standard page transition.
+  /// Opens an existing note by [noteId] using the P1-D refined note opening transition.
   void _openNote(String noteId) {
     final provider = Provider.of<NotesProvider>(context, listen: false);
     final note = provider.allActiveNotes
@@ -357,7 +357,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     HapticFeedback.lightImpact();
     Navigator.push(
       context,
-      buildFadePageRoute(NoteEditorScreen(note: note)),
+      buildNoteOpeningPageRoute(NoteEditorScreen(note: note)),
     );
   }
 
@@ -987,7 +987,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       }
                     }
                   } else {
-                    HapticFeedback.lightImpact();
                     setState(() => _activeNavIndex = i);
                   }
                 },

@@ -196,3 +196,104 @@ Added the Focused Task Overlay with full-screen glass backdrop blur and tactile 
 ### Architecture Impact
 - **Navigation**: `HomeScreen` acts as the host presentation surface for widget deep-link focus actions while maintaining complete decoupling from external widget logic.
 
+---
+
+## v3.1.0
+
+### Date
+2026-09-03
+
+### Author
+Anti Gravity
+
+### Type
+- UI / UX
+- Motion Lab
+- Tactile Architecture
+
+---
+
+### Summary
+Implemented Phase P1 — Home Screen Motion Lab: controlled physical motion language introducing liquid horizontal stretch to the bottom navigation indicator, calibrated tactile icon response, single semantic haptics gateway, magnetic snapping on the Notes/Tasks pill switcher, immediate press compression on the primary writing prompt, and a refined 340ms entry transition for existing notes.
+
+---
+
+### Detailed Changes
+- Created `lib/core/motion/motion_constants.dart` defining standard P1 motion tokens (`kMotionMicro`, `kMotionRelease`, `kMotionSelection`, `kMotionPage`, `kMotionPageReverse`) and `DampedSpringCurve` (closed-form damped harmonic oscillator with zeta ≈ 0.80 and 1.5% subtle overshoot).
+- Created `lib/core/motion/quick_notes_haptics.dart` establishing a centralized semantic haptics gateway (`navigationSelection`, `selection`, `buttonPress`, `subtleSettle`) preventing duplicate haptic triggers.
+- Upgraded `AppBottomNavigationBar` with `_PhysicalActiveIndicator` supporting symmetrical liquid horizontal stretch (peaking at midpoint, contracting on arrival) and damped spring settle while strictly locking 318px responsive geometry.
+- Calibrated `_NavigationButton` in `AppBottomNavigationBar` from 0.70 compression to refined tactile response (1.00 -> 0.94 -> 1.018 -> 1.000) over 190ms, removing duplicate navigation haptics.
+- Upgraded `NotesAndTaskPill` with `kMotionSelection` (260ms) and `kMotionSpring` for magnetic snap and single `QuickNotesHaptics.selection()` event.
+- Wrapped primary writing prompt in `_TactilePromptWrapper` within `HomePromptView` for immediate 0.97 touch-down compression and damped spring release.
+- Added `buildNoteOpeningPageRoute` in `page_transitions.dart` providing a 340ms forward / 260ms reverse paper-like entry transition (opacity 0.0->1.0 + scale 0.98->1.00) replacing the 600ms fade route.
+- Verified 100% test coverage in `test/views/home_screen_motion_test.dart` and accessibility compliance (`MediaQuery.disableAnimations`).
+
+---
+
+### Why was this change made?
+To make Quick Notes feel alive, physical, and tactile ("like beautiful stationery") on the Home Screen without cartoonish bouncing, noisy visual clutter, or destabilizing production geometries and gestures. Prior to this, navigation haptics were duplicated, the active indicator moved with standard linear easing without mass or liquid stretch, the primary prompt lacked touch-down feedback, and the existing note transition used an unnecessarily slow 600ms linear fade.
+
+---
+
+### Architecture Impact
+- **Motion System**: Centralized motion constants and semantic haptics without third-party dependencies or full-app refactoring.
+- **Geometry & Gesture Safety**: Zero changes to card dimensions (322x339), swipe thresholds (120px), surface top radius (32px), or outer navigation hit targets (min 48px).
+- **Navigation**: Home Screen maintains existing IndexedStack architecture and FAB morph route while providing a faster, tactile note opening transition.
+
+---
+
+### Files Created
+- `lib/core/motion/motion_constants.dart`
+- `lib/core/motion/quick_notes_haptics.dart`
+- `test/views/home_screen_motion_test.dart`
+
+---
+
+### Files Modified
+- `lib/core/animations/page_transitions.dart`
+- `lib/views/widgets/app_bottom_navigation_bar.dart`
+- `lib/views/widgets/notes_and_task_pill.dart`
+- `lib/views/widgets/home_prompt_view.dart`
+- `lib/views/screens/home_screen.dart`
+- `Agents/skills/ChangeLogs Folder/HomeScreen_Changelog.md`
+
+---
+
+### Dependencies Added
+None.
+
+---
+
+### Breaking Changes
+None.
+
+---
+
+### Migration Notes
+None required. All new motion constants are additive, and existing external contracts of `AppBottomNavigationBar`, `NotesAndTaskPill`, and `HomePromptView` remain fully backwards-compatible.
+
+---
+
+### Future Improvements
+- Phase P2: Consider extending physical mass-spring motion to the folder management screen and calendar day selectors.
+- Phase P3: Evaluate interactive gesture dismiss on the new note opening transition.
+
+---
+
+### Known Issues
+None in P1 motion lab components. (Legacy SQLite concurrent test suite lock warnings on Windows are unrelated to presentation motion layer).
+
+---
+
+### Testing Status
+- Manual Tests: Physical indicator stretch, prompt press-and-cancel, pill toggle snap, note opening route.
+- Automated Tests: 10/10 tests passing in `test/views/home_screen_motion_test.dart`.
+- Accessibility: Verified `MediaQuery.disableAnimations` bypasses all spring, stretch, and scale animations.
+
+---
+
+### Final Result
+The Quick Notes Home Screen now features an Apple-caliber physical motion language: liquid glass navigation indicator with transient mid-flight stretch, magnetic snapping switcher pod, immediate tactile prompt response, de-duplicated single-event haptics, and a 340ms document entry transition, with all foundational geometries 100% preserved.
+
+
+

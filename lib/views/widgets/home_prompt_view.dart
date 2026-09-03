@@ -11,6 +11,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'tactile_button.dart';
 import 'app_header_bar.dart';
 import '../../core/animations/animation_constants.dart';
+import '../../core/motion/motion_constants.dart';
+import '../../core/motion/quick_notes_haptics.dart';
 import '../../models/note.dart';
 
 // ── Witty messages (Change 5) ─────────────────────────────────────────────────
@@ -474,15 +476,15 @@ class _HomePromptViewState extends State<HomePromptView> {
                           ),
                         );
                       },
-                      child: GestureDetector(
+                      child: _TactilePromptWrapper(
                         onTap: widget.interactive ? null : widget.onTap,
-                        behavior: HitTestBehavior.opaque,
+                        interactive: widget.interactive,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (!widget.interactive) ...[
                               Padding(
-                                padding: EdgeInsets.only(top: 3.0),
+                                padding: const EdgeInsets.only(top: 3.0),
                                 child: _BlinkingCaret(
                                   height: 22.0,
                                   color: widget.isNotesActive
@@ -906,3 +908,128 @@ class _BlinkingCaretState extends State<_BlinkingCaret>
     );
   }
 }
+
+/// Phase P1-C: Dedicated tactile wrapper for the primary writing prompt.
+///
+/// Implements immediate touch-down compression (1.00 -> 0.97) with haptic feedback,
+/// and a damped spring release (0.97 -> 1.00) over 190ms before triggering note creation.
+class _TactilePromptWrapper extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final bool interactive;
+
+  const _TactilePromptWrapper({
+    required this.child,
+    required this.onTap,
+    this.interactive = false,
+  });
+
+  @override
+  State<_TactilePromptWrapper> createState() => _TactilePromptWrapperState();
+}
+
+class _TactilePromptWrapperState extends State<_TactilePromptWrapper>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+    _scaleAnimation = const AlwaysStoppedAnimation<double>(1.0);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(bool reduceMotion) {
+    if (widget.interactive || widget.onTap == null) return;
+    if (reduceMotion) return;
+
+    QuickNotesHaptics.buttonPress();
+    _controller.stop();
+    _controller.duration = QuickNotesMotion.kMotionMicro;
+    setState(() {
+      _scaleAnimation = Tween<double>(
+        begin: _scaleAnimation.value,
+        end: 0.97,
+      ).animate(CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeIn,
+      ));
+    });
+    _controller.forward(from: 0.0);
+  }
+
+  void _handleTapCancel(bool reduceMotion) {
+    if (widget.interactive || widget.onTap == null) return;
+    if (reduceMotion) return;
+
+    _controller.stop();
+    _controller.duration = QuickNotesMotion.kMotionRelease;
+    setState(() {
+      _scaleAnimation = Tween<double>(
+        begin: _scaleAnimation.value,
+        end: 1.0,
+      ).animate(CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutCubic,
+      ));
+    });
+    _controller.forward(from: 0.0);
+  }
+
+  void _handleTap(bool reduceMotion) {
+    if (widget.interactive || widget.onTap == null) return;
+
+    if (!reduceMotion) {
+      _controller.stop();
+      _controller.duration = QuickNotesMotion.kMotionRelease;
+      setState(() {
+        _scaleAnimation = Tween<double>(
+          begin: _scaleAnimation.value,
+          end: 1.0,
+        ).animate(CurvedAnimation(
+          parent: _controller,
+          curve: Curves.easeOutCubic,
+        ));
+      });
+      _controller.forward(from: 0.0);
+    }
+
+    widget.onTap!();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.interactive || widget.onTap == null) {
+      return widget.child;
+    }
+
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => _handleTapDown(reduceMotion),
+      onTapCancel: () => _handleTapCancel(reduceMotion),
+      onTap: () => _handleTap(reduceMotion),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final scale = reduceMotion ? 1.0 : _scaleAnimation.value;
+          return Transform.scale(
+            scale: scale,
+            alignment: Alignment.centerLeft,
+            child: child,
+          );
+        },
+        child: widget.child,
+      ),
+    );
+  }
+}
+

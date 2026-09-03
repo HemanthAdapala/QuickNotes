@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../core/motion/motion_constants.dart';
+import '../../core/motion/quick_notes_haptics.dart';
 import 'tactile_button.dart';
 
 class NotesAndTaskPill extends StatelessWidget {
@@ -12,8 +15,17 @@ class NotesAndTaskPill extends StatelessWidget {
     required this.onChanged,
   });
 
+  void _handleSelect(bool selectNotes) {
+    if (isNotesActive != selectNotes) {
+      QuickNotesHaptics.selection();
+      onChanged(selectNotes);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+
     return Container(
       width: 177.0,
       height: 40.0,
@@ -33,10 +45,12 @@ class NotesAndTaskPill extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Inner Sliding Active Pod
+          // Inner Sliding Active Pod (Phase P1-B: Magnetic snap with damped spring)
           AnimatedPositioned(
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOutCubic,
+            duration: reduceMotion
+                ? Duration.zero
+                : QuickNotesMotion.kMotionSelection,
+            curve: QuickNotesMotion.kMotionSpring,
             left: isNotesActive ? 5.0 : 89.0,
             top: 4.0,
             width: 83.0,
@@ -60,16 +74,17 @@ class NotesAndTaskPill extends StatelessWidget {
             width: 83.0,
             height: 32.0,
             child: TactileButton(
-              onTap: () => onChanged(true),
+              onTap: () => _handleSelect(true),
               useAppleSpring: true,
               compressionScale: 0.92,
+              playSelectionHaptic: false,
               child: Container(
                 alignment: Alignment.center,
                 color: Colors.transparent,
                 child: Text(
                   'Notes',
                   style: GoogleFonts.inter(
-                    color: isNotesActive ? Colors.white : Color(0xFF333333),
+                    color: isNotesActive ? Colors.white : const Color(0xFF333333),
                     fontSize: 16.0,
                     fontWeight: FontWeight.w600,
                     height: 1.38,
@@ -86,16 +101,17 @@ class NotesAndTaskPill extends StatelessWidget {
             width: 83.0,
             height: 32.0,
             child: TactileButton(
-              onTap: () => onChanged(false),
+              onTap: () => _handleSelect(false),
               useAppleSpring: true,
               compressionScale: 0.92,
+              playSelectionHaptic: false,
               child: Container(
                 alignment: Alignment.center,
                 color: Colors.transparent,
                 child: Text(
                   'Tasks',
                   style: GoogleFonts.inter(
-                    color: !isNotesActive ? Colors.white : Color(0xFF333333),
+                    color: !isNotesActive ? Colors.white : const Color(0xFF333333),
                     fontSize: 16.0,
                     fontWeight: FontWeight.w600,
                     height: 1.38,
@@ -110,3 +126,4 @@ class NotesAndTaskPill extends StatelessWidget {
     );
   }
 }
+
