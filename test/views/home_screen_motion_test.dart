@@ -10,6 +10,10 @@ import 'package:quick_notes/providers/notes_provider.dart';
 import 'package:quick_notes/views/widgets/app_bottom_navigation_bar.dart';
 import 'package:quick_notes/views/widgets/notes_and_task_pill.dart';
 import 'package:quick_notes/views/widgets/home_prompt_view.dart';
+import 'package:quick_notes/views/screens/home_screen.dart';
+import 'package:quick_notes/providers/tasks_provider.dart';
+import 'package:quick_notes/providers/settings_provider.dart';
+import 'package:quick_notes/premium/premium.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -375,6 +379,58 @@ void main() {
       final route = buildNoteOpeningPageRoute(const SizedBox()) as PageRouteBuilder;
       expect(route.transitionDuration, const Duration(milliseconds: 340));
       expect(route.reverseTransitionDuration, const Duration(milliseconds: 260));
+    });
+  });
+
+  group('Phase P1.1 — Home ↔ Non-Home Element Identity & Motion Verification', () {
+    testWidgets(
+        'Positioned(AppBottomNavigationBar) preserves Element identity across Home (0) <-> Folders (1) transition',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({});
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => SettingsProvider()),
+            ChangeNotifierProvider(create: (_) => PremiumEntitlementManager()),
+            Provider<FeatureAccess>(
+              create: (c) => DefaultFeatureAccess(
+                Provider.of<PremiumEntitlementManager>(c, listen: false),
+              ),
+            ),
+            ChangeNotifierProvider(create: (_) => NotesProvider()),
+            ChangeNotifierProvider(create: (_) => TasksProvider()),
+          ],
+          child: const MaterialApp(
+            home: HomeScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final navFinder = find.byKey(const ValueKey('home_bottom_navigation_bar_positioned'));
+      expect(navFinder, findsOneWidget);
+      final elementHome = tester.element(navFinder);
+
+      // Tap Folders (Tab 1)
+      await tester.tap(find.bySemanticsLabel('Folders'));
+      await tester.pump();
+
+      // Verify element identity is PRESERVED across 0 -> 1 transition
+      final elementFolders = tester.element(navFinder);
+      expect(identical(elementHome, elementFolders), isTrue,
+          reason: 'Positioned(AppBottomNavigationBar) Element must be preserved across Home -> Folders transition');
+
+      // Tap Home (Tab 0)
+      await tester.tap(find.bySemanticsLabel('Home'));
+      await tester.pump();
+
+      // Verify element identity is PRESERVED across 1 -> 0 transition
+      final elementHomeReturn = tester.element(navFinder);
+      expect(identical(elementHome, elementHomeReturn), isTrue,
+          reason: 'Positioned(AppBottomNavigationBar) Element must be preserved across Folders -> Home transition');
+
+      await tester.pumpAndSettle();
     });
   });
 }

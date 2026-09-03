@@ -967,6 +967,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
             // ── AppBottomNavigationBar (at bottom: 0) ──────────────────────────
             Positioned(
+              key: const ValueKey('home_bottom_navigation_bar_positioned'),
               left: 0,
               right: 0,
               bottom: 0,

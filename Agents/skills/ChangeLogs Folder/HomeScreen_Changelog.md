@@ -295,5 +295,92 @@ None in P1 motion lab components. (Legacy SQLite concurrent test suite lock warn
 ### Final Result
 The Quick Notes Home Screen now features an Apple-caliber physical motion language: liquid glass navigation indicator with transient mid-flight stretch, magnetic snapping switcher pod, immediate tactile prompt response, de-duplicated single-event haptics, and a 340ms document entry transition, with all foundational geometries 100% preserved.
 
+---
+
+## v3.1.1
+
+### Date
+2026-09-03
+
+### Author
+Anti Gravity
+
+### Type
+- Bug Fix
+- Motion Lab
+- Architecture
+
+---
+
+### Summary
+Fixed Phase P1.1 Home ↔ Non-Home navigation motion defect by assigning a stable ValueKey to the Positioned AppBottomNavigationBar wrapper in HomeScreen. This preserves element and state identity across dynamic Stack slot shifts, ensuring didUpdateWidget triggers and the physical spring and liquid stretch animate across all nine tab transitions.
+
+---
+
+### Detailed Changes
+- Assigned `key: const ValueKey('home_bottom_navigation_bar_positioned')` to the `Positioned` widget wrapping `AppBottomNavigationBar` in `HomeScreen.build()`.
+- Added targeted regression test in `test/views/home_screen_motion_test.dart` verifying `identical()` Element preservation across `0 <-> 1` transitions.
+
+---
+
+### Why was this change made?
+During `HomeScreen.build()`, collection-if statements for background and card sheets shift `Positioned(AppBottomNavigationBar)` from slot index 3 (Home) to slot index 1 (non-Home). Without a key, Flutter's `updateChildren` could not match the element by position and unmounted/disposed the entire subtree, creating a new indicator born at the destination without animating.
+
+---
+
+### Architecture Impact
+- **Element Identity**: Preserves the existing `AppBottomNavigationBar`, `BottomBarGlassSurface`, and `_PhysicalActiveIndicatorState` during transitions into and out of Home.
+- **Motion System**: Enables physical indicator spring and liquid stretch on `0 ➔ 1`, `1 ➔ 0`, `0 ➔ 2`, `2 ➔ 0`, `0 ➔ 3`, and `3 ➔ 0`.
+- **Zero Geometry or Logic Impact**: Pure lifecycle preservation with zero changes to dimensions, hit targets, or navigation logic.
+
+---
+
+### Files Created
+None.
+
+---
+
+### Files Modified
+- `lib/views/screens/home_screen.dart`
+- `test/views/home_screen_motion_test.dart`
+- `Agents/skills/ChangeLogs Folder/HomeScreen_Changelog.md`
+
+---
+
+### Dependencies Added
+None.
+
+---
+
+### Breaking Changes
+None.
+
+---
+
+### Migration Notes
+None.
+
+---
+
+### Future Improvements
+None required for P1.1.
+
+---
+
+### Known Issues
+None.
+
+---
+
+### Testing Status
+- Automated Tests: 11/11 tests passing in `test/views/home_screen_motion_test.dart` including Element identity test.
+- Static Analysis: `flutter analyze lib/views/screens/home_screen.dart` clean (0 errors).
+
+---
+
+### Final Result
+All 9 bottom navigation transitions (`0 ↔ 1`, `1 ↔ 2`, `2 ↔ 3`, `0 ↔ 2`, `0 ↔ 3`) now reliably trigger `didUpdateWidget` and play full physical spring overshoot and liquid stretch.
+
+
 
 
