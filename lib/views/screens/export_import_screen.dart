@@ -125,9 +125,9 @@ class ExportImportScreen extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
               child: AppHeaderBar(
+                leftHeroTag: 'hero_export_import_back',
                 leftWidth: 44.0,
                 onLeftTap: () {
-                  HapticFeedback.lightImpact();
                   Navigator.of(context).maybePop();
                 },
                 leftChild: SvgPicture.asset(

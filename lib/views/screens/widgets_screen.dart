@@ -6,8 +6,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/animations/page_transitions.dart';
 import '../../premium/premium.dart';
+import '../widgets/app_header_bar.dart';
 import '../widgets/primary_screen_surface.dart';
-import '../widgets/tactile_button.dart';
 
 /// Authoritative capability boundary for requesting access to Home Screen Widgets.
 /// Gated by [PremiumFeature.widgets].
@@ -61,56 +61,24 @@ class WidgetsScreen extends StatelessWidget {
             children: [
               // Top Navigation Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-                child: Row(
-                  children: [
-                    TactileButton(
-                      useAppleSpring: true,
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.of(context).pop();
-                      },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: borderColor, width: 0.5),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x0F000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: SvgPicture.asset(
-                            'assets/icons/arrow-left.svg',
-                            width: 16,
-                            height: 16,
-                            colorFilter: ColorFilter.mode(
-                              primaryTextColor,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                        ),
-                      ),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                child: AppHeaderBar(
+                  leftHeroTag: 'hero_widgets_back',
+                  leftWidth: 44.0,
+                  onLeftTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  leftChild: SvgPicture.asset(
+                    'assets/icons/angle_left.svg',
+                    width: 22,
+                    height: 22,
+                    colorFilter: ColorFilter.mode(
+                      primaryTextColor,
+                      BlendMode.srcIn,
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(
-                        'Home Screen Widgets',
-                        style: GoogleFonts.inter(
-                          color: primaryTextColor,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.4,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
+                  title: 'Home Screen Widgets',
+                  titleColor: primaryTextColor,
                 ),
               ),
 

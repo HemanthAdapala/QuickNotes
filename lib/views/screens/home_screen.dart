@@ -37,10 +37,14 @@ import '../widgets/app_header_bar.dart';
 import '../widgets/notes_and_task_pill.dart';
 import '../widgets/task_widget.dart';
 import '../widgets/notes_stack_widget.dart';
+import '../widgets/filter_pill.dart';
+import '../../core/motion/quick_notes_haptics.dart';
 import '../../models/task_item.dart';
 import '../../models/task_status.dart';
 import '../../models/single_task_snapshot.dart';
 import '../../models/note.dart';
+
+typedef _FilterPill = FilterPill;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Calendar tab content
@@ -179,7 +183,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
     _settingsBody = SettingsScreen(
       onMenuTap: () {
-        HapticFeedback.lightImpact();
         setState(() => _activeNavIndex = 0);
       },
     );
@@ -715,9 +718,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                     index == filters.length - 1
                                                         ? 0.0
                                                         : 12.0),
-                                            child: GestureDetector(
+                                            child: _FilterPill(
+                                              key: ValueKey('filter_pill_$filter'),
+                                              filter: filter,
+                                              text: text,
+                                              isSelected: isSelected,
+                                              dotColor: _isNotesActive
+                                                  ? const Color(0xFFFFCC00)
+                                                  : const Color(0xFF0088FF),
                                               onTap: () {
-                                                HapticFeedback.selectionClick();
+                                                QuickNotesHaptics.selection();
                                                 if (_activeFilter == filter) {
                                                   // Toggle sort direction on active filter tap (both Notes & Tasks)
                                                   _isSortAscending =
@@ -765,61 +775,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                 }
                                                 setState(() {});
                                               },
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  Container(
-                                                    height: 40.0,
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 20.0),
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(
-                                                          0x33787878),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20.0),
-                                                    ),
-                                                    alignment: Alignment.center,
-                                                    child: Text(
-                                                      text,
-                                                      style: GoogleFonts.inter(
-                                                        fontSize: 16.0,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: isSelected
-                                                            ? const Color(
-                                                                0xFF333333)
-                                                            : const Color(
-                                                                0x80333333),
-                                                        height: 1.38,
-                                                        letterSpacing: -0.43,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 4.0),
-                                                  Opacity(
-                                                    opacity:
-                                                        isSelected ? 1.0 : 0.0,
-                                                    child: Container(
-                                                      width: 5.0,
-                                                      height: 5.0,
-                                                      decoration:
-                                                          ShapeDecoration(
-                                                        color: _isNotesActive
-                                                            ? const Color(
-                                                                0xFFFFCC00)
-                                                            : const Color(
-                                                                0xFF0088FF),
-                                                        shape:
-                                                            const OvalBorder(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
                                             ),
                                           );
                                         },
@@ -1023,10 +978,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
                     child: AppHeaderBar(
+                      leftHeroTag: 'hero_home_profile',
                       rightHeroTag: 'hero_home_search',
                       leftWidth: 44.0,
                       onLeftTap: () async {
-                        HapticFeedback.selectionClick();
                         await Navigator.push(
                           context,
                           buildPageRoute(const ProfileScreen()),
@@ -1075,11 +1030,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ),
                       rightWidth: 44.0,
                       rightChild: TactileButton(
-                        useAppleSpring: true,
-                        compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
                         onTap: () {
-                          HapticFeedback.selectionClick();
                           Navigator.push(
                             context,
                             buildSearchTransitionRoute(

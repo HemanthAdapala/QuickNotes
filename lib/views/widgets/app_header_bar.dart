@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/motion/motion_constants.dart';
 import 'app_bottom_navigation_bar.dart'; // Import BottomBarGlassSurface
 import 'tactile_button.dart';
 
-class AppHeaderBar extends StatelessWidget {
+class AppHeaderBar extends StatefulWidget {
   final Widget? leftChild;
   final VoidCallback? onLeftTap;
   final double leftWidth;
@@ -21,6 +23,7 @@ class AppHeaderBar extends StatelessWidget {
   final double expandedWidth;
   final double expandedHeight;
   final Widget? expandedChild;
+  final VoidCallback? onCollapse;
   final Duration expandDuration;
   final Duration shrinkDuration;
   final Curve expandCurve;
@@ -31,10 +34,10 @@ class AppHeaderBar extends StatelessWidget {
     this.leftChild,
     this.onLeftTap,
     this.leftWidth = 44.0,
-    this.leftHeroTag = 'hero_profile_header',
+    this.leftHeroTag = 'hero_header_leading',
     this.rightChild,
     this.rightWidth = 44.0,
-    this.rightHeroTag = 'hero_more_options',
+    this.rightHeroTag = 'hero_header_trailing',
     this.title,
     this.titleWidget,
     this.titleColor,
@@ -42,132 +45,256 @@ class AppHeaderBar extends StatelessWidget {
     this.expandedWidth = 192.0,
     this.expandedHeight = 100.0,
     this.expandedChild,
-    this.expandDuration = const Duration(milliseconds: 500),
-    this.shrinkDuration = const Duration(milliseconds: 415),
-    this.expandCurve = Curves.easeOutCubic,
-    this.shrinkCurve = Curves.easeInOutCubic,
+    this.onCollapse,
+    this.expandDuration = QuickNotesMotion.kMotionPage,
+    this.shrinkDuration = QuickNotesMotion.kMotionPageReverse,
+    this.expandCurve = QuickNotesMotion.kMotionAppleEase,
+    this.shrinkCurve = QuickNotesMotion.kMotionAppleEase,
   });
 
   @override
+  State<AppHeaderBar> createState() => _AppHeaderBarState();
+}
+
+class _AppHeaderBarState extends State<AppHeaderBar> {
+  late bool _isInteractivityReady;
+  final FocusScopeNode _menuFocusScopeNode = FocusScopeNode(
+    debugLabel: 'AppHeaderBar_MenuFocusScope',
+    traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
+  );
+
+  @override
+  void dispose() {
+    _menuFocusScopeNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _isInteractivityReady = widget.isExpanded;
+    if (widget.isExpanded) {
+      _focusExpandedMenu();
+    }
+  }
+
+  void _focusExpandedMenu() {
+    if (!mounted || !widget.isExpanded || !_isInteractivityReady) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.isExpanded && _isInteractivityReady) {
+        final FocusNode? currentFocused = _menuFocusScopeNode.focusedChild;
+        final bool childHasFocus = currentFocused != null &&
+            currentFocused != _menuFocusScopeNode &&
+            currentFocused.canRequestFocus;
+        if (!childHasFocus) {
+          final FocusNode? firstChild =
+              _menuFocusScopeNode.traversalDescendants.firstOrNull;
+          if (firstChild != null) {
+            firstChild.requestFocus();
+          } else {
+            _menuFocusScopeNode.requestFocus();
+          }
+        }
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(AppHeaderBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isExpanded != oldWidget.isExpanded) {
+      if (!widget.isExpanded) {
+        _isInteractivityReady = false;
+        _menuFocusScopeNode.unfocus();
+      } else {
+        final bool disableAnimations = MediaQuery.of(context).disableAnimations;
+        _isInteractivityReady = disableAnimations;
+      }
+    }
+  }
+
+  void _handleAnimationEnd() {
+    if (mounted && widget.isExpanded && !_isInteractivityReady) {
+      setState(() {
+        _isInteractivityReady = true;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: isExpanded ? expandedHeight : 44.0,
+    final bool disableAnimations = MediaQuery.of(context).disableAnimations;
+    final Duration effectiveExpandDuration =
+        disableAnimations ? Duration.zero : widget.expandDuration;
+    final Duration effectiveShrinkDuration =
+        disableAnimations ? Duration.zero : widget.shrinkDuration;
+    final Duration effectiveFadeDuration = disableAnimations
+        ? Duration.zero
+        : (widget.isExpanded
+            ? QuickNotesMotion.kMotionMicro
+            : QuickNotesMotion.kMotionRelease);
+    final Duration effectivePopupDuration = disableAnimations
+        ? Duration.zero
+        : (widget.isExpanded
+            ? QuickNotesMotion.kMotionPage
+            : QuickNotesMotion.kMotionPageReverse);
+
+    final double effectiveRightWidth =
+        widget.isExpanded ? widget.expandedWidth : widget.rightWidth;
+
+    // Gated interactivity: expanded child only accepts pointer events once fully settled
+    final bool isContentInteractive =
+        widget.isExpanded && (disableAnimations || _isInteractivityReady);
+
+    _menuFocusScopeNode.canRequestFocus = isContentInteractive;
+    _menuFocusScopeNode.descendantsAreFocusable = isContentInteractive;
+
+    final FocusNode? currentFocused = _menuFocusScopeNode.focusedChild;
+    final bool childHasFocus = currentFocused != null &&
+        currentFocused != _menuFocusScopeNode &&
+        currentFocused.canRequestFocus;
+
+    if (isContentInteractive && !childHasFocus) {
+      _focusExpandedMenu();
+    }
+
+    Widget? leftButton;
+    if (widget.leftChild != null) {
+      leftButton = BottomBarGlassSurface(
+        width: widget.leftWidth,
+        height: 44.0,
+        borderRadius: BorderRadius.circular(22.0),
+        child: TactileButton(
+          onTap: widget.onLeftTap ?? () {},
+          child: Center(child: widget.leftChild),
+        ),
+      );
+      if (widget.leftHeroTag.isNotEmpty) {
+        leftButton = Hero(
+          tag: widget.leftHeroTag,
+          child: leftButton,
+        );
+      }
+    }
+
+    final body = SizedBox(
+      height: widget.isExpanded ? widget.expandedHeight : 44.0,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Left Button (Hero-wrapped Glass Surface)
-          if (leftChild != null)
+          // Left Button (Glass Surface)
+          if (leftButton != null)
             Positioned(
               left: 0,
               top: 0,
-              width: leftWidth,
+              width: widget.leftWidth,
               height: 44.0,
-              child: Hero(
-                tag: leftHeroTag,
-                child: BottomBarGlassSurface(
-                  width: leftWidth,
-                  height: 44.0,
-                  borderRadius: BorderRadius.circular(22.0),
-                  child: TactileButton(
-                    useAppleSpring: true,
-                    compressionScale: 0.7,
-                    settleDuration: const Duration(milliseconds: 1000),
-                    onTap: onLeftTap ?? () {},
-                    child: Center(child: leftChild),
-                  ),
-                ),
-              ),
+              child: leftButton,
             ),
 
           // Center Title Slot — titleWidget takes precedence.
-          // IMPORTANT: Uses Positioned(left/right) instead of Positioned.fill so
-          // the center widget occupies only the space *between* the left and right
-          // buttons. Positioned.fill would overlap the button zones, causing the
-          // BackdropFilter inside BottomBarGlassSurface to produce a gray
-          // compositing rectangle across the entire header area.
-          if (titleWidget != null)
+          if (widget.titleWidget != null)
             Positioned(
-              left: leftWidth,
-              right: rightWidth,
+              left: widget.leftWidth,
+              right: effectiveRightWidth,
               top: 0,
               bottom: 0,
-              child: Center(child: titleWidget!),
+              child: Center(child: widget.titleWidget!),
             )
-          else if (title != null)
-            Positioned.fill(
+          else if (widget.title != null)
+            Positioned(
+              left: widget.leftWidth,
+              right: effectiveRightWidth,
+              top: 0,
+              bottom: 0,
               child: Center(
                 child: Material(
                   type: MaterialType.transparency,
                   child: Text(
-                    title!,
+                    widget.title!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: titleColor ?? const Color(0xFF1C1C1E),
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.43,
+                      color: widget.titleColor ?? const Color(0xFF1C1C1E),
                     ),
                   ),
                 ),
               ),
             ),
 
-          // Right Button/Pill (Hero-wrapped Glass Surface with configurable in-place expansion/shrinking)
-          if (rightChild != null)
+          // Right Button/Pill (Glass Surface with configurable in-place expansion/shrinking)
+          if (widget.rightChild != null)
             Positioned(
               right: 0,
               top: 0,
               child: AnimatedContainer(
-                duration: isExpanded ? expandDuration : shrinkDuration,
-                curve: isExpanded ? expandCurve : shrinkCurve,
-                width: isExpanded ? expandedWidth : rightWidth,
-                height: isExpanded ? expandedHeight : 44.0,
+                duration: widget.isExpanded
+                    ? effectiveExpandDuration
+                    : effectiveShrinkDuration,
+                curve: widget.isExpanded
+                    ? widget.expandCurve
+                    : widget.shrinkCurve,
+                width: widget.isExpanded
+                    ? widget.expandedWidth
+                    : widget.rightWidth,
+                height: widget.isExpanded ? widget.expandedHeight : 44.0,
+                onEnd: _handleAnimationEnd,
                 child: Hero(
-                  tag: rightHeroTag,
+                  tag: widget.rightHeroTag,
                   child: BottomBarGlassSurface(
-                    width: isExpanded ? expandedWidth : rightWidth,
-                    height: isExpanded ? expandedHeight : 44.0,
-                    borderRadius:
-                        BorderRadius.circular(isExpanded ? 20.0 : 22.0),
+                    width: widget.isExpanded
+                        ? widget.expandedWidth
+                        : widget.rightWidth,
+                    height: widget.isExpanded ? widget.expandedHeight : 44.0,
+                    borderRadius: BorderRadius.circular(
+                        widget.isExpanded ? 20.0 : 22.0),
                     useFrost: true,
                     child: ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(isExpanded ? 20.0 : 22.0),
+                      borderRadius: BorderRadius.circular(
+                          widget.isExpanded ? 20.0 : 22.0),
                       child: Stack(
                         children: [
                           // Collapsed state: 3-dots icon
                           AnimatedOpacity(
-                            duration:
-                                Duration(milliseconds: isExpanded ? 200 : 250),
-                            curve: Curves.easeOut,
-                            opacity: isExpanded ? 0.0 : 1.0,
+                            duration: effectiveFadeDuration,
+                            curve: QuickNotesMotion.kMotionAppleEase,
+                            opacity: widget.isExpanded ? 0.0 : 1.0,
                             child: IgnorePointer(
-                              ignoring: isExpanded,
-                              child: rightChild!,
+                              ignoring: widget.isExpanded,
+                              child: widget.rightChild!,
                             ),
                           ),
 
                           // Expanded state: MoreOptionsPopup menu items (staggered fade & subtle slide)
-                          if (expandedChild != null)
+                          // DEF-07 fix: IgnorePointer gates hit-testing during expansion animation
+                          if (widget.expandedChild != null)
                             AnimatedOpacity(
-                              duration: Duration(
-                                  milliseconds: isExpanded ? 420 : 200),
-                              curve: Curves.easeOutCubic,
-                              opacity: isExpanded ? 1.0 : 0.0,
+                              duration: effectivePopupDuration,
+                              curve: QuickNotesMotion.kMotionAppleEase,
+                              opacity: widget.isExpanded ? 1.0 : 0.0,
                               child: IgnorePointer(
-                                ignoring: !isExpanded,
+                                ignoring: !isContentInteractive,
                                 child: AnimatedSlide(
-                                  duration: Duration(
-                                      milliseconds: isExpanded ? 420 : 200),
-                                  curve: Curves.easeOutCubic,
-                                  offset: isExpanded
+                                  duration: effectivePopupDuration,
+                                  curve: QuickNotesMotion.kMotionAppleEase,
+                                  offset: widget.isExpanded
                                       ? Offset.zero
                                       : const Offset(0, 0.08),
                                   child: OverflowBox(
-                                    minWidth: expandedWidth,
-                                    maxWidth: expandedWidth,
-                                    minHeight: expandedHeight,
-                                    maxHeight: expandedHeight,
+                                    minWidth: widget.expandedWidth,
+                                    maxWidth: widget.expandedWidth,
+                                    minHeight: widget.expandedHeight,
+                                    maxHeight: widget.expandedHeight,
                                     alignment: Alignment.topRight,
-                                    child: expandedChild!,
+                                    child: FocusScope(
+                                      node: _menuFocusScopeNode,
+                                      autofocus: isContentInteractive,
+                                      canRequestFocus: isContentInteractive,
+                                      child: widget.expandedChild!,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -181,6 +308,17 @@ class AppHeaderBar extends StatelessWidget {
             ),
         ],
       ),
+    );
+
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          if (widget.isExpanded) {
+            widget.onCollapse?.call();
+          }
+        },
+      },
+      child: body,
     );
   }
 }

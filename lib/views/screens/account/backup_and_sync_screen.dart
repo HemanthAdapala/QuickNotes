@@ -59,7 +59,6 @@ class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
                 rightWidth: 44.0,
                 rightChild: null,
                 onLeftTap: () {
-                  HapticFeedback.lightImpact();
                   Navigator.pop(context);
                 },
                 leftChild: SvgPicture.asset(

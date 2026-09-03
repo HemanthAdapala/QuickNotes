@@ -71,9 +71,9 @@ class GlassmorphismPresets {
 }
 
 class MotionPresets {
-  static const double compressionScale = 0.7;
-  static const Duration settleDuration = Duration(milliseconds: 1000);
-  static const Duration pressDuration = Duration(milliseconds: 80);
-  static const Duration morphDuration = Duration(milliseconds: 1000);
-  static const Curve morphCurve = Curves.elasticOut;
+  static const double compressionScale = 0.94;
+  static const Duration settleDuration = Duration(milliseconds: 190);
+  static const Duration pressDuration = Duration(milliseconds: 90);
+  static const Duration morphDuration = Duration(milliseconds: 260);
+  static const Curve morphCurve = Curves.easeOutCubic;
 }

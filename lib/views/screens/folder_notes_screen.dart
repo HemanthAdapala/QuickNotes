@@ -27,6 +27,7 @@ import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/primary_screen_surface.dart';
 import '../widgets/folder_note_card.dart';
 import '../widgets/folder_options_popup.dart';
+import '../widgets/header_expanded_interaction.dart';
 import '../widgets/pin_lock_sheet.dart';
 import 'note_editor_screen.dart';
 
@@ -851,6 +852,14 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                 ),
               ),
 
+            // Header Expanded Outside-Tap Barrier & Interaction
+            Positioned.fill(
+              child: HeaderExpandedInteraction(
+                isExpanded: _isFolderOptionsOpen,
+                onDismiss: () => setState(() => _isFolderOptionsOpen = false),
+              ),
+            ),
+
             // Floating Glass Header Row with Dual Glass Buttons on Top Right (Search + MoreOptions)
             SafeArea(
               bottom: false,
@@ -864,11 +873,12 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 24.0, vertical: 12.0),
                         child: AppHeaderBar(
-                          leftHeroTag: 'hero_profile_header',
-                          rightHeroTag: 'hero_more_options',
+                          leftHeroTag: 'hero_folder_notes_back',
+                          rightHeroTag: 'hero_folder_notes_more',
+                          onCollapse: () =>
+                              setState(() => _isFolderOptionsOpen = false),
                           leftWidth: 44.0,
                           onLeftTap: () {
-                            HapticFeedback.lightImpact();
                             if (_isFolderOptionsOpen) {
                               setState(() => _isFolderOptionsOpen = false);
                             } else if (_isSelectionMode) {
@@ -931,12 +941,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                 width: 44.0,
                                 height: 44.0,
                                 child: TactileButton(
-                                  useAppleSpring: true,
-                                  compressionScale: 0.7,
-                                  settleDuration:
-                                      const Duration(milliseconds: 1000),
                                   onTap: () {
-                                    HapticFeedback.lightImpact();
                                     Navigator.of(context)
                                         .push(buildSearchTransitionRoute(
                                       builder: (_) => SearchScreen(
@@ -960,12 +965,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                 width: 44.0,
                                 height: 44.0,
                                 child: TactileButton(
-                                  useAppleSpring: true,
-                                  compressionScale: 0.7,
-                                  settleDuration:
-                                      const Duration(milliseconds: 1000),
                                   onTap: () {
-                                    HapticFeedback.lightImpact();
                                     setState(() {
                                       _isFolderOptionsOpen =
                                           !_isFolderOptionsOpen;

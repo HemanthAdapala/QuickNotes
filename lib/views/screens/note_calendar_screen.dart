@@ -308,9 +308,10 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
               child: AppHeaderBar(
+                leftHeroTag: 'hero_note_calendar_back',
+                rightHeroTag: 'hero_note_calendar_search',
                 leftWidth: 44.0,
                 onLeftTap: () {
-                  HapticFeedback.lightImpact();
                   widget.onNavigateToTab?.call(0);
                 },
                 leftChild: SvgPicture.asset(
@@ -323,11 +324,7 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                 title: "Note Calendar",
                 rightWidth: 44.0,
                 rightChild: TactileButton(
-                  useAppleSpring: true,
-                  compressionScale: 0.7,
-                  settleDuration: const Duration(milliseconds: 1000),
                   onTap: () {
-                    HapticFeedback.lightImpact();
                     Navigator.of(context).push(buildSearchTransitionRoute(
                       builder: (_) => const SearchScreen(
                         initialScope: 'tasks',

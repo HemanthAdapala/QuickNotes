@@ -23,6 +23,7 @@ import '../../providers/tasks_provider.dart';
 import '../../providers/notes_provider.dart';
 import 'experimental/sde_drag_test_screen.dart';
 import '../widgets/more_options_popup.dart';
+import '../widgets/header_expanded_interaction.dart';
 import '../widgets/delete_confirmation_dialog.dart';
 import '../../models/note.dart';
 import '../../models/task_item.dart';
@@ -634,6 +635,14 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
             ],
           ),
 
+          // 3.5. Header Expanded Outside-Tap Barrier & Interaction
+          Positioned.fill(
+            child: HeaderExpandedInteraction(
+              isExpanded: _isMoreOptionsOpen,
+              onDismiss: () => setState(() => _isMoreOptionsOpen = false),
+            ),
+          ),
+
           // 4. Header Bar Overlay
           Positioned(
             top: 0,
@@ -647,7 +656,14 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                 child: AppHeaderBar(
                   leftHeroTag: 'hero_settings_back',
                   leftWidth: 44.0,
-                  onLeftTap: widget.onMenuTap,
+                  onLeftTap: () {
+                    if (_isMoreOptionsOpen) {
+                      setState(() => _isMoreOptionsOpen = false);
+                    } else {
+                      widget.onMenuTap?.call();
+                    }
+                  },
+                  onCollapse: () => setState(() => _isMoreOptionsOpen = false),
                   leftChild: SvgPicture.asset(
                     'assets/icons/angle_left.svg',
                     width: 22,
@@ -720,11 +736,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                     },
                   ),
                   rightChild: TactileButton(
-                    useAppleSpring: true,
-                    compressionScale: 0.7,
-                    settleDuration: const Duration(milliseconds: 1000),
                     onTap: () {
-                      HapticFeedback.selectionClick();
                       setState(() {
                         _isMoreOptionsOpen = !_isMoreOptionsOpen;
                       });

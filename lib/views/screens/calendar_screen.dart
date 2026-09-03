@@ -320,84 +320,140 @@ class _CalendarScreenState extends State<CalendarScreen> {
       body: PrimaryScreenSurface(
         child: SafeArea(
           bottom: false,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 402.0),
-              child: Column(
-                children: [
-                  // ── 1. Header Row (floating on stone background) ──────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 12.0,
-                    ),
-                    child: Row(
-                      children: [
-                        // ─ Back / home-tab button ─────────────────────────────────
-                        BottomBarGlassSurface(
-                          width: 44.0,
-                          height: 44.0,
-                          borderRadius: BorderRadius.circular(22.0),
-                          child: TactileButton(
-                            useAppleSpring: true,
-                            compressionScale: 0.7,
-                            settleDuration: const Duration(milliseconds: 1000),
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              if (widget.onBack != null) {
-                                widget.onBack!();
-                              } else {
-                                Navigator.of(context).pop();
-                              }
-                            },
-                            child: Center(
-                              child: SvgPicture.asset(
-                                'assets/icons/angle_left.svg',
-                                width: 22,
-                                height: 22,
-                                colorFilter: const ColorFilter.mode(
-                                  Color(0xFF1C1C1E),
-                                  BlendMode.srcIn,
-                                ),
+          child: Column(
+            children: [
+              // ── 1. Header Row (floating on stone background) ──────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 12.0,
+                ),
+                child: SizedBox(
+                  height: 44.0,
+                  child: Row(
+                    children: [
+                      // ─ Back / home-tab button ─────────────────────────────────
+                      BottomBarGlassSurface(
+                        width: 44.0,
+                        height: 44.0,
+                        borderRadius: BorderRadius.circular(22.0),
+                        child: TactileButton(
+                          onTap: () {
+                            if (widget.onBack != null) {
+                              widget.onBack!();
+                            } else {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'assets/icons/angle_left.svg',
+                              width: 22,
+                              height: 22,
+                              colorFilter: const ColorFilter.mode(
+                                Color(0xFF1C1C1E),
+                                BlendMode.srcIn,
                               ),
                             ),
                           ),
                         ),
+                      ),
 
-                        // ─ MonthContainer pill ──────────────────────────────────
-                        Expanded(
-                          child: Center(
-                            child: MonthContainer(
-                              label: _monthLabel,
-                              onPrevious: _previousMonth,
-                              onNext: _nextMonth,
+                      // ─ MonthContainer pill ──────────────────────────────────
+                      Expanded(
+                        child: Center(
+                          child: MonthContainer(
+                            label: _monthLabel,
+                            onPrevious: _previousMonth,
+                            onNext: _nextMonth,
+                          ),
+                        ),
+                      ),
+
+                      // ─ Search button ───────────────────────────────────────────
+                      BottomBarGlassSurface(
+                        width: 44.0,
+                        height: 44.0,
+                        borderRadius: BorderRadius.circular(22.0),
+                        child: TactileButton(
+                          onTap: () {
+                            Navigator.of(context)
+                                .push(buildSearchTransitionRoute(
+                              builder: (_) => const SearchScreen(
+                                initialScope: 'tasks',
+                              ),
+                            ));
+                          },
+                          child: const Center(
+                            child: Icon(
+                              Icons.search_rounded,
+                              color: Color(0xFF1C1C1E),
+                              size: 22,
                             ),
                           ),
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
-                        // ─ Search button ───────────────────────────────────────────
-                        BottomBarGlassSurface(
-                          width: 44.0,
-                          height: 44.0,
-                          borderRadius: BorderRadius.circular(22.0),
-                          child: TactileButton(
-                            useAppleSpring: true,
-                            compressionScale: 0.7,
-                            settleDuration: const Duration(milliseconds: 1000),
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              Navigator.of(context)
-                                  .push(buildSearchTransitionRoute(
-                                builder: (_) => const SearchScreen(
-                                  initialScope: 'tasks',
+              // ── Calendar Content Area (preserved 402.0px constraint) ──────────
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 402.0),
+                    child: Column(
+                      children: [
+                        // ── 2. Calendar Grid (sitting on background) ──────────────────────
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24.0,
+                            vertical: 8.0,
+                          ),
+                          child: CalendarGridWidget(
+                            currentMonth: _currentMonth,
+                            taskStates: _monthTaskStates,
+                            selectedDay: _selectedDay,
+                            onDayTap: (day) => setState(() => _selectedDay = day),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12.0),
+
+                        // ── 3. White Bottom Sheet Panel (ONLY wrapping Tasks Preview!) ────
+                        Expanded(
+                          child: Container(
+                            decoration: const ShapeDecoration(
+                              color: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(24),
                                 ),
-                              ));
-                            },
-                            child: const Center(
-                              child: Icon(
-                                Icons.search_rounded,
-                                color: Color(0xFF1C1C1E),
-                                size: 22,
+                              ),
+                              shadows: [
+                                BoxShadow(
+                                  color: Color(0x1F000000),
+                                  blurRadius: 20,
+                                  offset: Offset(0, -4),
+                                  spreadRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius:
+                                  const BorderRadius.vertical(top: Radius.circular(24)),
+                              child: TaskWidgetsContainer(
+                                selectedDate: DateTime(
+                                  _currentMonth.year,
+                                  _currentMonth.month,
+                                  _selectedDay,
+                                ),
+                                tasks: _selectedDayTasks,
+                                onToggleTask: _toggleTask,
+                                onDismissTask: _removeTask,
+                                onTapTask: _editTask,
+                                onAddTask: _showAddTaskSheet,
                               ),
                             ),
                           ),
@@ -405,63 +461,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ],
                     ),
                   ),
-
-                  // ── 2. Calendar Grid (sitting on background) ──────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 8.0,
-                    ),
-                    child: CalendarGridWidget(
-                      currentMonth: _currentMonth,
-                      taskStates: _monthTaskStates,
-                      selectedDay: _selectedDay,
-                      onDayTap: (day) => setState(() => _selectedDay = day),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12.0),
-
-                  // ── 3. White Bottom Sheet Panel (ONLY wrapping Tasks Preview!) ────
-                  Expanded(
-                    child: Container(
-                      decoration: const ShapeDecoration(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(24),
-                          ),
-                        ),
-                        shadows: [
-                          BoxShadow(
-                            color: Color(0x1F000000),
-                            blurRadius: 20,
-                            offset: Offset(0, -4),
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius:
-                            const BorderRadius.vertical(top: Radius.circular(24)),
-                        child: TaskWidgetsContainer(
-                          selectedDate: DateTime(
-                            _currentMonth.year,
-                            _currentMonth.month,
-                            _selectedDay,
-                          ),
-                          tasks: _selectedDayTasks,
-                          onToggleTask: _toggleTask,
-                          onDismissTask: _removeTask,
-                          onTapTask: _editTask,
-                          onAddTask: _showAddTaskSheet,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

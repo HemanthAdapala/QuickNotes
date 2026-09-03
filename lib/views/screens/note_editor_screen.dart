@@ -26,6 +26,7 @@ import '../widgets/rich_text_controller.dart';
 import '../widgets/new_single_document_editor.dart';
 import '../widgets/single_document_drag_overlay.dart';
 import '../widgets/note_editor_options_popup.dart';
+import '../widgets/header_expanded_interaction.dart';
 import '../widgets/delete_confirmation_dialog.dart';
 import '../widgets/paper_guide_painters.dart';
 import '../widgets/tactile_button.dart';
@@ -4686,21 +4687,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
               ),
             ),
 
-            // Backdrop Overlay for Morphing Options Popup
-            IgnorePointer(
-              ignoring: !_isNoteOptionsOpen,
-              child: AnimatedOpacity(
-                duration:
-                    Duration(milliseconds: _isNoteOptionsOpen ? 500 : 415),
-                curve: Curves.easeOutCubic,
-                opacity: _isNoteOptionsOpen ? 1.0 : 0.0,
-                child: GestureDetector(
-                  onTap: () => setState(() => _isNoteOptionsOpen = false),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    color: Color(0xFF333333).withValues(alpha: 0.20),
-                  ),
-                ),
+            // Header Expanded Outside-Tap Barrier & Interaction
+            Positioned.fill(
+              child: HeaderExpandedInteraction(
+                isExpanded: _isNoteOptionsOpen,
+                onDismiss: () => setState(() => _isNoteOptionsOpen = false),
+                barrierColor: const Color(0xFF333333).withValues(alpha: 0.08),
               ),
             ),
 
@@ -4731,6 +4723,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                           },
                         )
                       : AppHeaderBar(
+                          leftHeroTag: 'hero_note_editor_back',
+                          rightHeroTag: 'hero_note_editor_tools',
+                          onCollapse: () =>
+                              setState(() => _isNoteOptionsOpen = false),
                           isExpanded: _isNoteOptionsOpen,
                           expandedWidth: 192.0,
                           expandedHeight: 250.0,
@@ -4788,19 +4784,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                   builder: (context, val, _) {
                                     final canUndo = _contentController.canUndo;
                                     return TactileButton(
-                                      useAppleSpring: true,
-                                      compressionScale: 0.7,
-                                      settleDuration:
-                                          const Duration(milliseconds: 1000),
-                                      onTap: canUndo
-                                          ? () {
-                                              _contentController.undo();
-                                              _restoreContentFocus();
-                                              setState(() {
-                                                _hasChanges = true;
-                                              });
-                                            }
-                                          : () {},
+                                      enabled: canUndo,
+                                      onTap: () {
+                                        _contentController.undo();
+                                        _restoreContentFocus();
+                                        setState(() {
+                                          _hasChanges = true;
+                                        });
+                                      },
                                       child: Center(
                                         child: Icon(
                                           Icons.undo_rounded,
@@ -4822,19 +4813,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                   builder: (context, val, _) {
                                     final canRedo = _contentController.canRedo;
                                     return TactileButton(
-                                      useAppleSpring: true,
-                                      compressionScale: 0.7,
-                                      settleDuration:
-                                          const Duration(milliseconds: 1000),
-                                      onTap: canRedo
-                                          ? () {
-                                              _contentController.redo();
-                                              _restoreContentFocus();
-                                              setState(() {
-                                                _hasChanges = true;
-                                              });
-                                            }
-                                          : () {},
+                                      enabled: canRedo,
+                                      onTap: () {
+                                        _contentController.redo();
+                                        _restoreContentFocus();
+                                        setState(() {
+                                          _hasChanges = true;
+                                        });
+                                      },
                                       child: Center(
                                         child: Icon(
                                           Icons.redo_rounded,
@@ -4859,10 +4845,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                               // Folder Select Button
                               Expanded(
                                 child: TactileButton(
-                                  useAppleSpring: true,
-                                  compressionScale: 0.7,
-                                  settleDuration:
-                                      const Duration(milliseconds: 1000),
                                   onTap: () {
                                     _showFolderSelectorDialog();
                                   },
@@ -4880,10 +4862,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                               // Options Button
                               Expanded(
                                 child: TactileButton(
-                                  useAppleSpring: true,
-                                  compressionScale: 0.7,
-                                  settleDuration:
-                                      const Duration(milliseconds: 1000),
                                   onTap: () {
                                     setState(() {
                                       _isNoteOptionsOpen = !_isNoteOptionsOpen;
@@ -5887,6 +5865,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
       canPop: false,
       onPopInvokedWithResult: (bool didPop, Object? result) async {
         if (didPop) return;
+        if (_isNoteOptionsOpen) {
+          setState(() => _isNoteOptionsOpen = false);
+          return;
+        }
         await _onWillPop();
         if (context.mounted) {
           Navigator.of(context).pop();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/motion/quick_notes_haptics.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FolderOptionsPopup
@@ -39,66 +40,84 @@ class FolderOptionsPopup extends StatelessWidget {
   }) {
     const textColor = Color(0xFF333333);
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 192,
-        height: 50,
-        child: Stack(
-          children: [
-            if (hasBottomDivider)
-              Positioned(
-                left: 0,
-                bottom: 0,
-                child: Container(
-                  width: 192,
-                  height: 1,
-                  decoration: const ShapeDecoration(
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(width: 0.20, color: Color(0x33000000)),
+    return Semantics(
+      button: true,
+      child: FocusableActionDetector(
+        includeFocusSemantics: false,
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (intent) {
+              QuickNotesHaptics.buttonPress();
+              onTap?.call();
+              return null;
+            },
+          ),
+        },
+        child: GestureDetector(
+          onTap: () {
+            QuickNotesHaptics.buttonPress();
+            onTap?.call();
+          },
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            width: 192,
+            height: 50,
+            child: Stack(
+              children: [
+                if (hasBottomDivider)
+                  Positioned(
+                    left: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 192,
+                      height: 1,
+                      decoration: const ShapeDecoration(
+                        shape: RoundedRectangleBorder(
+                          side: BorderSide(width: 0.20, color: Color(0x33000000)),
+                        ),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  left: 14,
+                  top: 17,
+                  child: SvgPicture.asset(
+                    iconAsset,
+                    width: 16,
+                    height: 16,
+                    colorFilter: const ColorFilter.mode(textColor, BlendMode.srcIn),
+                  ),
+                ),
+                Positioned(
+                  left: 39,
+                  top: 10,
+                  child: SizedBox(
+                    width: trailingWidget != null ? 115 : 139,
+                    height: 30,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        label,
+                        style: GoogleFonts.inter(
+                          color: textColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: -0.43,
+                          height: 1.0,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            Positioned(
-              left: 14,
-              top: 17,
-              child: SvgPicture.asset(
-                iconAsset,
-                width: 16,
-                height: 16,
-                colorFilter: const ColorFilter.mode(textColor, BlendMode.srcIn),
-              ),
-            ),
-            Positioned(
-              left: 39,
-              top: 10,
-              child: SizedBox(
-                width: trailingWidget != null ? 115 : 139,
-                height: 30,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    label,
-                    style: GoogleFonts.inter(
-                      color: textColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: -0.43,
-                      height: 1.0,
-                    ),
+                if (trailingWidget != null)
+                  Positioned(
+                    right: 14,
+                    top: 17,
+                    child: trailingWidget,
                   ),
-                ),
-              ),
+              ],
             ),
-            if (trailingWidget != null)
-              Positioned(
-                right: 14,
-                top: 17,
-                child: trailingWidget,
-              ),
-          ],
+          ),
         ),
       ),
     );

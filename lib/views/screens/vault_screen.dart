@@ -80,8 +80,9 @@ class VaultScreen extends StatelessWidget {
                   "Vault",
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.43,
                     color: theme.brightness == Brightness.dark
                         ? Colors.white
                         : const Color(0xFF1C1C1E),
@@ -89,11 +90,7 @@ class VaultScreen extends StatelessWidget {
                 ),
                 rightChild: isUnlocked
                     ? TactileButton(
-                        useAppleSpring: true,
-                        compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
                         onTap: () {
-                          HapticFeedback.lightImpact();
                           provider.lockVault();
                           ScaffoldMessenger.of(context).hideCurrentSnackBar();
                           ScaffoldMessenger.of(context).showSnackBar(

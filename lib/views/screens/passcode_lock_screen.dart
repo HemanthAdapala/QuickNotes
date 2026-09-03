@@ -144,7 +144,6 @@ class _PasscodeLockScreenState extends State<PasscodeLockScreen> {
                     : null,
                 onLeftTap: isCancelable
                     ? () {
-                        HapticFeedback.lightImpact();
                         widget.onCancel?.call();
                       }
                     : null,

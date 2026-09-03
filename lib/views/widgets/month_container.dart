@@ -25,7 +25,7 @@ class MonthContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 193,
-      height: 46,
+      height: 44,
       child: Stack(
         children: [
           // ── Background pill ────────────────────────────────────────────
@@ -34,7 +34,7 @@ class MonthContainer extends StatelessWidget {
             top: 0,
             child: Container(
               width: 193,
-              height: 46,
+              height: 44,
               decoration: ShapeDecoration(
                 color: Colors.white, // Backgrounds-Primary
                 shape: RoundedRectangleBorder(
@@ -72,7 +72,7 @@ class MonthContainer extends StatelessWidget {
           // ── Angle-left icon (previous month) ──────────────────────────
           Positioned(
             left: 10,
-            top: 15,
+            top: 13.5,
             child: GestureDetector(
               onTap: onPrevious,
               behavior: HitTestBehavior.opaque,
@@ -95,7 +95,7 @@ class MonthContainer extends StatelessWidget {
           // ── Angle-right icon (next month) ─────────────────────────────
           Positioned(
             left: 166,
-            top: 15,
+            top: 13.5,
             child: GestureDetector(
               onTap: onNext,
               behavior: HitTestBehavior.opaque,

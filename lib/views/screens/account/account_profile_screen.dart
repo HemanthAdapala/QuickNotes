@@ -283,7 +283,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                             rightWidth: 44.0,
                             rightChild: null,
                             onLeftTap: () {
-                              HapticFeedback.lightImpact();
                               if (widget.isSetupFlow || !Navigator.canPop(context)) {
                                 _navigateToHome();
                               } else {

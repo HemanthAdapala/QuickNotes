@@ -747,7 +747,6 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                       child: AppHeaderBar(
                         leftWidth: 44.0,
                         onLeftTap: () {
-                          HapticFeedback.lightImpact();
                           Navigator.of(context).maybePop();
                         },
                         leftChild: SvgPicture.asset(
@@ -761,11 +760,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                         ),
                         rightWidth: 44.0,
                         rightChild: TactileButton(
-                          useAppleSpring: true,
-                          compressionScale: 0.7,
-                          settleDuration: const Duration(milliseconds: 1000),
                           onTap: () {
-                            HapticFeedback.lightImpact();
                             Navigator.of(context)
                                 .push(buildSearchTransitionRoute(
                               builder: (_) => SearchScreen(

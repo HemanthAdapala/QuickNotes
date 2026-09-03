@@ -427,11 +427,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                     borderRadius: BorderRadius.circular(22.0),
                     useFrost: true,
                     child: TactileButton(
-                      useAppleSpring: true,
-                      compressionScale: 0.7,
-                      settleDuration: const Duration(milliseconds: 1000),
                       onTap: () {
-                        HapticFeedback.lightImpact();
                         setState(() {
                           _isSearchExpanded = false;
                           _searchQuery = "";
@@ -489,11 +485,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                     borderRadius: BorderRadius.circular(22.0),
                     useFrost: true,
                     child: TactileButton(
-                      useAppleSpring: true,
-                      compressionScale: 0.7,
-                      settleDuration: const Duration(milliseconds: 1000),
                       onTap: () {
-                        HapticFeedback.lightImpact();
                         setState(() {
                           _isSearchExpanded = false;
                           _searchQuery = "";
@@ -524,11 +516,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                       borderRadius: BorderRadius.circular(22.0),
                       useFrost: true,
                       child: TactileButton(
-                        useAppleSpring: true,
-                        compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
                         onTap: () {
-                          HapticFeedback.lightImpact();
                           widget.onNavigateToTab?.call(0);
                         },
                         child: Center(
@@ -556,11 +544,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                         borderRadius: BorderRadius.circular(22.0),
                         useFrost: true,
                         child: TactileButton(
-                          useAppleSpring: true,
-                          compressionScale: 0.7,
-                          settleDuration: const Duration(milliseconds: 1000),
                           onTap: () {
-                            HapticFeedback.selectionClick();
                             Navigator.push(
                               context,
                               buildSearchTransitionRoute(
@@ -766,94 +750,93 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                   child: SizedBox(
                     width: screenWidth.clamp(0.0, 402.0),
                     child: folders.isEmpty
-                      ? _buildEmptyState()
-                      : filteredFolders.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 40.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.folder_open_rounded,
-                                      size: 48,
-                                      color: const Color(0xFF1C1C1E)
-                                          .withValues(alpha: 0.3),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      "No folders match search",
-                                      style: GoogleFonts.inter(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
+                        ? _buildEmptyState()
+                        : filteredFolders.isEmpty
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 40.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.folder_open_rounded,
+                                        size: 48,
                                         color: const Color(0xFF1C1C1E)
-                                            .withValues(alpha: 0.5),
+                                            .withValues(alpha: 0.3),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : GridView.builder(
-                              physics: const BouncingScrollPhysics(),
-                              padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0,
-                                  80.0 + MediaQuery.paddingOf(context).bottom),
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 8.0,
-                                mainAxisSpacing: 0.0,
-                                childAspectRatio: 150.0 / 192.0,
-                              ),
-                              itemCount: filteredFolders.length,
-                              itemBuilder: (context, index) {
-                                final item = filteredFolders[index];
-                                final folder = item.folder;
-                                final noteCount = activeNotes
-                                    .where((n) => n.folderId == folder.id)
-                                    .length;
-                                final key = _getKeyForFolder(folder.id);
-
-                                return AnimatedListEntrance(
-                                  key: key,
-                                  index: index,
-                                  child: FolderGridCard(
-                                    folder: folder,
-                                    index: index,
-                                    noteCount: noteCount,
-                                    onTap: () => _handleFolderTap(folder),
-                                    onLongPressStart: (details) {
-                                      _showFolderContextMenu(context, folder,
-                                          details.globalPosition);
-                                    },
-                                    onCustomizeTap: () {
-                                      _showCustomizationBottomSheet(folder);
-                                    },
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        "No folders match search",
+                                        style: GoogleFonts.inter(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color(0xFF1C1C1E)
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              },
-                            ),
-                    ),
+                                ),
+                              )
+                            : GridView.builder(
+                                physics: const BouncingScrollPhysics(),
+                                padding: EdgeInsets.fromLTRB(
+                                    16.0,
+                                    16.0,
+                                    16.0,
+                                    80.0 +
+                                        MediaQuery.paddingOf(context).bottom),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 8.0,
+                                  mainAxisSpacing: 0.0,
+                                  childAspectRatio: 150.0 / 192.0,
+                                ),
+                                itemCount: filteredFolders.length,
+                                itemBuilder: (context, index) {
+                                  final item = filteredFolders[index];
+                                  final folder = item.folder;
+                                  final noteCount = activeNotes
+                                      .where((n) => n.folderId == folder.id)
+                                      .length;
+                                  final key = _getKeyForFolder(folder.id);
+
+                                  return AnimatedListEntrance(
+                                    key: key,
+                                    index: index,
+                                    child: FolderGridCard(
+                                      folder: folder,
+                                      index: index,
+                                      noteCount: noteCount,
+                                      onTap: () => _handleFolderTap(folder),
+                                      onLongPressStart: (details) {
+                                        _showFolderContextMenu(context, folder,
+                                            details.globalPosition);
+                                      },
+                                      onCustomizeTap: () {
+                                        _showCustomizationBottomSheet(folder);
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
                   ),
                 ),
               ),
             ),
+          ),
 
           SafeArea(
             bottom: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: SizedBox(
-                    width: screenWidth.clamp(0.0, 402.0),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24.0, vertical: 12.0),
-                      child: _buildHeaderBar(),
-                    ),
-                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 12.0),
+                  child: _buildHeaderBar(),
                 ),
               ],
             ),
@@ -1232,7 +1215,8 @@ class FolderFgPainter extends CustomPainter {
 
 /// Authoritative capability boundary for opening Folder Customization.
 /// Gated by [PremiumFeature.folderCustomization].
-Future<void> openFolderCustomization(BuildContext context, Folder folder) async {
+Future<void> openFolderCustomization(
+    BuildContext context, Folder folder) async {
   try {
     final featureAccess = Provider.of<FeatureAccess>(context, listen: false);
     if (!featureAccess.canAccess(PremiumFeature.folderCustomization)) {

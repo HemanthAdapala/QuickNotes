@@ -198,7 +198,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                 rightWidth: 44.0,
                 rightChild: null,
                 onLeftTap: () {
-                  HapticFeedback.lightImpact();
                   Navigator.pop(context);
                 },
                 leftChild: SvgPicture.asset(
