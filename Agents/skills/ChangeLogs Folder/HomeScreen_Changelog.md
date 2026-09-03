@@ -378,9 +378,289 @@ None.
 
 ---
 
+## v3.2.0
+
+### Date
+2026-09-03
+
+### Author
+Anti Gravity
+
+### Type
+- UI / UX
+- Motion Lab
+- Architecture
+- Improvement
+- Bug Fix
+
+---
+
+### Summary
+Implemented Phase P2.1 — Home Card Stack Motion: controlled tactile and physical spring motion upgrades to `NotesStackWidget` and `TaskWidget`. Replaced flat linear 500ms swipe resets with calibrated 260ms damped spring physics (`QuickNotesMotion.kMotionSpring`), retuned dismissal animations to 260ms Apple ease (`QuickNotesMotion.kMotionAppleEase`), introduced subtle paint-only touch-down compression (1.00 ➔ 0.985), added directional single-event threshold haptics at 120.0px, eliminated asynchronous unmounted controller reset assertion risks across both stacks, added robust `onPanCancel` restoration via pointer routing, and provided full reduced-motion accessibility bypass.
+
+---
+
+### Detailed Changes
+- **DEF-01 Controller Lifecycle & Mounted Guards**: Guarded all asynchronous animation completion `.then((_) { ... })` paths in `NotesStackWidget` and `TaskWidget` with strict `if (!mounted) return;` checks BEFORE invoking `.reset()` or State mutations, eliminating assertion crashes during mid-flight unmounting.
+- **DEF-02 Reduced Motion Accessibility (`disableAnimations`)**: Added `didChangeDependencies` to instantly complete the 1000ms staggered entrance animations, bypass touch compression (fixed 1.00 scale), snap swipe resets to (0, 0) immediately, and cycle cards instantly without animation when `MediaQuery.of(context).disableAnimations` is active.
+- **DEF-03 Calibrated Spring Reset & Apple Ease Dismissal**: Replaced flat linear 500ms reset controllers with `QuickNotesMotion.kMotionSelection` (260ms) and `QuickNotesMotion.kMotionSpring` for natural mass-and-settle recovery. Retuned dismissal cycles to `QuickNotesMotion.kMotionSelection` (260ms) with `QuickNotesMotion.kMotionAppleEase`.
+- **DEF-04 Pan Cancellation Safety**: Integrated `onPanCancel` and root `Listener(onPointerCancel: ...)` to guarantee that platform/OS interruptions or cancelled gestures restore the card safely to resting origin $(0, 0)$ without triggering card cycle, mutation, or dismissal haptics.
+- **Touch-Down Micro Compression**: Added `_touchController` (90ms down, 190ms release) applying a paint-only `Transform.scale` (1.000 ➔ 0.985) on the front card during touch-down, releasing naturally on pan end, pan cancel, or completion slider engagement.
+- **Single-Event Threshold Crossing Haptic**: Implemented `_hasCrossedThreshold` tracking inside pan updates to fire exactly one semantic `QuickNotesHaptics.subtleSettle()` when dragging across $\ge 120.0\text{px}$, resetting cleanly if dragged back below the threshold.
+- **Centralized Haptic Gateway**: Replaced scattered raw `HapticFeedback.lightImpact()` invocations with `QuickNotesHaptics.selection()` on deck cycle completion and `QuickNotesHaptics.buttonPress()` on touch-down.
+- **Task Slider Protection**: Fully preserved slider drag geometry, 206.0px bounds, and 90% completion threshold in `TaskWidget`. Ensured slider touch-down immediately reverses card compression so the card remains stable during slide-to-complete.
+- **Comprehensive Automated Test Suite**: Created `test/views/card_stack_motion_test.dart` with 14 automated tests covering Geometry contracts (322x339, 37px offset, 3-card depth), Spring Reset, Swipe Dismissal & Deck Cycling, Rapid Gesture Guards, Pan Cancellation, Reduced Motion accessibility, Haptic dispatch semantics, and Lifecycle mounted safety.
+
+---
+
+### Why was this change made?
+To bring the Home Screen Notes and Tasks card stacks up to the physical, tactile, and responsive motion standards established in Phase P1. Prior to Phase P2.1, card swipe resets were flat and linear over an excessively sluggish 500ms, raw haptics were scattered rather than semantic, rapid unmounting during swipes risked controller reset assertion crashes, gesture cancellations could cause anomalous card state, and reduced motion settings were not respected in the card decks.
+
+---
+
+### Architecture Impact
+- **State & Lifecycle Invariants**: Asynchronous animation completion paths are hardened with mounted guards before invoking controller operations.
+- **Motion System Alignment**: Both `NotesStackWidget` and `TaskWidget` now consume the unified motion constants in `QuickNotesMotion` and semantic haptic gateway in `QuickNotesHaptics`.
+- **Locked Geometry Preservation**: 100% preservation of card sizing (322.0px × 339.0px), vertical depth offsets (37.0px), 3-card visible ceiling, 120.0px swipe threshold, and task completion slider physics (206.0px / 90%).
+- **Accessibility**: Full zero-animation compliance when requested by system accessibility settings without breaking card cycling business logic.
+
+---
+
+### Files Created
+- `test/views/card_stack_motion_test.dart`
+
+---
+
+### Files Modified
+- `lib/views/widgets/notes_stack_widget.dart`
+- `lib/views/widgets/task_widget.dart`
+- `Agents/skills/ChangeLogs Folder/HomeScreen_Changelog.md`
+
+---
+
+### Dependencies Added
+None.
+
+---
+
+### Breaking Changes
+None. All public APIs, constructors, callbacks, and parameters of `NotesStackWidget` and `TaskWidget` remain identical.
+
+---
+
+### Migration Notes
+None required.
+
+---
+
+### Future Improvements
+- Phase P3: Evaluate card elevation shadow spread adjustments dynamically linked to swipe translation.
+- Phase P4: Extend swipeable card gesture physics to the completed task archive view if needed.
+
+---
+
+### Known Issues
+None.
+
+---
+
+### Testing Status
+- Static Analysis: `flutter analyze` completed with 0 errors.
+- Unit & Widget Tests: 14/14 tests passing in `test/views/card_stack_motion_test.dart`.
+- Regression Tests: 11/11 tests passing in `test/views/home_screen_motion_test.dart`.
+- Global Test Suite: 121/121 tests passing across the entire project.
+
+---
+
 ### Final Result
-All 9 bottom navigation transitions (`0 ↔ 1`, `1 ↔ 2`, `2 ↔ 3`, `0 ↔ 2`, `0 ↔ 3`) now reliably trigger `didUpdateWidget` and play full physical spring overshoot and liquid stretch.
+The Quick Notes Home Screen card stacks for Notes and Tasks now feel alive, tactile, and physically responsive: cards compress subtly under touch, spring smoothly back to rest on rejected drags, settle with a single semantic haptic tick when reaching dismissal threshold, and dismiss with Apple-caliber easing, while fully protecting against unmounted assertions and respecting system accessibility.
 
+---
 
+## v3.3.0
 
+### Date
+2026-09-03
+
+### Author
+Anti Gravity
+
+### Type
+- UI / UX
+- Motion Lab
+- Architecture
+- Improvement
+
+---
+
+### Summary
+Implemented Phase P2.4 — Home Filter Pill Tactile & Motion Implementation: upgraded the Home Screen Filter Bar (`All`, `Today`, `Weekly`, `Monthly`, `Missed`) with micro-tactile touch-down compression, physical release recovery, Apple-caliber animated selection indicator dots, centralized semantic haptic feedback, and robust gesture cancellation. Encapsulated each filter pill in a standalone `FilterPill` widget with isolated local rebuild scope, stable element identity keys, and full reduced-motion accessibility support, while strictly preserving HomeScreen filter state ownership, sorting algorithms, locked geometry, and compound card-stack lifecycle contracts.
+
+---
+
+### Detailed Changes
+- **FilterPill Component Architecture**: Created `FilterPill` (`lib/views/widgets/filter_pill.dart`) as an isolated `StatefulWidget` owning its dedicated `AnimationController` for micro-compression (90ms `QuickNotesMotion.kMotionMicro` forward, 190ms `QuickNotesMotion.kMotionRelease` reverse).
+- **Paint-Only Micro-Compression**: Wrapped the 40.0px pill container in a local `AnimatedBuilder` driving a paint-only `Transform.scale` (resting at 1.000, compressing to 0.960 on touch-down, releasing to 1.000). The outer layout box, 12.0px inter-pill spacing, and 5.0px indicator dot remain completely unaffected by container compression.
+- **Apple-Caliber Indicator Dot Animation**: Animated the 5.0px circular indicator dot (`OvalBorder`) with `AnimatedScale` and `AnimatedOpacity` using `QuickNotesMotion.kMotionSelection` (260ms) and `QuickNotesMotion.kMotionAppleEase`, ensuring smooth entrance and exit transitions without layout shifts.
+- **Centralized Semantic Haptics**: Replaced scattered raw `HapticFeedback.selectionClick()` with `QuickNotesHaptics.selection()` in `_HomeScreenState`, dispatching exactly ONE semantic tick upon switching active filters and upon toggling sort order on the already-selected filter pill.
+- **Horizontal Scroll Arena & Gesture Cancellation**: Handled touch interactions through `onTapDown`, `onTapUp`, `onTapCancel`, and `onTap`. When the horizontal `ListView` takes over gesture ownership during scrolling, `onTapCancel` fires and immediately restores the pill to 1.000 scale without triggering filter selection or haptics.
+- **Lifecycle & Mounted Hardening**: Guarded all gesture callbacks against unmounted invocation, and cached `disableAnimations` from `MediaQueryData` during `didChangeDependencies` to prevent unsafe ancestor lookup assertions during widget deactivation or list virtualization.
+- **Accessibility & Reduced Motion**: Under `MediaQuery.of(context).disableAnimations == true`, container scale is hard-locked to 1.000, and indicator dot animation duration collapses to `Duration.zero` for instantaneous, non-animated state transitions while keeping all filter business logic fully functional.
+- **Stable Element Identity**: Assigned stable keys derived from filter identity (`ValueKey('filter_pill_$filter')`) to each filter pill, ensuring efficient Element reconciliation across state updates.
+- **Comprehensive Automated Test Suite**: Created `test/views/home_filter_motion_test.dart` with 11 automated widget tests across Groups A–H validating layout geometry contracts, single-tick semantic haptics, micro-compression scale metrics, scroll gesture cancellation, reduced motion locking, sort order toggle interactions, rapid switching stress tests, and stable element keys.
+
+---
+
+### Why was this change made?
+To eliminate static, lifeless filter bar interactions and replace them with Apple-grade tactile feedback consistent with the Phase P1/P1.1 motion foundation and Phase P2.1 card stack motion. Prior to Phase P2.4, filter pills had no tactile touch-down response, the active indicator dot popped abruptly without interpolation, haptics relied on raw uncalibrated system calls (OBS-01 from P2.3 audit), and gesture cancellations during horizontal scrolls risked stuck press states.
+
+---
+
+### Architecture Impact
+- **State Ownership Invariant**: Filter business logic (`_activeFilter`, `_isSortAscending`, filter counts, sorting algorithms) remains exclusively in `_HomeScreenState`. `FilterPill` owns only its visual/tactile animation lifecycle.
+- **Gesture Hierarchy**: Uses tap semantics (`onTapDown`, `onTapUp`, `onTapCancel`, `onTap`) rather than pan recognizers, preventing gesture arena conflicts with the parent horizontal `ListView`.
+- **Rebuild Scope Isolation**: Pill compression animations run inside `AnimatedBuilder` within `FilterPill`, completely decoupling micro-motion frame updates from `HomeScreen` and card-stack rebuilds.
+- **Locked Geometry Invariants**: 100% preservation of filter bar height (52.0px), list horizontal padding (24.0px), inter-pill spacing (12.0px), pill height (40.0px), internal padding (20.0px), pill radius (20.0px), dot size (5.0px × 5.0px), and vertical gap (4.0px).
+- **Compound Card-Stack Key Preserved**: Maintained `ValueKey('${_isNotesActive ? "notes" : "tasks"}_${_activeFilter}_${_isSortAscending}_...')` for controlled card-stack remounts upon filter changes.
+
+---
+
+### Files Created
+- `lib/views/widgets/filter_pill.dart`
+- `test/views/home_filter_motion_test.dart`
+
+---
+
+### Files Modified
+- `lib/views/screens/home_screen.dart`
+- `Agents/skills/ChangeLogs Folder/HomeScreen_Changelog.md`
+
+---
+
+### Dependencies Added
+None.
+
+---
+
+### Breaking Changes
+None. All filter APIs, sort toggles, SnackBar alerts, and navigation routes remain identical.
+
+---
+
+### Migration Notes
+None required.
+
+---
+
+### Future Improvements
+- Phase P3: Evaluate subtle horizontal auto-scroll centering when tapping off-screen or partially visible filter pills in narrow viewports.
+
+---
+
+### Known Issues
+None.
+
+---
+
+### Testing Status
+- Static Analysis: `flutter analyze lib/views/widgets/filter_pill.dart` clean (0 errors, 0 warnings, 0 infos).
+- Filter Motion Tests: 11/11 tests passing in `test/views/home_filter_motion_test.dart`.
+- Card Stack Motion Tests: 14/14 tests passing in `test/views/card_stack_motion_test.dart`.
+- Home Motion Tests: 11/11 tests passing in `test/views/home_screen_motion_test.dart`.
+- Complete Motion Suite: 36/36 tests passing (100% green).
+
+---
+
+### Final Result
+The Home Screen Filter Bar now exhibits seamless, tactile responsiveness: each pill compresses smoothly under touch, releases naturally on lift or scroll cancel, animates its selection indicator dot with Apple-caliber easing, dispatches crisp semantic haptic ticks, and fully respects reduced-motion accessibility preferences without compromising performance or architectural boundaries.
+
+---
+
+# Version
+v1.3.0
+
+## Date
+2026-09-03
+
+## Author
+Developer / Anti Gravity
+
+## Type
+- UI
+- Architecture
+- Animation
+- Accessibility
+
+## Summary
+Integrated canonical `AppHeaderBar` and `HeaderExpandedInteraction` into `HomeScreen`. Standardized top header geometry (height 44.0px, top inset `SafeArea.top + 12.0px`, horizontal insets 24.0px) and resolved desktop/web focus traversal leakage (DEF-12) through modal keyboard focus containment, while keeping the Phase P2.6 Home Motion firewall 100% intact and unregressed.
+
+---
+
+### Detailed Changes
+- **Canonical AppHeaderBar Integration**: Replaced ad-hoc top bar positioning in `HomeScreen` with canonical `AppHeaderBar` wrapping `MoreOptionsPopup` as `expandedChild`.
+- **Expanded Interaction Backdrop**: Connected `HeaderExpandedInteraction` overlay to manage outside-tap dismissal, hit-test interception, system-back interception, and Escape key handling.
+- **Closed-Loop Keyboard Focus**: Integrated with `AppHeaderBar` focus containment boundary ensuring Tab, Shift+Tab, Enter, Space, and Escape operate modally within the expanded More Options popup without focus escaping into underlying cards or filter pills.
+- **Home Motion Firewall Preservation**: Maintained strict architectural decoupling between header expansion state and card deck / filter pill motion physics. The card stack, tactile prompt, filter pills, and bottom bar element identity remain completely unregressed.
+- **Dormant Backdrop Retained**: Preserved the existing `_isMoreOptionsOpen` screen backdrop per architectural audit directives to prevent breaking visual stacking order.
+
+---
+
+### Why was this change made?
+To bring `HomeScreen` into strict alignment with the global application header design system and resolve defect DEF-12 (focus traversal leakage) on desktop and web environments.
+
+---
+
+### Architecture Impact
+- **Navigation & Presentation**: Home Screen header conforms to global `AppHeaderBar` contract.
+- **Motion Firewall**: Zero cross-talk between header expansion and Home Screen gesture arenas or card cycling animations.
+
+---
+
+### Files Created
+None.
+
+---
+
+### Files Modified
+- `lib/views/screens/home_screen.dart`
+- `Agents/skills/ChangeLogs Folder/HomeScreen_Changelog.md`
+
+---
+
+### Dependencies Added
+None.
+
+---
+
+### Breaking Changes
+None.
+
+---
+
+### Migration Notes
+None.
+
+---
+
+### Future Improvements
+- Synchronize header title subtle fade on deep vertical scroll if future Home feed requirements demand infinite list scrolling.
+
+---
+
+### Known Issues
+None.
+
+---
+
+### Testing Status
+- Filter Motion Tests: 11/11 tests passing (`test/views/home_filter_motion_test.dart`).
+- Card Stack Motion Tests: 14/14 tests passing (`test/views/card_stack_motion_test.dart`).
+- Home Screen Motion Tests: 11/11 tests passing (`test/views/home_screen_motion_test.dart`).
+- Header Expanded Interaction Tests: 25/25 tests passing (`test/views/header_expanded_interaction_test.dart`).
+- Static Analysis: 0 issues found on `lib/views/screens/home_screen.dart`.
+
+---
+
+### Final Result
+`HomeScreen` seamlessly incorporates the canonical `AppHeaderBar` and `HeaderExpandedInteraction` system with Apple-grade tactile feedback, full keyboard accessibility, and zero compromise to the established Home Motion architecture.
 
