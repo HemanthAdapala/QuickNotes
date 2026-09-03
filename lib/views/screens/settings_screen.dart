@@ -28,6 +28,8 @@ import '../../models/note.dart';
 import '../../models/task_item.dart';
 import '../../models/folder.dart';
 import 'appearance_screen.dart';
+import 'widgets_screen.dart';
+import '../../premium/premium.dart';
 import '../../providers/settings_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -391,6 +393,76 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                     }
                                   },
                                 ),
+                              ),
+                              Builder(
+                                builder: (context) {
+                                  bool hasWidgetAccess = false;
+                                  try {
+                                    final featureAccess =
+                                        Provider.of<FeatureAccess>(context);
+                                    hasWidgetAccess = featureAccess
+                                        .canAccess(PremiumFeature.widgets);
+                                  } catch (_) {
+                                    hasWidgetAccess = false;
+                                  }
+                                  return GroupedTile.navigation(
+                                    leading: const Icon(
+                                      Icons.widgets_rounded,
+                                      size: 18,
+                                      color: Color(0xFF333333),
+                                    ),
+                                    title: 'Widgets',
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (!hasWidgetAccess) ...[
+                                          Container(
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF10B981)
+                                                  .withValues(alpha: 0.12),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: const Color(0xFF10B981)
+                                                    .withValues(alpha: 0.3),
+                                                width: 0.8,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              '✦ PREMIUM',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.4,
+                                                color: const Color(0xFF10B981),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                        ],
+                                        SvgPicture.asset(
+                                          'assets/icons/angle-right.svg',
+                                          width: 14,
+                                          height: 14,
+                                          colorFilter:
+                                              const ColorFilter.mode(
+                                            Color(0xFF333333),
+                                            BlendMode.srcIn,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    onTap: () async {
+                                      HapticFeedback.lightImpact();
+                                      await requestWidgetAccess(context);
+                                    },
+                                  );
+                                },
                               ),
                               GroupedTile.navigation(
                                 iconPath: 'assets/icons/settings-sliders.svg',
