@@ -5,6 +5,35 @@ import 'package:provider/provider.dart';
 import '../widgets/app_header_bar.dart';
 import '../../themes/quick_notes_theme.dart';
 import '../../providers/settings_provider.dart';
+import '../../premium/premium.dart';
+
+/// Authoritative capability boundary for requesting activation of Premium Dark Mode.
+/// Gated by [PremiumFeature.darkMode].
+Future<void> requestDarkModeAccess(BuildContext context) async {
+  try {
+    final featureAccess = Provider.of<FeatureAccess>(context, listen: false);
+    if (!featureAccess.canAccess(PremiumFeature.darkMode)) {
+      await showPremiumGate(
+        context: context,
+        feature: PremiumFeature.darkMode,
+      );
+      return;
+    }
+  } catch (_) {
+    // Graceful fallback if FeatureAccess provider is not in context (e.g. isolated tests)
+    await showPremiumGate(
+      context: context,
+      feature: PremiumFeature.darkMode,
+    );
+    return;
+  }
+
+  if (!context.mounted) return;
+
+  final settingsProvider =
+      Provider.of<SettingsProvider>(context, listen: false);
+  await settingsProvider.setThemeMode(ThemeMode.dark);
+}
 
 class AppearanceScreen extends StatelessWidget {
   const AppearanceScreen({super.key});
@@ -81,9 +110,9 @@ class AppearanceScreen extends StatelessWidget {
                                   textPrimary: textPrimaryColor,
                                   textSecondary: textSecondaryColor,
                                   accentColor: const Color(0xFF6366F1),
-                                  onTap: () {
+                                  onTap: () async {
                                     HapticFeedback.selectionClick();
-                                    settingsProvider.setThemeMode(ThemeMode.light);
+                                    await settingsProvider.setThemeMode(ThemeMode.light);
                                   },
                                 ),
                               ),
@@ -93,15 +122,16 @@ class AppearanceScreen extends StatelessWidget {
                                   title: "Obsidian Night",
                                   description: "Luxury machined dark canvas",
                                   selected: isDark,
+                                  isPremiumFeature: true,
                                   icon: Icons.dark_mode_rounded,
                                   surfaceColor: surfaceColor,
                                   borderColor: borderColor,
                                   textPrimary: textPrimaryColor,
                                   textSecondary: textSecondaryColor,
                                   accentColor: QuickNotesTheme.accent,
-                                  onTap: () {
+                                  onTap: () async {
                                     HapticFeedback.selectionClick();
-                                    settingsProvider.setThemeMode(ThemeMode.dark);
+                                    await requestDarkModeAccess(context);
                                   },
                                 ),
                               ),
@@ -290,6 +320,7 @@ class AppearanceScreen extends StatelessWidget {
     required Color textSecondary,
     required Color accentColor,
     required VoidCallback onTap,
+    bool isPremiumFeature = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -328,6 +359,29 @@ class AppearanceScreen extends StatelessWidget {
                     Icons.check_circle_rounded,
                     color: accentColor,
                     size: 20,
+                  )
+                else if (isPremiumFeature)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: const Text(
+                      '✦ PREMIUM',
+                      style: TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6366F1),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
               ],
             ),

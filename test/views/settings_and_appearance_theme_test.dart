@@ -11,15 +11,22 @@ import 'package:quick_notes/services/reminder_scheduler.dart';
 import 'package:quick_notes/themes/quick_notes_theme.dart';
 import 'package:quick_notes/views/screens/settings_screen.dart';
 import 'package:quick_notes/views/screens/appearance_screen.dart';
+import 'package:quick_notes/premium/premium.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late SettingsProvider settingsProvider;
+  late PremiumEntitlementManager entitlementManager;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     FlutterSecureStorage.setMockInitialValues({});
+    entitlementManager = PremiumEntitlementManager();
+    await entitlementManager.initialize();
+    await entitlementManager.updateEntitlement(
+      PremiumEntitlement.active(productId: premiumLifetimeProductId),
+    );
     settingsProvider = SettingsProvider();
     await settingsProvider.initialize();
   });
@@ -27,6 +34,10 @@ void main() {
   Widget buildTestApp(Widget child) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider.value(value: entitlementManager),
+        ProxyProvider<PremiumEntitlementManager, FeatureAccess>(
+          update: (_, manager, __) => DefaultFeatureAccess(manager),
+        ),
         ChangeNotifierProvider.value(value: settingsProvider),
         ChangeNotifierProvider(create: (_) => NotesProvider()),
         ChangeNotifierProvider(

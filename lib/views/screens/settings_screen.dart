@@ -29,7 +29,6 @@ import '../../models/task_item.dart';
 import '../../models/folder.dart';
 import 'appearance_screen.dart';
 import '../../providers/settings_provider.dart';
-import 'storage_and_data_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool? isDarkMode;
@@ -379,10 +378,14 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                 title: 'Dark Mode',
                                 trailingSwitch: ToggleSwitch(
                                   value: isCurrentDark,
-                                  onChanged: (val) {
+                                  onChanged: (val) async {
                                     HapticFeedback.selectionClick();
-                                    settingsProvider.setThemeMode(
-                                        val ? ThemeMode.dark : ThemeMode.light);
+                                    if (val) {
+                                      await requestDarkModeAccess(context);
+                                    } else {
+                                      await settingsProvider
+                                          .setThemeMode(ThemeMode.light);
+                                    }
                                     if (widget.onThemeToggle != null) {
                                       widget.onThemeToggle!();
                                     }
