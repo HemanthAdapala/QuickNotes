@@ -184,11 +184,9 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
             onPressed: () async {
               final newName = _folderNameController.text.trim();
               if (newName.isNotEmpty) {
-                await provider.updateFolder(Folder(
-                  id: widget.folder.id,
+                await provider.updateFolder(widget.folder.copyWith(
                   name: newName,
-                  parentId: widget.folder.parentId,
-                  createdAt: widget.folder.createdAt,
+                  updatedAt: DateTime.now(),
                 ));
                 if (mounted) Navigator.pop(context);
               }

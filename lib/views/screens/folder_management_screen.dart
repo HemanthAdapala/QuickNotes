@@ -21,6 +21,7 @@ import '../../themes/app_theme.dart';
 import '../../core/animations/page_transitions.dart';
 import 'search_screen.dart';
 import '../../core/animations/search_transition_routes.dart';
+import '../../premium/premium.dart';
 
 class FolderManagementScreen extends StatefulWidget {
   final VoidCallback onMenuTap;
@@ -390,16 +391,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
   }
 
   void _showCustomizationBottomSheet(Folder folder) {
-    showBlurredBottomSheet(
-      context: context,
-      child: FolderCustomizationSheet(
-        folder: folder,
-        onApply: (updatedFolder) {
-          Provider.of<NotesProvider>(context, listen: false)
-              .updateFolder(updatedFolder);
-        },
-      ),
-    );
+    openFolderCustomization(context, folder);
   }
 
   Color _getFolderCardBg(int index) {
@@ -1235,8 +1227,44 @@ class FolderFgPainter extends CustomPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Folder Customization Bottom Sheet
+// Folder Customization Entry Point & Bottom Sheet
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// Authoritative capability boundary for opening Folder Customization.
+/// Gated by [PremiumFeature.folderCustomization].
+Future<void> openFolderCustomization(BuildContext context, Folder folder) async {
+  try {
+    final featureAccess = Provider.of<FeatureAccess>(context, listen: false);
+    if (!featureAccess.canAccess(PremiumFeature.folderCustomization)) {
+      await showPremiumGate(
+        context: context,
+        feature: PremiumFeature.folderCustomization,
+      );
+      return;
+    }
+  } catch (_) {
+    // Graceful fallback if FeatureAccess provider is not in context
+    await showPremiumGate(
+      context: context,
+      feature: PremiumFeature.folderCustomization,
+    );
+    return;
+  }
+
+  if (!context.mounted) return;
+
+  showBlurredBottomSheet(
+    context: context,
+    child: FolderCustomizationSheet(
+      folder: folder,
+      onApply: (updatedFolder) {
+        Provider.of<NotesProvider>(context, listen: false)
+            .updateFolder(updatedFolder);
+      },
+    ),
+  );
+}
+
 class FolderCustomizationSheet extends StatefulWidget {
   final Folder folder;
   final ValueChanged<Folder> onApply;
