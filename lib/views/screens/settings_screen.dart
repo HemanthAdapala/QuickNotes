@@ -562,10 +562,9 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                 iconPath: 'assets/icons/settings-sliders.svg',
                                 title: '🧪 Test SDE Drag Selection',
                                 onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const SDEDragTestScreen()),
+                                  Navigator.push(
+                                    context,
+                                    buildPageRoute(const SDEDragTestScreen()),
                                   );
                                 },
                               ),

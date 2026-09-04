@@ -5,12 +5,14 @@ void showBlurredBottomSheet({
   required BuildContext context,
   required Widget child,
 }) {
+  final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
   showGeneralDialog(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Dismiss',
-    barrierColor: Color(0xFF333333).withValues(alpha: 0.20),
-    transitionDuration: const Duration(milliseconds: 350),
+    barrierColor: const Color(0xFF333333).withValues(alpha: 0.20),
+    transitionDuration:
+        reduceMotion ? Duration.zero : const Duration(milliseconds: 350),
     pageBuilder: (context, animation, secondaryAnimation) {
       return Align(
         alignment: Alignment.bottomCenter,
@@ -21,6 +23,9 @@ void showBlurredBottomSheet({
       );
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
+      if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+        return child;
+      }
       final curvedAnimation = CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutCubic,

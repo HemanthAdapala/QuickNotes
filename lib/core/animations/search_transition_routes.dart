@@ -10,16 +10,25 @@ Route<T> buildSearchTransitionRoute<T>({
 
 class PixelAlignedSearchRoute<T> extends PageRouteBuilder<T> {
   final WidgetBuilder builder;
+  final Duration normalTransitionDuration;
+  final Duration normalReverseTransitionDuration;
 
-  PixelAlignedSearchRoute({required this.builder})
-      : super(
+  PixelAlignedSearchRoute({
+    required this.builder,
+    this.normalTransitionDuration = const Duration(milliseconds: 300),
+    this.normalReverseTransitionDuration = const Duration(milliseconds: 220),
+  }) : super(
           pageBuilder: (context, animation, secondaryAnimation) =>
               builder(context),
-          transitionDuration: const Duration(milliseconds: 300),
-          reverseTransitionDuration: const Duration(milliseconds: 220),
+          transitionDuration: normalTransitionDuration,
+          reverseTransitionDuration: normalReverseTransitionDuration,
           opaque: false,
           barrierDismissible: false,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+              return child;
+            }
+
             final curvedAnim = CurvedAnimation(
               parent: animation,
               curve: Curves.easeOutCubic,
@@ -32,4 +41,22 @@ class PixelAlignedSearchRoute<T> extends PageRouteBuilder<T> {
             );
           },
         );
+
+  @override
+  Duration get transitionDuration {
+    final ctx = navigator?.context;
+    if (ctx != null && (MediaQuery.maybeDisableAnimationsOf(ctx) ?? false)) {
+      return Duration.zero;
+    }
+    return normalTransitionDuration;
+  }
+
+  @override
+  Duration get reverseTransitionDuration {
+    final ctx = navigator?.context;
+    if (ctx != null && (MediaQuery.maybeDisableAnimationsOf(ctx) ?? false)) {
+      return Duration.zero;
+    }
+    return normalReverseTransitionDuration;
+  }
 }

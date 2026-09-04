@@ -679,6 +679,10 @@ class FabMorphPageRoute<T> extends PageRouteBuilder<T> {
           opaque: true,
           barrierDismissible: false,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+              return child;
+            }
+
             final double t = animation.value;
             if (animation.status == AnimationStatus.completed) {
               return child;
@@ -727,6 +731,24 @@ class FabMorphPageRoute<T> extends PageRouteBuilder<T> {
             );
           },
         );
+
+  @override
+  Duration get transitionDuration {
+    final ctx = navigator?.context;
+    if (ctx != null && (MediaQuery.maybeDisableAnimationsOf(ctx) ?? false)) {
+      return Duration.zero;
+    }
+    return const Duration(milliseconds: 400);
+  }
+
+  @override
+  Duration get reverseTransitionDuration {
+    final ctx = navigator?.context;
+    if (ctx != null && (MediaQuery.maybeDisableAnimationsOf(ctx) ?? false)) {
+      return Duration.zero;
+    }
+    return const Duration(milliseconds: 350);
+  }
 }
 
 /// A wrapper that tracks layout movements of widgets across trees (FLIP).
@@ -846,6 +868,10 @@ class FolderMorphPageRoute<T> extends PageRouteBuilder<T> {
           opaque: true,
           barrierDismissible: false,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+              return child;
+            }
+
             final double t = animation.value;
             if (animation.status == AnimationStatus.completed) {
               return child;
@@ -894,4 +920,22 @@ class FolderMorphPageRoute<T> extends PageRouteBuilder<T> {
             );
           },
         );
+
+  @override
+  Duration get transitionDuration {
+    final ctx = navigator?.context;
+    if (ctx != null && (MediaQuery.maybeDisableAnimationsOf(ctx) ?? false)) {
+      return Duration.zero;
+    }
+    return const Duration(milliseconds: 450);
+  }
+
+  @override
+  Duration get reverseTransitionDuration {
+    final ctx = navigator?.context;
+    if (ctx != null && (MediaQuery.maybeDisableAnimationsOf(ctx) ?? false)) {
+      return Duration.zero;
+    }
+    return const Duration(milliseconds: 400);
+  }
 }

@@ -26,10 +26,22 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
   String? get barrierLabel => 'Dismiss';
 
   @override
-  Duration get transitionDuration => kDurationNormal; // 250ms
+  Duration get transitionDuration {
+    final ctx = navigator?.context;
+    if (ctx != null && (MediaQuery.maybeDisableAnimationsOf(ctx) ?? false)) {
+      return Duration.zero;
+    }
+    return kDurationNormal; // 250ms
+  }
 
   @override
-  Duration get reverseTransitionDuration => kDurationFast; // 150ms
+  Duration get reverseTransitionDuration {
+    final ctx = navigator?.context;
+    if (ctx != null && (MediaQuery.maybeDisableAnimationsOf(ctx) ?? false)) {
+      return Duration.zero;
+    }
+    return kDurationFast; // 150ms
+  }
 
   @override
   Widget buildPage(BuildContext context, Animation<double> animation,
@@ -58,6 +70,10 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
   @override
   Widget buildTransitions(BuildContext context, Animation<double> animation,
       Animation<double> secondaryAnimation, Widget child) {
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      return child;
+    }
+
     final isEntering = animation.status == AnimationStatus.forward ||
         animation.status == AnimationStatus.completed;
     final curve = isEntering ? kCurveEnter : kCurveExit;

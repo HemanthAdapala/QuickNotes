@@ -6,15 +6,20 @@ Future<T?> showAnimatedDialog<T>({
   required Widget child,
   Color? barrierColor,
 }) {
+  final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
   return showGeneralDialog<T>(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Dismiss',
-    barrierColor: barrierColor ?? Color(0xFF333333).withValues(alpha: 0.20),
-    transitionDuration: kDurationNormal, // 250ms
+    barrierColor: barrierColor ?? const Color(0xFF333333).withValues(alpha: 0.20),
+    transitionDuration: reduceMotion ? Duration.zero : kDurationNormal, // 250ms
     pageBuilder: (context, animation, secondaryAnimation) =>
         Center(child: child),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
+      if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+        return child;
+      }
+
       final curvedAnimation = CurvedAnimation(
         parent: animation,
         curve: kCurveEnter, // Curves.easeOut

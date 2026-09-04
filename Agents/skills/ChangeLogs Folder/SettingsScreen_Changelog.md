@@ -328,3 +328,62 @@ Connected `SettingsScreen` to the centralized `SettingsProvider` for reactive Da
 
 ### Testing Status
 - Validated via `test/views/settings_and_appearance_theme_test.dart` (Dark Mode toggle updates SettingsProvider and ThemeMode).
+
+---
+
+## v3.5.0
+
+### Date
+2026-09-04
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- Refactor
+- Animation
+- Bug Fix
+
+---
+
+### Summary
+Resolved P4-DEF-05 by replacing isolated raw `MaterialPageRoute` invocation for `SDEDragTestScreen` with the project's standard `buildPageRoute`, bringing the experimental route into full compliance with Quick Notes standard navigation transitions and reduced-motion overrides.
+
+---
+
+### Detailed Changes
+- Replaced `MaterialPageRoute(builder: (context) => const SDEDragTestScreen())` with `buildPageRoute(const SDEDragTestScreen())`.
+- Maintained exact tile styling, icon, and position within the Advanced Diagnostics section.
+
+---
+
+### Why was this change made?
+During the Phase P4.0 Forensic Audit, P4-DEF-05 identified that `SDEDragTestScreen` was the sole screen using Flutter's raw `MaterialPageRoute`, bypassing project-wide slide/fade transitions, authoritative `QuickNotesMotion` tokens, and global reduced-motion overrides.
+
+---
+
+### Architecture Impact
+- Enforces 100% unified route construction across all Settings navigation tiles.
+- Zero impact on state management, providers, or screen layouts.
+
+---
+
+### Files Modified
+- `lib/views/screens/settings_screen.dart`
+
+---
+
+### Dependencies Added
+None.
+
+---
+
+### Breaking Changes
+None.
+
+---
+
+### Testing Status
+- Validated via `test/views/global_motion_foundation_p4_1_test.dart` (`TEST 5: SettingsScreen SDEDragTestScreen pushes using buildPageRoute`).
+- Existing `settings_and_appearance_theme_test.dart` passes cleanly.
+
