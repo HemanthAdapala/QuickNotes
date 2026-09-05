@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../motion/motion_constants.dart';
 
 /// Pixel-perfect Search Screen route transition with zero header icon displacement.
 Route<T> buildSearchTransitionRoute<T>({
@@ -15,8 +16,8 @@ class PixelAlignedSearchRoute<T> extends PageRouteBuilder<T> {
 
   PixelAlignedSearchRoute({
     required this.builder,
-    this.normalTransitionDuration = const Duration(milliseconds: 300),
-    this.normalReverseTransitionDuration = const Duration(milliseconds: 220),
+    this.normalTransitionDuration = QuickNotesMotion.kMotionPage,
+    this.normalReverseTransitionDuration = QuickNotesMotion.kMotionPageReverse,
   }) : super(
           pageBuilder: (context, animation, secondaryAnimation) =>
               builder(context),
@@ -31,8 +32,8 @@ class PixelAlignedSearchRoute<T> extends PageRouteBuilder<T> {
 
             final curvedAnim = CurvedAnimation(
               parent: animation,
-              curve: Curves.easeOutCubic,
-              reverseCurve: Curves.easeInCubic,
+              curve: QuickNotesMotion.kMotionEaseOutCubic,
+              reverseCurve: QuickNotesMotion.kMotionEaseInCubic,
             );
 
             return FadeTransition(

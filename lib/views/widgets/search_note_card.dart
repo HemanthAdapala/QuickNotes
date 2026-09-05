@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/note.dart';
-import '../widgets/tactile_button.dart';
+import '../../core/animations/tactile_card_wrapper.dart';
 
 const Color _kAmberYellow = Color(0xFFFFCC00);
 const Color _kInk = Color(0xFF333333);
@@ -75,10 +75,7 @@ class SearchNoteCard extends StatelessWidget {
           ),
         ],
       ),
-      child: TactileButton(
-        useAppleSpring: true,
-        compressionScale: 0.98,
-        settleDuration: const Duration(milliseconds: 600),
+      child: TactileCardWrapper(
         onTap: onTap,
         child: Stack(
           children: [

@@ -4,6 +4,48 @@ All implementation details, visual design tokens, interaction mechanics, and arc
 
 ---
 
+## [v2.9.0] - 2026-09-04
+
+### Author
+Developer / Anti Gravity
+
+### Type
+- Feature
+- UI/UX
+- Animation
+- Accessibility
+
+---
+
+### Summary
+Phase P4.5 Search Subsystem Motion & Haptics Migration. Fully migrated the Search subsystem onto the locked Quick Notes Motion + Haptics Foundation (`QuickNotesMotion`, `QuickNotesHaptics`, `TactileCardWrapper`). Removed duplicate exit/clear haptics, normalized header tactile buttons, integrated canonical `TactileCardWrapper` on search result cards, established lifecycle guards for `_entryCtrl` and body sheet under reduced motion, and safely added semantic haptics.
+
+---
+
+### Detailed Changes
+- **Search Header Normalization (`lib/views/screens/search_screen.dart`)**:
+  - Removed duplicate `HapticFeedback.lightImpact()` calls from `_popSearch` and `_closeOrClearSearch`, relying exclusively on `TactileButton`'s embedded tactile feedback.
+  - Removed anomalous `compressionScale: 0.7` and `settleDuration: 1000ms` overrides from header back and close buttons, restoring canonical `TactileButton` physics (0.96 scale, 180ms settle).
+- **Reduced Motion & Lifecycle Guards (`lib/views/screens/search_screen.dart`)**:
+  - Deferred `_entryCtrl.forward()` from `initState` to `didChangeDependencies` guarded by `_entryInitialized`. Under `disableAnimations: true`, `_entryCtrl.value = 1.0` is assigned directly without starting the ticker, preventing start-then-snap artifacts.
+  - Preserved existing body `TweenAnimationBuilder` architecture while evaluating `effectiveValue = disableAnimations ? 1.0 : value` and setting `duration = disableAnimations ? Duration.zero : QuickNotesMotion.kMotionSheetPresent`.
+  - Added reduced-motion `Duration.zero` snap to scope pill `AnimatedContainer`.
+  - Added reduced-motion lifecycle guard in `_ShimmerRowState` (`didChangeDependencies` halts `_ctrl.repeat()` under reduced motion and renders a static skeleton container).
+- **Search Result Cards (`lib/views/widgets/search_note_card.dart`, `lib/views/widgets/search_task_card.dart`)**:
+  - Migrated root container from `TactileButton` to `TactileCardWrapper`, acquiring canonical card physics (0.94 compression, 90ms press, 190ms spring settle, and scale 1.0 under reduced motion).
+- **Semantic Haptic Alignment (`lib/views/screens/search_screen.dart`)**:
+  - Scope pill selection: `QuickNotesHaptics.selection()`.
+  - Recent search tap & delete: `QuickNotesHaptics.selection()`.
+  - Clear all recent searches: `QuickNotesHaptics.destructiveAction()` guarded by `_recentSearches.isNotEmpty`.
+  - Category result & Create New CTA: `QuickNotesHaptics.navigationSelection()`.
+- **Search Route Canonicalization (`lib/core/animations/search_transition_routes.dart`)**:
+  - Standardized transition durations to `QuickNotesMotion.kMotionPage` (340ms) and `QuickNotesMotion.kMotionPageReverse` (260ms).
+  - Standardized transition curves to `QuickNotesMotion.kMotionEaseOutCubic` and `QuickNotesMotion.kMotionEaseInCubic`.
+- **Navigation Invariant Preservation (P4-SEARCH-NAV-01)**:
+  - Intentionally preserved canonical `buildPageRoute(NoteEditorScreen(...))` in `_openNote()`.
+
+---
+
 ## [v2.8.0] - 2026-08-12
 
 ### Author

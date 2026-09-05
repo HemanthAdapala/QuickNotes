@@ -17,12 +17,12 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/animations/animation_constants.dart';
+import '../../core/motion/motion_constants.dart';
+import '../../core/motion/quick_notes_haptics.dart';
 import '../../core/animations/animated_list_entrance.dart';
 import '../../core/animations/page_transitions.dart';
 import '../../models/folder.dart';
@@ -33,7 +33,6 @@ import '../../providers/tasks_provider.dart';
 import '../../services/recent_searches_service.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/tactile_button.dart';
-import '../widgets/living_writing_experience.dart';
 import '../widgets/search_note_card.dart';
 import '../widgets/search_task_card.dart';
 import '../widgets/folder_card.dart';
@@ -72,8 +71,9 @@ const Map<String, Color> _kCategoryDotColors = {
 };
 
 Color _categoryDotColor(String category) {
-  if (_kCategoryDotColors.containsKey(category))
+  if (_kCategoryDotColors.containsKey(category)) {
     return _kCategoryDotColors[category]!;
+  }
   final hue = (category.hashCode.abs() % 360).toDouble();
   return HSLColor.fromAHSL(1.0, hue, 0.55, 0.50).toColor();
 }
@@ -133,6 +133,7 @@ class _SearchScreenState extends State<SearchScreen>
 
   late AnimationController _entryCtrl;
   late Animation<double> _entryFade;
+  bool _entryInitialized = false;
 
   @override
   void initState() {
@@ -142,10 +143,16 @@ class _SearchScreenState extends State<SearchScreen>
     _filterFolderId = widget.presetFolder;
     _filterCategory = widget.presetCategory;
 
-    _entryCtrl = AnimationController(vsync: this, duration: kDurationNormal);
-    _entryFade = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(parent: _entryCtrl, curve: kCurveEnter));
-    _entryCtrl.forward();
+    _entryCtrl = AnimationController(
+      vsync: this,
+      duration: QuickNotesMotion.kMotionPage,
+    );
+    _entryFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entryCtrl,
+        curve: QuickNotesMotion.kMotionAppleEase,
+      ),
+    );
 
     _loadRecentSearches();
 
@@ -154,6 +161,21 @@ class _SearchScreenState extends State<SearchScreen>
     });
 
     _queryCtrl.addListener(_onQueryChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_entryInitialized) {
+      _entryInitialized = true;
+      final disableAnimations =
+          MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+      if (disableAnimations) {
+        _entryCtrl.value = 1.0;
+      } else {
+        _entryCtrl.forward();
+      }
+    }
   }
 
   @override
@@ -180,13 +202,18 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   Future<void> _removeSearch(String term) async {
+    QuickNotesHaptics.selection();
     final updated = await RecentSearchesService.instance.removeSearch(term);
     if (mounted) setState(() => _recentSearches = updated);
   }
 
   Future<void> _clearAllSearches() async {
+    if (_recentSearches.isEmpty) return;
     await RecentSearchesService.instance.clearAll();
-    if (mounted) setState(() => _recentSearches = []);
+    if (mounted) {
+      setState(() => _recentSearches = []);
+      QuickNotesHaptics.destructiveAction();
+    }
   }
 
   // ── Query & Search Logic ──────────────────────────────────────────────────
@@ -373,7 +400,7 @@ class _SearchScreenState extends State<SearchScreen>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
   void _onScopeChanged(_Scope scope) {
-    HapticFeedback.selectionClick();
+    QuickNotesHaptics.selection();
     setState(() {
       _scope = scope;
       if (_uiState == _UiState.results || _uiState == _UiState.noResults) {
@@ -389,7 +416,6 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   void _closeOrClearSearch() {
-    HapticFeedback.lightImpact();
     if (_query.isNotEmpty) {
       _queryCtrl.clear();
       _focusNode.requestFocus();
@@ -400,7 +426,6 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   void _popSearch() {
-    HapticFeedback.lightImpact();
     _debounce?.cancel();
     Navigator.of(context).pop();
   }
@@ -432,13 +457,13 @@ class _SearchScreenState extends State<SearchScreen>
   void _openFolder(Folder folder) {
     Navigator.push(
         context,
-        FolderMorphPageRoute(
-          cardBounds: Rect.zero,
-          builder: (_) => FolderNotesScreen(folder: folder),
+        buildPageRoute(
+          FolderNotesScreen(folder: folder),
         ));
   }
 
   void _openCategory(String category) {
+    QuickNotesHaptics.navigationSelection();
     Navigator.push(
         context,
         buildPageRoute(
@@ -447,6 +472,7 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   void _createNoteWithTitle(String title) {
+    QuickNotesHaptics.navigationSelection();
     Navigator.push(
         context,
         buildPageRoute(
@@ -455,6 +481,7 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   void _tapRecentSearch(String term) {
+    QuickNotesHaptics.selection();
     _queryCtrl.text = term;
     _queryCtrl.selection = TextSelection.collapsed(offset: term.length);
   }
@@ -493,6 +520,9 @@ class _SearchScreenState extends State<SearchScreen>
 
   @override
   Widget build(BuildContext context) {
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
     return Scaffold(
       backgroundColor: _kGroupedBg,
       body: SafeArea(
@@ -503,20 +533,23 @@ class _SearchScreenState extends State<SearchScreen>
             Expanded(
               child: TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 320),
-                curve: Curves.easeOutCubic,
+                duration: disableAnimations
+                    ? Duration.zero
+                    : QuickNotesMotion.kMotionSheetPresent,
+                curve: QuickNotesMotion.kMotionAppleEase,
                 builder: (context, value, child) {
+                  final effectiveValue = disableAnimations ? 1.0 : value;
                   return Transform.translate(
-                    offset: Offset(0, 36.0 * (1.0 - value)),
+                    offset: Offset(0, 36.0 * (1.0 - effectiveValue)),
                     child: Opacity(
-                      opacity: value,
+                      opacity: effectiveValue,
                       child: child,
                     ),
                   );
                 },
                 child: Column(
                   children: [
-                    _buildScopePillBar(),
+                    _buildScopePillBar(disableAnimations: disableAnimations),
                     const SizedBox(height: 12),
                     Expanded(child: _buildBodySheetCard()),
                   ],
@@ -545,9 +578,6 @@ class _SearchScreenState extends State<SearchScreen>
               borderRadius: BorderRadius.circular(22.0),
               useFrost: true,
               child: TactileButton(
-                useAppleSpring: true,
-                compressionScale: 0.7,
-                settleDuration: const Duration(milliseconds: 1000),
                 onTap: _popSearch,
                 child: Center(
                   child: SvgPicture.asset(
@@ -609,9 +639,6 @@ class _SearchScreenState extends State<SearchScreen>
               borderRadius: BorderRadius.circular(22.0),
               useFrost: true,
               child: TactileButton(
-                useAppleSpring: true,
-                compressionScale: 0.7,
-                settleDuration: const Duration(milliseconds: 1000),
                 onTap: _closeOrClearSearch,
                 child: const Center(
                   child: Icon(
@@ -630,7 +657,7 @@ class _SearchScreenState extends State<SearchScreen>
 
   // ── 2. Scope Pill Bar ────────────────────────────────────────────────────
 
-  Widget _buildScopePillBar() {
+  Widget _buildScopePillBar({bool disableAnimations = false}) {
     const scopes = _Scope.values;
     return SizedBox(
       height: 40.0,
@@ -645,8 +672,10 @@ class _SearchScreenState extends State<SearchScreen>
               child: GestureDetector(
                 onTap: () => _onScopeChanged(s),
                 child: AnimatedContainer(
-                  duration: kDurationFast,
-                  curve: kCurveDefault,
+                  duration: disableAnimations
+                      ? Duration.zero
+                      : QuickNotesMotion.kMotionSelection,
+                  curve: QuickNotesMotion.kMotionAppleEase,
                   height: 40.0,
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   decoration: BoxDecoration(
@@ -1272,6 +1301,7 @@ class _ShimmerRowState extends State<_ShimmerRow>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _anim;
+  bool _repeating = false;
 
   @override
   void initState() {
@@ -1279,8 +1309,26 @@ class _ShimmerRowState extends State<_ShimmerRow>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    );
     _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (disableAnimations) {
+      if (_repeating) {
+        _ctrl.stop();
+        _repeating = false;
+      }
+    } else {
+      if (!_repeating) {
+        _ctrl.repeat(reverse: true);
+        _repeating = true;
+      }
+    }
   }
 
   @override
@@ -1291,6 +1339,18 @@ class _ShimmerRowState extends State<_ShimmerRow>
 
   @override
   Widget build(BuildContext context) {
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (disableAnimations) {
+      return Container(
+        height: 72,
+        decoration: BoxDecoration(
+          color: _kPillInactive.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(20),
+        ),
+      );
+    }
+
     return AnimatedBuilder(
       animation: _anim,
       builder: (_, __) {

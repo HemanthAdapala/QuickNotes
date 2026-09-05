@@ -19,7 +19,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/task_item.dart';
 import '../../models/repeat_rule.dart';
-import '../widgets/tactile_button.dart';
+import '../../core/animations/tactile_card_wrapper.dart';
 
 const Color _kAccentsBlue = Color(0xFF0088FF);
 const Color _kAccentsRed = Color(0xFFFF383C);
@@ -75,10 +75,7 @@ class SearchTaskCard extends StatelessWidget {
           ),
         ],
       ),
-      child: TactileButton(
-        useAppleSpring: true,
-        compressionScale: 0.98,
-        settleDuration: const Duration(milliseconds: 600),
+      child: TactileCardWrapper(
         onTap: onTap,
         child: Stack(
           children: [
