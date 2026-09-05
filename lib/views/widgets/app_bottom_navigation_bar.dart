@@ -392,17 +392,17 @@ class _NavigationButtonState extends State<_NavigationButton>
   }
 
   void _handleTap(bool reduceMotion) {
-    if (reduceMotion) {
-      widget.onDestinationSelected(widget.index);
-      return;
-    }
-
     // Play semantic navigation haptic tick ONLY when destination changes,
     // or buttonPress for FAB action
     if (widget.index != widget.selectedIndex) {
       QuickNotesHaptics.navigationSelection();
     } else if (widget.index == 4) {
       QuickNotesHaptics.buttonPress();
+    }
+
+    if (reduceMotion) {
+      widget.onDestinationSelected(widget.index);
+      return;
     }
 
     // Refined spring return sequence (0.94 -> 1.018 -> 1.000) over 190ms

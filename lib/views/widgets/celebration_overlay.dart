@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
@@ -31,6 +32,9 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final List<_Particle> _particles;
+  bool _initialized = false;
+  bool _isReducedMotion = false;
+  Timer? _dismissTimer;
 
   // App-palette colours + a couple of extras for vibrancy
   static const List<Color> _palette = [
@@ -63,21 +67,70 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
-    )
-      ..addStatusListener((s) {
+    )..addStatusListener((s) {
         if (s == AnimationStatus.completed) widget.onDone();
-      })
-      ..forward();
+      });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      _isReducedMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+      if (_isReducedMotion) {
+        // Reduced-motion: skip particle simulation, maintain 1600ms lifecycle for static acknowledgement
+        _dismissTimer = Timer(const Duration(milliseconds: 1600), () {
+          if (mounted) widget.onDone();
+        });
+      } else {
+        _controller.forward();
+      }
+    }
   }
 
   @override
   void dispose() {
+    _dismissTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isReducedMotion) {
+      // Immediate, static completion acknowledgement without particle physics animation
+      return IgnorePointer(
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 26, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF333333).withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Text(
+              widget.message,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1C1C1E),
+                decoration: TextDecoration.none,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return IgnorePointer(
       child: AnimatedBuilder(
         animation: _controller,
@@ -114,7 +167,7 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0xFF333333).withValues(alpha: 0.12),
+                            color: const Color(0xFF333333).withValues(alpha: 0.12),
                             blurRadius: 24,
                             offset: const Offset(0, 6),
                           ),
