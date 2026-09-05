@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'animation_constants.dart';
+import '../motion/motion_constants.dart';
 
 class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
   final Widget child;
@@ -31,7 +31,7 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
     if (ctx != null && (MediaQuery.maybeDisableAnimationsOf(ctx) ?? false)) {
       return Duration.zero;
     }
-    return kDurationNormal; // 250ms
+    return QuickNotesMotion.kMotionSheetPresent; // 350ms
   }
 
   @override
@@ -40,7 +40,7 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
     if (ctx != null && (MediaQuery.maybeDisableAnimationsOf(ctx) ?? false)) {
       return Duration.zero;
     }
-    return kDurationFast; // 150ms
+    return QuickNotesMotion.kMotionSheetDismiss; // 260ms
   }
 
   @override
@@ -76,7 +76,9 @@ class AnimatedBottomSheetRoute<T> extends PopupRoute<T> {
 
     final isEntering = animation.status == AnimationStatus.forward ||
         animation.status == AnimationStatus.completed;
-    final curve = isEntering ? kCurveEnter : kCurveExit;
+    final curve = isEntering
+        ? QuickNotesMotion.kMotionEaseOutCubic
+        : QuickNotesMotion.kMotionEaseInCubic;
 
     final curvedAnimation = CurvedAnimation(
       parent: animation,

@@ -24,12 +24,33 @@ class QuickNotesMotion {
   /// Note opening reverse route transition duration.
   static const Duration kMotionPageReverse = Duration(milliseconds: 260);
 
+  /// Bottom sheet presentation entrance duration.
+  static const Duration kMotionSheetPresent = Duration(milliseconds: 350);
+
+  /// Bottom sheet dismissal exit duration.
+  static const Duration kMotionSheetDismiss = Duration(milliseconds: 260);
+
+  /// Dialog scale & fade presentation entrance duration.
+  static const Duration kMotionDialogPresent = Duration(milliseconds: 240);
+
+  /// Dialog dismissal exit duration.
+  static const Duration kMotionDialogDismiss = Duration(milliseconds: 180);
+
   // ── Curves ───────────────────────────────────────────────────────────────
   /// Apple-style emphasized ease-out for document surface navigation.
   static const Curve kMotionAppleEase = Cubic(0.20, 0.0, 0.0, 1.0);
 
   /// Snappy cubic curve with gentle overshoot for magnetic switching.
   static const Curve kMotionSnappy = Cubic(0.20, 1.12, 0.40, 1.0);
+
+  /// Standard smooth cubic ease-in-out curve for structural transitions.
+  static const Curve kMotionEaseInOutCubic = Cubic(0.42, 0.0, 0.58, 1.0);
+
+  /// Smooth ease-out cubic curve for modal sheets and overlays.
+  static const Curve kMotionEaseOutCubic = Curves.easeOutCubic;
+
+  /// Smooth ease-in cubic curve for modal sheet dismissals.
+  static const Curve kMotionEaseInCubic = Curves.easeInCubic;
 
   /// Physics-based damped spring curve (zeta ≈ 0.80, 1.5% subtle overshoot).
   static const Curve kMotionSpring = DampedSpringCurve();

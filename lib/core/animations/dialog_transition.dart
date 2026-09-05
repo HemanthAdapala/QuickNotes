@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'animation_constants.dart';
+import '../motion/motion_constants.dart';
 
 Future<T?> showAnimatedDialog<T>({
   required BuildContext context,
@@ -12,7 +12,8 @@ Future<T?> showAnimatedDialog<T>({
     barrierDismissible: true,
     barrierLabel: 'Dismiss',
     barrierColor: barrierColor ?? const Color(0xFF333333).withValues(alpha: 0.20),
-    transitionDuration: reduceMotion ? Duration.zero : kDurationNormal, // 250ms
+    transitionDuration:
+        reduceMotion ? Duration.zero : QuickNotesMotion.kMotionDialogPresent, // 240ms
     pageBuilder: (context, animation, secondaryAnimation) =>
         Center(child: child),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -22,7 +23,7 @@ Future<T?> showAnimatedDialog<T>({
 
       final curvedAnimation = CurvedAnimation(
         parent: animation,
-        curve: kCurveEnter, // Curves.easeOut
+        curve: QuickNotesMotion.kMotionAppleEase,
       );
 
       final scaleTween = Tween<double>(

@@ -7,7 +7,9 @@ import 'package:quick_notes/core/animations/bottom_sheet_transition.dart';
 import 'package:quick_notes/core/animations/dialog_transition.dart';
 import 'package:quick_notes/core/animations/page_transitions.dart';
 import 'package:quick_notes/core/animations/search_transition_routes.dart';
+import 'package:quick_notes/core/animations/tactile_card_wrapper.dart';
 import 'package:quick_notes/core/motion/motion_constants.dart';
+import 'package:quick_notes/core/motion/quick_notes_haptics.dart';
 import 'package:quick_notes/views/screens/settings_screen.dart';
 import 'package:quick_notes/views/screens/experimental/sde_drag_test_screen.dart';
 import 'package:quick_notes/views/widgets/blurred_bottom_sheet.dart';
@@ -376,6 +378,120 @@ void main() {
       expect(navObserver.lastPushedRoute, isA<QuickNotesPageRoute>());
       expect(navObserver.lastPushedRoute, isNot(isA<MaterialPageRoute>()));
       expect(find.byType(SDEDragTestScreen), findsOneWidget);
+    });
+
+    // ── TEST 6: Hardened QuickNotesMotion Tokens ─────────────────────────────
+    test('TEST 6: QuickNotesMotion exposes authoritative modal and curve tokens', () {
+      expect(QuickNotesMotion.kMotionSheetPresent, equals(const Duration(milliseconds: 350)));
+      expect(QuickNotesMotion.kMotionSheetDismiss, equals(const Duration(milliseconds: 260)));
+      expect(QuickNotesMotion.kMotionDialogPresent, equals(const Duration(milliseconds: 240)));
+      expect(QuickNotesMotion.kMotionDialogDismiss, equals(const Duration(milliseconds: 180)));
+      expect(QuickNotesMotion.kMotionEaseInOutCubic, equals(const Cubic(0.42, 0.0, 0.58, 1.0)));
+      expect(QuickNotesMotion.kMotionEaseOutCubic, equals(Curves.easeOutCubic));
+      expect(QuickNotesMotion.kMotionEaseInCubic, equals(Curves.easeInCubic));
+    });
+
+    // ── TEST 7: Hardened QuickNotesHaptics Semantic Channels ─────────────────
+    test('TEST 7: QuickNotesHaptics dispatches all semantic channels safely', () async {
+      final List<String> receivedEvents = [];
+      QuickNotesHaptics.debugHapticListener = (method) {
+        receivedEvents.add(method);
+      };
+
+      await QuickNotesHaptics.navigationSelection();
+      await QuickNotesHaptics.selection();
+      await QuickNotesHaptics.buttonPress();
+      await QuickNotesHaptics.subtleSettle();
+      await QuickNotesHaptics.destructiveAction();
+      await QuickNotesHaptics.errorAlert();
+      await QuickNotesHaptics.taskCompletion();
+      await QuickNotesHaptics.dragBoundary();
+
+      expect(receivedEvents, equals([
+        'navigationSelection',
+        'selection',
+        'buttonPress',
+        'subtleSettle',
+        'destructiveAction',
+        'errorAlert',
+        'taskCompletion',
+        'dragBoundary',
+      ]));
+
+      QuickNotesHaptics.debugHapticListener = null;
+    });
+
+    // ── TEST 8: Hardened TactileCardWrapper Canonical Behavior ────────────────
+    testWidgets('TEST 8A: TactileCardWrapper scales to 0.94 and triggers buttonPress haptic', (tester) async {
+      final List<String> haptics = [];
+      QuickNotesHaptics.debugHapticListener = (method) => haptics.add(method);
+
+      bool tapped = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: TactileCardWrapper(
+                onTap: () => tapped = true,
+                child: const SizedBox(width: 100, height: 100, child: Text('Card')),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final cardFinder = find.text('Card');
+      final gesture = await tester.startGesture(tester.getCenter(cardFinder));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 90)); // kMotionMicro
+
+      // Should have triggered buttonPress haptic
+      expect(haptics, contains('buttonPress'));
+
+      // Verify scale is 0.94
+      final ScaleTransition scaleTransition =
+          tester.widget(find.byType(ScaleTransition).first);
+      expect(scaleTransition.scale.value, closeTo(0.94, 0.01));
+
+      // Release
+      await gesture.up();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 190)); // kMotionRelease
+      expect(tapped, isTrue);
+
+      QuickNotesHaptics.debugHapticListener = null;
+    });
+
+    testWidgets('TEST 8B: TactileCardWrapper suppresses scaling under reduced motion', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: Center(
+              child: TactileCardWrapper(
+                onTap: () {},
+                child: const SizedBox(width: 100, height: 100, child: Text('Reduced Card')),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final cardFinder = find.text('Reduced Card');
+      final gesture = await tester.startGesture(tester.getCenter(cardFinder));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 90));
+
+      // Under reduced motion, scale must remain exactly 1.0
+      final ScaleTransition scaleTransition =
+          tester.widget(find.byType(ScaleTransition).first);
+      expect(scaleTransition.scale.value, equals(1.0));
+
+      await gesture.up();
+      await tester.pump();
     });
   });
 }

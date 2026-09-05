@@ -92,8 +92,8 @@ Route<T> buildPageRoute<T>(Widget page) {
 Route<T> buildFadePageRoute<T>(Widget page) {
   return QuickNotesPageRoute<T>(
     pageBuilder: (context, animation, secondaryAnimation) => page,
-    normalTransitionDuration: const Duration(milliseconds: 600),
-    normalReverseTransitionDuration: const Duration(milliseconds: 600),
+    normalTransitionDuration: QuickNotesMotion.kMotionPage,
+    normalReverseTransitionDuration: QuickNotesMotion.kMotionPageReverse,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
         return child;
@@ -101,7 +101,7 @@ Route<T> buildFadePageRoute<T>(Widget page) {
       return FadeTransition(
         opacity: CurvedAnimation(
           parent: animation,
-          curve: Curves.easeInOut,
+          curve: QuickNotesMotion.kMotionEaseInOutCubic,
         ),
         child: child,
       );
