@@ -25,7 +25,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../providers/notes_provider.dart';
 import '../../models/note_summary.dart';
 import '../../themes/app_theme.dart';
-import '../../core/animations/animation_constants.dart';
+import '../../core/motion/motion_constants.dart';
+import '../../core/motion/quick_notes_haptics.dart';
+import '../../core/animations/tactile_card_wrapper.dart';
 import '../../core/animations/animated_list_entrance.dart';
 import '../../core/animations/page_transitions.dart';
 import '../../core/animations/search_transition_routes.dart';
@@ -112,7 +114,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     super.initState();
     _scrollController = ScrollController()..addListener(_scrollListener);
 
-    _tintCtrl = AnimationController(vsync: this, duration: kDurationNormal);
+    _tintCtrl = AnimationController(
+        vsync: this, duration: QuickNotesMotion.kMotionSelection);
     _tintAnim = ColorTween(
       begin: AppColors.background,
       end: AppColors.background,
@@ -159,9 +162,12 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     }
   }
 
+  ModalRoute? _route;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _route = ModalRoute.of(context);
     if (!_tintReady) {
       final theme = Theme.of(context);
       const isDark = false;
@@ -169,9 +175,15 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
           isDark ? theme.scaffoldBackgroundColor : AppColors.background;
       final end = Color.lerp(base, _accent, isDark ? 0.08 : 0.12)!;
 
-      _tintAnim = ColorTween(begin: base, end: end)
-          .animate(CurvedAnimation(parent: _tintCtrl, curve: kCurveDefault));
-      _tintCtrl.forward();
+      _tintAnim = ColorTween(begin: base, end: end).animate(CurvedAnimation(
+          parent: _tintCtrl, curve: QuickNotesMotion.kMotionEaseOutCubic));
+      final bool disableAnimations =
+          MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+      if (disableAnimations) {
+        _tintCtrl.value = 1.0;
+      } else {
+        _tintCtrl.forward();
+      }
       _tintReady = true;
     }
   }
@@ -181,9 +193,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     _tintCtrl.dispose();
-    final route = ModalRoute.of(context);
-    route?.animation?.removeListener(_onRouteAnim);
-    route?.animation?.removeStatusListener(_onRouteStatus);
+    _route?.animation?.removeListener(_onRouteAnim);
+    _route?.animation?.removeStatusListener(_onRouteStatus);
 
     // Reset category selection safely
     try {
@@ -673,6 +684,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
       return b.updatedAt.compareTo(a.updatedAt);
     });
 
+    final bool disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     final scaffoldBg =
         isDark ? theme.scaffoldBackgroundColor : AppColors.background;
 
@@ -683,12 +696,20 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
       // Opens NoteEditorScreen with this category pre-selected
       floatingActionButton: AnimatedScale(
         scale: _isFabVisible ? 1.0 : 0.0,
-        duration: kDurationFast,
-        curve: _isFabVisible ? kCurveEnter : kCurveExit,
+        duration: disableAnimations
+            ? Duration.zero
+            : QuickNotesMotion.kMotionRelease,
+        curve: _isFabVisible
+            ? QuickNotesMotion.kMotionAppleEase
+            : QuickNotesMotion.kMotionEaseInCubic,
         child: AnimatedOpacity(
           opacity: _isFabVisible ? 1.0 : 0.0,
-          duration: kDurationFast,
-          curve: _isFabVisible ? kCurveEnter : kCurveExit,
+          duration: disableAnimations
+              ? Duration.zero
+              : QuickNotesMotion.kMotionRelease,
+          curve: _isFabVisible
+              ? QuickNotesMotion.kMotionAppleEase
+              : QuickNotesMotion.kMotionEaseInCubic,
           child: LivingFloatingActionButton(
             key: _fabKey,
             backgroundColor: AppColors.amber,
@@ -745,6 +766,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24.0, vertical: 12.0),
                       child: AppHeaderBar(
+                        leftHeroTag: 'hero_category_details_back',
+                        rightHeroTag: 'hero_category_details_search',
                         leftWidth: 44.0,
                         onLeftTap: () {
                           Navigator.of(context).maybePop();
@@ -854,7 +877,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
 //   footer padding-top: 12px
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _CategoryNoteCard extends StatefulWidget {
+class _CategoryNoteCard extends StatelessWidget {
   final NoteSummary note;
   final NotesProvider provider;
   final VoidCallback onTap;
@@ -870,35 +893,12 @@ class _CategoryNoteCard extends StatefulWidget {
   });
 
   @override
-  State<_CategoryNoteCard> createState() => _CategoryNoteCardState();
-}
-
-class _CategoryNoteCardState extends State<_CategoryNoteCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _press;
-  late Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _press = AnimationController(vsync: this, duration: kDurationCardPress);
-    _scale = Tween<double>(begin: 1.0, end: 0.97)
-        .animate(CurvedAnimation(parent: _press, curve: kCurveExit));
-  }
-
-  @override
-  void dispose() {
-    _press.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final cardColor =
-        NotesProvider.getNoteColor(widget.note.colorValue, context);
-    final date = DateFormat('MMM d, yyyy').format(widget.note.updatedAt);
+        NotesProvider.getNoteColor(note.colorValue, context);
+    final date = DateFormat('MMM d, yyyy').format(note.updatedAt);
 
-    final folderName = widget.note.folderName?.toUpperCase();
+    final folderName = note.folderName?.toUpperCase();
 
     // Pill badge background: card color blended toward ink (~20% darker)
     final pillBg = Color.lerp(
@@ -907,23 +907,9 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
       0.18,
     )!;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => _press.animateTo(1.0,
-          duration: kDurationCardPress, curve: kCurveExit),
-      onTapUp: (_) {
-        _press.animateTo(0.0,
-            duration: kDurationCardRelease, curve: kCurveEnter);
-        widget.onTap();
-      },
-      onTapCancel: () => _press.animateTo(0.0,
-          duration: kDurationCardRelease, curve: kCurveEnter),
-      child: AnimatedBuilder(
-        animation: _press,
-        builder: (_, child) =>
-            Transform.scale(scale: _scale.value, child: child),
-        child: _buildCard(context, cardColor, date, folderName, pillBg),
-      ),
+    return TactileCardWrapper(
+      onTap: onTap,
+      child: _buildCard(context, cardColor, date, folderName, pillBg),
     );
   }
 
@@ -935,9 +921,14 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
     Color pillBg,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
     return AnimatedContainer(
-      duration: kDurationNormal,
+      duration: disableAnimations
+          ? Duration.zero
+          : QuickNotesMotion.kMotionSelection,
+      curve: QuickNotesMotion.kMotionEaseOutCubic,
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardColor,
@@ -971,9 +962,9 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                 // Note weight label — mockup shows "Inter 500" or "Inter 400"
                 // This is the font-weight of the note's type label
                 Text(
-                  widget.note.isPinned
+                  note.isPinned
                       ? 'Pinned'
-                      : 'Inter ${widget.note.colorValue > 0 ? '500' : '400'}',
+                      : 'Inter ${note.colorValue > 0 ? '500' : '400'}',
                   style: GoogleFonts.inter(
                     // project rule: Inter for labels
                     fontSize: 11,
@@ -988,9 +979,9 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: () {
-                      HapticFeedback.lightImpact();
-                      final noteFolder = widget.provider.folders
-                          .firstWhere((f) => f.id == widget.note.folderId);
+                      QuickNotesHaptics.navigationSelection();
+                      final noteFolder = provider.folders
+                          .firstWhere((f) => f.id == note.folderId);
                       Navigator.of(context).push(
                         buildPageRoute(FolderNotesScreen(folder: noteFolder)),
                       );
@@ -1025,10 +1016,10 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
             // ── TITLE ──────────────────────────────────────────────────────
             // Playfair Display SemiBold 600 · 20px · #211A12
             Text(
-              widget.note.isLocked
+              note.isLocked
                   ? 'Locked Note'
-                  : (widget.note.title.isNotEmpty
-                      ? widget.note.title
+                  : (note.title.isNotEmpty
+                      ? note.title
                       : 'Untitled'),
               style: GoogleFonts.inter(
                 // project rule: Playfair for titles
@@ -1046,16 +1037,16 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
             // ── BODY ───────────────────────────────────────────────────────
             // Inter Regular 400 · 13px · #524534  (mockup: 1 line snippet)
             Text(
-              widget.note.isLocked
+              note.isLocked
                   ? '••••••••••••••••'
-                  : (widget.note.previewText.isNotEmpty
-                      ? widget.note.previewText
+                  : (note.previewText.isNotEmpty
+                      ? note.previewText
                       : 'No additional text'),
               style: GoogleFonts.inter(
                 // project rule: Inter for body
                 fontSize: 13,
                 fontWeight: FontWeight.w400, // Regular
-                color: widget.note.previewText.isNotEmpty
+                color: note.previewText.isNotEmpty
                     ? (isDark ? Colors.white70 : const Color(0xFF524534))
                     : const Color(0xFF524534).withValues(alpha: 0.45),
                 height: 1.5,
@@ -1092,8 +1083,8 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                     const SizedBox(width: 5),
                     // "Color" label — Inter Regular 12px #828282
                     Text(
-                      NotesProvider.colorNames.length > widget.note.colorValue
-                          ? NotesProvider.colorNames[widget.note.colorValue]
+                      NotesProvider.colorNames.length > note.colorValue
+                          ? NotesProvider.colorNames[note.colorValue]
                           : 'Default',
                       style: GoogleFonts.inter(
                         fontSize: 12,
@@ -1102,7 +1093,7 @@ class _CategoryNoteCardState extends State<_CategoryNoteCard>
                             isDark ? Colors.white38 : const Color(0xFF828282),
                       ),
                     ),
-                    if (widget.note.isPinned) ...[
+                    if (note.isPinned) ...[
                       const SizedBox(width: 8),
                       Icon(Icons.push_pin,
                           size: 11,

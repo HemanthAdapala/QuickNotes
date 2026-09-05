@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/motion/quick_notes_haptics.dart';
+import 'tactile_button.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DeleteConfirmationDialog
@@ -95,9 +97,8 @@ class DeleteConfirmationDialog extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Cancel Button
-                    GestureDetector(
+                    TactileButton(
                       onTap: () => Navigator.of(context).pop(false),
-                      behavior: HitTestBehavior.opaque,
                       child: Container(
                         width: 125,
                         height: 40,
@@ -122,9 +123,12 @@ class DeleteConfirmationDialog extends StatelessWidget {
                     ),
 
                     // Delete Button
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(true),
-                      behavior: HitTestBehavior.opaque,
+                    TactileButton(
+                      playSelectionHaptic: false,
+                      onTap: () {
+                        QuickNotesHaptics.destructiveAction();
+                        Navigator.of(context).pop(true);
+                      },
                       child: Container(
                         width: 125,
                         height: 40,

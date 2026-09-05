@@ -47,7 +47,8 @@ class FolderNoteCard extends StatelessWidget {
 
     return TactileButton(
       useAppleSpring: true,
-      compressionScale: 0.95,
+      compressionScale: 0.94,
+      playSelectionHaptic: !isSelectionMode,
       onTap: onTap,
       onLongPressStart: onLongPressStart != null
           ? (details) => onLongPressStart!(details.globalPosition)

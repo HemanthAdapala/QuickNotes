@@ -9,13 +9,14 @@ import '../../models/folder.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/living_writing_experience.dart';
 import 'folder_notes_screen.dart';
-import '../../core/animations/animation_constants.dart';
-import '../../core/animations/tactile_card_wrapper.dart';
+import '../../core/motion/motion_constants.dart';
+import '../../core/motion/quick_notes_haptics.dart';
 import '../../core/animations/dialog_transition.dart';
 import '../../core/animations/animated_list_entrance.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/blurred_bottom_sheet.dart';
 import '../widgets/folder_card.dart';
+export '../widgets/folder_card.dart' show FolderGridCard;
 import '../widgets/primary_screen_surface.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/page_transitions.dart';
@@ -180,7 +181,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                             if (_folderController.text.isNotEmpty)
                               GestureDetector(
                                 onTap: () {
-                                  HapticFeedback.selectionClick();
+                                  QuickNotesHaptics.selection();
                                   setDialogState(() {
                                     _folderController.clear();
                                   });
@@ -301,6 +302,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
               ),
               TextButton(
                 onPressed: () async {
+                  QuickNotesHaptics.destructiveAction();
                   Navigator.pop(dialogContext);
                   final success = await Provider.of<NotesProvider>(
                           screenContext,
@@ -407,11 +409,17 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
   }
 
   Widget _buildHeaderBar() {
+    final bool disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
     return SizedBox(
       height: 44.0,
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 250),
+        duration: disableAnimations
+            ? Duration.zero
+            : QuickNotesMotion.kMotionSelection,
         transitionBuilder: (child, animation) {
+          if (disableAnimations) return child;
           return FadeTransition(
             opacity: animation,
             child: child,
@@ -536,29 +544,26 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                     top: 0,
                     width: 44.0,
                     height: 44.0,
-                    child: Hero(
-                      tag: 'hero_folders_search',
-                      child: BottomBarGlassSurface(
-                        width: 44.0,
-                        height: 44.0,
-                        borderRadius: BorderRadius.circular(22.0),
-                        useFrost: true,
-                        child: TactileButton(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              buildSearchTransitionRoute(
-                                builder: (_) =>
-                                    const SearchScreen(initialScope: 'notes'),
-                              ),
-                            );
-                          },
-                          child: const Center(
-                            child: Icon(
-                              Icons.search_rounded,
-                              color: Color(0xFF1C1C1E),
-                              size: 22,
+                    child: BottomBarGlassSurface(
+                      width: 44.0,
+                      height: 44.0,
+                      borderRadius: BorderRadius.circular(22.0),
+                      useFrost: true,
+                      child: TactileButton(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            buildSearchTransitionRoute(
+                              builder: (_) =>
+                                  const SearchScreen(initialScope: 'notes'),
                             ),
+                          );
+                        },
+                        child: const Center(
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: Color(0xFF1C1C1E),
+                            size: 22,
                           ),
                         ),
                       ),
@@ -848,368 +853,6 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Redesigned Grid Folder Card
-// ─────────────────────────────────────────────────────────────────────────────
-class FolderGridCard extends StatelessWidget {
-  final Folder folder;
-  final int index;
-  final int noteCount;
-  final VoidCallback onTap;
-  final GestureLongPressStartCallback onLongPressStart;
-  final VoidCallback onCustomizeTap;
-
-  const FolderGridCard({
-    super.key,
-    required this.folder,
-    required this.index,
-    required this.noteCount,
-    required this.onTap,
-    required this.onLongPressStart,
-    required this.onCustomizeTap,
-  });
-
-  Color _darken(Color color, [double amount = .08]) {
-    final hsl = HSLColor.fromColor(color);
-    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
-    return hslDark.toColor();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final Color bgColor;
-    final Color bgColorDark;
-    if (folder.colorHex != null) {
-      final parsed = Color(int.parse(folder.colorHex!));
-      bgColor = parsed;
-      bgColorDark = _darken(parsed);
-    } else {
-      bgColor = const Color(0xFFB0B0A8);
-      bgColorDark = const Color(0xFF9E9E96);
-    }
-
-    return TactileButton(
-      onTap: onTap,
-      onLongPressStart: onLongPressStart,
-      compressionScale: 0.95,
-      useAppleSpring: true,
-      playSelectionHaptic: true,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.contain,
-              child: SizedBox(
-                width: 150.0,
-                height: 154.0,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned(
-                      top: 20.916,
-                      left: 0,
-                      width: 150.0,
-                      height: 133.0,
-                      child: CustomPaint(
-                        painter: FolderBgPainter(color: bgColorDark),
-                      ),
-                    ),
-                    Positioned(
-                      left: 13.9,
-                      top: 9.5,
-                      child: Transform.rotate(
-                        angle: -10.0 * pi / 180.0,
-                        alignment: Alignment.topLeft,
-                        child: const DecorativeNoteCard(),
-                      ),
-                    ),
-                    Positioned(
-                      left: 73.5,
-                      top: -1.5,
-                      child: Transform.rotate(
-                        angle: 10.0 * pi / 180.0,
-                        alignment: Alignment.topLeft,
-                        child: const DecorativeNoteCard(),
-                      ),
-                    ),
-                    Positioned(
-                      top: 20.916,
-                      left: 0,
-                      width: 150.0,
-                      height: 133.0,
-                      child: CustomPaint(
-                        painter: FolderFgPainter(color: bgColor),
-                      ),
-                    ),
-                    Positioned(
-                      right: 8.0,
-                      bottom: 8.0,
-                      width: 36.0,
-                      height: 36.0,
-                      child: folder.sticker != null
-                          ? Image.asset(
-                              "assets/stickers/${folder.sticker}",
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const SizedBox.shrink();
-                              },
-                            )
-                          : TactileButton(
-                              onTap: onCustomizeTap,
-                              compressionScale: 0.8,
-                              useAppleSpring: true,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black12,
-                                      blurRadius: 4.0,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.add_rounded,
-                                  color: Color(0xFF8E8E93),
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  folder.name,
-                  style: GoogleFonts.inter(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1C1C1E),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 6.0),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-                decoration: BoxDecoration(
-                  color: const Color(0x1A787880),
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                child: Text(
-                  "$noteCount",
-                  style: GoogleFonts.inter(
-                    fontSize: 12.0,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF555558),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Decorative peeking notepad
-// ─────────────────────────────────────────────────────────────────────────────
-class DecorativeNoteCard extends StatelessWidget {
-  const DecorativeNoteCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 64.0,
-      height: 86.0,
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            width: 64.0,
-            height: 86.0,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFF333333).withValues(alpha: 0.18),
-                    blurRadius: 16.0,
-                    offset: Offset.zero,
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            width: 64.0,
-            height: 41.0,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFCC00),
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 11.0,
-            left: 0,
-            width: 64.0,
-            height: 75.0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFF333333).withValues(alpha: 0.10),
-                    blurRadius: 6.0,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8.0, 10.0, 8.0, 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(
-                    5,
-                    (i) => Container(
-                      height: 1.5,
-                      margin: EdgeInsets.only(right: i == 4 ? 14.0 : 0.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE2E2DF),
-                        borderRadius: BorderRadius.circular(1.0),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Folder Background Painter
-// ─────────────────────────────────────────────────────────────────────────────
-class FolderBgPainter extends CustomPainter {
-  final Color color;
-
-  const FolderBgPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      const Radius.circular(20.0),
-    );
-
-    final shadowPaint = Paint()
-      ..color = Color(0xFF333333).withValues(alpha: 0.18)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0);
-    canvas.drawRRect(rrect, shadowPaint);
-
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(rrect, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant FolderBgPainter oldDelegate) {
-    return oldDelegate.color != color;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Folder Foreground Flap Painter
-// ─────────────────────────────────────────────────────────────────────────────
-class FolderFgPainter extends CustomPainter {
-  final Color color;
-
-  const FolderFgPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double sx = size.width / 150.0;
-    final double sy = size.height / 133.0;
-
-    Path _svg() {
-      final p = Path();
-      p.moveTo(0, 20.0007);
-      p.cubicTo(0, 8.95454, 8.94541, 0, 19.9916, 0);
-      p.cubicTo(34.3373, 0, 53.6809, 0, 68.5554, 0);
-      p.cubicTo(72.7535, 0, 77.0289, 1.23472, 79.298, 4.7667);
-      p.cubicTo(81.9393, 8.87798, 83.7342, 14.0167, 86.4703, 18.0011);
-      p.cubicTo(88.7081, 21.2597, 92.7727, 22.3273, 96.7258, 22.3273);
-      p.cubicTo(108.31, 22.3273, 120.325, 22.3273, 130.007, 22.3273);
-      p.cubicTo(141.052, 22.3273, 150, 31.2816, 150, 42.3273);
-      p.lineTo(150, 112.999);
-      p.cubicTo(150, 124.045, 141.046, 133, 130, 133);
-      p.lineTo(20, 133);
-      p.cubicTo(8.9543, 133, 0, 124.045, 0, 113);
-      p.lineTo(0, 20.0007);
-      p.close();
-      return p;
-    }
-
-    final svgPath = _svg();
-    final matrix = Matrix4.identity()..scale(sx, sy, 1.0);
-    final scaledPath = svgPath.transform(matrix.storage);
-
-    canvas.drawShadow(
-        scaledPath, Color(0xFF333333).withValues(alpha: 0.18), 3.0, true);
-
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(scaledPath, paint);
-
-    final highlightPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Colors.white.withValues(alpha: 0.35),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawPath(scaledPath, highlightPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant FolderFgPainter oldDelegate) {
-    return oldDelegate.color != color;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Folder Customization Entry Point & Bottom Sheet
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1279,9 +922,9 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
     final initialColor = _selectedColorHex != null
         ? Color(int.parse(_selectedColorHex!))
         : const Color(0xFFB0B0A8);
-    showDialog(
+    showAnimatedDialog(
       context: context,
-      builder: (context) => IosColorPickerDialog(
+      child: IosColorPickerDialog(
         initialColor: initialColor,
         onColorSelected: (color) {
           setState(() {

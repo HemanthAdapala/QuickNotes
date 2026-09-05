@@ -148,7 +148,7 @@ class _NoteCardState extends State<NoteCard> with TickerProviderStateMixin {
     return TactileFlipWrapper(
       id: widget.note.id,
       child: Hero(
-        tag: 'note_card_${widget.note.id}',
+        tag: 'hero_note_card_${widget.note.id}',
         child: Material(
           color: Colors.transparent,
           child: GestureDetector(

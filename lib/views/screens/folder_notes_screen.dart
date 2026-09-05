@@ -15,6 +15,7 @@ import '../../providers/notes_provider.dart';
 import '../../models/note_summary.dart';
 import '../../models/folder.dart';
 import '../../themes/app_theme.dart';
+import '../../core/motion/quick_notes_haptics.dart';
 import '../../core/animations/animated_list_entrance.dart';
 import '../../core/animations/page_transitions.dart';
 import '../../core/animations/search_transition_routes.dart';
@@ -96,7 +97,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
     }
 
     if (_isSelectionMode) {
-      HapticFeedback.selectionClick();
+      QuickNotesHaptics.selection();
       setState(() {
         if (_selectedNoteIds.contains(note.id)) {
           _selectedNoteIds.remove(note.id);
@@ -153,7 +154,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
   }
 
   void _onNoteLongPress(NoteSummary note) {
-    HapticFeedback.heavyImpact();
+    QuickNotesHaptics.selection();
     setState(() {
       _isSelectionMode = true;
       _selectedNoteIds.add(note.id);
@@ -272,6 +273,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
           ),
           TextButton(
             onPressed: () async {
+              QuickNotesHaptics.destructiveAction();
               await provider.deleteFolder(widget.folder.id);
               if (mounted) {
                 Navigator.pop(context); // Close dialog
@@ -436,6 +438,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
   }
 
   void _bulkDeleteNotes(NotesProvider provider) async {
+    QuickNotesHaptics.destructiveAction();
     for (final id in _selectedNoteIds) {
       await provider.trashNote(id);
     }
@@ -475,9 +478,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
             const SizedBox(height: 16),
             TactileButton(
               useAppleSpring: true,
-              compressionScale: 0.9,
+              compressionScale: 0.94,
               onTap: () {
-                HapticFeedback.lightImpact();
                 Navigator.push(
                   context,
                   buildPageRoute(
@@ -769,10 +771,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                   borderRadius: BorderRadius.circular(26.0),
                   child: TactileButton(
                     useAppleSpring: true,
-                    compressionScale: 0.7,
-                    settleDuration: const Duration(milliseconds: 1000),
+                    compressionScale: 0.94,
                     onTap: () {
-                      HapticFeedback.lightImpact();
                       Navigator.push(
                         context,
                         buildPageRoute(NoteEditorScreen(
