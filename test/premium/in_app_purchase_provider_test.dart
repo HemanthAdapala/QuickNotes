@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:quick_notes/premium/premium.dart';
 
@@ -172,6 +173,7 @@ void main() {
 
     setUp(() {
       FlutterSecureStorage.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({});
       fakeIap = FakeInAppPurchase();
       entitlementManager = PremiumEntitlementManager();
       provider = InAppPurchaseProvider(

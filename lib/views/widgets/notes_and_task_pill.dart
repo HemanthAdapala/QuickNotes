@@ -25,12 +25,13 @@ class NotesAndTaskPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: 177.0,
       height: 40.0,
       decoration: ShapeDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF5A5A5A) : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0),
         ),
@@ -84,7 +85,11 @@ class NotesAndTaskPill extends StatelessWidget {
                 child: Text(
                   'Notes',
                   style: GoogleFonts.inter(
-                    color: isNotesActive ? Colors.white : const Color(0xFF333333),
+                    color: isNotesActive
+                        ? Colors.white
+                        : (isDark
+                            ? const Color(0xFF757575)
+                            : const Color(0xFF333333)),
                     fontSize: 16.0,
                     fontWeight: FontWeight.w600,
                     height: 1.38,
@@ -111,7 +116,11 @@ class NotesAndTaskPill extends StatelessWidget {
                 child: Text(
                   'Tasks',
                   style: GoogleFonts.inter(
-                    color: !isNotesActive ? Colors.white : const Color(0xFF333333),
+                    color: !isNotesActive
+                        ? Colors.white
+                        : (isDark
+                            ? const Color(0xFF757575)
+                            : const Color(0xFF333333)),
                     fontSize: 16.0,
                     fontWeight: FontWeight.w600,
                     height: 1.38,

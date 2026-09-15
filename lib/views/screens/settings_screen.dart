@@ -1,6 +1,6 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,6 +32,7 @@ import 'appearance_screen.dart';
 import 'widgets_screen.dart';
 import '../../premium/premium.dart';
 import '../../providers/settings_provider.dart';
+import 'developer/premium_test_mode_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool? isDarkMode;
@@ -189,14 +190,34 @@ If you choose to use our Backup & Sync feature, your data will be securely trans
 We do not sell, trade, or otherwise transfer your personally identifiable information to outside parties.
 ''';
 
+  Widget _buildSectionHeader(String title, {required bool isDark}) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+      child: Text(
+        title,
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF8E8E93),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    const primaryTextColor = Color(0xFF333333);
-    final settingsProvider = Provider.of<SettingsProvider>(context);
-    final isCurrentDark = settingsProvider.isDarkMode;
+    final isCurrentDark =
+        context.select<SettingsProvider, bool>((p) => p.isDarkMode);
+    final isDark = widget.isDarkMode ?? isCurrentDark;
+    final primaryTextColor = isDark ? Colors.white : const Color(0xFF333333);
+    final secondaryTextColor =
+        isDark ? const Color(0xFF9E9E9E) : const Color(0xFF8E8E93);
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final double headerHeight = screenHeight < 720 ? 238.0 : 248.0;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
       body: Stack(
         children: [
           // 1. Fixed Top Floral Background Banner (Layer Isolated)
@@ -206,34 +227,44 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
             right: 0,
             height: 180,
             child: RepaintBoundary(
-              child: SvgPicture.asset(
-                'assets/Settings Screen/Background.svg',
-                fit: BoxFit.cover,
-                width: double.infinity,
-              ),
+              child: isDark
+                  ? Opacity(
+                      opacity: 0.38,
+                      child: SvgPicture.asset(
+                        'assets/Settings Screen/Background.svg',
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
+                    )
+                  : SvgPicture.asset(
+                      'assets/Settings Screen/Background.svg',
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    ),
             ),
           ),
 
           // 2. Primary Screen Surface Background
-          const Positioned(
+          Positioned(
             top: 140,
             left: 0,
             right: 0,
             bottom: 0,
             child: PrimaryScreenSurface(
-              child: SizedBox.expand(),
+              color: isDark ? const Color(0xFF121212) : Colors.white,
+              child: const SizedBox.expand(),
             ),
           ),
 
           // 3. Fixed Upper Header Block + Scrollable Cards Column
           Column(
             children: [
-              // Fixed Top Header Area (Height: 285px) — Avatar + User info
+              // Responsive Top Header Area (Height: 248px / 238px on compact) — Avatar + User info
               SizedBox(
-                height: 285,
+                height: headerHeight,
                 child: Stack(
                   children: [
-                    // Overlapping Profile Avatar Circle
+                    // Overlapping Profile Avatar Circle with Camera Overlay Badge
                     Positioned(
                       top: 95,
                       left: 0,
@@ -241,32 +272,94 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                       child: Center(
                         child: TactileButton(
                           useAppleSpring: true,
+                          scrollSafe: false,
                           onTap: () async {
-                            HapticFeedback.lightImpact();
                             await Navigator.push(
                               context,
                               buildPageRoute(const ProfileScreen()),
                             );
                             _loadUserData();
                           },
-                          child: Container(
+                          child: SizedBox(
                             width: 90,
                             height: 90,
-                            decoration: const ShapeDecoration(
-                              color: Colors.white,
-                              shape: OvalBorder(
-                                side: BorderSide(width: 4, color: Colors.white),
-                              ),
-                              shadows: [
-                                BoxShadow(
-                                  color: Color(0x26000000),
-                                  blurRadius: 16,
-                                  offset: Offset(0, 4),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                // Main Avatar Circle
+                                Container(
+                                  width: 90,
+                                  height: 90,
+                                  decoration: ShapeDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF1E1E1E)
+                                        : Colors.white,
+                                    shape: OvalBorder(
+                                      side: BorderSide(
+                                        width: 4,
+                                        color: isDark
+                                            ? const Color(0xFF121212)
+                                            : Colors.white,
+                                      ),
+                                    ),
+                                    shadows: const [
+                                      BoxShadow(
+                                        color: Color(0x26000000),
+                                        blurRadius: 16,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: _buildAvatarWidget(),
+                                ),
+
+                                // Camera overlay badge (28x28 visual, 44x44 hit target)
+                                Positioned(
+                                  right: -8,
+                                  bottom: -8,
+                                  child: Container(
+                                    width: 44,
+                                    height: 44,
+                                    color: Colors.transparent,
+                                    alignment: Alignment.center,
+                                    child: Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: ShapeDecoration(
+                                        color: isDark
+                                            ? const Color(0xFF2C2C2E)
+                                            : Colors.white,
+                                        shape: const OvalBorder(
+                                          side: BorderSide(
+                                            color: Color(0x1F3C3C43),
+                                            width: 0.5,
+                                          ),
+                                        ),
+                                        shadows: const [
+                                          BoxShadow(
+                                            color: Color(0x3F000000),
+                                            blurRadius: 6,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: SvgPicture.asset(
+                                          'assets/icons/camera.svg',
+                                          width: 13,
+                                          height: 13,
+                                          colorFilter: ColorFilter.mode(
+                                            primaryTextColor,
+                                            BlendMode.srcIn,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                            clipBehavior: Clip.antiAlias,
-                            child: _buildAvatarWidget(),
                           ),
                         ),
                       ),
@@ -274,13 +367,13 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
 
                     // Fixed User Info (FullName, @Email)
                     Positioned(
-                      top: 195,
+                      top: 193,
                       left: 24,
                       right: 24,
                       child: TactileButton(
                         useAppleSpring: true,
+                        scrollSafe: false,
                         onTap: () async {
-                          HapticFeedback.lightImpact();
                           await Navigator.push(
                             context,
                             buildPageRoute(const ProfileScreen()),
@@ -293,9 +386,9 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                               _fullName,
                               style: GoogleFonts.inter(
                                 color: primaryTextColor,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                height: 1.1,
+                                fontSize: 19,
+                                fontWeight: FontWeight.w600,
+                                height: 1.2,
                                 letterSpacing: -0.43,
                               ),
                               textAlign: TextAlign.center,
@@ -304,10 +397,10 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                             Text(
                               '@${_email.isNotEmpty ? _email : _username}',
                               style: GoogleFonts.inter(
-                                color: const Color(0xFF8E8E93),
+                                color: secondaryTextColor,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                height: 1.1,
+                                height: 1.3,
                                 letterSpacing: -0.43,
                               ),
                               textAlign: TextAlign.center,
@@ -324,315 +417,371 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
               Expanded(
                 child: RepaintBoundary(
                   child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.only(
-                          left: 24.0, right: 24.0, top: 12.0, bottom: 100.0),
-                      child: Column(
-                        children: [
-                          // Section 1 Card (Account, Backup & Sync)
-                          GroupedListContainer(
-                            children: [
-                              GroupedTile.navigation(
-                                iconPath:
-                                    'assets/icons/bottom_navigation/settings.svg',
-                                title: 'Account',
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.push(
-                                    context,
-                                    buildPageRoute(
-                                        const AccountSettingsScreen()),
-                                  );
-                                },
-                              ),
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/refresh.svg',
-                                title: 'Backup & Sync',
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.push(
-                                    context,
-                                    buildPageRoute(const BackupRestoreScreen()),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16.0),
-
-                          // Section 2 Card (Appearance, Dark Mode, Storage and Data)
-                          GroupedListContainer(
-                            children: [
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/highlighter.svg',
-                                title: 'Appearance',
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.push(
-                                    context,
-                                    buildPageRoute(
-                                        const AppearanceScreen()),
-                                  );
-                                },
-                              ),
-                              GroupedTile.toggle(
-                                iconPath: 'assets/icons/night-day.svg',
-                                title: 'Dark Mode',
-                                trailingSwitch: ToggleSwitch(
-                                  value: isCurrentDark,
-                                  onChanged: (val) async {
-                                    HapticFeedback.selectionClick();
-                                    if (val) {
-                                      await requestDarkModeAccess(context);
-                                    } else {
-                                      await settingsProvider
-                                          .setThemeMode(ThemeMode.light);
-                                    }
-                                    if (widget.onThemeToggle != null) {
-                                      widget.onThemeToggle!();
-                                    }
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(
+                        left: 20.0, right: 20.0, top: 10.0, bottom: 120.0),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 480.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // ── SECTION 1: ACCOUNT & BACKUP ───────────────────────
+                            _buildSectionHeader('ACCOUNT & BACKUP', isDark: isDark),
+                            GroupedListContainer(
+                              width: double.infinity,
+                              border: isDark
+                                  ? Border.all(color: const Color(0xFF2C2C2E), width: 1.0)
+                                  : Border.all(color: const Color(0xFFEFEFF2), width: 1.0),
+                              children: [
+                                GroupedTile.navigation(
+                                  iconPath:
+                                      'assets/icons/bottom_navigation/settings.svg',
+                                  title: 'Account',
+                                  fontSize: 15.0,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      buildPageRoute(
+                                          const AccountSettingsScreen()),
+                                    );
                                   },
                                 ),
-                              ),
-                              Builder(
-                                builder: (context) {
-                                  bool hasWidgetAccess = false;
-                                  try {
-                                    final featureAccess =
-                                        Provider.of<FeatureAccess>(context);
-                                    hasWidgetAccess = featureAccess
-                                        .canAccess(PremiumFeature.widgets);
-                                  } catch (_) {
-                                    hasWidgetAccess = false;
-                                  }
-                                  return GroupedTile.navigation(
-                                    leading: const Icon(
-                                      Icons.widgets_rounded,
-                                      size: 18,
-                                      color: Color(0xFF333333),
-                                    ),
-                                    title: 'Widgets',
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (!hasWidgetAccess) ...[
-                                          Container(
-                                            padding:
-                                                const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF10B981)
-                                                  .withValues(alpha: 0.12),
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              border: Border.all(
-                                                color: const Color(0xFF10B981)
-                                                    .withValues(alpha: 0.3),
-                                                width: 0.8,
-                                              ),
-                                            ),
-                                            child: Text(
-                                              '✦ PREMIUM',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.w700,
-                                                letterSpacing: 0.4,
-                                                color: const Color(0xFF10B981),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                        ],
-                                        SvgPicture.asset(
-                                          'assets/icons/angle-right.svg',
-                                          width: 14,
-                                          height: 14,
-                                          colorFilter:
-                                              const ColorFilter.mode(
-                                            Color(0xFF333333),
-                                            BlendMode.srcIn,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    onTap: () async {
-                                      HapticFeedback.lightImpact();
-                                      await requestWidgetAccess(context);
+                                GroupedTile.navigation(
+                                  iconPath: 'assets/icons/refresh.svg',
+                                  title: 'Backup & Sync',
+                                  fontSize: 15.0,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      buildPageRoute(const BackupRestoreScreen()),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20.0),
+
+                            // ── SECTION 2: PREFERENCES ────────────────────────────
+                            _buildSectionHeader('PREFERENCES', isDark: isDark),
+                            GroupedListContainer(
+                              width: double.infinity,
+                              border: isDark
+                                  ? Border.all(color: const Color(0xFF2C2C2E), width: 1.0)
+                                  : Border.all(color: const Color(0xFFEFEFF2), width: 1.0),
+                              children: [
+                                GroupedTile.navigation(
+                                  iconPath: 'assets/icons/highlighter.svg',
+                                  title: 'Appearance',
+                                  fontSize: 15.0,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      buildPageRoute(
+                                          const AppearanceScreen()),
+                                    );
+                                  },
+                                ),
+                                GroupedTile.toggle(
+                                  iconPath: 'assets/icons/night-day.svg',
+                                  title: 'Dark Mode',
+                                  fontSize: 15.0,
+                                  trailingSwitch: Selector<SettingsProvider, bool>(
+                                    selector: (_, p) => p.isDarkMode,
+                                    builder: (context, isCurrentDark, _) {
+                                      return ToggleSwitch(
+                                        value: isCurrentDark,
+                                        onChanged: (val) async {
+                                          final settingsProv =
+                                              Provider.of<SettingsProvider>(context,
+                                                  listen: false);
+                                          if (val) {
+                                            await requestDarkModeAccess(context);
+                                          } else {
+                                            await settingsProv
+                                                .setThemeMode(ThemeMode.light);
+                                          }
+                                          if (widget.onThemeToggle != null) {
+                                            widget.onThemeToggle!();
+                                          }
+                                        },
+                                      );
                                     },
-                                  );
-                                },
-                              ),
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/settings-sliders.svg',
-                                title: 'Storage and Data',
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.push(
-                                    context,
-                                    buildPageRoute(
-                                        const StorageAndDataScreen()),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16.0),
-
-                          // Section 3 Card (FAQ, Terms of service, Privacy Policy, About)
-                          GroupedListContainer(
-                            children: [
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/interrogation.svg',
-                                title: 'FAQ',
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.push(
-                                    context,
-                                    buildPageRoute(const LegalDocumentScreen(
-                                      title: 'FAQ',
-                                      markdownContent: _faqMarkdown,
-                                    )),
-                                  );
-                                },
-                              ),
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/terms-info.svg',
-                                title: 'Terms of service',
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.push(
-                                    context,
-                                    buildPageRoute(const LegalDocumentScreen(
-                                      title: 'Terms of Service',
-                                      markdownContent: _tosMarkdown,
-                                    )),
-                                  );
-                                },
-                              ),
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/insurance.svg',
-                                title: 'Privacy Policy',
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.push(
-                                    context,
-                                    buildPageRoute(const LegalDocumentScreen(
-                                      title: 'Privacy Policy',
-                                      markdownContent: _privacyMarkdown,
-                                    )),
-                                  );
-                                },
-                              ),
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/terms-info.svg',
-                                title: 'About',
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  showBlurredBottomSheet(
-                                    context: context,
-                                    child: const AboutBottomSheet(),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 16.0),
-
-                          // Section 4 Card (🧪 Developer & Testing Screens)
-                          GroupedListContainer(
-                            children: [
-                              GroupedTile.navigation(
-                                iconPath:
-                                    'assets/icons/bottom_navigation/home.svg',
-                                title: '🧪 Test Welcome Screen',
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  Navigator.push(
-                                    context,
-                                    buildPageRoute(const TestWelcomeScreen()),
-                                  );
-                                },
-                              ),
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/settings-sliders.svg',
-                                title: '🧪 Test SDE Drag Selection',
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    buildPageRoute(const SDEDragTestScreen()),
-                                  );
-                                },
-                              ),
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/refresh.svg',
-                                title: 'Glassmorphism Sandbox',
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  Navigator.push(
-                                    context,
-                                    buildPageRoute(
-                                        const GlassmorphismSandboxScreen()),
-                                  );
-                                },
-                              ),
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/terms-info.svg',
-                                title: 'Seed Long Note (10,000+ Chars)',
-                                onTap: () async {
-                                  HapticFeedback.mediumImpact();
-                                  final provider = Provider.of<NotesProvider>(
-                                      context,
-                                      listen: false);
-                                  final seededNote =
-                                      await provider.seedLongTestNote();
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            '✅ Seeded Long Note with ${seededNote.content.length} characters!'),
-                                        backgroundColor:
-                                            const Color(0xFF34C759),
-                                        duration: const Duration(seconds: 3),
+                                  ),
+                                ),
+                                Builder(
+                                  builder: (context) {
+                                    bool hasWidgetAccess = false;
+                                    try {
+                                      final featureAccess =
+                                          Provider.of<FeatureAccess>(context);
+                                      hasWidgetAccess = featureAccess
+                                          .canAccess(PremiumFeature.widgets);
+                                    } catch (_) {
+                                      hasWidgetAccess = false;
+                                    }
+                                    return GroupedTile.navigation(
+                                      iconPath: 'assets/icons/category.svg',
+                                      title: 'Widgets',
+                                      fontSize: 15.0,
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (!hasWidgetAccess) ...[
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 6,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF10B981)
+                                                    .withValues(alpha: 0.12),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                  color: const Color(0xFF10B981)
+                                                      .withValues(alpha: 0.3),
+                                                  width: 0.8,
+                                                ),
+                                              ),
+                                              child: Text(
+                                                '✦ PREMIUM',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.4,
+                                                  color: const Color(0xFF10B981),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                          ],
+                                          SvgPicture.asset(
+                                            'assets/icons/angle-right.svg',
+                                            width: 14,
+                                            height: 14,
+                                            colorFilter: ColorFilter.mode(
+                                              isDark
+                                                  ? const Color(0xFF8E8E93)
+                                                  : const Color(0xFF333333),
+                                              BlendMode.srcIn,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                      onTap: () async {
+                                        await requestWidgetAccess(context);
+                                      },
                                     );
-                                  }
-                                },
-                              ),
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/alarm_clock.svg',
-                                title: 'Seed 50 Test Tasks',
-                                onTap: () async {
-                                  HapticFeedback.mediumImpact();
-                                  final provider = Provider.of<TasksProvider>(
+                                  },
+                                ),
+                                GroupedTile.navigation(
+                                  iconPath: 'assets/icons/settings-sliders.svg',
+                                  title: 'Storage and Data',
+                                  fontSize: 15.0,
+                                  onTap: () {
+                                    Navigator.push(
                                       context,
-                                      listen: false);
-                                  await provider.seedTestTasks(55);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            '✅ 55 Test Tasks created across Today, Weekly & Missed!'),
-                                        backgroundColor: Color(0xFF34C759),
-                                        duration: Duration(seconds: 3),
-                                      ),
+                                      buildPageRoute(
+                                          const StorageAndDataScreen()),
                                     );
-                                  }
-                                },
+                                  },
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20.0),
+
+                            // ── SECTION 3: SUPPORT & ABOUT ────────────────────────
+                            _buildSectionHeader('SUPPORT & ABOUT', isDark: isDark),
+                            GroupedListContainer(
+                              width: double.infinity,
+                              border: isDark
+                                  ? Border.all(color: const Color(0xFF2C2C2E), width: 1.0)
+                                  : Border.all(color: const Color(0xFFEFEFF2), width: 1.0),
+                              children: [
+                                GroupedTile.navigation(
+                                  iconPath: 'assets/icons/interrogation.svg',
+                                  title: 'FAQ',
+                                  fontSize: 15.0,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      buildPageRoute(const LegalDocumentScreen(
+                                        title: 'FAQ',
+                                        markdownContent: _faqMarkdown,
+                                      )),
+                                    );
+                                  },
+                                ),
+                                GroupedTile.navigation(
+                                  iconPath: 'assets/icons/terms-info.svg',
+                                  title: 'Terms of Service',
+                                  fontSize: 15.0,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      buildPageRoute(const LegalDocumentScreen(
+                                        title: 'Terms of Service',
+                                        markdownContent: _tosMarkdown,
+                                      )),
+                                    );
+                                  },
+                                ),
+                                GroupedTile.navigation(
+                                  iconPath: 'assets/icons/insurance.svg',
+                                  title: 'Privacy Policy',
+                                  fontSize: 15.0,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      buildPageRoute(const LegalDocumentScreen(
+                                        title: 'Privacy Policy',
+                                        markdownContent: _privacyMarkdown,
+                                      )),
+                                    );
+                                  },
+                                ),
+                                GroupedTile.navigation(
+                                  iconPath: 'assets/icons/terms-info.svg',
+                                  title: 'About',
+                                  fontSize: 15.0,
+                                  onTap: () {
+                                    showBlurredBottomSheet(
+                                      context: context,
+                                      child: const AboutBottomSheet(),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+
+                            // ── SECTION 4: DEVELOPER (DEBUG BUILDS ONLY) ──────────
+                            if (kDebugMode) ...[
+                              const SizedBox(height: 20.0),
+                              _buildSectionHeader('DEVELOPER', isDark: isDark),
+                              GroupedListContainer(
+                                width: double.infinity,
+                                border: isDark
+                                    ? Border.all(color: const Color(0xFF2C2C2E), width: 1.0)
+                                    : Border.all(color: const Color(0xFFEFEFF2), width: 1.0),
+                                children: [
+                                  GroupedTile.navigation(
+                                    iconPath: 'assets/icons/settings-sliders.svg',
+                                    title: 'Premium Test Mode',
+                                    fontSize: 15.0,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        buildPageRoute(
+                                            const PremiumTestModeScreen()),
+                                      );
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
+                                    iconPath:
+                                        'assets/icons/bottom_navigation/home.svg',
+                                    title: 'Test Welcome Screen',
+                                    fontSize: 15.0,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        buildPageRoute(const TestWelcomeScreen()),
+                                      );
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
+                                    iconPath: 'assets/icons/edit_pen.svg',
+                                    title: 'Test SDE Drag Selection',
+                                    fontSize: 15.0,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        buildPageRoute(const SDEDragTestScreen()),
+                                      );
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
+                                    iconPath: 'assets/icons/highlighter.svg',
+                                    title: 'Glassmorphism Sandbox',
+                                    fontSize: 15.0,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        buildPageRoute(
+                                            const GlassmorphismSandboxScreen()),
+                                      );
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
+                                    iconPath: 'assets/icons/terms-info.svg',
+                                    title: 'Seed Long Note (10,000+ Chars)',
+                                    fontSize: 15.0,
+                                    onTap: () async {
+                                      final provider = Provider.of<NotesProvider>(
+                                          context,
+                                          listen: false);
+                                      final seededNote =
+                                          await provider.seedLongTestNote();
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                '✅ Seeded Long Note with ${seededNote.content.length} characters!'),
+                                            backgroundColor:
+                                                const Color(0xFF34C759),
+                                            duration: const Duration(seconds: 3),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
+                                    iconPath: 'assets/icons/alarm_clock.svg',
+                                    title: 'Seed 50 Test Tasks',
+                                    fontSize: 15.0,
+                                    onTap: () async {
+                                      final provider = Provider.of<TasksProvider>(
+                                          context,
+                                          listen: false);
+                                      await provider.seedTestTasks(55);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                '✅ 55 Test Tasks created across Today, Weekly & Missed!'),
+                                            backgroundColor: Color(0xFF34C759),
+                                            duration: Duration(seconds: 3),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                        ],
+
+                            const SizedBox(height: 24.0),
+                            Text(
+                              'QuickNotes v1.0.0',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: secondaryTextColor,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
+        ),
 
           // 3.5. Header Expanded Outside-Tap Barrier & Interaction
           Positioned.fill(
@@ -667,7 +816,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                     'assets/icons/angle_left.svg',
                     width: 22,
                     height: 22,
-                    colorFilter: const ColorFilter.mode(
+                    colorFilter: ColorFilter.mode(
                         primaryTextColor, BlendMode.srcIn),
                   ),
                   titleWidget: Text(
@@ -677,7 +826,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                       color: primaryTextColor,
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
-                      height: 0.70,
+                      height: 1.2,
                       letterSpacing: -0.43,
                     ),
                   ),
@@ -749,7 +898,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                             width: 5.0,
                             height: 5.0,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1C1C1E)
+                              color: primaryTextColor
                                   .withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),
@@ -759,7 +908,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                             width: 5.0,
                             height: 5.0,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1C1C1E)
+                              color: primaryTextColor
                                   .withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),
@@ -769,7 +918,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                             width: 5.0,
                             height: 5.0,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1C1C1E)
+                              color: primaryTextColor
                                   .withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),

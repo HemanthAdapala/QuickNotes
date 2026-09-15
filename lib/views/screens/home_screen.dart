@@ -571,8 +571,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         return Container(color: const Color(0xFF333333));
       case 0:
       default:
-        // B0: Default Pure White
-        return Container(color: Colors.white);
+        // B0: Default Pure White (Light) / Primary Background #1E1E1E (Dark)
+        return Builder(builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Container(
+              color: isDark ? const Color(0xFF1E1E1E) : Colors.white);
+        });
     }
   }
 
@@ -580,6 +584,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final notesProvider = Provider.of<NotesProvider>(context);
     final tasksProvider = Provider.of<TasksProvider>(context);
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -619,7 +624,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor:
+            isDark ? const Color(0xFF1E1E1E) : AppColors.background,
         resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
@@ -664,6 +670,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ],
                   ),
                   child: PrimaryScreenSurface(
+                    color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                     child: CustomScrollView(
                       physics: const BouncingScrollPhysics(),
                       slivers: [
@@ -1042,7 +1049,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         child: Center(
                           child: Icon(
                             Icons.search_rounded,
-                            color: (selectedBgIndex == 1 ||
+                            color: (isDark ||
+                                    selectedBgIndex == 1 ||
                                     selectedBgIndex == 2 ||
                                     selectedBgIndex == 6)
                                 ? Colors.white

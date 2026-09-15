@@ -269,6 +269,8 @@ class _HomePromptViewState extends State<HomePromptView> {
     }
 
     final bool isTest = Platform.environment.containsKey('FLUTTER_TEST');
+    final bool isDark =
+        (Theme.of(context).brightness == Brightness.dark) || widget.isDarkBackground;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +293,7 @@ class _HomePromptViewState extends State<HomePromptView> {
                   style: GoogleFonts.inter(
                     fontSize: 36.0,
                     fontWeight: FontWeight.bold,
-                    color: widget.isDarkBackground
+                    color: isDark
                         ? Colors.white
                         : const Color(0xFF1C1C1E),
                     height: 1.1,
@@ -302,7 +304,9 @@ class _HomePromptViewState extends State<HomePromptView> {
                   style: GoogleFonts.inter(
                     fontSize: 36.0,
                     fontWeight: FontWeight.w400,
-                    color: const Color(0xFF8E8E93),
+                    color: isDark
+                        ? const Color(0xFF757575)
+                        : const Color(0xFF8E8E93),
                     height: 1.1,
                   ),
                 ),

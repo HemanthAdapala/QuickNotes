@@ -73,3 +73,71 @@ Implemented the foundational Premium Domain & Entitlement Infrastructure (`lib/p
 ### Testing Status
 - Unit tests in `test/premium/premium_domain_test.dart` passing 16/16.
 - Full regression suite (Settings, Theme, Tasks, Folders, Notifications, Data Architecture) passing 54/54.
+
+---
+
+## v1.1.0
+
+### Date
+2026-09-05
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- Testing Infrastructure
+- Developer Tooling
+- Security
+- Architecture
+
+---
+
+### Summary
+Implemented Phase P9 — Debug Premium Test Mode, establishing development-only simulation infrastructure for Premium entitlement states without real store purchases, fake store receipts, or security boundary breaches.
+
+---
+
+### Detailed Capabilities
+- **Simulated Store Source & Test Mode Enum (`lib/premium/premium_entitlement.dart`)**:
+  - Added `StoreSource.debug` to explicitly distinguish simulated entitlements from store/manual grants.
+  - Introduced `PremiumTestMode` enum (`system`, `free`, `premium`).
+- **3-Way Entitlement Separation (`lib/premium/premium_entitlement_manager.dart`)**:
+  - Authoritative Entitlement (`authoritativeEntitlement` / `_currentEntitlement`): Real store-derived state; never mutated by debug overrides.
+  - Debug Test Mode (`debugTestMode` / `_debugTestMode`): Local testing state in SharedPreferences.
+  - Effective Entitlement (`effectiveEntitlement`): What feature gates (`FeatureAccess`) consume.
+- **Strict Release Isolation**:
+  - In release builds (`!kDebugMode`), debug overrides are strictly ignored, never hydrated, and `setDebugTestMode` is a no-op.
+- **Ordered Lifecycle Initialization**:
+  - `initialize()` hydrates authoritative cache first $\to$ hydrates debug override $\to$ sets `_isInitialized = true` $\to$ notifies listeners once (no start-up state flicker).
+- **Reactive FeatureAccess Propagation (`lib/main.dart`)**:
+  - Registered `ProxyProvider<PremiumEntitlementManager, FeatureAccess>` to reactively update consumers on entitlement transitions.
+- **Container-Level Backup Isolation**:
+  - Verified that `debug_premium_test_mode`, `debug_simulated_premium`, and `PremiumTestMode` never leak into `.qnb` backup containers, and restore never alters developer test settings.
+- **Developer UI (`lib/views/screens/developer/premium_test_mode_screen.dart`)**:
+  - Built unmistakable developer utility screen with environment warning banner, live diagnostics card (`SIMULATED PREMIUM`, `FORCED FREE`, `SYSTEM (REAL STORE)`), radio selector, and system reset.
+- **Settings Screen Integration (`lib/views/screens/settings_screen.dart`)**:
+  - Exposed `Premium Test Mode` tile in Section 4 Developer tools (strictly debug builds only).
+
+---
+
+### Files Created
+- `lib/views/screens/developer/premium_test_mode_screen.dart`
+- `test/premium/debug_premium_test_mode_test.dart`
+
+### Files Modified
+- `lib/premium/premium_entitlement.dart`
+- `lib/premium/premium_entitlement_manager.dart`
+- `lib/main.dart`
+- `lib/views/screens/settings_screen.dart`
+- `test/premium/premium_gate_sheet_test.dart`
+- `test/premium/premium_domain_test.dart`
+- `test/premium/in_app_purchase_provider_test.dart`
+- `Agents/skills/ChangeLogs Folder/PremiumDomain_Changelog.md`
+
+---
+
+### Testing Status
+- `test/premium/debug_premium_test_mode_test.dart`: 14/14 tests PASS (100% GREEN).
+- Full `test/premium/` suite: 87/87 tests PASS across all 7 test files.
+- Static analysis: `flutter analyze` 0 issues found (100% clean).
+

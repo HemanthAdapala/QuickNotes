@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quick_notes/premium/premium.dart';
 
 void main() {
@@ -108,6 +109,7 @@ void main() {
   group('PremiumEntitlementManager Tests', () {
     setUp(() {
       FlutterSecureStorage.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({});
     });
 
     test('8. Fresh initialization with empty storage defaults to un-entitled', () async {

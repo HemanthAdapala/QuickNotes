@@ -430,8 +430,11 @@ class _NavigationButtonState extends State<_NavigationButton>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSelected = widget.selectedIndex == widget.index;
-    final color = isSelected ? widget.selectedColor : widget.unselectedColor;
+    final lightModeColor =
+        isSelected ? widget.selectedColor : widget.unselectedColor;
+    final color = isDark ? Colors.white : lightModeColor;
     final reduceMotion = MediaQuery.of(context).disableAnimations;
 
     return Semantics(
@@ -596,6 +599,7 @@ class _PhysicalActiveIndicatorState extends State<_PhysicalActiveIndicator>
           key: const ValueKey('physical_active_indicator'),
           borderRadius: BorderRadius.circular(21.5 * widget.scale),
           customTintColor: widget.activeColor,
+          stableTint: true,
           child: const SizedBox.expand(),
         ),
       );
@@ -637,6 +641,7 @@ class _PhysicalActiveIndicatorState extends State<_PhysicalActiveIndicator>
             key: const ValueKey('physical_active_indicator'),
             borderRadius: BorderRadius.circular(21.5 * widget.scale),
             customTintColor: widget.activeColor,
+            stableTint: true,
             child: const SizedBox.expand(),
           ),
         );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quick_notes/premium/premium.dart';
 import 'package:quick_notes/themes/quick_notes_theme.dart';
 
@@ -47,6 +48,7 @@ void main() {
   group('PremiumGateSheet Widget & Presentation Tests', () {
     setUp(() {
       FlutterSecureStorage.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({});
     });
 
     testWidgets('5. Renders PremiumGateSheet for folderCustomization with all elements',

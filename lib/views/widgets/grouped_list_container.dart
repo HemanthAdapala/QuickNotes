@@ -21,16 +21,17 @@ class GroupedListContainer extends StatelessWidget {
   final List<Widget> children;
   final double width;
   final double borderRadius;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final List<BoxShadow>? shadows;
   final EdgeInsetsGeometry? padding;
+  final BoxBorder? border;
 
   const GroupedListContainer({
     super.key,
     required this.children,
     this.width = 322.0,
     this.borderRadius = 20.0,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor,
     this.shadows = const [
       BoxShadow(
         color: Color(0x1A000000),
@@ -39,11 +40,18 @@ class GroupedListContainer extends StatelessWidget {
       ),
     ],
     this.padding,
+    this.border,
   });
 
   @override
   Widget build(BuildContext context) {
     if (children.isEmpty) return const SizedBox.shrink();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveBg =
+        backgroundColor ?? (isDark ? const Color(0xFF1E1E1E) : Colors.white);
+    final dividerColor =
+        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE6E6E6);
 
     // Auto-inject 1px hairline dividers between adjacent children
     final List<Widget> dividedChildren = [];
@@ -55,7 +63,7 @@ class GroupedListContainer extends StatelessWidget {
             width: double.infinity,
             height: 1,
             margin: const EdgeInsets.symmetric(horizontal: 16),
-            color: const Color(0xFFE6E6E6),
+            color: dividerColor,
           ),
         );
       }
@@ -66,12 +74,11 @@ class GroupedListContainer extends StatelessWidget {
         width: width,
         padding: padding,
         clipBehavior: Clip.antiAlias,
-        decoration: ShapeDecoration(
-          color: backgroundColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
-          ),
-          shadows: shadows,
+        decoration: BoxDecoration(
+          color: effectiveBg,
+          borderRadius: BorderRadius.circular(borderRadius),
+          border: border,
+          boxShadow: shadows,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -93,16 +100,22 @@ abstract class GroupedTile {
     Widget? trailing,
     VoidCallback? onTap,
     double height = 50.0,
+    bool scrollSafe = true,
+    Color? textColor,
+    double fontSize = 14.0,
   }) {
+    final primaryColor = textColor ?? const Color(0xFF333333);
     return TactileButton(
       key: key,
       useAppleSpring: true,
+      scrollSafe: scrollSafe,
       onTap: onTap ?? () {},
       child: Container(
         width: double.infinity,
-        height: height,
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        constraints: BoxConstraints(minHeight: height),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (leading != null) ...[
               leading,
@@ -112,8 +125,8 @@ abstract class GroupedTile {
                 iconPath,
                 width: 18,
                 height: 18,
-                colorFilter: const ColorFilter.mode(
-                  Color(0xFF333333),
+                colorFilter: ColorFilter.mode(
+                  primaryColor,
                   BlendMode.srcIn,
                 ),
               ),
@@ -122,22 +135,24 @@ abstract class GroupedTile {
             Expanded(
               child: Text(
                 title,
+                softWrap: true,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF333333),
-                  fontSize: 14,
+                  color: primaryColor,
+                  fontSize: fontSize,
                   fontWeight: FontWeight.w500,
-                  height: 1.2,
-                  letterSpacing: -0.4,
+                  height: 1.25,
+                  letterSpacing: -0.3,
                 ),
               ),
             ),
+            const SizedBox(width: 8),
             trailing ??
                 SvgPicture.asset(
                   'assets/icons/angle-right.svg',
                   width: 14,
                   height: 14,
-                  colorFilter: const ColorFilter.mode(
-                    Color(0xFF333333),
+                  colorFilter: ColorFilter.mode(
+                    primaryColor,
                     BlendMode.srcIn,
                   ),
                 ),
@@ -159,8 +174,10 @@ abstract class GroupedTile {
     bool showVerifiedBadge = false,
     double height = 52.0,
     List<TextInputFormatter>? inputFormatters,
+    Color? textColor,
   }) {
-    const primaryTextColor = Color(0xFF333333);
+    final primaryTextColor = textColor ?? const Color(0xFF333333);
+    const hintColor = Color(0x4C3C3C43);
 
     return Container(
       key: key,
@@ -188,7 +205,7 @@ abstract class GroupedTile {
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: GoogleFonts.inter(
-                  color: const Color(0x4C3C3C43),
+                  color: hintColor,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                   letterSpacing: -0.3,
@@ -236,13 +253,18 @@ abstract class GroupedTile {
     Widget? leading,
     required Widget trailingSwitch,
     double height = 50.0,
+    Color? textColor,
+    double fontSize = 14.0,
   }) {
+    final primaryColor = textColor ?? const Color(0xFF333333);
+
     return Container(
       key: key,
       width: double.infinity,
-      height: height,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      constraints: BoxConstraints(minHeight: height),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (leading != null) ...[
             leading,
@@ -252,8 +274,8 @@ abstract class GroupedTile {
               iconPath,
               width: 18,
               height: 18,
-              colorFilter: const ColorFilter.mode(
-                Color(0xFF333333),
+              colorFilter: ColorFilter.mode(
+                primaryColor,
                 BlendMode.srcIn,
               ),
             ),
@@ -262,15 +284,17 @@ abstract class GroupedTile {
           Expanded(
             child: Text(
               title,
+              softWrap: true,
               style: GoogleFonts.inter(
-                color: const Color(0xFF333333),
-                fontSize: 14,
+                color: primaryColor,
+                fontSize: fontSize,
                 fontWeight: FontWeight.w500,
-                height: 1.2,
-                letterSpacing: -0.4,
+                height: 1.25,
+                letterSpacing: -0.3,
               ),
             ),
           ),
+          const SizedBox(width: 8),
           trailingSwitch,
         ],
       ),
@@ -286,19 +310,25 @@ abstract class GroupedTile {
     VoidCallback? onTap,
     bool isDestructive = false,
     double height = 50.0,
+    bool scrollSafe = true,
+    Color? textColor,
+    double fontSize = 14.0,
   }) {
-    final textColor =
-        isDestructive ? const Color(0xFFFF3B30) : const Color(0xFF333333);
+    final effectiveTextColor = isDestructive
+        ? const Color(0xFFFF453A)
+        : (textColor ?? const Color(0xFF333333));
 
     return TactileButton(
       key: key,
       useAppleSpring: true,
+      scrollSafe: scrollSafe,
       onTap: onTap ?? () {},
       child: Container(
         width: double.infinity,
-        height: height,
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        constraints: BoxConstraints(minHeight: height),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (leading != null) ...[
               leading,
@@ -308,27 +338,29 @@ abstract class GroupedTile {
                 iconPath,
                 width: 18,
                 height: 18,
-                colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(effectiveTextColor, BlendMode.srcIn),
               ),
               const SizedBox(width: 12),
             ],
             Expanded(
               child: Text(
                 title,
+                softWrap: true,
                 style: GoogleFonts.inter(
-                  color: textColor,
-                  fontSize: 14,
+                  color: effectiveTextColor,
+                  fontSize: fontSize,
                   fontWeight: FontWeight.w500,
-                  height: 1.2,
-                  letterSpacing: -0.4,
+                  height: 1.25,
+                  letterSpacing: -0.3,
                 ),
               ),
             ),
+            const SizedBox(width: 8),
             SvgPicture.asset(
               'assets/icons/angle-right.svg',
               width: 14,
               height: 14,
-              colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+              colorFilter: ColorFilter.mode(effectiveTextColor, BlendMode.srcIn),
             ),
           ],
         ),
@@ -345,19 +377,24 @@ abstract class GroupedTile {
     Widget? leading,
     VoidCallback? onTap,
     double height = 50.0,
+    bool scrollSafe = true,
+    Color? textColor,
+    double fontSize = 14.0,
   }) {
-    const primaryTextColor = Color(0xFF333333);
+    final primaryTextColor = textColor ?? const Color(0xFF333333);
     const valueTextColor = Color(0xFF8E8E93);
 
     return TactileButton(
       key: key,
       useAppleSpring: true,
+      scrollSafe: scrollSafe,
       onTap: onTap ?? () {},
       child: Container(
         width: double.infinity,
-        height: height,
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        constraints: BoxConstraints(minHeight: height),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (leading != null) ...[
               leading,
@@ -367,32 +404,38 @@ abstract class GroupedTile {
                 iconPath,
                 width: 18,
                 height: 18,
-                colorFilter:
-                    const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(
+                    primaryTextColor, BlendMode.srcIn),
               ),
               const SizedBox(width: 12),
             ],
-            Text(
-              title,
-              style: GoogleFonts.inter(
-                color: primaryTextColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                height: 1.0,
-                letterSpacing: -0.43,
+            Flexible(
+              flex: 3,
+              child: Text(
+                title,
+                softWrap: true,
+                style: GoogleFonts.inter(
+                  color: primaryTextColor,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w500,
+                  height: 1.25,
+                  letterSpacing: -0.3,
+                ),
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
+            Flexible(
+              flex: 2,
               child: Text(
                 value,
                 textAlign: TextAlign.right,
+                softWrap: true,
                 style: GoogleFonts.inter(
                   color: valueTextColor,
-                  fontSize: 14,
+                  fontSize: fontSize,
                   fontWeight: FontWeight.w400,
-                  height: 1.2,
-                  letterSpacing: -0.4,
+                  height: 1.25,
+                  letterSpacing: -0.3,
                 ),
               ),
             ),

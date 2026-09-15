@@ -12,6 +12,7 @@ class TactileButton extends StatefulWidget {
   final bool useAppleSpring;
   final bool playSelectionHaptic;
   final bool enabled;
+  final bool scrollSafe;
 
   const TactileButton({
     super.key,
@@ -24,6 +25,7 @@ class TactileButton extends StatefulWidget {
     this.useAppleSpring = true,
     this.playSelectionHaptic = true,
     this.enabled = true,
+    this.scrollSafe = false,
   });
 
   @override
@@ -80,12 +82,14 @@ class _TactileButtonState extends State<TactileButton>
   void _handleTapDown() {
     if (!widget.enabled) return;
 
-    if (widget.playSelectionHaptic) {
-      QuickNotesHaptics.buttonPress();
+    if (!widget.scrollSafe) {
+      if (widget.playSelectionHaptic) {
+        QuickNotesHaptics.buttonPress();
+      }
+      _controller.stop();
+      _controller.duration = widget.pressDuration;
+      _controller.forward();
     }
-    _controller.stop();
-    _controller.duration = widget.pressDuration;
-    _controller.forward();
   }
 
   void _handleTapUp() {
@@ -93,10 +97,19 @@ class _TactileButtonState extends State<TactileButton>
 
     _controller.stop();
     _controller.duration = widget.settleDuration;
+
+    // In scroll-safe mode, emit the singular intentional tap haptic upon confirmation
+    if (widget.scrollSafe && widget.playSelectionHaptic) {
+      QuickNotesHaptics.buttonPress();
+    }
+
     if (widget.useAppleSpring) {
+      final double beginScale = widget.scrollSafe
+          ? widget.compressionScale
+          : _scaleAnimation.value;
       setState(() {
         _scaleAnimation =
-            Tween<double>(begin: _scaleAnimation.value, end: 1.0).animate(
+            Tween<double>(begin: beginScale, end: 1.0).animate(
           CurvedAnimation(
             parent: _controller,
             curve: QuickNotesMotion.kMotionSpring,
@@ -113,21 +126,31 @@ class _TactileButtonState extends State<TactileButton>
   void _handleTapCancel() {
     if (!widget.enabled) return;
 
-    _controller.stop();
-    _controller.duration = widget.settleDuration;
-    if (widget.useAppleSpring) {
-      setState(() {
-        _scaleAnimation =
-            Tween<double>(begin: _scaleAnimation.value, end: 1.0).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: QuickNotesMotion.kMotionSpring,
-          ),
-        );
-      });
-      _controller.forward(from: 0.0);
-    } else {
-      _controller.reverse();
+    // In scroll-safe mode, immediately abort on drag/scroll start with
+    // ZERO haptics, ZERO setState calls, and ZERO animation tickers.
+    if (widget.scrollSafe) {
+      _controller.stop();
+      _controller.value = 0.0;
+      return;
+    }
+
+    if (_controller.value > 0.0) {
+      _controller.stop();
+      _controller.duration = widget.settleDuration;
+      if (widget.useAppleSpring) {
+        setState(() {
+          _scaleAnimation =
+              Tween<double>(begin: _scaleAnimation.value, end: 1.0).animate(
+            CurvedAnimation(
+              parent: _controller,
+              curve: QuickNotesMotion.kMotionSpring,
+            ),
+          );
+        });
+        _controller.forward(from: 0.0);
+      } else {
+        _controller.reverse();
+      }
     }
   }
 

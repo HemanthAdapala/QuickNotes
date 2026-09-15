@@ -32,8 +32,23 @@ enum StoreSource {
   /// Manual grant or promotion code.
   manual,
 
+  /// Development-only simulated entitlement (never in release).
+  debug,
+
   /// Unknown or unspecified source.
   unknown,
+}
+
+/// Simulation mode for developer testing of Premium entitlement states.
+enum PremiumTestMode {
+  /// Follows the authoritative store entitlement state.
+  system,
+
+  /// Forces the effective entitlement to un-entitled (Free).
+  free,
+
+  /// Forces the effective entitlement to active Premium (Simulated).
+  premium,
 }
 
 /// PremiumEntitlement — Immutable domain representation of a user's entitlement state.

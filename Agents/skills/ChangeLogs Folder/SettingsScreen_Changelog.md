@@ -383,7 +383,204 @@ None.
 
 ---
 
+---
+
+## v3.6.0
+
+### Date
+2026-09-05
+
+### Author
+Antigravity (Senior Flutter Architect)
+
+### Type
+- Performance
+- Refactor
+- UI
+- Animation
+
+---
+
+### Summary
+Executed Phase S2 Settings Performance Remediation & Interaction Polish. Resolved touch-to-scroll tactile contention, eliminated duplicate haptic feedback on Settings tile taps, narrowed `SettingsProvider` rebuild scope using `context.select`, reduced fixed header geometry from 285px to a responsive 248px/238px height, and verified zero regressions across light and dark theme modes.
+
+---
+
+### Detailed Changes
+- **Scroll-Safe Tactile Interaction (S2.1 & S2.4)**:
+  - Added `scrollSafe: false` capability to `TactileButton`. Under `scrollSafe: true`, suppresses forward scale compression and haptics on touch-down.
+  - On touch cancel (when scroll gesture arena wins), immediately aborts without `setState` and without launching a spring curve ticker.
+  - On intentional tap up, delivers single crisp `QuickNotesHaptics.buttonPress()` and runs spring settle animation.
+  - Defaulted all `GroupedTile` navigation, action, and key-value rows to `scrollSafe: true`.
+- **Eliminated Duplicate Haptics (S2.2)**:
+  - Removed redundant `HapticFeedback.lightImpact()`, `selectionClick()`, and `mediumImpact()` calls from individual tile `onTap` callbacks. Single haptic ownership is delegated cleanly to `TactileButton(scrollSafe: true)`.
+- **Narrowed Rebuild Scope (S2.3)**:
+  - Replaced root `Provider.of<SettingsProvider>(context)` in `SettingsScreen.build()` with targeted `context.select<SettingsProvider, bool>((p) => p.isDarkMode)`.
+  - Changes to unrelated settings (`layoutDensity`, `fontSizeScale`, `selectedAccent`) no longer trigger unnecessary full-tree rebuilds of `SettingsScreen`.
+  - Wrapped `ToggleSwitch` trailing control with `Selector<SettingsProvider, bool>`.
+- **Responsive Viewport & Header Geometry (S2.7)**:
+  - Converted monolithic fixed `SizedBox(height: 285)` header to responsive `headerHeight` (`screenHeight < 720 ? 238.0 : 248.0`).
+  - Reclaimed ~37–47px of valuable vertical viewport space for cards on compact and standard mobile devices while preserving the 140px avatar seam alignment and `PrimaryScreenSurface` aesthetics.
+- **Theme & Dark Mode Support**:
+  - `PrimaryScreenSurface` now accepts optional `color` and automatically respects `Theme.of(context).brightness`.
+  - `GroupedListContainer` adapts background (`#1E1E1E` when dark) and hairline dividers (`#2C2C2E` when dark).
+  - Avatar border and container adapt seamlessly to light and dark theme modes.
+
+---
+
+### Why was this change made?
+Phase S1 audit confirmed that touch-down on settings tiles triggered immediate scale compression and haptic pulses before the gesture arena resolved whether the user intended to tap or scroll. When the user scrolled, tap cancellation launched an unneeded spring animation ticker, fighting the scroll physics. Additionally, broad provider listening caused full-screen rebuilds on unrelated settings changes, and a frozen 285px header cramped the scrollable viewport.
+
+---
+
+### Architecture Impact
+- Purely surgical; zero disruption to `HomeScreen`'s `IndexedStack`, navigation routes, `FeatureAccess` gating, or database persistence.
+- `TactileButton` retains 100% backward compatibility for non-scroll consumers (`scrollSafe: false` default).
+- Card rasterization and repaint boundaries remain stable and isolated.
+
+---
+
+### Files Modified
+- `lib/views/widgets/tactile_button.dart`
+- `lib/views/widgets/grouped_list_container.dart`
+- `lib/views/widgets/primary_screen_surface.dart`
+- `lib/views/screens/settings_screen.dart`
+- `test/views/settings_performance_s2_test.dart`
+- `Agents/skills/ChangeLogs Folder/SettingsScreen_Changelog.md`
+
+---
+
+### Dependencies Added
+None.
+
+---
+
+### Breaking Changes
+None.
+
+---
+
 ### Testing Status
-- Validated via `test/views/global_motion_foundation_p4_1_test.dart` (`TEST 5: SettingsScreen SDEDragTestScreen pushes using buildPageRoute`).
-- Existing `settings_and_appearance_theme_test.dart` passes cleanly.
+- Static analysis: `flutter analyze` passes with 0 issues.
+- `test/views/settings_and_appearance_theme_test.dart`: 3/3 tests PASS.
+- `test/views/settings_performance_s2_test.dart`: 5/5 tests PASS.
+
+---
+
+## v3.2.0
+
+### Date
+2026-09-05
+
+### Author
+Anti Gravity
+
+### Type
+- UI
+- UX
+- Accessibility
+- Refactor
+
+---
+
+### Summary
+Executed Phase S4 Settings Visual Polish & Dynamic Layout Remediation. Transformed the Settings screen into a calm, responsive, cohesive editorial control room. Implemented responsive width bounds (`maxWidth: 480.0`), uppercase section headers (`ACCOUNT & BACKUP`, `PREFERENCES`, `SUPPORT & ABOUT`), debug-gated developer tool isolation, unified SVG iconography, refined typography hierarchy (20px title > 19px name > 13px handle > 15px rows), dynamic type resilience with intrinsic tile expansion without overflow, 28x28 camera badge overlay with unambiguous 44x44 touch target, and high-performance dark/light theme styling with 38% opacity floral banner and subtle 1px card borders.
+
+---
+
+### Detailed Changes
+- **Responsive Width (S4.1)**:
+  - Wrapped scrollable card content inside `Center -> ConstrainedBox(maxWidth: 480.0)`.
+  - Replaced hardcoded 322px fixed card width in Settings with `width: double.infinity` inside 20px horizontal screen margins.
+  - Eliminated stranded 322px cards on wider screens and tablets.
+- **Section Hierarchy & Headers (S4.2)**:
+  - Added uppercase section headers (`_buildSectionHeader` with 12px, FontWeight.w700, 0.8 letter spacing, secondary text color): `ACCOUNT & BACKUP`, `PREFERENCES`, and `SUPPORT & ABOUT`.
+  - Grouped related actions logically, providing clear visual anchoring across cards.
+- **Developer Tools Isolation (S4.3)**:
+  - Wrapped Section 4 inside `if (kDebugMode) ...[...]`, completely eliminating debug tools, sandbox, and seed utilities from production release builds.
+  - Cleaned developer tile labels: stripped informal emojis (e.g. `🧪`) and standardized all rows to use production SVG icons (`home.svg`, `edit_pen.svg`, `highlighter.svg`, `terms-info.svg`, `alarm_clock.svg`).
+- **Iconography Standardization (S4.4)**:
+  - Replaced filled Material icon `Icons.widgets_rounded` in the Widgets row with outline 4-quadrant grid asset `assets/icons/category.svg`.
+  - Unified all row chevrons to `assets/icons/angle-right.svg` (14x14).
+- **Typography Hierarchy & Normalization (S4.5)**:
+  - Established unambiguous visual hierarchy: Settings header title (`20px, w700, height: 1.2`) > Profile display name (`19px, w600, height: 1.2`) > Profile email handle (`13px, w500, height: 1.3`) > Row titles (`15px, w500, height: 1.25`).
+  - Standardized legal tile casing from `'Terms of service'` to title-case `'Terms of Service'`.
+  - Added muted version footer: `QuickNotes v1.0.0` (`12px, w400`).
+- **Camera Badge Overlay & Interaction Safety (S4.6)**:
+  - Added a 28x28 visual camera badge overlay (`assets/icons/camera.svg`) on the avatar circle with a 44x44 interactive hit target box.
+  - Integrated into the avatar's single parent `TactileButton` navigating to `ProfileScreen`, preventing nested `GestureDetector` conflicts, duplicate navigation, or gesture arena contention.
+- **Dark Mode & Light Mode Card Treatment (S4.7)**:
+  - Applied subtle 1px border on `GroupedListContainer` (`#EFEFF2` in light mode, `#2C2C2E` in dark mode) for crisp definition without heavy outlines.
+  - In dark mode, rendered floral header banner through `Opacity(opacity: 0.38)` inside the existing `RepaintBoundary` over `#121212` canvas, preserving tranquil botanical atmosphere with 0ms shader cost.
+- **Dynamic Type & Layout Resilience (S4.8)**:
+  - Refactored `GroupedTile.navigation`, `.toggle`, `.action`, and `.keyValue` to use `constraints: BoxConstraints(minHeight: height)` with vertical padding `8.0`.
+  - Added `softWrap: true` on title text and inserted an explicit `8.0px` buffer between text and trailing controls.
+  - At 1.0x text scale, tiles maintain compact ~50px visual rhythm; at larger text scales (up to 2.0x+), tiles expand vertically with zero text clipping or horizontal overflow.
+- **Shared Component Backwards Compatibility**:
+  - Maintained default `width: 322.0` and `fontSize: 14.0` in `GroupedListContainer` and `GroupedTile` constructors to ensure zero regression for existing callers across other screens.
+
+---
+
+### Files Modified
+- `lib/views/screens/settings_screen.dart`
+- `lib/views/widgets/grouped_list_container.dart`
+- `test/views/settings_visual_polish_s4_test.dart`
+- `Agents/skills/ChangeLogs Folder/SettingsScreen_Changelog.md`
+
+---
+
+### Testing Status
+- `flutter analyze lib/views/screens/settings_screen.dart lib/views/widgets/grouped_list_container.dart`: 0 issues found (100% clean).
+- `flutter test test/views/settings_visual_polish_s4_test.dart`: 6/6 tests PASS.
+- `flutter test test/views/settings_performance_s2_test.dart`: 5/5 tests PASS.
+- `test/views/settings_and_appearance_theme_test.dart`: 3/3 tests PASS.
+- Combined Settings test suite: 14/14 tests PASS (100% GREEN).
+
+---
+
+## v2.10.0
+
+### Date
+2026-09-05
+
+### Author
+Anti Gravity
+
+### Type
+- Feature
+- Developer Tooling
+- Navigation
+
+---
+
+### Summary
+Integrated Phase P9 Premium Test Mode entry point into the Developer section of SettingsScreen (`lib/views/screens/settings_screen.dart`).
+
+---
+
+### Detailed Changes
+- **Developer Section Navigation Tile**:
+  - Added `Premium Test Mode` navigation tile under Section 4 Developer tools (`if (kDebugMode)`).
+  - Configured with `assets/icons/settings-sliders.svg` and `buildPageRoute(const PremiumTestModeScreen())`.
+  - Strictly excluded from release builds via compile-time tree shaking and runtime `kDebugMode` gating.
+- **Visual & Structural Consistency**:
+  - Seamlessly embedded into Section 4's `GroupedListContainer` with standardized 15px font, hairline divider, and Apple-spring tactile interaction.
+  - Zero disruption to Section 1 (Account & Backup), Section 2 (Preferences), or Section 3 (Support & About).
+
+---
+
+### Files Modified
+- `lib/views/screens/settings_screen.dart`
+- `Agents/skills/ChangeLogs Folder/SettingsScreen_Changelog.md`
+
+---
+
+### Testing Status
+- `test/views/settings_visual_polish_s4_test.dart`: 6/6 PASS.
+- `test/views/settings_performance_s2_test.dart`: 5/5 PASS.
+- `test/views/settings_and_appearance_theme_test.dart`: 3/3 PASS.
+- `test/premium/debug_premium_test_mode_test.dart`: 14/14 PASS.
+- Static analysis: 0 issues found (100% clean).
+
+
 

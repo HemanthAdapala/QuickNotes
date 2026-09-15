@@ -298,6 +298,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
   }
 
   Widget _buildBackgroundCard(int index, int totalCards) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final double offset = 37.0 * index;
     final int dist = totalCards - 1 - index;
     final double blurSigma = 1.0 + (dist - 1) * 0.1;
@@ -359,7 +360,9 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                       child: Text(
                         formattedDate,
                         style: GoogleFonts.inter(
-                          color: const Color(0xFF333333),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF333333),
                           fontSize: 16.0,
                           fontWeight: FontWeight.w400,
                           height: 1.2,
@@ -378,7 +381,9 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                         formattedTime,
                         textAlign: TextAlign.right,
                         style: GoogleFonts.inter(
-                          color: const Color(0xFF333333),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF333333),
                           fontSize: 16.0,
                           fontWeight: FontWeight.w400,
                           height: 0.88,
@@ -437,13 +442,14 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_currentNotesList.isEmpty) {
       return SizedBox(
         width: widget.width,
         height: 339.0,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
             borderRadius: BorderRadius.circular(30.0),
             boxShadow: const [
               BoxShadow(
@@ -476,7 +482,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                 style: GoogleFonts.inter(
                   fontSize: 22.0,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1C1C1E),
+                  color: isDark ? Colors.white : const Color(0xFF1C1C1E),
                 ),
               ),
               const SizedBox(height: 8.0),
@@ -485,7 +491,9 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 14.0,
-                  color: const Color(0xFF8E8E93),
+                  color: isDark
+                      ? const Color(0xFF757575)
+                      : const Color(0xFF8E8E93),
                 ),
               ),
             ],
@@ -601,9 +609,11 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                                   child: Container(
                                     width: 322.0,
                                     height: 302.0,
-                                    decoration: const ShapeDecoration(
-                                      color: Colors.white,
-                                      shape: RoundedRectangleBorder(
+                                    decoration: ShapeDecoration(
+                                      color: isDark
+                                          ? const Color(0xFF2C2C2C)
+                                          : Colors.white,
+                                      shape: const RoundedRectangleBorder(
                                         borderRadius: BorderRadius.all(
                                             Radius.circular(30.0)),
                                       ),
@@ -628,7 +638,9 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                                             child: Text(
                                               formattedDate,
                                               style: GoogleFonts.inter(
-                                                color: const Color(0xFF333333),
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : const Color(0xFF333333),
                                                 fontSize: 16.0,
                                                 fontWeight: FontWeight.w400,
                                                 height: 1.2,
@@ -647,7 +659,9 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                                               formattedTime,
                                               textAlign: TextAlign.right,
                                               style: GoogleFonts.inter(
-                                                color: const Color(0xFF333333),
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : const Color(0xFF333333),
                                                 fontSize: 16.0,
                                                 fontWeight: FontWeight.w400,
                                                 height: 0.88,
@@ -681,7 +695,9 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                           style: GoogleFonts.inter(
-                                            color: const Color(0xFF333333),
+                                            color: isDark
+                                                ? Colors.white
+                                                : const Color(0xFF333333),
                                             fontSize: 40.0,
                                             fontWeight: FontWeight.w600,
                                             height: 1.0,
@@ -706,7 +722,9 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                                                   : 'No additional text',
                                               style: GoogleFonts.inter(
                                                 fontSize: 16.0,
-                                                color: const Color(0xFF333333),
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : const Color(0xFF333333),
                                                 height: 1.4,
                                               ),
                                             ),
@@ -731,7 +749,9 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                                       width: 47.52,
                                       height: 47.52,
                                       decoration: ShapeDecoration(
-                                        color: Colors.white,
+                                        color: isDark
+                                            ? const Color(0xFF5A5A5A)
+                                            : Colors.white,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(100.0),
@@ -750,8 +770,10 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                                         "assets/icons/bottom_navigation/pencil.svg",
                                         width: 20.0,
                                         height: 20.0,
-                                        colorFilter: const ColorFilter.mode(
-                                          Color(0xFF1C1C1E),
+                                        colorFilter: ColorFilter.mode(
+                                          isDark
+                                              ? Colors.white
+                                              : const Color(0xFF1C1C1E),
                                           BlendMode.srcIn,
                                         ),
                                       ),

@@ -10,18 +10,25 @@ import 'package:flutter/material.dart';
 /// - Bottom-left/right: 0px (flush)
 class PrimaryScreenSurface extends StatelessWidget {
   final Widget child;
+  final Color? color;
 
   const PrimaryScreenSurface({
     super.key,
     required this.child,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ??
+        (Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF121212)
+            : Colors.white);
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: effectiveColor,
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(32),
           topRight: Radius.circular(32),
         ),

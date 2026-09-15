@@ -22,6 +22,7 @@ class GlassSurface extends StatelessWidget {
     this.customOutlineWidth,
     this.customBevelIntensity,
     this.useBottomBarPreset = false,
+    this.stableTint = false,
   });
 
   const GlassSurface.bottomBar({
@@ -37,6 +38,7 @@ class GlassSurface extends StatelessWidget {
           height: height,
           borderRadius: borderRadius,
           useBottomBarPreset: true,
+          stableTint: false,
         );
 
   final Widget child;
@@ -55,11 +57,14 @@ class GlassSurface extends StatelessWidget {
   final double? customOutlineWidth;
   final double? customBevelIntensity;
   final bool useBottomBarPreset;
+  final bool stableTint;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = stableTint
+        ? false
+        : (Theme.of(context).brightness == Brightness.dark);
     final activeBlur =
         customBlurSigma ?? blurSigma ?? GlassmorphismPresets.blurSigma;
     final activeFrost =
@@ -76,7 +81,7 @@ class GlassSurface extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               borderRadius: borderRadius,
-              color: (isDark ? Color(0xFF333333) : Colors.white)
+              color: (isDark ? const Color(0xFF333333) : Colors.white)
                   .withValues(alpha: 0.94),
             ),
           ),
@@ -98,10 +103,10 @@ class GlassSurface extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: isDark
                 ? [
-                    Color(0xFF333333).withValues(alpha: 0.45),
-                    Color(0xFF333333).withValues(alpha: 0.25),
+                    const Color(0xFF333333).withValues(alpha: 0.45),
+                    const Color(0xFF333333).withValues(alpha: 0.25),
                     scheme.surfaceTint.withValues(alpha: 0.12),
-                    Color(0xFF333333).withValues(alpha: 0.50),
+                    const Color(0xFF333333).withValues(alpha: 0.50),
                   ]
                 : [
                     Colors.white.withValues(alpha: 0.72),
@@ -109,7 +114,7 @@ class GlassSurface extends StatelessWidget {
                       alpha: activeFrost,
                     ),
                     scheme.surfaceTint.withValues(alpha: 0.08),
-                    Color(0xFF333333).withValues(alpha: 0.035),
+                    const Color(0xFF333333).withValues(alpha: 0.035),
                   ],
             stops: const [0, 0.42, 0.78, 1],
           ),
@@ -265,7 +270,7 @@ class _GlassRimPainter extends CustomPainter {
         colors: [
           Colors.white.withValues(alpha: 0.38 * bevelIntensity),
           Colors.transparent,
-          Color(0xFF333333).withValues(alpha: depthOpacity * bevelIntensity),
+          const Color(0xFF333333).withValues(alpha: depthOpacity * bevelIntensity),
         ],
         stops: const [0, 0.48, 1],
       ).createShader(rect);

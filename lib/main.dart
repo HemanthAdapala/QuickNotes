@@ -60,8 +60,8 @@ void main() async {
         ChangeNotifierProvider.value(value: settingsProvider),
         ChangeNotifierProvider.value(value: entitlementManager),
         Provider<PurchaseProvider>.value(value: purchaseProvider),
-        Provider<FeatureAccess>(
-          create: (_) => DefaultFeatureAccess(entitlementManager),
+        ProxyProvider<PremiumEntitlementManager, FeatureAccess>(
+          update: (_, manager, __) => DefaultFeatureAccess(manager),
         ),
         ChangeNotifierProvider(create: (_) => NotesProvider()),
         ChangeNotifierProvider(

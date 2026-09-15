@@ -463,6 +463,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   }
 
   Widget _buildBackgroundCard(int index, int totalCards) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final double offset = 37.0 * index;
     final int dist = totalCards - 1 - index;
     final double blurSigma = 1.0 + (dist - 1) * 0.1;
@@ -513,9 +514,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
             child: Container(
               width: 322.0,
               height: 302.0,
-              decoration: const ShapeDecoration(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
+              decoration: ShapeDecoration(
+                color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(30.0)),
                 ),
               ),
@@ -618,13 +619,15 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (_currentTasksList.isEmpty) {
       return SizedBox(
         width: widget.width,
         height: 339.0,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
             borderRadius: BorderRadius.circular(30.0),
             boxShadow: const [
               BoxShadow(
@@ -657,7 +660,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                 style: GoogleFonts.inter(
                   fontSize: 22.0,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1C1C1E),
+                  color: isDark ? Colors.white : const Color(0xFF1C1C1E),
                 ),
               ),
               const SizedBox(height: 8.0),
@@ -666,7 +669,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 14.0,
-                  color: const Color(0xFF8E8E93),
+                  color: isDark
+                      ? const Color(0xFF757575)
+                      : const Color(0xFF8E8E93),
                 ),
               ),
             ],
@@ -742,7 +747,8 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     } else if (priority.toLowerCase() == 'low') {
       priorityColor = const Color(0xFF0088FF);
     } else {
-      priorityColor = const Color(0xFF8E8E93);
+      priorityColor =
+          isDark ? const Color(0xFF757575) : const Color(0xFF8E8E93);
     }
 
     final bool hasTopBadge =
@@ -841,9 +847,11 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                 child: Container(
                                   width: 322.0,
                                   height: 302.0,
-                                  decoration: const ShapeDecoration(
-                                    color: Colors.white,
-                                    shape: RoundedRectangleBorder(
+                                  decoration: ShapeDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF2C2C2C)
+                                        : Colors.white,
+                                    shape: const RoundedRectangleBorder(
                                       borderRadius: BorderRadius.all(
                                           Radius.circular(30.0)),
                                     ),
@@ -917,7 +925,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 12.0),
                                           decoration: ShapeDecoration(
-                                            color: const Color(0xFFF2F2F7),
+                                            color: isDark
+                                                ? const Color(0xFF5A5A5A)
+                                                : const Color(0xFFF2F2F7),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(19.0),
@@ -965,7 +975,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                               horizontal: 12.0),
                                           decoration: ShapeDecoration(
                                             color: const Color(0xFF0088FF)
-                                                .withValues(alpha: 0.12),
+                                                .withValues(alpha: isDark ? 0.18 : 0.12),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(19.0),
@@ -1008,7 +1018,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                   maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFF333333),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF333333),
                                     fontSize: 40.0,
                                     fontWeight: FontWeight.w600,
                                     height: 1.0,
@@ -1031,12 +1043,12 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                             horizontal: 14.0),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFF0088FF)
-                                              .withValues(alpha: 0.10),
+                                              .withValues(alpha: isDark ? 0.15 : 0.10),
                                           borderRadius:
                                               BorderRadius.circular(25.0),
                                           border: Border.all(
                                             color: const Color(0xFF0088FF)
-                                                .withValues(alpha: 0.25),
+                                                .withValues(alpha: isDark ? 0.30 : 0.25),
                                             width: 1.0,
                                           ),
                                         ),
@@ -1098,7 +1110,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                                         horizontal: 12.0,
                                                         vertical: 6.0),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.white,
+                                                  color: isDark
+                                                      ? const Color(0xFF5A5A5A)
+                                                      : Colors.white,
                                                   borderRadius:
                                                       BorderRadius.circular(
                                                           14.0),
@@ -1151,7 +1165,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                           width: 251.0,
                                           height: 50.0,
                                           decoration: BoxDecoration(
-                                            color: const Color(0x33787878),
+                                            color: isDark
+                                                ? const Color(0xFF5A5A5A)
+                                                : const Color(0x33787878),
                                             borderRadius:
                                                 BorderRadius.circular(25.0),
                                           ),
@@ -1204,8 +1220,10 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                                               FontWeight.w600,
                                                           color: progress > 0.5
                                                               ? Colors.white
-                                                              : const Color(
-                                                                  0xFF333333),
+                                                              : (isDark
+                                                                  ? Colors.white
+                                                                  : const Color(
+                                                                      0xFF333333)),
                                                           height: 1.0,
                                                           letterSpacing: -0.43,
                                                         ),
@@ -1220,8 +1238,10 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                                           ColorFilter.mode(
                                                         progress > 0.5
                                                             ? Colors.white
-                                                            : const Color(
-                                                                0xFF333333),
+                                                            : (isDark
+                                                                ? Colors.white
+                                                                : const Color(
+                                                                    0xFF333333)),
                                                         BlendMode.srcIn,
                                                       ),
                                                     ),
@@ -1304,10 +1324,12 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                   child: Container(
                                     width: 50.0,
                                     height: 50.0,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? const Color(0xFF5A5A5A)
+                                          : Colors.white,
                                       shape: BoxShape.circle,
-                                      boxShadow: [
+                                      boxShadow: const [
                                         BoxShadow(
                                           color: Color(0x3F000000),
                                           blurRadius: 16.0,
@@ -1321,8 +1343,10 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                       "assets/app_bottom_navigation_bar_Icons/pencil.svg",
                                       width: 22.0,
                                       height: 22.0,
-                                      colorFilter: const ColorFilter.mode(
-                                        Color(0xFF1C1C1E),
+                                      colorFilter: ColorFilter.mode(
+                                        isDark
+                                            ? Colors.white
+                                            : const Color(0xFF1C1C1E),
                                         BlendMode.srcIn,
                                       ),
                                     ),

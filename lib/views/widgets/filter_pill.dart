@@ -87,6 +87,7 @@ class FilterPillState extends State<FilterPill>
   @override
   Widget build(BuildContext context) {
     final bool disableAnimations = MediaQuery.of(context).disableAnimations;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -114,7 +115,9 @@ class FilterPillState extends State<FilterPill>
               height: 40.0,
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               decoration: BoxDecoration(
-                color: const Color(0x33787878),
+                color: isDark
+                    ? const Color(0xFF5A5A5A)
+                    : const Color(0x33787878),
                 borderRadius: BorderRadius.circular(20.0),
               ),
               alignment: Alignment.center,
@@ -124,8 +127,10 @@ class FilterPillState extends State<FilterPill>
                   fontSize: 16.0,
                   fontWeight: FontWeight.w600,
                   color: widget.isSelected
-                      ? const Color(0xFF333333)
-                      : const Color(0x80333333),
+                      ? (isDark ? Colors.white : const Color(0xFF333333))
+                      : (isDark
+                          ? const Color(0xFF757575)
+                          : const Color(0x80333333)),
                   height: 1.38,
                   letterSpacing: -0.43,
                 ),
