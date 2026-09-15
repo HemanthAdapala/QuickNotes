@@ -114,3 +114,69 @@ Implemented **Phase D3-A — Folders Screen Main Surfaces Only** of the Quick No
   - `home_dark_mode_palette_test.dart` (16/16 passed).
   - `home_filter_motion_test.dart` & `home_screen_motion_test.dart` (22/22 passed).
 
+---
+
+## v1.2.0 (Phase D3-B)
+
+### Date
+2026-09-15
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- UI
+- Dark Mode Migration (Phase D3-B)
+
+---
+
+### Summary
+Implemented **Phase D3-B — Folders Screen Header & Search Dark Mode Implementation** of the Quick Notes Dark Mode migration. Migrated strictly the Folders Screen (`FolderManagementScreen`) header controls and active search bar UI to the approved Dark Mode contract (#FFFFFF icons/text, #757575 search hint), preserving existing Light Mode values (#1C1C1E icons/text, #8C8987 hint), preserving D3-A physical surfaces (#1E1E1E / #2C2C2C / 32px radii), and maintaining 100% shared-component safety for `BottomBarGlassSurface` and `PrimaryScreenSurface`.
+
+---
+
+### Key Implementations
+
+#### 1. Header Navigation & Search Trigger Icons
+- Scoped icon colors in `FolderManagementScreen._buildHeaderBar()`:
+  - **Back Arrow (`assets/icons/angle_left.svg`)**:
+    - Dark Mode: `ColorFilter.mode(Colors.white, BlendMode.srcIn)` (#FFFFFF)
+    - Light Mode: `ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn)` (preserved)
+  - **Search Icon (`Icons.search_rounded`)**:
+    - Dark Mode: `Colors.white` (#FFFFFF)
+    - Light Mode: `const Color(0xFF1C1C1E)` (preserved)
+
+#### 2. Active Inline Search UI
+- Scoped search field and clear controls in `search_active_header`:
+  - **Active Back Arrow (`assets/icons/angle_left.svg`)**:
+    - Dark Mode: `ColorFilter.mode(Colors.white, BlendMode.srcIn)` (#FFFFFF)
+    - Light Mode: `ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn)` (preserved)
+  - **Search Input Text (`TextField.style`)**:
+    - Dark Mode: `GoogleFonts.inter(color: Colors.white)` (#FFFFFF)
+    - Light Mode: `GoogleFonts.inter(color: const Color(0xFF1C1C1E))` (preserved)
+  - **Search Placeholder / Hint (`InputDecoration.hintStyle`)**:
+    - Dark Mode: `GoogleFonts.inter(color: const Color(0xFF757575))` (#757575)
+    - Light Mode: `GoogleFonts.inter(color: const Color(0xFF8C8987))` (preserved)
+  - **Close / Clear Icon (`Icons.close_rounded`)**:
+    - Dark Mode: `Colors.white` (#FFFFFF)
+    - Light Mode: `const Color(0xFF1C1C1E)` (preserved)
+
+#### 3. Shared Component & Surface Preservation
+- `BottomBarGlassSurface` glass wrapper internals, blur, frost, borders, and shadows remain completely unmodified.
+- D3-A Upper canvas (`#1E1E1E`), Rounded content sheet (`#2C2C2C`), and 32px top radii remain preserved.
+- `PrimaryScreenSurface` shared defaults remain unmodified.
+
+---
+
+### Verification
+- Extended dedicated test suite `test/views/folders_dark_mode_palette_test.dart` with Phase D3-B verification:
+  - Dark Mode: Back arrow (#FFFFFF), Search icon (#FFFFFF), Active back arrow (#FFFFFF), Entered text (#FFFFFF), Search hint (#757575), Close/clear icon (#FFFFFF), D3-A surfaces (#1E1E1E / #2C2C2C / 32px radii).
+  - Light Mode: Back arrow (#1C1C1E), Search icon (#1C1C1E), Active back arrow (#1C1C1E), Entered text (#1C1C1E), Search hint (#8C8987), Close icon (#1C1C1E), D3-A light surfaces.
+  - Test Suite Result: 5/5 passed.
+- Regression suites executed and passed:
+  - `folders_motion_haptics_p4_3_test.dart` (26/26 passed).
+  - `home_dark_mode_palette_test.dart` (16/16 passed).
+  - `home_filter_motion_test.dart` & `home_screen_motion_test.dart` (22/22 passed).
+- Static analysis: `flutter analyze` verified 0 errors across modified files.
+
+

@@ -48,6 +48,13 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
   bool _isSearchExpanded = false;
   String _searchQuery = "";
 
+  @visibleForTesting
+  void setSearchExpandedForTesting(bool value) {
+    setState(() {
+      _isSearchExpanded = value;
+    });
+  }
+
   GlobalKey _getKeyForFolder(String id) {
     return _folderKeys.putIfAbsent(id, () => GlobalKey());
   }
@@ -409,6 +416,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
   }
 
   Widget _buildHeaderBar() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final bool disableAnimations =
         MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
@@ -446,8 +454,9 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                           'assets/icons/angle_left.svg',
                           width: 22,
                           height: 22,
-                          colorFilter: const ColorFilter.mode(
-                              Color(0xFF1C1C1E), BlendMode.srcIn),
+                          colorFilter: ColorFilter.mode(
+                              isDark ? Colors.white : const Color(0xFF1C1C1E),
+                              BlendMode.srcIn),
                         ),
                       ),
                     ),
@@ -465,13 +474,17 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                           autofocus: true,
                           style: GoogleFonts.inter(
                             fontSize: 15,
-                            color: const Color(0xFF1C1C1E),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1C1C1E),
                           ),
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: "Search folders...",
                             hintStyle: GoogleFonts.inter(
-                              color: const Color(0xFF8C8987),
+                              color: isDark
+                                  ? const Color(0xFF757575)
+                                  : const Color(0xFF8C8987),
                             ),
                             isDense: true,
                             contentPadding:
@@ -499,10 +512,11 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                           _searchQuery = "";
                         });
                       },
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.close_rounded,
-                          color: Color(0xFF1C1C1E),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF1C1C1E),
                           size: 22,
                         ),
                       ),
@@ -532,8 +546,11 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                             'assets/icons/angle_left.svg',
                             width: 22,
                             height: 22,
-                            colorFilter: const ColorFilter.mode(
-                                Color(0xFF1C1C1E), BlendMode.srcIn),
+                            colorFilter: ColorFilter.mode(
+                                isDark
+                                    ? Colors.white
+                                    : const Color(0xFF1C1C1E),
+                                BlendMode.srcIn),
                           ),
                         ),
                       ),
@@ -559,10 +576,11 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                             ),
                           );
                         },
-                        child: const Center(
+                        child: Center(
                           child: Icon(
                             Icons.search_rounded,
-                            color: Color(0xFF1C1C1E),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF1C1C1E),
                             size: 22,
                           ),
                         ),
