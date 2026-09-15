@@ -65,3 +65,52 @@ Executed **Phase P4.3 — Folders & Collections Motion/Haptics Migration** acros
 - 100% test pass rate across P4.3 suite (26/26 tests), P4.1 foundation suite (16/16 tests), and Folder tests (11/11 tests).
 - 100% test pass rate across all protected firewalls: P2.6, P3.3, P3.5, P3.7, P3.9 (92/92 tests). Total verified: 145/145 tests passing.
 - `flutter analyze` verified 0 errors, with issue count dropping from 472 to 468.
+
+---
+
+## v1.1.0 (Phase D3-A)
+
+### Date
+2026-09-15
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- UI
+- Dark Mode Migration (Phase D3-A)
+
+---
+
+### Summary
+Implemented **Phase D3-A — Folders Screen Main Surfaces Only** of the Quick Notes Dark Mode migration. Migrated strictly the two primary physical background surfaces of the Folders Screen (`FolderManagementScreen`) to Dark Mode using the canonical Home Screen palette mapping (`#1E1E1E` upper canvas, `#2C2C2C` rounded content sheet) while strictly isolating `PrimaryScreenSurface` defaults to protect all other screen consumers.
+
+---
+
+### Key Implementations
+
+#### 1. Upper / Root Canvas Dark Background
+- Scoped Scaffold background color in `FolderManagementScreenState.build()`:
+  - Dark Mode: `Color(0xFF1E1E1E)`
+  - Light Mode: `AppColors.background` (`#FFFFFF`, preserved exactly)
+
+#### 2. Rounded Content Sheet Surface
+- Passed explicit `color` override to `PrimaryScreenSurface`:
+  - Dark Mode: `Color(0xFF2C2C2C)`
+  - Light Mode: `Colors.white`
+- Kept 32px top-left and top-right radii intact without modifying geometry.
+- Preserved default constructor values of `PrimaryScreenSurface` (`#121212` in Dark Mode) to ensure zero regression across other consumers (`SettingsScreen`, `StorageAndDataScreen`, `VaultScreen`, `BackupAndSyncScreen`).
+
+---
+
+### Verification
+- Added dedicated test suite `test/views/folders_dark_mode_palette_test.dart` validating:
+  - Dark Mode: Upper canvas `#1E1E1E`, Content sheet `#2C2C2C`, 32px top radii.
+  - Light Mode: Upper canvas `#FFFFFF`, Content sheet `Colors.white`, 32px top radii.
+  - Shared Component Safety: Default `PrimaryScreenSurface` behavior unmodified.
+- Verified with `flutter analyze` (0 errors).
+- Regression suites executed and passed:
+  - `folders_motion_haptics_p4_3_test.dart` (26/26 passed).
+  - `home_dark_mode_palette_test.dart` (16/16 passed).
+  - `home_filter_motion_test.dart` & `home_screen_motion_test.dart` (22/22 passed).
+

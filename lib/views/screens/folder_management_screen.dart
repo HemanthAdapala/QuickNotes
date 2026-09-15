@@ -703,6 +703,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = Provider.of<NotesProvider>(context);
     final folders = provider.folders;
     final orderedFolders = FolderUtils.getHierarchicalFolders(folders);
@@ -719,7 +720,8 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor:
+          isDark ? const Color(0xFF1E1E1E) : AppColors.background,
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
@@ -751,6 +753,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                 ],
               ),
               child: PrimaryScreenSurface(
+                color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                 child: Center(
                   child: SizedBox(
                     width: screenWidth.clamp(0.0, 402.0),
