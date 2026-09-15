@@ -260,3 +260,481 @@ Implemented **Phase D3-C — Folders Screen Folder Card System** of the Quick No
 - `lib/views/widgets/folder_card.dart`
 - `test/views/folders_dark_mode_palette_test.dart`
 - `Agents/skills/ChangeLogs Folder/FolderManagement_Changelog.md`
+
+---
+
+## [1.4.0] - Folders Screen Empty-State Dark Mode (Phase D3-D)
+
+### Date
+2026-09-15
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- UI
+- Dark Mode Migration (Phase D3-D)
+
+---
+
+### Summary
+Implemented **Phase D3-D — Folders Screen Empty-State UI** of the Quick Notes Dark Mode migration. Migrated strictly the typography of the zero-folders empty state (`_buildEmptyState()` in `lib/views/screens/folder_management_screen.dart`) to the approved Dark Mode contract (#FFFFFF heading, #757575 subtitle, #FFFFFF "Create Folder" CTA label), while strictly preserving the physical and decorative stationery artwork (#E6E3D2 back flap, #F2F2EE front flap, #FFFFFF note paper, #FFCC00 yellow notepad header, #E2E2DF ruled lines, #FFCC00 circular plus badge, and #1C1C1E plus icon), frosted glass CTA container (`BottomBarGlassSurface`), TactileButton motion parameters and haptics, empty-state geometry, and Light Mode parity (#1C1C1E heading, #8E8E93 subtitle, #1C1C1E CTA text).
+
+---
+
+### Key Implementations
+
+#### 1. Theme-Aware Empty-State Heading
+- Scoped heading text color in `_buildEmptyState()`:
+  - **Dark Mode**: `Color(0xFFFFFFFF)` (#FFFFFF)
+  - **Light Mode**: `Color(0xFF1C1C1E)` (#1C1C1E, preserved)
+- Preserved exact typography and layout: `GoogleFonts.inter`, `fontSize: 22.0`, `fontWeight: FontWeight.bold`, `textAlign: TextAlign.center`.
+
+#### 2. Theme-Aware Empty-State Subtitle
+- Scoped subtitle text color in `_buildEmptyState()`:
+  - **Dark Mode**: `Color(0xFF757575)` (#757575, matching established Quick Notes secondary typography contract)
+  - **Light Mode**: `Color(0xFF8E8E93)` (#8E8E93, preserved)
+- Preserved exact typography: `GoogleFonts.inter`, `fontSize: 14.0`, `height: 1.5`, `textAlign: TextAlign.center`.
+
+#### 3. Theme-Aware "Create Folder" CTA Label
+- Scoped CTA label text color in `_buildEmptyState()`:
+  - **Dark Mode**: `Color(0xFFFFFFFF)` (#FFFFFF)
+  - **Light Mode**: `Color(0xFF1C1C1E)` (#1C1C1E, preserved)
+- Preserved exact button typography: `GoogleFonts.inter`, `fontSize: 15.0`, `fontWeight: FontWeight.bold`.
+
+#### 4. Physical & Decorative Artwork Invariance (Locked)
+- Physical and decorative illustration layers strictly preserved:
+  - Folder back flap: `CustomPaint(FolderBgPainter(color: Color(0xFFE6E3D2)))`
+  - Folder front flap: `CustomPaint(FolderFgPainter(color: Color(0xFFF2F2EE)))`
+  - Physical drop shadows: `Color(0xFF333333)` with original alpha channels (18%, 12%, 10%)
+  - Decorative stationery: 2× `DecorativeNoteCard` with white paper (`#FFFFFF`), yellow header tape (`#FFCC00`), and 5 ruled lines (`#E2E2DF`)
+  - Circular plus badge: `Color(0xFFFFCC00)` background with `Colors.black12` shadow
+  - Plus badge icon: `Icon(Icons.add_rounded, color: Color(0xFF1C1C1E), size: 22.0)` (strictly preserved as `#1C1C1E` to maintain 11.3:1 contrast against `#FFCC00`)
+
+#### 5. CTA Surface & Interaction Preservation (Locked)
+- `BottomBarGlassSurface` container strictly preserved: `width: 200.0`, `height: 50.0`, `borderRadius: BorderRadius.circular(25.0)`, `useFrost: true`. No internal modifications.
+- `TactileButton` strictly preserved: `compressionScale: 0.9`, `useAppleSpring: true`, `playSelectionHaptic: true`, `onTap: showCreateFolderDialog`.
+
+#### 6. Spacing & Geometry Preservation (Locked)
+- 180 × 180 illustration box
+- 40.0px horizontal screen padding
+- 24px illustration-to-heading spacing
+- 10px heading-to-subtitle spacing
+- 32px subtitle-to-CTA spacing
+- 200 × 50 CTA pill dimensions
+
+#### 7. Search Empty-State Isolation
+- Separate search empty state (`filteredFolders.isEmpty`: `Icons.folder_open_rounded` and `"No folders match search"`) left completely untouched and explicitly deferred.
+
+---
+
+### Verification
+- Extended dedicated test suite `test/views/folders_dark_mode_palette_test.dart` with Phase D3-D verification:
+  - Dark Mode: Heading (#FFFFFF), Subtitle (#757575), CTA text (#FFFFFF), physical folder back flap (#E6E3D2), front flap (#F2F2EE), notepad paper (#FFFFFF), yellow header (#FFCC00), ruled lines (#E2E2DF), plus badge (#FFCC00), plus icon (#1C1C1E), Upper Canvas (#1E1E1E), Content Sheet (#2C2C2C, 32px radii).
+  - Light Mode: Heading (#1C1C1E), Subtitle (#8E8E93), CTA text (#1C1C1E), identical physical artwork, plus badge (#FFCC00), plus icon (#1C1C1E), Upper Canvas (AppColors.background), Content Sheet (Colors.white).
+  - CTA Interaction: Verified tapping "Create Folder" triggers `showCreateFolderDialog`.
+  - Geometry: 180 × 180 illustration, 24px/10px/32px vertical spacings, 200 × 50 CTA, 25px CTA radius, 40px outer padding.
+  - Test Suite Result: 16/16 tests passed.
+- Regression test suites executed and passed:
+  - `folders_motion_haptics_p4_3_test.dart` (26/26 passed)
+  - `home_dark_mode_palette_test.dart` (16/16 passed)
+  - `home_filter_motion_test.dart` & `home_screen_motion_test.dart` (22/22 passed)
+  - `search_motion_haptics_p4_5_test.dart` (20/20 passed)
+  - `folder_customization_gating_test.dart` (10/10 passed)
+- Static analysis: `flutter analyze lib/views/screens/folder_management_screen.dart test/views/folders_dark_mode_palette_test.dart` confirmed 0 errors and 0 new warnings.
+- Physical device verification: Verified on connected physical Android device (Samsung SM-S918B / `R5CW10GW8TE`):
+  - Dark Mode: Verified heading in crisp `#FFFFFF`, subtitle in `#757575`, CTA text in `#FFFFFF`, invariant cream folder artwork (`#E6E3D2`, `#F2F2EE`), white stationery, yellow badge with dark `#1C1C1E` plus icon.
+  - Light Mode: Verified heading `#1C1C1E`, subtitle `#8E8E93`, CTA text `#1C1C1E`, identical physical artwork.
+  - Interaction verification: Tapped "Create Folder" CTA pill; verified Apple spring press animation, tactile haptic feedback, and presentation of "New Folder" creation dialog.
+  - Database restoration: Restored original folder database and verified zero state leakage.
+
+---
+
+### File Manifest
+- `lib/views/screens/folder_management_screen.dart`
+- `test/views/folders_dark_mode_palette_test.dart`
+- `Agents/skills/ChangeLogs Folder/FolderManagement_Changelog.md`
+
+---
+
+## [1.5.0] - Folders Search Empty State Dark Mode (Phase D3-E)
+
+### Date
+2026-09-15
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- UI
+- Dark Mode Migration (Phase D3-E)
+
+---
+
+### Summary
+Implemented **Phase D3-E — Folders Search Empty State** of the Quick Notes Dark Mode migration. Migrated strictly the inline search-empty state (`"No folders match search"`) in `lib/views/screens/folder_management_screen.dart` (rendered when `folders.isNotEmpty && filteredFolders.isEmpty`) to the approved Dark Mode contract (`#FFFFFF` with alpha 0.3 for `Icons.folder_open_rounded`, `#FFFFFF` with alpha 0.7 for `"No folders match search"` text), while strictly preserving Light Mode colors (`#1C1C1E` at alpha 0.3 and 0.5), search filtering logic, branch structure, layout geometry, absence of motion/haptics, shared components, and previous locked phases D3-A through D3-D.
+
+---
+
+### Key Implementations
+
+#### 1. Theme-Aware Search Empty Icon
+- Scoped icon color in `folder_management_screen.dart` (lines 793–798):
+  - **Dark Mode**: `Color(0xFFFFFFFF).withValues(alpha: 0.3)`
+  - **Light Mode**: `Color(0xFF1C1C1E).withValues(alpha: 0.3)` (preserved exactly)
+- Maintained exact size: `48.0` logical pixels.
+
+#### 2. Theme-Aware Search Empty Text
+- Scoped typography color in `folder_management_screen.dart` (lines 801–808):
+  - **Dark Mode**: `Color(0xFFFFFFFF).withValues(alpha: 0.7)`
+  - **Light Mode**: `Color(0xFF1C1C1E).withValues(alpha: 0.5)` (preserved exactly)
+- Maintained exact typography: `GoogleFonts.inter`, `fontSize: 18.0`, `fontWeight: FontWeight.bold`.
+
+#### 3. Preservation of Geometry & Behavior (Locked)
+- Preserved `SizedBox(width: screenWidth.clamp(0.0, 402.0))`, `Padding(padding: EdgeInsets.symmetric(vertical: 40.0))`, `Column(mainAxisAlignment: MainAxisAlignment.center)`, and `SizedBox(height: 16)`.
+- Preserved search query string handling (`_searchQuery`), case-insensitive matching in `filteredFolders`, and instant derived reactivity.
+- No motion, animations, or haptic effects introduced.
+- Locked zero-folders empty state (`_buildEmptyState()`, Phase D3-D) remains 100% untouched.
+
+---
+
+### Verification
+- Extended dedicated test suite `test/views/folders_dark_mode_palette_test.dart` with Phase D3-E tests:
+  - **Test A (Visibility)**: Asserted `find.text("No folders match search")` and `find.byIcon(Icons.folder_open_rounded)` render when query has zero matches.
+  - **Test B (Dark Mode Palette)**: Verified Icon resolves to `Color(0xFFFFFFFF).withValues(alpha: 0.3)` and Text resolves to `Color(0xFFFFFFFF).withValues(alpha: 0.7)` on `#2C2C2C`.
+  - **Test C (Light Mode Regression)**: Verified Icon resolves to `Color(0xFF1C1C1E).withValues(alpha: 0.3)` and Text resolves to `Color(0xFF1C1C1E).withValues(alpha: 0.5)` on `#FFFFFF`.
+  - **Test D (Recovery)**: Verified dynamic recovery flow: unmatched query -> search-empty state -> matching query -> `FolderGridCard` returns -> cleared query -> full folder grid restored.
+  - Test Suite Result: 20/20 tests passed.
+- Regression test suites executed and passed:
+  - `folders_motion_haptics_p4_3_test.dart` (26/26 passed)
+  - `home_dark_mode_palette_test.dart` (16/16 passed)
+  - `home_filter_motion_test.dart` & `home_screen_motion_test.dart` (22/22 passed)
+  - `search_motion_haptics_p4_5_test.dart` (20/20 passed)
+  - `folder_customization_gating_test.dart` (10/10 passed)
+- Static analysis: `flutter analyze lib/views/screens/folder_management_screen.dart test/views/folders_dark_mode_palette_test.dart` confirmed 0 errors and 0 new warnings.
+- Prohibited color rule: Verified `#444444` does NOT exist anywhere in `lib/`.
+- Physical device verification: Verified on Samsung Galaxy S23 Ultra (`R5CW10GW8TE`):
+  - Dark Mode: Verified folder open icon in subtle white (`alpha: 0.3`) and "No folders match search" text in legible `#FFFFFF` (`alpha: 0.7`) against `#2C2C2C` sheet with 32px radii and `#1E1E1E` upper canvas.
+  - Light Mode: Verified icon and text preserve original dark translucent tints (`alpha: 0.3` and `0.5`) against white sheet.
+  - Recovery: Verified unmatched query triggers empty state, modifying query restores matching card, and clearing query restores grid.
+
+---
+
+### File Manifest
+- `lib/views/screens/folder_management_screen.dart`
+- `test/views/folders_dark_mode_palette_test.dart`
+- `Agents/skills/ChangeLogs Folder/FolderManagement_Changelog.md`
+
+---
+
+## v1.5.0 (Phase D3-F1)
+
+### Date
+2026-09-15
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- UI
+- Dark Mode Migration (Phase D3-F1)
+
+---
+
+### Summary
+Implemented **Phase D3-F1 — Folders Create / Delete Modals** of the Quick Notes Dark Mode migration. Surgically adapted the visual colors of:
+1. **Create Folder Dialog** (`showCreateFolderDialog`)
+2. **Folder Context Menu** (`_showFolderContextMenu`)
+3. **Delete Folder Dialog** (`_confirmDeleteFolder`)
+4. **Standalone DeleteConfirmationDialog** (`lib/views/widgets/delete_confirmation_dialog.dart`)
+
+All original Light Mode values and appearance were strictly preserved. All geometry, motion/animations, haptics, folder CRUD operations, duplicate name validation, premium logic, and shared component architectures were strictly preserved without modification.
+
+---
+
+### Key Implementations
+
+#### 1. Create Folder Dialog (`showCreateFolderDialog`)
+- **Dialog Background**: Dark `#2C2C2C` (`Color(0xFF2C2C2C)`), Light `#FDFDFD` (`Color(0xFFFDFDFD)`).
+- **Title Text**: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1D1D1D` (`Color(0xFF1D1D1D)`).
+- **Subtitle Text**: Dark `#757575` (`Color(0xFF757575)`), Light `#8E8E93` (`Color(0xFF8E8E93)`).
+- **Input Container**: Dark `#1E1E1E` (`Color(0xFF1E1E1E)`), Light `#EFEFF4` (`Color(0xFFEFEFF4)`).
+- **Entered Text**: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+- **Hint Text**: Dark `#757575` (`Color(0xFF757575)`), Light `#AEAEB2` (`Color(0xFFAEAEB2)`).
+- **Clear Icon**: Dark `#757575` (`Color(0xFF757575)`), Light `#C7C7CC` (`Color(0xFFC7C7CC)`).
+- **Dividers**: Dark `#3A3A3C` (`Color(0xFF3A3A3C)`), Light `#D1D1D6` (`Color(0xFFD1D1D6)`).
+- **Cancel Button Text**: Dark `#757575` (`Color(0xFF757575)`), Light `#8E8E93` (`Color(0xFF8E8E93)`).
+- **Save Button Text**: Theme Invariant `#FFCC00` (`Color(0xFFFFCC00)`), with disabled state retaining existing `0.4` opacity.
+- **Cursor**: Retained existing cursor color and behavior.
+
+#### 2. Folder Context Menu (`_showFolderContextMenu`)
+- **Popup Surface**: Dark `#2C2C2C` (`Color(0xFF2C2C2C)`), Light `#F2F2EE` (`Color(0xFFF2F2EE)`).
+- **Customize Icon & Text**: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+- **Popup Divider**: Implemented local `_PopupMenuDivider` with Dark `#3A3A3C` (`Color(0xFF3A3A3C)`), Light `#D1D1D6` (`Color(0xFFD1D1D6)`).
+- **Delete Icon & Text**: Dark `#FF453A` (`Color(0xFFFF453A)`), Light `Colors.red`.
+
+#### 3. Delete Folder Dialog (`_confirmDeleteFolder`)
+- **Dialog Surface**: Dark `#2C2C2C` (`Color(0xFF2C2C2C)`), Light `Colors.white`.
+- **Title**: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+- **Body**: Dark `#FFFFFF @ 70%` (`Color(0xFFFFFFFF).withValues(alpha: 0.70)`), Light `#1C1C1E @ 80%` (`Color(0xFF1C1C1E).withValues(alpha: 0.80)`).
+- **Cancel Button Text**: Dark `#757575` (`Color(0xFF757575)`), Light `#8C8987` (`Color(0xFF8C8987)`).
+- **Delete Button Text**: Dark `#FF453A` (`Color(0xFFFF453A)`), Light `theme.colorScheme.error`.
+
+#### 4. Standalone DeleteConfirmationDialog (`lib/views/widgets/delete_confirmation_dialog.dart`)
+- **Dialog Surface**: Dark `#2C2C2C` (`Color(0xFF2C2C2C)`), Light `Colors.white`.
+- **Title**: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#333333` (`Color(0xFF333333)`).
+- **Message**: Dark `#FFFFFF @ 70%` (`Color(0xFFFFFFFF).withValues(alpha: 0.70)`), Light `#333333` (`Color(0xFF333333)`).
+- **Cancel Text**: Dark `#757575` (`Color(0xFF757575)`), Light `#333333` (`Color(0xFF333333)`).
+- **Delete Text**: Dark `#FF453A` (`Color(0xFFFF453A)`), Light `#FF383C` (`Color(0xFFFF383C)`).
+
+---
+
+### Verification
+- **Automated Tests**:
+  - Extended `test/views/folders_dark_mode_palette_test.dart` with 8 dedicated D3-F1 test cases:
+    - Create Folder Dialog (Dark Palette & Light Palette)
+    - Folder Context Menu (Dark Palette & Light Palette)
+    - Delete Folder Dialog (Dark Palette & Light Palette)
+    - Standalone DeleteConfirmationDialog (Dark Palette & Light Palette)
+    - Interaction flow tests: Empty input disables Save, typing enables Save, duplicate name rejection, cancel dismisses, delete deletes.
+    - Test Suite Result: 28/28 passed (100%).
+- **Regression Test Suites**:
+  - `folders_motion_haptics_p4_3_test.dart` (26/26 passed)
+  - `home_dark_mode_palette_test.dart` (16/16 passed)
+  - `home_filter_motion_test.dart` (11/11 passed)
+  - `search_motion_haptics_p4_5_test.dart` (20/20 passed)
+  - `folder_customization_gating_test.dart` (10/10 passed)
+  - Total tests verified: 111/111 passed.
+- **Static Analysis**:
+  - `flutter analyze` on modified files: 0 errors, 0 new warnings.
+- **Prohibited Color Safety Check**:
+  - `git grep -i "444444" lib/`: 0 matches (confirmed absent).
+- **Physical Device Verification (Samsung Galaxy S23 Ultra `R5CW10GW8TE`)**:
+  - Dark Mode:
+    1. Folder context menu verified: `#2C2C2C` surface, `#FFFFFF` Customize, `#3A3A3C` divider, `#FF453A` Delete.
+    2. Delete folder dialog verified: `#2C2C2C` surface, `#FFFFFF` title, `#FFFFFF @ 70%` body, `#757575` Cancel, `#FF453A` Delete.
+    3. Cancel dismissed cleanly without deleting folder.
+    4. Create folder dialog verified: `#2C2C2C` surface, `#FFFFFF` title, `#757575` subtitle, `#1E1E1E` input box, `#757575` hint, `#3A3A3C` dividers, `#757575` cancel, `#FFCC00` save (disabled at 0.4 opacity).
+    5. Typed "Project Alpha": entered text `#FFFFFF`, clear icon `#757575`, save `#FFCC00` enabled at full opacity.
+    6. Cancel dismissed cleanly.
+  - Light Mode:
+    1. Folder context menu verified: `#F2F2EE` surface, `#1C1C1E` Customize, `#D1D1D6` divider, `Colors.red` Delete.
+    2. Delete folder dialog verified: `Colors.white` surface, `#1C1C1E` title, `#1C1C1E @ 80%` body, `#8C8987` Cancel, `theme.error` Delete.
+    3. Create folder dialog verified: `#FDFDFD` surface, `#1D1D1D` title, `#8E8E93` subtitle, `#EFEFF4` input box, `#AEAEB2` hint, `#D1D1D6` dividers, `#8E8E93` cancel, `#FFCC00` save.
+    4. Typed "LightTest": entered text `#1C1C1E`, clear icon `#C7C7CC`, save `#FFCC00` enabled.
+    5. Cancel dismissed cleanly.
+  - Prior Phase Preservations (D3-A, D3-B, D3-C, D3-D, D3-E) physically confirmed intact.
+
+---
+
+### File Manifest
+- `lib/views/screens/folder_management_screen.dart`
+- `lib/views/widgets/delete_confirmation_dialog.dart`
+- `test/views/folders_dark_mode_palette_test.dart`
+- `Agents/skills/ChangeLogs Folder/FolderManagement_Changelog.md`
+
+---
+
+## v1.5.1 (Phase D3-F2)
+
+### Date
+2026-09-15
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- UI
+- Dark Mode Migration (Phase D3-F2)
+
+---
+
+### Summary
+Implemented **Phase D3-F2 — Folder Customization Sheet + Sticker UI Dark Mode** of the Quick Notes Dark Mode migration. Surgically migrated `FolderCustomizationSheet` and its embedded sticker picker UI chrome to Dark Mode while strictly preserving:
+- Original Light Mode behavior, appearance, and contrast 100% byte-for-byte.
+- All folder artwork, sticker artwork assets, and color preset swatches without tinting or modification.
+- BottomBarGlassSurface container and Liquid Glass architecture untouched.
+- Premium entitlement gating (`showPremiumGate`) and folder persistence semantics.
+- Motion curves, haptics feedback, geometry, and layout constraints.
+
+---
+
+### Key Implementations
+
+#### 1. FolderCustomizationSheet
+- **Sheet Background**: Dark `#2C2C2C` (`Color(0xFF2C2C2C)`), Light `#F9F9F7` (`Color(0xFFF9F9F7)`).
+- **Drag Handle**: Dark `#5A5A5A` (`Color(0xFF5A5A5A)`), Light `#D1D1D6` (`Color(0xFFD1D1D6)`).
+- **Sheet Title & Section Titles**: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+- **Color Preset Swatches**: Theme-invariant physical color values.
+- **Eyedropper / Custom Color Tile**:
+  - Background: Dark `#3A3A3C` (`Color(0xFF3A3A3C)`), Light `#EFEFF4` (`Color(0xFFEFEFF4)`).
+  - Icon: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+- **Selected Color Swatch Indicator**:
+  - Border: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+  - Checkmark Icon: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+- **None Sticker Tile**:
+  - Background: Dark `#3A3A3C` (`Color(0xFF3A3A3C)`), Light `#EFEFF4` (`Color(0xFFEFEFF4)`).
+  - Block Icon: Dark `#757575` (`Color(0xFF757575)`), Light `#8E8E93` (`Color(0xFF8E8E93)`).
+- **Sticker Card**:
+  - Tile Background: Dark `#2C2C2C` (`Color(0xFF2C2C2C)`), Light `Colors.white`.
+  - Selected Tile Border: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+  - Selected Badge: `#34C759` with `#FFFFFF` checkmark (theme invariant).
+  - Sticker Images: 100% theme-invariant physical artwork.
+- **Apply Action Button**:
+  - Label Text: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+  - Container: `BottomBarGlassSurface` intact and unmodified.
+
+---
+
+### Verification
+- **Automated Tests**:
+  - Extended `test/views/folders_dark_mode_palette_test.dart` with 8 dedicated D3-F2 test cases:
+    - Test 1: Dark Mode sheet background `#2C2C2C`, handle `#5A5A5A`, titles `#FFFFFF`.
+    - Test 2: Light Mode sheet background `#F9F9F7`, handle `#D1D1D6`, titles `#1C1C1E`.
+    - Test 3: Color swatches & eyedropper tile dark/light palettes.
+    - Test 4: Selected color border & checkmark contrast.
+    - Test 5: Sticker section & cards dark/light palettes.
+    - Test 6: None sticker tile & selected sticker badge invariants.
+    - Test 7: Apply button dark/light label text & custom color dialog trigger.
+    - Test 8: Premium gating & persistence flow verification.
+    - Suite Result: 36/36 tests passed (100%).
+- **Regression Test Suites**:
+  - `folders_motion_haptics_p4_3_test.dart` (26/26 passed)
+  - `home_dark_mode_palette_test.dart` (16/16 passed)
+  - `home_filter_motion_test.dart` (11/11 passed)
+  - `search_motion_haptics_p4_5_test.dart` (20/20 passed)
+  - `folder_customization_gating_test.dart` (10/10 passed)
+  - `folder_deletion_test.dart` (all passed)
+  - Total tests verified: 119/119 passed.
+- **Static Analysis**:
+  - `flutter analyze` on modified files: 0 errors, 0 warnings.
+- **Prohibited Color Safety Check**:
+  - `git grep -i "444444" lib/`: 0 matches (confirmed absent).
+- **Shared Components Firewall**:
+  - Verified 0 changes to `PrimaryScreenSurface`, `BottomBarGlassSurface`, `TactileButton`, `showBlurredBottomSheet`.
+- **Physical Device Verification (Samsung Galaxy S23 Ultra `R5CW10GW8TE`)**:
+  - Dark Mode: Verified `#2C2C2C` sheet, `#5A5A5A` drag handle, `#FFFFFF` titles, `#3A3A3C` eyedropper, `#FFFFFF` selected color border, `#2C2C2C` sticker cards, `#34C759` badge, and `#FFFFFF` Apply button.
+  - Light Mode: Verified `#F9F9F7` sheet, `#D1D1D6` drag handle, `#1C1C1E` titles, `#EFEFF4` eyedropper, `Colors.white` sticker cards, and `#1C1C1E` Apply button.
+  - Customization Applied: Verified sticker selection persists to folder card on folders screen.
+  - Mode Restoration: Device returned to Dark Mode (Obsidian Night) on Folders tab.
+
+---
+
+### File Manifest
+- `lib/views/screens/folder_management_screen.dart`
+- `test/views/folders_dark_mode_palette_test.dart`
+- `Agents/skills/ChangeLogs Folder/FolderManagement_Changelog.md`
+
+---
+
+## v1.5.2 (Phase D3-F3)
+
+### Date
+2026-09-15
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- UI
+- Dark Mode Migration (Phase D3-F3)
+
+---
+
+### Summary
+Implemented **Phase D3-F3 — Color Picker Dark Mode** of the Quick Notes Dark Mode migration. Surgically migrated `IosColorPickerDialog` and its direct UI chrome to Dark Mode while strictly preserving:
+- Original Light Mode behavior, appearance, and contrast 100% byte-for-byte.
+- All actual color rendering, math, and calculations (`_gridColors`, `_userPresets`, HSV / RGB conversion, opacity alpha ramps).
+- `SpectrumPainter` and `CheckerboardPainter` shader logic 100% theme-invariant without dark branches.
+- Shared `BottomBarGlassSurface` container and Liquid Glass architecture untouched (only child CTA label adapted).
+- `FolderCustomizationSheet` isolated and untouched.
+- Motion curves, haptics feedback, geometry, and layout constraints.
+
+---
+
+### Key Implementations
+
+#### 1. Dialog & Header
+- **Dialog Background**: Dark `#2C2C2C` (`Color(0xFF2C2C2C)`), Light `#F9F9F7` (`Color(0xFFF9F9F7)`).
+- **Dialog Border Radius**: Locked at 28.0px.
+- **Header Colorize Icon**: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+- **Header Title ("Colors")**: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+- **Header Close Icon**: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+
+#### 2. Segmented Tabs
+- **Tab Track Container**: Dark `#1E1E1E` (`Color(0xFF1E1E1E)`), Light `#EFEFF4` (`Color(0xFFEFEFF4)`).
+- **Active Tab Pill**: Dark `#3A3A3C` (`Color(0xFF3A3A3C)`), Light `Colors.white` (`#FFFFFF`).
+- **Active Tab Label**: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`, `FontWeight.w700`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`, `FontWeight.w700`).
+- **Inactive Tab Label**: Dark `#757575` (`Color(0xFF757575)`, `FontWeight.w500`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`, `FontWeight.w500`).
+
+#### 3. Opacity & Sliders Chrome
+- **Section Label ("OPACITY")**: Dark `#757575` (`Color(0xFF757575)`), Light `#8E8E93` (`Color(0xFF8E8E93)`).
+- **Opacity Value Badge**:
+  - Background: Dark `#1E1E1E` (`Color(0xFF1E1E1E)`), Light `Colors.white`.
+  - Border: Dark `#3A3A3C` (`Color(0xFF3A3A3C)`), Light `#EFEFF4` (`Color(0xFFEFEFF4)`).
+  - Text: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+- **Opacity Track & Thumb**:
+  - Checkerboard grid & color alpha ramp: 100% theme-invariant content.
+  - White 20x20 circular thumb: unchanged.
+- **Sliders Tab**:
+  - Channel Labels ("R", "G", "B"): Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+  - Slider Inactive Track: Dark `#3A3A3C` (`Color(0xFF3A3A3C)`), Light `#E5E5EA` (`Color(0xFFE5E5EA)`).
+  - Active Track Channels: `Colors.red`, `Colors.green`, `Colors.blue` (Theme-invariant color content).
+  - Thumb: `Colors.white` (Theme-invariant).
+  - Value Badges: Dark `#1E1E1E` bg, `#3A3A3C` border, `#FFFFFF` text; Light `Colors.white` bg, `#EFEFF4` border, `#1C1C1E` text.
+
+#### 4. Presets, Divider & CTA
+- **Divider**: Dark `#3A3A3C` (`Color(0xFF3A3A3C)`), Light `#E5E5EA` (`Color(0xFFE5E5EA)`).
+- **Selected Color Preview Border**: Dark `#3A3A3C` (`Color(0xFF3A3A3C)`), Light `#E5E5EA` (`Color(0xFFE5E5EA)`). Fill remains `_currentColor` with `_currentOpacity`.
+- **Grid Swatch Unselected Border**: Dark `Color(0x26FFFFFF)` (15% white), Light `Color(0x1F000000)` (12% black). Selected border remains `Colors.white` with black drop shadow.
+- **User Preset Swatch Borders**:
+  - Unselected: Dark `Color(0x26FFFFFF)`, Light `Color(0x1F000000)`.
+  - Selected: Dark `#FFFFFF` (2.0px), Light `#1C1C1E` (2.0px).
+- **Add Preset Button**:
+  - Background: Dark `#3A3A3C` (`Color(0xFF3A3A3C)`), Light `#EFEFF4` (`Color(0xFFEFEFF4)`).
+  - Plus Icon: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+- **CTA ("Select Color")**:
+  - Label Text: Dark `#FFFFFF` (`Color(0xFFFFFFFF)`), Light `#1C1C1E` (`Color(0xFF1C1C1E)`).
+  - Container: `BottomBarGlassSurface` intact and unmodified.
+
+---
+
+### Verification
+- **Automated Tests**:
+  - Extended `test/views/folders_dark_mode_palette_test.dart` with 8 dedicated D3-F3 test cases:
+    - Test 1: Dark Mode Dialog Surface & Header (`#2C2C2C` background, 28px radius, `#FFFFFF` icons and title).
+    - Test 2: Light Mode Dialog Surface & Header Regression (`#F9F9F7` background, `#1C1C1E` icons and title).
+    - Test 3: Dark Mode Tab Selector Palette (`#1E1E1E` track, `#3A3A3C` active pill, `#FFFFFF` active label, `#757575` inactive label, dynamic tab switching).
+    - Test 4: Light Mode Tab Selector Regression (`#EFEFF4` track, `Colors.white` active pill, `#1C1C1E` labels).
+    - Test 5: Dark Mode Opacity & RGB Slider Chrome (`#757575` opacity label, `#1E1E1E` / `#3A3A3C` / `#FFFFFF` badge, `#FFFFFF` RGB labels, `#3A3A3C` inactive track).
+    - Test 6: Light Mode Opacity & RGB Regression (`#8E8E93` opacity label, `Colors.white` / `#EFEFF4` / `#1C1C1E` badge, `#1C1C1E` RGB labels, `#E5E5EA` inactive track).
+    - Test 7: Content Invariance (120 grid swatches, `SpectrumPainter`, `CheckerboardPainter`, and Red/Green/Blue active channels unchanged).
+    - Test 8: Presets & CTA Interaction (`#3A3A3C` Add button with `#FFFFFF` icon, `#FFFFFF` CTA text, color selection callback invocation, dialog dismissal).
+    - Suite Result: 44/44 tests passed (100%).
+- **Regression Test Suites**:
+  - `folders_motion_haptics_p4_3_test.dart` (26/26 passed)
+  - `home_dark_mode_palette_test.dart` (16/16 passed)
+  - `home_filter_motion_test.dart` (11/11 passed)
+  - `search_motion_haptics_p4_5_test.dart` (20/20 passed)
+  - `folder_customization_gating_test.dart` (10/10 passed)
+  - `folder_deletion_test.dart` (all passed)
+  - Total tests verified: 128/128 passed.
+- **Static Analysis**:
+  - `flutter analyze` on modified files: 0 errors, 0 new warnings.
+- **Prohibited Color Safety Check**:
+  - `git grep -i "444444" lib/`: 0 matches (confirmed absent).
+- **Shared Components Firewall**:
+  - Verified 0 changes to `PrimaryScreenSurface`, `BottomBarGlassSurface`, `TactileButton`, `showBlurredBottomSheet`, `showAnimatedDialog`.
+- **D3-F2 Boundary Integrity**:
+  - Verified `FolderCustomizationSheet` remains 100% untouched.
+
+---
+
+### File Manifest
+- `lib/views/screens/folder_management_screen.dart`
+- `test/views/folders_dark_mode_palette_test.dart`
+- `Agents/skills/ChangeLogs Folder/FolderManagement_Changelog.md`
+
+
+
+

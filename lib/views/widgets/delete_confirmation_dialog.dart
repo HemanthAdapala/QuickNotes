@@ -31,6 +31,7 @@ class DeleteConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding:
@@ -41,7 +42,7 @@ class DeleteConfirmationDialog extends StatelessWidget {
           width: 303,
           height: 187,
           decoration: ShapeDecoration(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30),
             ),
@@ -69,7 +70,9 @@ class DeleteConfirmationDialog extends StatelessWidget {
                       title,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF333333),
+                        color: isDark
+                            ? const Color(0xFFFFFFFF)
+                            : const Color(0xFF333333),
                         fontSize: 20,
                         fontWeight: FontWeight.w400,
                       ),
@@ -79,7 +82,9 @@ class DeleteConfirmationDialog extends StatelessWidget {
                       message,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF333333),
+                        color: isDark
+                            ? const Color(0xFFFFFFFF).withValues(alpha: 0.70)
+                            : const Color(0xFF333333),
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         height: 1.25,
@@ -113,7 +118,9 @@ class DeleteConfirmationDialog extends StatelessWidget {
                             cancelText,
                             textAlign: TextAlign.center,
                             style: GoogleFonts.inter(
-                              color: const Color(0xFF333333),
+                              color: isDark
+                                  ? const Color(0xFF757575)
+                                  : const Color(0xFF333333),
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
                             ),
@@ -143,7 +150,9 @@ class DeleteConfirmationDialog extends StatelessWidget {
                             deleteText,
                             textAlign: TextAlign.center,
                             style: GoogleFonts.inter(
-                              color: const Color(0xFFFF383C),
+                              color: isDark
+                                  ? const Color(0xFFFF453A)
+                                  : const Color(0xFFFF383C),
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
                             ),
