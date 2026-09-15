@@ -44,6 +44,8 @@ class FolderGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     final Color bgColor;
     final Color bgColorDark;
     if (folder.colorHex != null) {
@@ -59,7 +61,7 @@ class FolderGridCard extends StatelessWidget {
     final baseTitleStyle = GoogleFonts.inter(
       fontSize: 16.0,
       fontWeight: FontWeight.w600,
-      color: const Color(0xFF1C1C1E),
+      color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E),
     );
     final highlightTitleStyle = baseTitleStyle.copyWith(
       color: const Color(0xFFD49200),
@@ -189,7 +191,9 @@ class FolderGridCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
                 decoration: BoxDecoration(
-                  color: const Color(0x1A787880),
+                  color: isDark
+                      ? const Color(0xFF5A5A5A)
+                      : const Color(0x1A787880),
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 child: Text(
@@ -197,7 +201,9 @@ class FolderGridCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 12.0,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF555558),
+                    color: isDark
+                        ? const Color(0xFFFFFFFF)
+                        : const Color(0xFF555558),
                   ),
                 ),
               ),

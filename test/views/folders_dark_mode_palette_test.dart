@@ -8,6 +8,20 @@ import 'package:quick_notes/providers/notes_provider.dart';
 import 'package:quick_notes/views/screens/folder_management_screen.dart';
 import 'package:quick_notes/views/widgets/primary_screen_surface.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:quick_notes/models/folder.dart';
+import 'package:quick_notes/views/widgets/folder_card.dart';
+
+class _TestNotesProvider extends NotesProvider {
+  final List<Folder> _testFolders = [];
+
+  @override
+  List<Folder> get folders => _testFolders;
+
+  void addTestFolder(Folder folder) {
+    _testFolders.add(folder);
+    notifyListeners();
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -16,12 +30,15 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  Widget buildFoldersScreenHarness({required bool isDark}) {
+  Widget buildFoldersScreenHarness({
+    required bool isDark,
+    NotesProvider? notesProvider,
+  }) {
     SharedPreferences.setMockInitialValues({});
-    final notesProvider = NotesProvider();
+    final provider = notesProvider ?? NotesProvider();
 
     return ChangeNotifierProvider<NotesProvider>.value(
-      value: notesProvider,
+      value: provider,
       child: MaterialApp(
         theme: isDark ? ThemeData.dark() : ThemeData.light(),
         home: FolderManagementScreen(
@@ -401,4 +418,496 @@ void main() {
       );
     });
   });
+
+  group('Phase D3-C — Folders Screen Folder Card System Dark Mode Verification', () {
+    Widget buildFolderCardHarness({
+      required bool isDark,
+      required Folder folder,
+      int noteCount = 3,
+      String query = '',
+      VoidCallback? onCustomizeTap,
+    }) {
+      return MaterialApp(
+        theme: isDark ? ThemeData.dark() : ThemeData.light(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 150,
+              height: 192,
+              child: FolderGridCard(
+                folder: folder,
+                index: 0,
+                noteCount: noteCount,
+                query: query,
+                onTap: () {},
+                onCustomizeTap: onCustomizeTap,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets(
+        'Dark Mode: Title resolves to #FFFFFF, badge bg resolves to #5A5A5A, badge text resolves to #FFFFFF',
+        (tester) async {
+      final folder = Folder(
+        id: 'f1',
+        name: 'Work Projects',
+        createdAt: DateTime.now(),
+      );
+      await tester.pumpWidget(buildFolderCardHarness(
+        isDark: true,
+        folder: folder,
+        noteCount: 12,
+      ));
+      await tester.pumpAndSettle();
+
+      // 1. Folder title resolves to #FFFFFF
+      final titleRichText = tester.widget<RichText>(
+        find.descendant(
+          of: find.byType(FolderGridCard),
+          matching: find.byWidgetPredicate(
+            (w) =>
+                w is RichText &&
+                w.maxLines == 1 &&
+                w.overflow == TextOverflow.ellipsis,
+          ),
+        ),
+      );
+      final textSpan = titleRichText.text as TextSpan;
+      expect(textSpan.children, isNotNull);
+      final titleSpan = textSpan.children!.first as TextSpan;
+      expect(titleSpan.text, 'Work Projects');
+      expect(
+        titleSpan.style?.color,
+        const Color(0xFFFFFFFF),
+        reason: 'Base folder title must resolve to #FFFFFF in Dark Mode',
+      );
+
+      // 2. Note count badge background resolves to #5A5A5A
+      final badgeContainerFinder = find.ancestor(
+        of: find.text('12'),
+        matching: find.byType(Container),
+      ).first;
+      final badgeContainer = tester.widget<Container>(badgeContainerFinder);
+      final badgeDec = badgeContainer.decoration as BoxDecoration;
+      expect(
+        badgeDec.color,
+        const Color(0xFF5A5A5A),
+        reason: 'Badge container background must resolve to #5A5A5A in Dark Mode',
+      );
+
+      // 3. Note count badge text resolves to #FFFFFF
+      final countText = tester.widget<Text>(find.text('12'));
+      expect(
+        countText.style?.color,
+        const Color(0xFFFFFFFF),
+        reason: 'Badge count text must resolve to #FFFFFF in Dark Mode',
+      );
+    });
+
+    testWidgets(
+        'Dark Mode: Query highlight remains #D49200 and unhighlighted spans resolve to #FFFFFF',
+        (tester) async {
+      final folder = Folder(
+        id: 'f1',
+        name: 'Work Projects',
+        createdAt: DateTime.now(),
+      );
+      await tester.pumpWidget(buildFolderCardHarness(
+        isDark: true,
+        folder: folder,
+        query: 'Work',
+      ));
+      await tester.pumpAndSettle();
+
+      final titleRichText = tester.widget<RichText>(
+        find.descendant(
+          of: find.byType(FolderGridCard),
+          matching: find.byWidgetPredicate(
+            (w) =>
+                w is RichText &&
+                w.maxLines == 1 &&
+                w.overflow == TextOverflow.ellipsis,
+          ),
+        ),
+      );
+      final textSpan = titleRichText.text as TextSpan;
+      final spans = textSpan.children!;
+
+      // 4. Query highlight remains #D49200
+      final highlightSpan = spans[0] as TextSpan;
+      expect(highlightSpan.text, 'Work');
+      expect(
+        highlightSpan.style?.color,
+        const Color(0xFFD49200),
+        reason: 'Query highlight TextSpan must be #D49200 in Dark Mode',
+      );
+
+      // Unhighlighted remainder resolves to #FFFFFF
+      final remainderSpan = spans[1] as TextSpan;
+      expect(remainderSpan.text, ' Projects');
+      expect(
+        remainderSpan.style?.color,
+        const Color(0xFFFFFFFF),
+        reason: 'Unhighlighted remainder TextSpan must be #FFFFFF in Dark Mode',
+      );
+    });
+
+    testWidgets(
+        'Dark Mode: Physical folder artwork, paper, header, ruled lines, and customize button are invariant',
+        (tester) async {
+      final folder = Folder(
+        id: 'f1',
+        name: 'Work Projects',
+        createdAt: DateTime.now(),
+        colorHex: '0xFF4A90E2',
+      );
+      await tester.pumpWidget(buildFolderCardHarness(
+        isDark: true,
+        folder: folder,
+        onCustomizeTap: () {},
+      ));
+      await tester.pumpAndSettle();
+
+      // 5. Physical folder color remains exactly the supplied folder color
+      final fgFinder = find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.painter is FolderFgPainter,
+      );
+      expect(fgFinder, findsOneWidget);
+      final fgCustomPaint = tester.widget<CustomPaint>(fgFinder);
+      final fgPainter = fgCustomPaint.painter as FolderFgPainter;
+      expect(
+        fgPainter.color,
+        const Color(0xFF4A90E2),
+        reason: 'FolderFgPainter color must strictly match folder.colorHex in Dark Mode',
+      );
+
+      // 6. Folder back-flap derived color remains unchanged
+      final bgFinder = find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.painter is FolderBgPainter,
+      );
+      expect(bgFinder, findsOneWidget);
+      final bgCustomPaint = tester.widget<CustomPaint>(bgFinder);
+      final bgPainter = bgCustomPaint.painter as FolderBgPainter;
+      final hsl = HSLColor.fromColor(const Color(0xFF4A90E2));
+      final expectedDark =
+          hsl.withLightness((hsl.lightness - 0.08).clamp(0.0, 1.0)).toColor();
+      expect(
+        bgPainter.color,
+        expectedDark,
+        reason: 'FolderBgPainter color must remain _darken(colorHex) in Dark Mode',
+      );
+
+      // 7. DecorativeNoteCard stationery remains invariant (paper #FFFFFF, header #FFCC00, ruled lines #E2E2DF)
+      expect(find.byType(DecorativeNoteCard), findsNWidgets(2));
+      final firstCard = find.byType(DecorativeNoteCard).first;
+
+      final headerFinder = find.descendant(
+        of: firstCard,
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is DecoratedBox &&
+              (w.decoration as BoxDecoration).color == const Color(0xFFFFCC00),
+        ),
+      );
+      expect(
+        headerFinder,
+        findsOneWidget,
+        reason: 'DecorativeNoteCard header must remain #FFCC00 in Dark Mode',
+      );
+
+      final paperFinder = find.descendant(
+        of: firstCard,
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Container &&
+              (w.decoration as BoxDecoration?)?.color == Colors.white,
+        ),
+      );
+      expect(
+        paperFinder,
+        findsOneWidget,
+        reason: 'DecorativeNoteCard paper must remain Colors.white in Dark Mode',
+      );
+
+      final ruledLineFinder = find.descendant(
+        of: firstCard,
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Container &&
+              (w.decoration as BoxDecoration?)?.color ==
+                  const Color(0xFFE2E2DF),
+        ),
+      );
+      expect(
+        ruledLineFinder,
+        findsNWidgets(5),
+        reason: 'DecorativeNoteCard must have 5 ruled lines with #E2E2DF in Dark Mode',
+      );
+
+      // 8. Customize button remains background #FFFFFF and icon #8E8E93
+      final customizeContainerFinder = find.ancestor(
+        of: find.byIcon(Icons.add_rounded),
+        matching: find.byType(Container),
+      ).first;
+      final customizeContainer =
+          tester.widget<Container>(customizeContainerFinder);
+      final customizeDec = customizeContainer.decoration as BoxDecoration;
+      expect(
+        customizeDec.color,
+        Colors.white,
+        reason: 'Customize button background must remain Colors.white in Dark Mode',
+      );
+      expect(customizeDec.shape, BoxShape.circle);
+
+      final addIcon = tester.widget<Icon>(find.byIcon(Icons.add_rounded));
+      expect(
+        addIcon.color,
+        const Color(0xFF8E8E93),
+        reason: 'Customize button icon must remain #8E8E93 in Dark Mode',
+      );
+    });
+
+    testWidgets(
+        'Light Mode: Title remains #1C1C1E, badge bg remains #1A787880, badge text remains #555558',
+        (tester) async {
+      final folder = Folder(
+        id: 'f1',
+        name: 'Personal Notes',
+        createdAt: DateTime.now(),
+      );
+      await tester.pumpWidget(buildFolderCardHarness(
+        isDark: false,
+        folder: folder,
+        noteCount: 7,
+      ));
+      await tester.pumpAndSettle();
+
+      // 9. Folder title remains #1C1C1E
+      final titleRichText = tester.widget<RichText>(
+        find.descendant(
+          of: find.byType(FolderGridCard),
+          matching: find.byWidgetPredicate(
+            (w) =>
+                w is RichText &&
+                w.maxLines == 1 &&
+                w.overflow == TextOverflow.ellipsis,
+          ),
+        ),
+      );
+      final textSpan = titleRichText.text as TextSpan;
+      final titleSpan = textSpan.children!.first as TextSpan;
+      expect(
+        titleSpan.style?.color,
+        const Color(0xFF1C1C1E),
+        reason: 'Base folder title must remain #1C1C1E in Light Mode',
+      );
+
+      // 10. Count badge background remains #1A787880
+      final badgeContainerFinder = find.ancestor(
+        of: find.text('7'),
+        matching: find.byType(Container),
+      ).first;
+      final badgeContainer = tester.widget<Container>(badgeContainerFinder);
+      final badgeDec = badgeContainer.decoration as BoxDecoration;
+      expect(
+        badgeDec.color,
+        const Color(0x1A787880),
+        reason: 'Badge container background must remain #1A787880 in Light Mode',
+      );
+
+      // 11. Count badge text remains #555558
+      final countText = tester.widget<Text>(find.text('7'));
+      expect(
+        countText.style?.color,
+        const Color(0xFF555558),
+        reason: 'Badge count text must remain #555558 in Light Mode',
+      );
+    });
+
+    testWidgets(
+        'Light Mode: Query highlight remains #D49200 and unhighlighted spans remain #1C1C1E',
+        (tester) async {
+      final folder = Folder(
+        id: 'f1',
+        name: 'Personal Notes',
+        createdAt: DateTime.now(),
+      );
+      await tester.pumpWidget(buildFolderCardHarness(
+        isDark: false,
+        folder: folder,
+        query: 'Personal',
+      ));
+      await tester.pumpAndSettle();
+
+      final titleRichText = tester.widget<RichText>(
+        find.descendant(
+          of: find.byType(FolderGridCard),
+          matching: find.byWidgetPredicate(
+            (w) =>
+                w is RichText &&
+                w.maxLines == 1 &&
+                w.overflow == TextOverflow.ellipsis,
+          ),
+        ),
+      );
+      final textSpan = titleRichText.text as TextSpan;
+      final spans = textSpan.children!;
+
+      // 12. Query highlight remains #D49200
+      final highlightSpan = spans[0] as TextSpan;
+      expect(highlightSpan.text, 'Personal');
+      expect(
+        highlightSpan.style?.color,
+        const Color(0xFFD49200),
+        reason: 'Query highlight TextSpan must remain #D49200 in Light Mode',
+      );
+
+      // Unhighlighted remainder remains #1C1C1E
+      final remainderSpan = spans[1] as TextSpan;
+      expect(remainderSpan.text, ' Notes');
+      expect(
+        remainderSpan.style?.color,
+        const Color(0xFF1C1C1E),
+        reason: 'Unhighlighted remainder TextSpan must remain #1C1C1E in Light Mode',
+      );
+    });
+
+    testWidgets(
+        'Light Mode: Physical artwork, stationery, and customize button remain unchanged',
+        (tester) async {
+      final folder = Folder(
+        id: 'f1',
+        name: 'Personal Notes',
+        createdAt: DateTime.now(),
+        colorHex: '0xFFE57373',
+      );
+      await tester.pumpWidget(buildFolderCardHarness(
+        isDark: false,
+        folder: folder,
+        onCustomizeTap: () {},
+      ));
+      await tester.pumpAndSettle();
+
+      // 13. Physical folder colors remain unchanged
+      final fgFinder = find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.painter is FolderFgPainter,
+      );
+      final fgCustomPaint = tester.widget<CustomPaint>(fgFinder);
+      final fgPainter = fgCustomPaint.painter as FolderFgPainter;
+      expect(fgPainter.color, const Color(0xFFE57373));
+
+      // 14. Decorative stationery remains unchanged
+      final firstCard = find.byType(DecorativeNoteCard).first;
+      final headerFinder = find.descendant(
+        of: firstCard,
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is DecoratedBox &&
+              (w.decoration as BoxDecoration).color == const Color(0xFFFFCC00),
+        ),
+      );
+      expect(headerFinder, findsOneWidget);
+
+      final paperFinder = find.descendant(
+        of: firstCard,
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Container &&
+              (w.decoration as BoxDecoration?)?.color == Colors.white,
+        ),
+      );
+      expect(paperFinder, findsOneWidget);
+
+      // 15. Customize button remains unchanged
+      final addIcon = tester.widget<Icon>(find.byIcon(Icons.add_rounded));
+      expect(addIcon.color, const Color(0xFF8E8E93));
+    });
+
+    testWidgets(
+        'Geometry Lock: Card dimensions, spacings, badge radius, and grid aspect ratio are strictly preserved',
+        (tester) async {
+      final folder = Folder(
+        id: 'f1',
+        name: 'Geometry Test',
+        createdAt: DateTime.now(),
+      );
+      await tester.pumpWidget(buildFolderCardHarness(
+        isDark: true,
+        folder: folder,
+      ));
+      await tester.pumpAndSettle();
+
+      // 16. Existing 150 × 154 folder graphic geometry remains unchanged
+      final graphicSizedBoxFinder = find.byWidgetPredicate(
+        (w) => w is SizedBox && w.width == 150.0 && w.height == 154.0,
+      );
+      expect(
+        graphicSizedBoxFinder,
+        findsOneWidget,
+        reason: 'Folder graphic container must be exactly 150 × 154',
+      );
+
+      // 17. 12px graphic/title spacing remains unchanged
+      final spacing12Finder = find.byWidgetPredicate(
+        (w) => w is SizedBox && w.height == 12.0,
+      );
+      expect(
+        spacing12Finder,
+        findsOneWidget,
+        reason: 'Spacing between graphic and title row must be exactly 12.0px',
+      );
+
+      // 18. 6px title/badge spacing remains unchanged
+      final spacing6Finder = find.byWidgetPredicate(
+        (w) => w is SizedBox && w.width == 6.0,
+      );
+      expect(
+        spacing6Finder,
+        findsOneWidget,
+        reason: 'Spacing between title and badge must be exactly 6.0px',
+      );
+
+      // 19. Badge radius remains 10px
+      final badgeContainerFinder = find.ancestor(
+        of: find.text('3'),
+        matching: find.byType(Container),
+      ).first;
+      final badgeContainer = tester.widget<Container>(badgeContainerFinder);
+      final badgeDec = badgeContainer.decoration as BoxDecoration;
+      expect(
+        badgeDec.borderRadius,
+        BorderRadius.circular(10.0),
+        reason: 'Badge border radius must remain 10px',
+      );
+
+      // 20. Grid aspect ratio remains 150 / 192 on FolderManagementScreen
+      final notesProvider = _TestNotesProvider();
+      notesProvider.addTestFolder(Folder(
+        id: 'f_test',
+        name: 'Test Grid Folder',
+        createdAt: DateTime.now(),
+      ));
+      await tester.pumpWidget(buildFoldersScreenHarness(
+        isDark: true,
+        notesProvider: notesProvider,
+      ));
+      await tester.pumpAndSettle();
+
+      final gridFinder = find.byType(GridView);
+      expect(gridFinder, findsOneWidget);
+      final grid = tester.widget<GridView>(gridFinder);
+      final delegate =
+          grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+      expect(
+        delegate.childAspectRatio,
+        150.0 / 192.0,
+        reason: 'GridView childAspectRatio must be exactly 150.0 / 192.0',
+      );
+    });
+  });
 }
+
+

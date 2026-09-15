@@ -179,4 +179,84 @@ Implemented **Phase D3-B — Folders Screen Header & Search Dark Mode Implementa
   - `home_filter_motion_test.dart` & `home_screen_motion_test.dart` (22/22 passed).
 - Static analysis: `flutter analyze` verified 0 errors across modified files.
 
+---
 
+## [1.3.0] - Folders Screen Folder Card System Dark Mode (Phase D3-C)
+
+### Date
+2026-09-15
+
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- UI
+- Dark Mode Migration (Phase D3-C)
+
+---
+
+### Summary
+Implemented **Phase D3-C — Folders Screen Folder Card System** of the Quick Notes Dark Mode migration. Migrated strictly the UI chrome / metadata of `FolderGridCard` (folder title and note count badge) to the approved Dark Mode contract (#FFFFFF title, #5A5A5A badge background, #FFFFFF badge text), while strictly preserving search query highlight (#D49200), physical folder artwork, geometry, motion parameters, haptics, and Light Mode parity (#1C1C1E title, #1A787880 badge background, #555558 badge text).
+
+---
+
+### Key Implementations
+
+#### 1. Theme-Aware Folder Title
+- Scoped base folder title color in `FolderGridCard`:
+  - **Dark Mode**: `Color(0xFFFFFFFF)` (#FFFFFF)
+  - **Light Mode**: `Color(0xFF1C1C1E)` (#1C1C1E, preserved)
+- Title typography strictly retained: `GoogleFonts.inter`, `fontSize: 16.0`, `fontWeight: FontWeight.w600`, `maxLines: 1`, `overflow: TextOverflow.ellipsis`.
+
+#### 2. Search Query Highlighting Invariance
+- Query highlight `TextSpan` strictly preserved as `Color(0xFFD49200)` (#D49200) across both Dark Mode and Light Mode.
+
+#### 3. Theme-Aware Note Count Badge
+- Scoped badge container background and text color in `FolderGridCard`:
+  - **Dark Mode**:
+    - Background: `Color(0xFF5A5A5A)` (#5A5A5A)
+    - Text: `Color(0xFFFFFFFF)` (#FFFFFF)
+  - **Light Mode**:
+    - Background: `Color(0x1A787880)` (#1A787880, preserved)
+    - Text: `Color(0xFF555558)` (#555558, preserved)
+- Preserved exact badge geometry: `padding: (horizontal: 8.0, vertical: 2.0)`, `borderRadius: BorderRadius.circular(10.0)`, `fontSize: 12.0`, `FontWeight.bold`.
+
+#### 4. Physical Artwork & Component Invariance (Locked)
+- Physical artwork layers strictly preserved:
+  - Folder body and flap painters (`FolderBgPainter`, `FolderFgPainter`)
+  - Folder color parsing and `_darken()` back-flap logic
+  - Folder 3D physical shadows (`#333333`)
+  - `DecorativeNoteCard` stationery: white paper (`#FFFFFF`), yellow notepad header (`#FFCC00`), ruled lines (`#E2E2DF`)
+  - Folder sticker PNG assets
+  - Customize button: white circle background (`Colors.white`), icon `#8E8E93`, shadow `Colors.black12`
+- Folder card geometry strictly preserved: 150 × 154 graphic canvas, 150 × 133 folder artwork, 12px graphic-to-title spacing, 6px title-to-badge spacing, 150/192 grid aspect ratio.
+- Tactile motion & haptics strictly preserved: `TactileButton` compression 0.95, Apple spring, selection haptics.
+
+#### 5. Shared Component Safety
+- `FolderGridCard` resolved theme context naturally using `Theme.of(context).brightness == Brightness.dark`, guaranteeing zero regressions when rendered in `FolderManagementScreen` and `SearchScreen`.
+
+---
+
+### Verification
+- Extended dedicated test suite `test/views/folders_dark_mode_palette_test.dart` with Phase D3-C verification (covering 20 test points):
+  - Dark Mode: Folder title (#FFFFFF), Badge background (#5A5A5A), Badge text (#FFFFFF), Query highlight (#D49200), physical folder color preserved, back-flap darkening preserved, stationery preserved (paper #FFFFFF, header #FFCC00, ruled lines #E2E2DF), customize button preserved.
+  - Light Mode: Folder title (#1C1C1E), Badge background (#1A787880), Badge text (#555558), Query highlight (#D49200), physical artwork preserved, stationery preserved, customize button preserved.
+  - Geometry: 150 × 154 graphic canvas, 12px spacing, 6px spacing, 10px badge radius, 150/192 grid aspect ratio.
+  - Test Suite Result: 12/12 passed.
+- Regression test suites executed and passed:
+  - `folders_motion_haptics_p4_3_test.dart` (26/26 passed)
+  - `home_dark_mode_palette_test.dart` (16/16 passed)
+  - `home_filter_motion_test.dart` & `home_screen_motion_test.dart` (22/22 passed)
+  - `search_motion_haptics_p4_5_test.dart` (20/20 passed)
+- Static analysis: `flutter analyze lib/views/widgets/folder_card.dart test/views/folders_dark_mode_palette_test.dart` confirmed 0 errors and 0 warnings.
+- Physical device verification: Verified on connected physical Android device (Samsung SM-S918B / `R5CW10GW8TE`):
+  - Dark Mode: Verified pure white titles (#FFFFFF), contrast-accessible badge pills (#5A5A5A) with white count (#FFFFFF), invariant folder physical colors (lavender, gray), stickers, white stationery, and yellow headers.
+  - Light Mode: Verified #1C1C1E titles, #1A787880 badge pills, #555558 count text, and identical physical artwork.
+  - Interaction verification: Folder tap morph transition, long press context menu, customize button (+) sheet, search query amber highlight (#D49200), back navigation, and theme toggling all verified without regressions.
+
+---
+
+### File Manifest
+- `lib/views/widgets/folder_card.dart`
+- `test/views/folders_dark_mode_palette_test.dart`
+- `Agents/skills/ChangeLogs Folder/FolderManagement_Changelog.md`
