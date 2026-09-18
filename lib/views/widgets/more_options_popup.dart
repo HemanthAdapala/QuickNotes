@@ -6,15 +6,25 @@ import '../../core/motion/quick_notes_haptics.dart';
 class MoreOptionsPopup extends StatelessWidget {
   final VoidCallback? onDeleteData;
   final VoidCallback? onRefresh;
+  final Color? deleteColor;
+  final Color? refreshColor;
+  final Color? dividerColor;
 
   const MoreOptionsPopup({
     super.key,
     this.onDeleteData,
     this.onRefresh,
+    this.deleteColor,
+    this.refreshColor,
+    this.dividerColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveDeleteColor = deleteColor ?? const Color(0xFF333333);
+    final effectiveRefreshColor = refreshColor ?? const Color(0xFF333333);
+    final effectiveDividerColor = dividerColor ?? const Color(0x33000000);
+
     return SizedBox(
       width: 192,
       height: 100,
@@ -54,10 +64,10 @@ class MoreOptionsPopup extends StatelessWidget {
                         child: Container(
                           width: 192,
                           height: 50,
-                          decoration: const ShapeDecoration(
+                          decoration: ShapeDecoration(
                             shape: RoundedRectangleBorder(
                               side:
-                                  BorderSide(width: 0.20, color: Color(0x33000000)),
+                                  BorderSide(width: 0.20, color: effectiveDividerColor),
                             ),
                           ),
                         ),
@@ -70,7 +80,7 @@ class MoreOptionsPopup extends StatelessWidget {
                           width: 16,
                           height: 16,
                           colorFilter:
-                              const ColorFilter.mode(Color(0xFF333333), BlendMode.srcIn),
+                              ColorFilter.mode(effectiveDeleteColor, BlendMode.srcIn),
                         ),
                       ),
                       Positioned(
@@ -84,7 +94,7 @@ class MoreOptionsPopup extends StatelessWidget {
                             child: Text(
                               'Delete Data',
                               style: GoogleFonts.inter(
-                                color: const Color(0xFF333333),
+                                color: effectiveDeleteColor,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
                               ),
@@ -132,7 +142,7 @@ class MoreOptionsPopup extends StatelessWidget {
                           width: 16,
                           height: 16,
                           colorFilter:
-                              const ColorFilter.mode(Color(0xFF333333), BlendMode.srcIn),
+                              ColorFilter.mode(effectiveRefreshColor, BlendMode.srcIn),
                         ),
                       ),
                       Positioned(
@@ -146,7 +156,7 @@ class MoreOptionsPopup extends StatelessWidget {
                             child: Text(
                               'Refresh',
                               style: GoogleFonts.inter(
-                                color: const Color(0xFF333333),
+                                color: effectiveRefreshColor,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
                               ),

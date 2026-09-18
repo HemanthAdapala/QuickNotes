@@ -48,9 +48,11 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryTextColor = Color(0xFF333333);
-    const secondaryTextColor = Color(0xFF666666);
-    const backgroundColor = Color(0xFFF2F2F7);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333);
+    final secondaryTextColor = isDark ? const Color(0xFF8E8E93) : const Color(0xFF666666);
+    final backgroundColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF2F2F7);
+    final sheetColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
     const primaryBlueColor = Color(0xFF007AFF);
 
     return Scaffold(
@@ -75,7 +77,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   'assets/icons/angle_left.svg',
                   width: 22,
                   height: 22,
-                  colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                  colorFilter: ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
                 ),
                 titleWidget: Text(
                   "Delete your account",
@@ -96,9 +98,15 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             Expanded(
               child: Container(
                 width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                decoration: BoxDecoration(
+                  color: sheetColor,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                  border: isDark
+                      ? Border.all(
+                          color: const Color(0xFF2C2C2E),
+                          width: 1.0,
+                        )
+                      : null,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Align(

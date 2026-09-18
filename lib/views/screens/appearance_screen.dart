@@ -44,11 +44,11 @@ class AppearanceScreen extends StatelessWidget {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final isDark = settingsProvider.isDarkMode;
 
-    final backgroundColor = isDark ? QuickNotesTheme.background : const Color(0xFFF2F2F7);
-    final surfaceColor = isDark ? QuickNotesTheme.surface : Colors.white;
-    final textPrimaryColor = isDark ? QuickNotesTheme.textPrimary : const Color(0xFF333333);
-    final textSecondaryColor = isDark ? QuickNotesTheme.textSecondary : const Color(0xFF8E8E93);
-    final borderColor = isDark ? QuickNotesTheme.border : const Color(0x14333333);
+    final backgroundColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF2F2F7);
+    final surfaceColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+    final textPrimaryColor = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333);
+    final textSecondaryColor = isDark ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93);
+    final borderColor = isDark ? const Color(0xFF2C2C2E) : const Color(0x14333333);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -202,7 +202,9 @@ class AppearanceScreen extends StatelessWidget {
                                   activeColor: isDark
                                       ? QuickNotesTheme.accent
                                       : const Color(0xFF6366F1),
-                                  inactiveColor: borderColor,
+                                  inactiveColor: isDark
+                                      ? const Color(0xFF3A3A3C)
+                                      : borderColor,
                                   onChanged: (val) {
                                     HapticFeedback.selectionClick();
                                     settingsProvider.setFontSizeScale(val);

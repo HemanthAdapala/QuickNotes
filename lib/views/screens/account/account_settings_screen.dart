@@ -105,24 +105,27 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   }
 
   void _showConflictDialog(AccountLinkResult result) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           "Existing Account Found",
           style: GoogleFonts.inter(
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF333333),
+            color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333),
             fontSize: 18,
           ),
         ),
         content: Text(
           "This Google account is already linked to another Quick Notes account.\n\nYou can switch to that account, or stay with your current offline account.",
           style: GoogleFonts.inter(
-            color: const Color(0xFF333333).withValues(alpha: 0.8),
+            color: isDark
+                ? const Color(0xFF8E8E93)
+                : const Color(0xFF333333).withValues(alpha: 0.8),
             fontSize: 14,
             height: 1.4,
           ),
@@ -155,7 +158,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E1E1E),
+              backgroundColor: isDark ? const Color(0xFF3A3A3C) : const Color(0xFF1E1E1E),
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -176,8 +179,23 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryTextColor = Color(0xFF333333);
-    const backgroundColor = Color(0xFFF2F2F7);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor = isDark ? Colors.white : const Color(0xFF333333);
+    final secondaryTextColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF666666);
+    final backgroundColor =
+        isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF2F2F7);
+    final sheetColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+    final cardBgColor =
+        isDark ? const Color(0xFF242426) : const Color(0xFFF9F9FB);
+    final cardBorderColor =
+        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    final offlineIconBg =
+        isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA);
+    final googleBtnBg =
+        isDark ? const Color(0xFF3A3A3C) : const Color(0xFF1E1E1E);
+    final chevronColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333);
 
     final isOffline = _controller.isOffline;
     final isSigningIn = _controller.state == AccountUiState.signingIn;
@@ -204,7 +222,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                   'assets/icons/angle_left.svg',
                   width: 22,
                   height: 22,
-                  colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                  colorFilter:
+                      ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
                 ),
                 titleWidget: Text(
                   "Account",
@@ -225,9 +244,16 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             Expanded(
               child: Container(
                 width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                decoration: BoxDecoration(
+                  color: sheetColor,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(32)),
+                  border: isDark
+                      ? Border.all(
+                          color: const Color(0xFF2C2C2E),
+                          width: 1.0,
+                        )
+                      : null,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Align(
@@ -247,10 +273,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(20.0),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF9F9FB),
+                            color: cardBgColor,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                                color: const Color(0xFFE5E5EA), width: 1),
+                                color: cardBorderColor, width: 1),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +287,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFE5E5EA),
+                                      color: offlineIconBg,
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: const Center(
@@ -288,7 +314,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                               Text(
                                 "Your notes are stored on this device.\nSign in with Google to connect this account and enable cloud backup.",
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFF666666),
+                                  color: secondaryTextColor,
                                   fontSize: 13,
                                   height: 1.4,
                                 ),
@@ -300,7 +326,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                   onPressed:
                                       isSigningIn ? null : _handleGoogleSignIn,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF1E1E1E),
+                                    backgroundColor: googleBtnBg,
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     padding: const EdgeInsets.symmetric(
@@ -350,10 +376,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(20.0),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF9F9FB),
+                            color: cardBgColor,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                                color: const Color(0xFFE5E5EA), width: 1),
+                                color: cardBorderColor, width: 1),
                           ),
                           child: Row(
                             children: [
@@ -361,7 +387,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                 width: 52,
                                 height: 52,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE5E5EA),
+                                  color: offlineIconBg,
                                   shape: BoxShape.circle,
                                   image: _controller.photoUrl != null &&
                                           _controller.photoUrl!.isNotEmpty
@@ -424,7 +450,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFE8F5E9),
+                                        color: isDark
+                                            ? const Color(0xFF34C759)
+                                                .withValues(alpha: 0.15)
+                                            : const Color(0xFFE8F5E9),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Row(
@@ -436,7 +465,9 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                                           Text(
                                             "Google Account Connected",
                                             style: GoogleFonts.inter(
-                                              color: const Color(0xFF2E7D32),
+                                              color: isDark
+                                                  ? const Color(0xFF34C759)
+                                                  : const Color(0xFF2E7D32),
                                               fontSize: 11,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -456,11 +487,24 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
                       // ── GROUPED TILES ─────────────────────────────────────
                       GroupedListContainer(
+                        backgroundColor:
+                            isDark ? const Color(0xFF242426) : Colors.white,
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF2C2C2E)
+                              : const Color(0xFFE5E5EA),
+                          width: 1.0,
+                        ),
+                        dividerColor: isDark
+                            ? const Color(0xFF2C2C2E)
+                            : const Color(0xFFE5E5EA),
                         children: [
                           GroupedTile.navigation(
                             iconPath:
                                 'assets/icons/bottom_navigation/settings.svg',
                             title: 'Profile',
+                            textColor: primaryTextColor,
+                            chevronColor: chevronColor,
                             onTap: () {
                               HapticFeedback.lightImpact();
                               Navigator.push(
@@ -472,6 +516,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                           GroupedTile.navigation(
                             iconPath: 'assets/icons/trash.svg',
                             title: 'Delete your data and account',
+                            textColor: primaryTextColor,
+                            chevronColor: chevronColor,
                             onTap: () {
                               HapticFeedback.lightImpact();
                               Navigator.push(

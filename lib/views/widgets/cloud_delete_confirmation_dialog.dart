@@ -33,6 +33,19 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+    final primaryTextColor = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF374151);
+    final secondaryTextColor = isDark ? const Color(0xFF8E8E93) : const Color(0xFF4B5563);
+    final detailsCardBg = isDark ? const Color(0xFF242426) : const Color(0xFFF9FAFB);
+    final detailsCardBorder = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E7EB);
+    final cancelBtnBg = isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF3F4F6);
+    final cancelBtnBorder = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E7EB);
+    final cancelBtnTextColor = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF4B5563);
+    final destructiveColor = isDark ? const Color(0xFFFF453A) : const Color(0xFFDC2626);
+    final destructiveIconBg = isDark ? const Color(0x33FF453A) : const Color(0xFFFEE2E2);
+    final destructiveTitleColor = isDark ? const Color(0xFFFF453A) : const Color(0xFF991B1B);
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding:
@@ -42,9 +55,10 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
         width: 320,
         padding: const EdgeInsets.all(20.0),
         decoration: ShapeDecoration(
-          color: Colors.white,
+          color: dialogBg,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
+            side: isDark ? const BorderSide(color: Color(0xFF2C2C2E), width: 1.0) : BorderSide.none,
           ),
           shadows: const [
             BoxShadow(
@@ -66,12 +80,12 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEE2E2),
+                      color: destructiveIconBg,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.delete_forever_outlined,
-                      color: Color(0xFFDC2626),
+                      color: destructiveColor,
                       size: 24,
                     ),
                   ),
@@ -85,7 +99,7 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF991B1B),
+                            color: destructiveTitleColor,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -94,7 +108,7 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: const Color(0xFF4B5563),
+                            color: secondaryTextColor,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -109,9 +123,9 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
+                  color: detailsCardBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  border: Border.all(color: detailsCardBorder),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +135,7 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF374151),
+                        color: primaryTextColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -129,7 +143,7 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
                       'Size: ${_formatBytes(remoteBackup.fileSizeBytes)}',
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: const Color(0xFF6B7280),
+                        color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -143,7 +157,7 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   height: 1.35,
-                  color: const Color(0xFF4B5563),
+                  color: secondaryTextColor,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -161,9 +175,9 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
+                          color: cancelBtnBg,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          border: Border.all(color: cancelBtnBorder),
                         ),
                         child: Center(
                           child: Text(
@@ -171,7 +185,7 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF4B5563),
+                              color: cancelBtnTextColor,
                             ),
                           ),
                         ),
@@ -188,7 +202,7 @@ class CloudDeleteConfirmationDialog extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDC2626),
+                          color: destructiveColor,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Center(

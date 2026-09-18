@@ -366,7 +366,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Scroll to reveal the SDE drag tile
-      final tileFinder = find.text('🧪 Test SDE Drag Selection');
+      final tileFinder = find.textContaining('Test SDE Drag Selection');
       expect(tileFinder, findsOneWidget);
       await tester.ensureVisible(tileFinder);
       await tester.pumpAndSettle();

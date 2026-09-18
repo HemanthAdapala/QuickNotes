@@ -45,14 +45,15 @@ class WidgetsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF242426) : Colors.white;
     final primaryTextColor =
         isDark ? const Color(0xFFF5F5F7) : const Color(0xFF1D1D1F);
     final secondaryTextColor =
         isDark ? const Color(0xFF8E8E93) : const Color(0xFF86868B);
-    final borderColor = isDark ? const Color(0x33FFFFFF) : const Color(0x1A000000);
+    final borderColor = isDark ? const Color(0xFF2C2C2E) : const Color(0x1A000000);
 
     return PrimaryScreenSurface(
+      color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(

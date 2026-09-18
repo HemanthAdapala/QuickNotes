@@ -199,7 +199,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
           fontSize: 12,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
-          color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF8E8E93),
+          color: const Color(0xFF8E8E93),
         ),
       ),
     );
@@ -211,13 +211,24 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
         context.select<SettingsProvider, bool>((p) => p.isDarkMode);
     final isDark = widget.isDarkMode ?? isCurrentDark;
     final primaryTextColor = isDark ? Colors.white : const Color(0xFF333333);
-    final secondaryTextColor =
-        isDark ? const Color(0xFF9E9E9E) : const Color(0xFF8E8E93);
+    const secondaryTextColor = Color(0xFF8E8E93);
+    final chevronColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333);
+    final cardBgColor = isDark ? const Color(0xFF242426) : Colors.white;
+    final cardBorderColor =
+        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFEFEFF2);
+    final cardDividerColor =
+        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE6E6E6);
+    final popupDeleteColor =
+        isDark ? const Color(0xFFFF453A) : const Color(0xFF333333);
+    final popupRefreshColor = isDark ? Colors.white : const Color(0xFF333333);
+    final popupDividerColor =
+        isDark ? const Color(0xFF38383A) : const Color(0x33000000);
     final screenHeight = MediaQuery.sizeOf(context).height;
     final double headerHeight = screenHeight < 720 ? 238.0 : 248.0;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       body: Stack(
         children: [
           // 1. Fixed Top Floral Background Banner (Layer Isolated)
@@ -251,7 +262,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
             right: 0,
             bottom: 0,
             child: PrimaryScreenSurface(
-              color: isDark ? const Color(0xFF121212) : Colors.white,
+              color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
               child: const SizedBox.expand(),
             ),
           ),
@@ -292,13 +303,13 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                   height: 90,
                                   decoration: ShapeDecoration(
                                     color: isDark
-                                        ? const Color(0xFF1E1E1E)
+                                        ? const Color(0xFFE2E2DF)
                                         : Colors.white,
                                     shape: OvalBorder(
                                       side: BorderSide(
                                         width: 4,
                                         color: isDark
-                                            ? const Color(0xFF121212)
+                                            ? const Color(0xFF1E1E1E)
                                             : Colors.white,
                                       ),
                                     ),
@@ -330,9 +341,11 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                         color: isDark
                                             ? const Color(0xFF2C2C2E)
                                             : Colors.white,
-                                        shape: const OvalBorder(
+                                        shape: OvalBorder(
                                           side: BorderSide(
-                                            color: Color(0x1F3C3C43),
+                                            color: isDark
+                                                ? const Color(0x38FFFFFF)
+                                                : const Color(0x1F3C3C43),
                                             width: 0.5,
                                           ),
                                         ),
@@ -427,18 +440,22 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             // ── SECTION 1: ACCOUNT & BACKUP ───────────────────────
-                            _buildSectionHeader('ACCOUNT & BACKUP', isDark: isDark),
+                            _buildSectionHeader('ACCOUNT & BACKUP',
+                                isDark: isDark),
                             GroupedListContainer(
                               width: double.infinity,
-                              border: isDark
-                                  ? Border.all(color: const Color(0xFF2C2C2E), width: 1.0)
-                                  : Border.all(color: const Color(0xFFEFEFF2), width: 1.0),
+                              backgroundColor: cardBgColor,
+                              border: Border.all(
+                                  color: cardBorderColor, width: 1.0),
+                              dividerColor: cardDividerColor,
                               children: [
                                 GroupedTile.navigation(
                                   iconPath:
                                       'assets/icons/bottom_navigation/settings.svg',
                                   title: 'Account',
                                   fontSize: 15.0,
+                                  textColor: primaryTextColor,
+                                  chevronColor: chevronColor,
                                   onTap: () {
                                     Navigator.push(
                                       context,
@@ -451,10 +468,13 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                   iconPath: 'assets/icons/refresh.svg',
                                   title: 'Backup & Sync',
                                   fontSize: 15.0,
+                                  textColor: primaryTextColor,
+                                  chevronColor: chevronColor,
                                   onTap: () {
                                     Navigator.push(
                                       context,
-                                      buildPageRoute(const BackupRestoreScreen()),
+                                      buildPageRoute(
+                                          const BackupRestoreScreen()),
                                     );
                                   },
                                 ),
@@ -467,19 +487,21 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                             _buildSectionHeader('PREFERENCES', isDark: isDark),
                             GroupedListContainer(
                               width: double.infinity,
-                              border: isDark
-                                  ? Border.all(color: const Color(0xFF2C2C2E), width: 1.0)
-                                  : Border.all(color: const Color(0xFFEFEFF2), width: 1.0),
+                              backgroundColor: cardBgColor,
+                              border: Border.all(
+                                  color: cardBorderColor, width: 1.0),
+                              dividerColor: cardDividerColor,
                               children: [
                                 GroupedTile.navigation(
                                   iconPath: 'assets/icons/highlighter.svg',
                                   title: 'Appearance',
                                   fontSize: 15.0,
+                                  textColor: primaryTextColor,
+                                  chevronColor: chevronColor,
                                   onTap: () {
                                     Navigator.push(
                                       context,
-                                      buildPageRoute(
-                                          const AppearanceScreen()),
+                                      buildPageRoute(const AppearanceScreen()),
                                     );
                                   },
                                 ),
@@ -487,17 +509,22 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                   iconPath: 'assets/icons/night-day.svg',
                                   title: 'Dark Mode',
                                   fontSize: 15.0,
-                                  trailingSwitch: Selector<SettingsProvider, bool>(
+                                  textColor: primaryTextColor,
+                                  trailingSwitch:
+                                      Selector<SettingsProvider, bool>(
                                     selector: (_, p) => p.isDarkMode,
                                     builder: (context, isCurrentDark, _) {
                                       return ToggleSwitch(
                                         value: isCurrentDark,
+                                        isDark: isDark,
                                         onChanged: (val) async {
                                           final settingsProv =
-                                              Provider.of<SettingsProvider>(context,
+                                              Provider.of<SettingsProvider>(
+                                                  context,
                                                   listen: false);
                                           if (val) {
-                                            await requestDarkModeAccess(context);
+                                            await requestDarkModeAccess(
+                                                context);
                                           } else {
                                             await settingsProv
                                                 .setThemeMode(ThemeMode.light);
@@ -525,6 +552,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                       iconPath: 'assets/icons/category.svg',
                                       title: 'Widgets',
                                       fontSize: 15.0,
+                                      textColor: primaryTextColor,
+                                      chevronColor: chevronColor,
                                       trailing: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
@@ -552,7 +581,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                                   fontSize: 9,
                                                   fontWeight: FontWeight.w700,
                                                   letterSpacing: 0.4,
-                                                  color: const Color(0xFF10B981),
+                                                  color:
+                                                      const Color(0xFF10B981),
                                                 ),
                                               ),
                                             ),
@@ -563,9 +593,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                             width: 14,
                                             height: 14,
                                             colorFilter: ColorFilter.mode(
-                                              isDark
-                                                  ? const Color(0xFF8E8E93)
-                                                  : const Color(0xFF333333),
+                                              chevronColor,
                                               BlendMode.srcIn,
                                             ),
                                           ),
@@ -581,6 +609,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                   iconPath: 'assets/icons/settings-sliders.svg',
                                   title: 'Storage and Data',
                                   fontSize: 15.0,
+                                  textColor: primaryTextColor,
+                                  chevronColor: chevronColor,
                                   onTap: () {
                                     Navigator.push(
                                       context,
@@ -595,17 +625,21 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                             const SizedBox(height: 20.0),
 
                             // ── SECTION 3: SUPPORT & ABOUT ────────────────────────
-                            _buildSectionHeader('SUPPORT & ABOUT', isDark: isDark),
+                            _buildSectionHeader('SUPPORT & ABOUT',
+                                isDark: isDark),
                             GroupedListContainer(
                               width: double.infinity,
-                              border: isDark
-                                  ? Border.all(color: const Color(0xFF2C2C2E), width: 1.0)
-                                  : Border.all(color: const Color(0xFFEFEFF2), width: 1.0),
+                              backgroundColor: cardBgColor,
+                              border: Border.all(
+                                  color: cardBorderColor, width: 1.0),
+                              dividerColor: cardDividerColor,
                               children: [
                                 GroupedTile.navigation(
                                   iconPath: 'assets/icons/interrogation.svg',
                                   title: 'FAQ',
                                   fontSize: 15.0,
+                                  textColor: primaryTextColor,
+                                  chevronColor: chevronColor,
                                   onTap: () {
                                     Navigator.push(
                                       context,
@@ -620,6 +654,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                   iconPath: 'assets/icons/terms-info.svg',
                                   title: 'Terms of Service',
                                   fontSize: 15.0,
+                                  textColor: primaryTextColor,
+                                  chevronColor: chevronColor,
                                   onTap: () {
                                     Navigator.push(
                                       context,
@@ -634,6 +670,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                   iconPath: 'assets/icons/insurance.svg',
                                   title: 'Privacy Policy',
                                   fontSize: 15.0,
+                                  textColor: primaryTextColor,
+                                  chevronColor: chevronColor,
                                   onTap: () {
                                     Navigator.push(
                                       context,
@@ -648,6 +686,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                   iconPath: 'assets/icons/terms-info.svg',
                                   title: 'About',
                                   fontSize: 15.0,
+                                  textColor: primaryTextColor,
+                                  chevronColor: chevronColor,
                                   onTap: () {
                                     showBlurredBottomSheet(
                                       context: context,
@@ -664,14 +704,18 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                               _buildSectionHeader('DEVELOPER', isDark: isDark),
                               GroupedListContainer(
                                 width: double.infinity,
-                                border: isDark
-                                    ? Border.all(color: const Color(0xFF2C2C2E), width: 1.0)
-                                    : Border.all(color: const Color(0xFFEFEFF2), width: 1.0),
+                                backgroundColor: cardBgColor,
+                                border: Border.all(
+                                    color: cardBorderColor, width: 1.0),
+                                dividerColor: cardDividerColor,
                                 children: [
                                   GroupedTile.navigation(
-                                    iconPath: 'assets/icons/settings-sliders.svg',
+                                    iconPath:
+                                        'assets/icons/settings-sliders.svg',
                                     title: 'Premium Test Mode',
                                     fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
                                     onTap: () {
                                       Navigator.push(
                                         context,
@@ -685,10 +729,13 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                         'assets/icons/bottom_navigation/home.svg',
                                     title: 'Test Welcome Screen',
                                     fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
                                     onTap: () {
                                       Navigator.push(
                                         context,
-                                        buildPageRoute(const TestWelcomeScreen()),
+                                        buildPageRoute(
+                                            const TestWelcomeScreen()),
                                       );
                                     },
                                   ),
@@ -696,10 +743,13 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                     iconPath: 'assets/icons/edit_pen.svg',
                                     title: 'Test SDE Drag Selection',
                                     fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
                                     onTap: () {
                                       Navigator.push(
                                         context,
-                                        buildPageRoute(const SDEDragTestScreen()),
+                                        buildPageRoute(
+                                            const SDEDragTestScreen()),
                                       );
                                     },
                                   ),
@@ -707,6 +757,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                     iconPath: 'assets/icons/highlighter.svg',
                                     title: 'Glassmorphism Sandbox',
                                     fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
                                     onTap: () {
                                       Navigator.push(
                                         context,
@@ -719,20 +771,24 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                     iconPath: 'assets/icons/terms-info.svg',
                                     title: 'Seed Long Note (10,000+ Chars)',
                                     fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
                                     onTap: () async {
-                                      final provider = Provider.of<NotesProvider>(
-                                          context,
-                                          listen: false);
+                                      final provider =
+                                          Provider.of<NotesProvider>(context,
+                                              listen: false);
                                       final seededNote =
                                           await provider.seedLongTestNote();
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
                                           SnackBar(
                                             content: Text(
                                                 '✅ Seeded Long Note with ${seededNote.content.length} characters!'),
                                             backgroundColor:
                                                 const Color(0xFF34C759),
-                                            duration: const Duration(seconds: 3),
+                                            duration:
+                                                const Duration(seconds: 3),
                                           ),
                                         );
                                       }
@@ -742,13 +798,16 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                     iconPath: 'assets/icons/alarm_clock.svg',
                                     title: 'Seed 50 Test Tasks',
                                     fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
                                     onTap: () async {
-                                      final provider = Provider.of<TasksProvider>(
-                                          context,
-                                          listen: false);
+                                      final provider =
+                                          Provider.of<TasksProvider>(context,
+                                              listen: false);
                                       await provider.seedTestTasks(55);
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
                                           const SnackBar(
                                             content: Text(
                                                 '✅ 55 Test Tasks created across Today, Weekly & Missed!'),
@@ -780,8 +839,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                   ),
                 ),
               ),
-          ],
-        ),
+            ],
+          ),
 
           // 3.5. Header Expanded Outside-Tap Barrier & Interaction
           Positioned.fill(
@@ -816,8 +875,8 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                     'assets/icons/angle_left.svg',
                     width: 22,
                     height: 22,
-                    colorFilter: ColorFilter.mode(
-                        primaryTextColor, BlendMode.srcIn),
+                    colorFilter:
+                        ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
                   ),
                   titleWidget: Text(
                     "Settings",
@@ -836,6 +895,9 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                   expandedWidth: 192.0,
                   expandedHeight: 100.0,
                   expandedChild: MoreOptionsPopup(
+                    deleteColor: popupDeleteColor,
+                    refreshColor: popupRefreshColor,
+                    dividerColor: popupDividerColor,
                     onDeleteData: () async {
                       setState(() => _isMoreOptionsOpen = false);
                       final notesProvider =
@@ -898,8 +960,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                             width: 5.0,
                             height: 5.0,
                             decoration: BoxDecoration(
-                              color: primaryTextColor
-                                  .withValues(alpha: 0.8),
+                              color: primaryTextColor.withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -908,8 +969,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                             width: 5.0,
                             height: 5.0,
                             decoration: BoxDecoration(
-                              color: primaryTextColor
-                                  .withValues(alpha: 0.8),
+                              color: primaryTextColor.withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -918,8 +978,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                             width: 5.0,
                             height: 5.0,
                             decoration: BoxDecoration(
-                              color: primaryTextColor
-                                  .withValues(alpha: 0.8),
+                              color: primaryTextColor.withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -941,11 +1000,13 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
 class ToggleSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
+  final bool isDark;
 
   const ToggleSwitch({
     super.key,
     required this.value,
     required this.onChanged,
+    this.isDark = false,
   });
 
   @override
@@ -958,7 +1019,9 @@ class ToggleSwitch extends StatelessWidget {
         width: 53,
         height: 28,
         decoration: ShapeDecoration(
-          color: value ? const Color(0xFF34C759) : const Color(0xFFE5E5EA),
+          color: value
+              ? const Color(0xFF34C759)
+              : (isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(100),
           ),
@@ -989,4 +1052,3 @@ class ToggleSwitch extends StatelessWidget {
 }
 
 typedef StitchToggleSwitch = ToggleSwitch;
-

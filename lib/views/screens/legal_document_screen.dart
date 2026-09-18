@@ -17,8 +17,13 @@ class LegalDocumentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryTextColor = Color(0xFF333333);
-    const backgroundColor = Color(0xFFF2F2F7);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333);
+    final bodyTextColor = isDark ? const Color(0xFFE5E5EA) : const Color(0xFF4A4A4A);
+    final blockquoteTextColor = isDark ? const Color(0xFF8E8E93) : const Color(0xFF8C8987);
+    final blockquoteBorderColor = isDark ? const Color(0xFF3A3A3C) : const Color(0xFFD9D9D9);
+    final backgroundColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF2F2F7);
+    final sheetColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -42,7 +47,7 @@ class LegalDocumentScreen extends StatelessWidget {
                   'assets/icons/angle_left.svg',
                   width: 22,
                   height: 22,
-                  colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                  colorFilter: ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
                 ),
                 titleWidget: Text(
                   title,
@@ -62,9 +67,15 @@ class LegalDocumentScreen extends StatelessWidget {
             Expanded(
               child: Container(
                 width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                decoration: BoxDecoration(
+                  color: sheetColor,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                  border: isDark
+                      ? Border.all(
+                          color: const Color(0xFF2C2C2E),
+                          width: 1.0,
+                        )
+                      : null,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Align(
@@ -97,22 +108,22 @@ class LegalDocumentScreen extends StatelessWidget {
                     p: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
-                      color: const Color(0xFF4A4A4A),
+                      color: bodyTextColor,
                       height: 1.6,
                     ),
                     listBullet: GoogleFonts.inter(
                       fontSize: 15,
-                      color: const Color(0xFF4A4A4A),
+                      color: bodyTextColor,
                       height: 1.6,
                     ),
                     blockquote: GoogleFonts.inter(
                       fontSize: 15,
                       fontStyle: FontStyle.italic,
-                      color: const Color(0xFF8C8987),
+                      color: blockquoteTextColor,
                     ),
-                    blockquoteDecoration: const BoxDecoration(
+                    blockquoteDecoration: BoxDecoration(
                       border: Border(
-                        left: BorderSide(color: Color(0xFFD9D9D9), width: 4),
+                        left: BorderSide(color: blockquoteBorderColor, width: 4),
                       ),
                     ),
                   ),

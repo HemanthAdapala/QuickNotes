@@ -28,10 +28,10 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
 
   Future<void> _loadStorageData() async {
     setState(() => _isLoading = true);
-    
+
     final db = await StorageService.getDatabaseSize();
     final cache = await StorageService.getCacheSize();
-    
+
     setState(() {
       _dbSize = db;
       _cacheSize = cache;
@@ -73,13 +73,14 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
     required VoidCallback onConfirm,
   }) {
     HapticFeedback.lightImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showBlurredBottomSheet(
       context: context,
       child: Container(
         width: double.infinity,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         ),
         padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
         child: Column(
@@ -89,7 +90,8 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
             Text(
               title,
               style: GoogleFonts.inter(
-                color: const Color(0xFF333333),
+                color:
+                    isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333),
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
@@ -99,7 +101,8 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
             Text(
               message,
               style: GoogleFonts.inter(
-                color: const Color(0xFF666666),
+                color:
+                    isDark ? const Color(0xFF8E8E93) : const Color(0xFF666666),
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
@@ -113,8 +116,12 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF2F2F7),
-                      foregroundColor: const Color(0xFF333333),
+                      backgroundColor: isDark
+                          ? const Color(0xFF3A3A3C)
+                          : const Color(0xFFF2F2F7),
+                      foregroundColor: isDark
+                          ? const Color(0xFFFFFFFF)
+                          : const Color(0xFF333333),
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -138,7 +145,11 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
                       onConfirm();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isDestructive ? const Color(0xFFFF3B30) : const Color(0xFF007AFF),
+                      backgroundColor: isDestructive
+                          ? (isDark
+                              ? const Color(0xFFFF453A)
+                              : const Color(0xFFFF3B30))
+                          : const Color(0xFF007AFF),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -165,8 +176,17 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryTextColor = Color(0xFF333333);
-    const backgroundColor = Color(0xFFF2F2F7);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor =
+        isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333);
+    final backgroundColor =
+        isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF2F2F7);
+    final sheetColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+    final groupedCardBg = isDark ? const Color(0xFF242426) : Colors.white;
+    final groupedBorder =
+        isDark ? Border.all(color: const Color(0xFF2C2C2E), width: 1.0) : null;
+    final groupedDivider =
+        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -190,7 +210,8 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
                   'assets/icons/angle_left.svg',
                   width: 22,
                   height: 22,
-                  colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                  colorFilter:
+                      ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
                 ),
                 titleWidget: Text(
                   "Storage & Data",
@@ -204,86 +225,112 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 24.0),
 
             // Content Area (White Rounded Sheet)
             Expanded(
               child: Container(
                 width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                decoration: BoxDecoration(
+                  color: sheetColor,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(32)),
+                  border: isDark
+                      ? Border.all(
+                          color: const Color(0xFF2C2C2E),
+                          width: 1.0,
+                        )
+                      : null,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : Align(
-                       alignment: Alignment.topCenter,
-                       child: ConstrainedBox(
-                         constraints: const BoxConstraints(maxWidth: 402.0),
-                         child: ListView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.only(left: 24.0, right: 24.0, top: 32.0, bottom: 100.0 + MediaQuery.paddingOf(context).bottom),
-                        children: [
-                          // Storage Visualizer
-                          _buildStorageVisualizer(),
-                          
-                          const SizedBox(height: 32.0),
-
-                          // Section 1: Local Database
-                          GroupedListContainer(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 402.0),
+                          child: ListView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: EdgeInsets.only(
+                                left: 24.0,
+                                right: 24.0,
+                                top: 32.0,
+                                bottom: 100.0 +
+                                    MediaQuery.paddingOf(context).bottom),
                             children: [
-                              GroupedTile.keyValue(
-                                iconPath: 'assets/icons/file.svg',
-                                title: 'Local Database',
-                                value: StorageService.formatBytes(_dbSize),
-                                onTap: null,
+                              // Storage Visualizer
+                              _buildStorageVisualizer(isDark),
+
+                              const SizedBox(height: 32.0),
+
+                              // Section 1: Local Database
+                              GroupedListContainer(
+                                backgroundColor: groupedCardBg,
+                                border: groupedBorder,
+                                dividerColor: groupedDivider,
+                                children: [
+                                  GroupedTile.keyValue(
+                                    iconPath: 'assets/icons/terms-info.svg',
+                                    title: 'Local Database',
+                                    value: StorageService.formatBytes(_dbSize),
+                                    textColor: primaryTextColor,
+                                    onTap: null,
+                                  ),
+                                  GroupedTile.action(
+                                    iconPath:
+                                        'assets/icons/settings-sliders.svg',
+                                    title: 'Compact Database',
+                                    isDestructive: false,
+                                    textColor: primaryTextColor,
+                                    onTap: () => _confirmAction(
+                                      title: 'Compact Database',
+                                      message:
+                                          'This will optimize the database and reclaim unused space. Your data will not be lost.',
+                                      confirmText: 'Compact',
+                                      isDestructive: false,
+                                      onConfirm: _compactDatabase,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              GroupedTile.action(
-                                iconPath: 'assets/icons/settings-sliders.svg',
-                                title: 'Compact Database',
-                                isDestructive: false,
-                                onTap: () => _confirmAction(
-                                  title: 'Compact Database',
-                                  message: 'This will optimize the database and reclaim unused space. Your data will not be lost.',
-                                  confirmText: 'Compact',
-                                  isDestructive: false,
-                                  onConfirm: _compactDatabase,
-                                ),
+
+                              const SizedBox(height: 16.0),
+
+                              // Section 2: Offline Cache
+                              GroupedListContainer(
+                                backgroundColor: groupedCardBg,
+                                border: groupedBorder,
+                                dividerColor: groupedDivider,
+                                children: [
+                                  GroupedTile.keyValue(
+                                    iconPath:
+                                        'assets/icons/bottom_navigation/folder-open.svg',
+                                    title: 'Offline Cache',
+                                    value:
+                                        StorageService.formatBytes(_cacheSize),
+                                    textColor: primaryTextColor,
+                                    onTap: null,
+                                  ),
+                                  GroupedTile.action(
+                                    iconPath: 'assets/icons/trash.svg',
+                                    title: 'Clear Cache',
+                                    isDestructive: true,
+                                    onTap: () => _confirmAction(
+                                      title: 'Clear Cache',
+                                      message:
+                                          'This will clear temporary files and cached data. Your notes and tasks will remain safe.',
+                                      confirmText: 'Clear Cache',
+                                      isDestructive: true,
+                                      onConfirm: _clearCache,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                          
-                          const SizedBox(height: 16.0),
-
-                          // Section 2: Offline Cache
-                          GroupedListContainer(
-                            children: [
-                              GroupedTile.keyValue(
-                                iconPath: 'assets/icons/folder.svg',
-                                title: 'Offline Cache',
-                                value: StorageService.formatBytes(_cacheSize),
-                                onTap: null,
-                              ),
-                              GroupedTile.action(
-                                iconPath: 'assets/icons/trash.svg',
-                                title: 'Clear Cache',
-                                isDestructive: true,
-                                onTap: () => _confirmAction(
-                                  title: 'Clear Cache',
-                                  message: 'This will clear temporary files and cached data. Your notes and tasks will remain safe.',
-                                  confirmText: 'Clear Cache',
-                                  isDestructive: true,
-                                  onConfirm: _clearCache,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
-                       ),
-                     ),
               ),
             ),
           ],
@@ -292,22 +339,27 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
     );
   }
 
-  Widget _buildStorageVisualizer() {
+  Widget _buildStorageVisualizer(bool isDark) {
     final total = _dbSize + _cacheSize;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: ShapeDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF242426) : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
+          side: isDark
+              ? const BorderSide(color: Color(0xFF2C2C2E), width: 1.0)
+              : BorderSide.none,
         ),
-        shadows: const [
-          BoxShadow(
-            color: Color(0x0F000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        shadows: isDark
+            ? const []
+            : const [
+                BoxShadow(
+                  color: Color(0x0F000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,7 +376,7 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
           Text(
             StorageService.formatBytes(total),
             style: GoogleFonts.inter(
-              color: const Color(0xFF1C1C1E),
+              color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E),
               fontSize: 28,
               fontWeight: FontWeight.w700,
               letterSpacing: -1.0,
@@ -357,7 +409,9 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
                     flex: 1,
                     child: Container(
                       height: 12,
-                      color: const Color(0xFFE5E5EA), // Empty gray
+                      color: isDark
+                          ? const Color(0xFF3A3A3C)
+                          : const Color(0xFFE5E5EA), // Empty gray
                     ),
                   ),
               ],
@@ -368,9 +422,9 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              _buildLegendItem("Database", const Color(0xFF007AFF)),
+              _buildLegendItem("Database", const Color(0xFF007AFF), isDark),
               const SizedBox(width: 24),
-              _buildLegendItem("Cache", const Color(0xFFFF9500)),
+              _buildLegendItem("Cache", const Color(0xFFFF9500), isDark),
             ],
           )
         ],
@@ -378,7 +432,7 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
     );
   }
 
-  Widget _buildLegendItem(String label, Color color) {
+  Widget _buildLegendItem(String label, Color color, bool isDark) {
     return Row(
       children: [
         Container(
@@ -393,7 +447,7 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
         Text(
           label,
           style: GoogleFonts.inter(
-            color: const Color(0xFF333333),
+            color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333),
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),

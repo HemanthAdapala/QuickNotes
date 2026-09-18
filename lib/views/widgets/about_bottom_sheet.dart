@@ -2,15 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AboutBottomSheet extends StatelessWidget {
-  const AboutBottomSheet({Key? key}) : super(key: key);
+  final bool? isDark;
+
+  const AboutBottomSheet({
+    Key? key,
+    this.isDark,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final dark = isDark ?? (Theme.of(context).brightness == Brightness.dark);
+    final sheetColor = dark ? const Color(0xFF2C2C2C) : Colors.white;
+    final titleColor = dark ? const Color(0xFFFFFFFF) : const Color(0xFF333333);
+    final versionColor = dark ? const Color(0xFF8E8E93) : const Color(0xFF8C8987);
+    final descriptionColor = dark ? const Color(0xFF8E8E93) : const Color(0xFF4A4A4A);
+    final pillBgColor = dark ? const Color(0xFF3A3A3C) : const Color(0xFFF2F2F7);
+    final pillTextColor = dark ? const Color(0xFF8E8E93) : const Color(0xFF8C8987);
+    final closeBtnBgColor = dark ? const Color(0xFF3A3A3C) : const Color(0xFFF2F2F7);
+    final closeBtnTextColor = dark ? const Color(0xFFFFFFFF) : const Color(0xFF333333);
+
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: sheetColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
       child: Column(
@@ -24,6 +39,12 @@ class AboutBottomSheet extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFF222222),
               borderRadius: BorderRadius.circular(22),
+              border: dark
+                  ? Border.all(
+                      color: const Color(0xFF2C2C2E),
+                      width: 1.0,
+                    )
+                  : null,
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x3F000000),
@@ -49,7 +70,7 @@ class AboutBottomSheet extends StatelessWidget {
           Text(
             "QuickNotes",
             style: GoogleFonts.inter(
-              color: const Color(0xFF333333),
+              color: titleColor,
               fontSize: 24,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
@@ -59,7 +80,7 @@ class AboutBottomSheet extends StatelessWidget {
           Text(
             "Version 1.0.4",
             style: GoogleFonts.inter(
-              color: const Color(0xFF8C8987),
+              color: versionColor,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -69,7 +90,7 @@ class AboutBottomSheet extends StatelessWidget {
           Text(
             "The fastest, most elegant way to capture your thoughts, organize your life, and secure your ideas.",
             style: GoogleFonts.inter(
-              color: const Color(0xFF4A4A4A),
+              color: descriptionColor,
               fontSize: 15,
               fontWeight: FontWeight.w400,
               height: 1.5,
@@ -82,7 +103,7 @@ class AboutBottomSheet extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFF2F2F7),
+              color: pillBgColor,
               borderRadius: BorderRadius.circular(100),
             ),
             child: Row(
@@ -91,7 +112,7 @@ class AboutBottomSheet extends StatelessWidget {
                 Text(
                   "Crafted with ",
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF8C8987),
+                    color: pillTextColor,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -112,8 +133,8 @@ class AboutBottomSheet extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF2F2F7),
-                foregroundColor: const Color(0xFF333333),
+                backgroundColor: closeBtnBgColor,
+                foregroundColor: closeBtnTextColor,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(

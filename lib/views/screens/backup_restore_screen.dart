@@ -20,7 +20,6 @@ import '../widgets/cloud_delete_confirmation_dialog.dart';
 import '../widgets/grouped_list_container.dart';
 import '../widgets/restore_confirmation_dialog.dart';
 import '../widgets/tactile_button.dart';
-import '../widgets/app_header_bar.dart';
 
 /// BackupRestoreScreen — UI Foundation for Local & Cloud Backup & Restore management.
 /// Designed according to QuickNotes Apple-inspired visual language (GroupedListContainer, TactileButton, AppHeaderBar).
@@ -66,7 +65,37 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryTextColor = Color(0xFF333333);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor =
+        isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333);
+    final secondaryTextColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF666666);
+    final scaffoldBg =
+        isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF2F2F7);
+    final sheetBg = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+    final groupedCardBg = isDark ? const Color(0xFF242426) : Colors.white;
+    final groupedBorder =
+        isDark ? Border.all(color: const Color(0xFF2C2C2E), width: 1.0) : null;
+    final groupedDivider =
+        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    final backupInfoCardBg =
+        isDark ? const Color(0xFF242426) : const Color(0xFFF2F2F7);
+    final greenInfoSurfaceBg =
+        isDark ? const Color(0x2634C759) : const Color(0xFFE8F5E9);
+    final greenInfoTextColor =
+        isDark ? const Color(0xFF34C759) : const Color(0xFF1B5E20);
+    final greenInfoSubtextColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF2E7D32);
+    final disabledControlBg =
+        isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA);
+    final viewCloudBackupsBg =
+        isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF2F2F7);
+    final remoteBackupRowBg =
+        isDark ? const Color(0xFF242426) : const Color(0xFFF2F2F7);
+    final trashBg = isDark ? const Color(0x33FF453A) : const Color(0xFFFFE5E5);
+    final trashIconColor =
+        isDark ? const Color(0xFFFF453A) : const Color(0xFFFF3B30);
+
     final sessionManager = SessionManager();
     final isGoogleAuthenticated =
         sessionManager.activeSessionType == SessionType.google;
@@ -80,12 +109,10 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             opState == BackupOperationState.creatingLocalBackup;
         final lastLocalBackup = _controller.lastLocalBackupResult;
 
-        const backgroundColor = Color(0xFFF2F2F7);
-
         return Scaffold(
-          backgroundColor: backgroundColor,
+          backgroundColor: scaffoldBg,
           body: SafeArea(
-        bottom: false,
+            bottom: false,
             child: Column(
               children: [
                 // Top Navigation Bar (Matching Account Section)
@@ -104,7 +131,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                       'assets/icons/angle_left.svg',
                       width: 22,
                       height: 22,
-                      colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                      colorFilter:
+                          ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
                     ),
                     titleWidget: Text(
                       "Backup & Sync",
@@ -118,7 +146,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 20.0),
                 const SizedBox(height: 8.0),
 
@@ -126,510 +154,206 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: sheetBg,
                       borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(32)),
+                          const BorderRadius.vertical(top: Radius.circular(32)),
+                      border: isDark
+                          ? Border.all(
+                              color: const Color(0xFF2C2C2E),
+                              width: 1.0,
+                            )
+                          : null,
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: Align(
-                   alignment: Alignment.topCenter,
-                   child: ConstrainedBox(
-                         constraints: const BoxConstraints(maxWidth: 402.0),
-                         child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: EdgeInsets.only(
-                          left: 24.0, right: 24.0, top: 24.0, bottom: 40.0 + MediaQuery.paddingOf(context).bottom),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Restoration Progress Stage Banner
-                          if (_controller.operationState ==
-                                  BackupOperationState.restoring &&
-                              _controller.currentRestoreStage != null) ...[
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14.0),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFFBEB),
-                                borderRadius: BorderRadius.circular(20),
-                                border:
-                                    Border.all(color: const Color(0xFFFDE68A)),
-                              ),
-                              child: Row(
-                                children: [
-                                  const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Color(0xFFD97706)),
-                                    ),
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 402.0),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: EdgeInsets.only(
+                              left: 24.0,
+                              right: 24.0,
+                              top: 24.0,
+                              bottom:
+                                  40.0 + MediaQuery.paddingOf(context).bottom),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Restoration Progress Stage Banner
+                              if (_controller.operationState ==
+                                      BackupOperationState.restoring &&
+                                  _controller.currentRestoreStage != null) ...[
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(14.0),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0x26FF9500)
+                                        : const Color(0xFFFFFBEB),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                        color: isDark
+                                            ? const Color(0xFF2C2C2E)
+                                            : const Color(0xFFFDE68A)),
                                   ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      _controller.currentRestoreStage!,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF92400E),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<
+                                                  Color>(
+                                              isDark
+                                                  ? const Color(0xFFFF9500)
+                                                  : const Color(0xFFD97706)),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _controller.currentRestoreStage!,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark
+                                                ? const Color(0xFFFF9500)
+                                                : const Color(0xFF92400E),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 16.0),
+                              ],
+
+                              // Error & Info Banners
+                              if (_controller.errorMessage != null) ...[
+                                _buildStatusBanner(
+                                  message: _controller.errorMessage!,
+                                  isError: true,
+                                ),
+                                const SizedBox(height: 16.0),
+                              ],
+                              if (_controller.infoMessage != null) ...[
+                                _buildStatusBanner(
+                                  message: _controller.infoMessage!,
+                                  isError: false,
+                                ),
+                                const SizedBox(height: 16.0),
+                              ],
+
+                              // SECTION: Google Drive Status
+                              _buildSectionHeader('GOOGLE DRIVE'),
+                              const SizedBox(height: 8.0),
+                              GroupedListContainer(
+                                backgroundColor: groupedCardBg,
+                                border: groupedBorder,
+                                dividerColor: groupedDivider,
+                                children: [
+                                  GroupedTile.navigation(
+                                    iconPath:
+                                        'assets/icons/settings-sliders.svg',
+                                    title: 'Google Drive',
+                                    textColor: primaryTextColor,
+                                    trailing: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: isGoogleAuthenticated
+                                            ? (isDark
+                                                ? const Color(0x2634C759)
+                                                : const Color(0xFFE8F5E9))
+                                            : (isDark
+                                                ? const Color(0xFF3A3A3C)
+                                                : const Color(0xFFF2F2F7)),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        isGoogleAuthenticated
+                                            ? 'Connected'
+                                            : 'Not Connected',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: isGoogleAuthenticated
+                                              ? const Color(0xFF34C759)
+                                              : const Color(0xFF8E8E93),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(height: 16.0),
-                          ],
 
-                          // Error & Info Banners
-                          if (_controller.errorMessage != null) ...[
-                            _buildStatusBanner(
-                              message: _controller.errorMessage!,
-                              isError: true,
-                            ),
-                            const SizedBox(height: 16.0),
-                          ],
-                          if (_controller.infoMessage != null) ...[
-                            _buildStatusBanner(
-                              message: _controller.infoMessage!,
-                              isError: false,
-                            ),
-                            const SizedBox(height: 16.0),
-                          ],
+                              const SizedBox(height: 20.0),
 
-                          // SECTION: Google Drive Status
-                          _buildSectionHeader('GOOGLE DRIVE'),
-                          const SizedBox(height: 8.0),
-                          GroupedListContainer(
-                            children: [
-                              GroupedTile.navigation(
-                                iconPath: 'assets/icons/settings-sliders.svg',
-                                title: 'Google Drive',
-                                trailing: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: isGoogleAuthenticated
-                                        ? const Color(0xFFE8F5E9)
-                                        : const Color(0xFFF2F2F7),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    isGoogleAuthenticated
-                                        ? 'Connected'
-                                        : 'Not Connected',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: isGoogleAuthenticated
-                                          ? const Color(0xFF34C759)
-                                          : const Color(0xFF8E8E93),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 20.0),
-
-                          // SECTION: Local Backup
-                          _buildSectionHeader('CREATE LOCAL BACKUP'),
-                          const SizedBox(height: 8.0),
-                          GroupedListContainer(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Generates a portable .qnb backup archive stored locally on your device.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        color: const Color(0xFF666666),
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                    if (lastLocalBackup != null &&
-                                        lastLocalBackup.success &&
-                                        lastLocalBackup.filePath != null) ...[
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.all(12.0),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF2F2F7),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                const Icon(Icons.check_circle,
-                                                    color: Color(0xFF34C759),
-                                                    size: 16),
-                                                const SizedBox(width: 6),
-                                                Expanded(
-                                                  child: Text(
-                                                    p.basename(lastLocalBackup
-                                                        .filePath!),
-                                                    style: GoogleFonts.inter(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: primaryTextColor,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '${lastLocalBackup.noteCount} Notes · ${lastLocalBackup.folderCount} Folders · ${lastLocalBackup.taskCount} Tasks · ${lastLocalBackup.attachmentCount} Attachments',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w500,
-                                                color: const Color(0xFF666666),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              'Size: ${_formatBytes(lastLocalBackup.fileSize ?? 0)}',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 11,
-                                                color: const Color(0xFF8E8E93),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                    const SizedBox(height: 14),
-                                    TactileButton(
-                                      useAppleSpring: true,
-                                      onTap: isBusy
-                                          ? () {}
-                                          : () async {
-                                              HapticFeedback.lightImpact();
-                                              await _controller
-                                                  .createLocalBackup();
-                                            },
-                                      child: Container(
-                                        width: double.infinity,
-                                        height: 46,
-                                        decoration: BoxDecoration(
-                                          color: isBusy
-                                              ? const Color(0xFFE5E5EA)
-                                              : const Color(0xFF007AFF),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Center(
-                                          child: isCreatingLocal
-                                              ? const SizedBox(
-                                                  width: 18,
-                                                  height: 18,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                    valueColor:
-                                                        AlwaysStoppedAnimation<
-                                                                Color>(
-                                                            Colors.white),
-                                                  ),
-                                                )
-                                              : Text(
-                                                  'Create Local Backup',
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: isBusy
-                                                        ? const Color(
-                                                            0xFF8E8E93)
-                                                        : Colors.white,
-                                                  ),
-                                                ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 20.0),
-
-                          // SECTION: Cloud Backup
-                          _buildSectionHeader('CLOUD BACKUP'),
-                          const SizedBox(height: 8.0),
-                          GroupedListContainer(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Back up notes, folders, and image assets directly to Google Drive.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        color: const Color(0xFF666666),
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                    if (_controller.lastUploadedCloudBackup !=
-                                        null) ...[
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.all(12.0),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFE8F5E9),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                const Icon(Icons.cloud_done,
-                                                    color: Color(0xFF34C759),
-                                                    size: 16),
-                                                const SizedBox(width: 6),
-                                                Expanded(
-                                                  child: Text(
-                                                    _controller
-                                                        .lastUploadedCloudBackup!
-                                                        .fileName,
-                                                    style: GoogleFonts.inter(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: const Color(
-                                                          0xFF1B5E20),
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Size: ${_formatBytes(_controller.lastUploadedCloudBackup!.fileSizeBytes)} · Uploaded to Google Drive',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w500,
-                                                color: const Color(0xFF2E7D32),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                    const SizedBox(height: 14),
-                                    Row(
+                              // SECTION: Local Backup
+                              _buildSectionHeader('CREATE LOCAL BACKUP'),
+                              const SizedBox(height: 8.0),
+                              GroupedListContainer(
+                                backgroundColor: groupedCardBg,
+                                border: groupedBorder,
+                                dividerColor: groupedDivider,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Expanded(
-                                          child: TactileButton(
-                                            useAppleSpring: true,
-                                            onTap: (isBusy ||
-                                                    !isGoogleAuthenticated)
-                                                ? () {}
-                                                : () async {
-                                                    HapticFeedback
-                                                        .lightImpact();
-                                                    await _controller
-                                                        .uploadCloudBackup();
-                                                  },
-                                            child: Container(
-                                              height: 44,
-                                              decoration: BoxDecoration(
-                                                color: (isBusy ||
-                                                        !isGoogleAuthenticated)
-                                                    ? const Color(0xFFE5E5EA)
-                                                    : const Color(0xFF34C759),
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
-                                              child: Center(
-                                                child: opState ==
-                                                        BackupOperationState
-                                                            .uploadingCloudBackup
-                                                    ? const SizedBox(
-                                                        width: 18,
-                                                        height: 18,
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                          strokeWidth: 2,
-                                                          valueColor:
-                                                              AlwaysStoppedAnimation<
-                                                                      Color>(
-                                                                  Colors.white),
-                                                        ),
-                                                      )
-                                                    : Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal:
-                                                                    6.0),
-                                                        child: FittedBox(
-                                                          fit: BoxFit.scaleDown,
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child: Text(
-                                                            'Back Up to Drive',
-                                                            maxLines: 1,
-                                                            softWrap: false,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .clip,
-                                                            style: GoogleFonts
-                                                                .inter(
-                                                              fontSize: 13,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                              color: (isBusy ||
-                                                                      !isGoogleAuthenticated)
-                                                                  ? const Color(
-                                                                      0xFF8E8E93)
-                                                                  : Colors
-                                                                      .white,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                              ),
-                                            ),
+                                        Text(
+                                          'Generates a portable .qnb backup archive stored locally on your device.',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            color: secondaryTextColor,
+                                            height: 1.3,
                                           ),
                                         ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: TactileButton(
-                                            useAppleSpring: true,
-                                            onTap: (isBusy ||
-                                                    !isGoogleAuthenticated)
-                                                ? () {}
-                                                : () async {
-                                                    HapticFeedback
-                                                        .lightImpact();
-                                                    await _controller
-                                                        .fetchCloudBackups();
-                                                  },
-                                            child: Container(
-                                              height: 44,
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFF2F2F7),
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  'View Cloud Backups',
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: primaryTextColor,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-
-                                    // Cloud Backup List
-                                    if (_controller.operationState ==
-                                        BackupOperationState
-                                            .loadingCloudBackups) ...[
-                                      const SizedBox(height: 16),
-                                      Center(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(12.0),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              const SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                        strokeWidth: 2),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Text(
-                                                'Fetching backups from Google Drive...',
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 12,
-                                                  color:
-                                                      const Color(0xFF666666),
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ] else if (_controller
-                                        .remoteBackups.isNotEmpty) ...[
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'AVAILABLE CLOUD BACKUPS (${_controller.remoteBackups.length})',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.8,
-                                          color: const Color(0xFF8E8E93),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      ListView.separated(
-                                        shrinkWrap: true,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        itemCount:
-                                            _controller.remoteBackups.length,
-                                        separatorBuilder: (context, index) =>
-                                            const SizedBox(height: 8),
-                                        itemBuilder: (context, index) {
-                                          final backup =
-                                              _controller.remoteBackups[index];
-                                          return Container(
+                                        if (lastLocalBackup != null &&
+                                            lastLocalBackup.success &&
+                                            lastLocalBackup.filePath !=
+                                                null) ...[
+                                          const SizedBox(height: 12),
+                                          Container(
+                                            width: double.infinity,
                                             padding: const EdgeInsets.all(12.0),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFF2F2F7),
+                                              color: backupInfoCardBg,
                                               borderRadius:
                                                   BorderRadius.circular(20),
+                                              border: isDark
+                                                  ? Border.all(
+                                                      color: const Color(
+                                                          0xFF2C2C2E),
+                                                      width: 1.0,
+                                                    )
+                                                  : null,
                                             ),
-                                            child: Row(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        backup.fileName,
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                        Icons.check_circle,
+                                                        color:
+                                                            Color(0xFF34C759),
+                                                        size: 16),
+                                                    const SizedBox(width: 6),
+                                                    Expanded(
+                                                      child: Text(
+                                                        p.basename(
+                                                            lastLocalBackup
+                                                                .filePath!),
                                                         style:
                                                             GoogleFonts.inter(
-                                                          fontSize: 13,
+                                                          fontSize: 12,
                                                           fontWeight:
                                                               FontWeight.w600,
                                                           color:
@@ -638,253 +362,779 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                         overflow: TextOverflow
                                                             .ellipsis,
                                                       ),
-                                                      const SizedBox(height: 4),
-                                                      Text(
-                                                        '${backup.noteCount} Notes · ${backup.folderCount} Folders · ${backup.taskCount} Tasks · ${_formatBytes(backup.fileSizeBytes)}',
-                                                        style:
-                                                            GoogleFonts.inter(
-                                                          fontSize: 11,
-                                                          color: const Color(
-                                                              0xFF666666),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: 2),
-                                                      Text(
-                                                        'Created: ${_formatDate(backup.createdAt)}',
-                                                        style:
-                                                            GoogleFonts.inter(
-                                                          fontSize: 11,
-                                                          color: const Color(
-                                                              0xFF8E8E93),
-                                                        ),
-                                                      ),
-                                                    ],
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  '${lastLocalBackup.noteCount} Notes · ${lastLocalBackup.folderCount} Folders · ${lastLocalBackup.taskCount} Tasks · ${lastLocalBackup.attachmentCount} Attachments',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: secondaryTextColor,
                                                   ),
                                                 ),
-                                                const SizedBox(width: 8),
-                                                GestureDetector(
-                                                  onTap: isBusy
-                                                      ? () {}
-                                                      : () async {
-                                                          HapticFeedback
-                                                              .lightImpact();
-                                                          final confirmed =
-                                                              await CloudDeleteConfirmationDialog
-                                                                  .show(
-                                                            context,
-                                                            remoteBackup:
-                                                                backup,
-                                                          );
-                                                          if (confirmed ==
-                                                                  true &&
-                                                              mounted) {
-                                                            await _controller
-                                                                .deleteCloudBackup(
-                                                                    backup);
-                                                          }
-                                                        },
-                                                  behavior:
-                                                      HitTestBehavior.opaque,
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(8),
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(
-                                                          0xFFFFE5E5),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                    ),
-                                                    child: const Icon(
-                                                      Icons
-                                                          .delete_outline_rounded,
-                                                      color: Color(0xFFFF3B30),
-                                                      size: 18,
-                                                    ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  'Size: ${_formatBytes(lastLocalBackup.fileSize ?? 0)}',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 11,
+                                                    color:
+                                                        const Color(0xFF8E8E93),
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 20.0),
-
-                          // SECTION: Restore Data
-                          _buildSectionHeader('RESTORE DATA', isWarning: true),
-                          const SizedBox(height: 8.0),
-                          GroupedListContainer(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.warning_amber_rounded,
-                                            color: Color(0xFFFF9500), size: 18),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Restoring replaces active data',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: const Color(0xFFD97706),
+                                          ),
+                                        ],
+                                        const SizedBox(height: 14),
+                                        TactileButton(
+                                          useAppleSpring: true,
+                                          onTap: isBusy
+                                              ? () {}
+                                              : () async {
+                                                  HapticFeedback.lightImpact();
+                                                  await _controller
+                                                      .createLocalBackup();
+                                                },
+                                          child: Container(
+                                            width: double.infinity,
+                                            height: 46,
+                                            decoration: BoxDecoration(
+                                              color: isBusy
+                                                  ? disabledControlBg
+                                                  : const Color(0xFF007AFF),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Center(
+                                              child: isCreatingLocal
+                                                  ? const SizedBox(
+                                                      width: 18,
+                                                      height: 18,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        valueColor:
+                                                            AlwaysStoppedAnimation<
+                                                                    Color>(
+                                                                Colors.white),
+                                                      ),
+                                                    )
+                                                  : Text(
+                                                      'Create Local Backup',
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: isBusy
+                                                            ? const Color(
+                                                                0xFF8E8E93)
+                                                            : Colors.white,
+                                                      ),
+                                                    ),
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'Restoring a backup replaces your active notes, folders, and tasks. A pre-restore safety snapshot will be created automatically.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        color: const Color(0xFF666666),
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 14),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: TactileButton(
-                                            useAppleSpring: true,
-                                            onTap: isBusy
-                                                ? () {}
-                                                : () async {
-                                                    HapticFeedback
-                                                        .lightImpact();
+                                  ),
+                                ],
+                              ),
 
-                                                    File? candidateFile;
-                                                    final lastLocalPath =
+                              const SizedBox(height: 20.0),
+
+                              // SECTION: Cloud Backup
+                              _buildSectionHeader('CLOUD BACKUP'),
+                              const SizedBox(height: 8.0),
+                              GroupedListContainer(
+                                backgroundColor: groupedCardBg,
+                                border: groupedBorder,
+                                dividerColor: groupedDivider,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Back up notes, folders, and image assets directly to Google Drive.',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            color: secondaryTextColor,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                        if (_controller
+                                                .lastUploadedCloudBackup !=
+                                            null) ...[
+                                          const SizedBox(height: 12),
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.all(12.0),
+                                            decoration: BoxDecoration(
+                                              color: greenInfoSurfaceBg,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    const Icon(Icons.cloud_done,
+                                                        color:
+                                                            Color(0xFF34C759),
+                                                        size: 16),
+                                                    const SizedBox(width: 6),
+                                                    Expanded(
+                                                      child: Text(
                                                         _controller
-                                                            .lastLocalBackupResult
-                                                            ?.filePath;
-                                                    if (lastLocalPath != null &&
-                                                        File(lastLocalPath)
-                                                            .existsSync()) {
-                                                      candidateFile =
-                                                          File(lastLocalPath);
-                                                    } else {
-                                                      try {
-                                                        final docsDir =
-                                                            await getApplicationDocumentsDirectory();
-                                                        final backupsDir =
-                                                            Directory(p.join(
-                                                                docsDir.path,
-                                                                'backups'));
-                                                        if (backupsDir
-                                                            .existsSync()) {
-                                                          final files = backupsDir
-                                                              .listSync()
-                                                              .whereType<File>()
-                                                              .where((f) => f
-                                                                  .path
-                                                                  .toLowerCase()
-                                                                  .endsWith(
-                                                                      '.qnb'))
-                                                              .toList();
-                                                          if (files
-                                                              .isNotEmpty) {
-                                                            files.sort((a, b) => b
-                                                                .lastModifiedSync()
-                                                                .compareTo(a
-                                                                    .lastModifiedSync()));
-                                                            candidateFile =
-                                                                files.first;
+                                                            .lastUploadedCloudBackup!
+                                                            .fileName,
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color:
+                                                              greenInfoTextColor,
+                                                        ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Size: ${_formatBytes(_controller.lastUploadedCloudBackup!.fileSizeBytes)} · Uploaded to Google Drive',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w500,
+                                                    color:
+                                                        greenInfoSubtextColor,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                        const SizedBox(height: 14),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: TactileButton(
+                                                useAppleSpring: true,
+                                                onTap: (isBusy ||
+                                                        !isGoogleAuthenticated)
+                                                    ? () {}
+                                                    : () async {
+                                                        HapticFeedback
+                                                            .lightImpact();
+                                                        await _controller
+                                                            .uploadCloudBackup();
+                                                      },
+                                                child: Container(
+                                                  height: 44,
+                                                  decoration: BoxDecoration(
+                                                    color: (isBusy ||
+                                                            !isGoogleAuthenticated)
+                                                        ? disabledControlBg
+                                                        : const Color(
+                                                            0xFF34C759),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
+                                                  ),
+                                                  child: Center(
+                                                    child: opState ==
+                                                            BackupOperationState
+                                                                .uploadingCloudBackup
+                                                        ? const SizedBox(
+                                                            width: 18,
+                                                            height: 18,
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                              strokeWidth: 2,
+                                                              valueColor:
+                                                                  AlwaysStoppedAnimation<
+                                                                          Color>(
+                                                                      Colors
+                                                                          .white),
+                                                            ),
+                                                          )
+                                                        : Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    horizontal:
+                                                                        6.0),
+                                                            child: FittedBox(
+                                                              fit: BoxFit
+                                                                  .scaleDown,
+                                                              alignment:
+                                                                  Alignment
+                                                                      .center,
+                                                              child: Text(
+                                                                'Back Up to Drive',
+                                                                maxLines: 1,
+                                                                softWrap: false,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .clip,
+                                                                style:
+                                                                    GoogleFonts
+                                                                        .inter(
+                                                                  fontSize: 13,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  color: (isBusy ||
+                                                                          !isGoogleAuthenticated)
+                                                                      ? const Color(
+                                                                          0xFF8E8E93)
+                                                                      : Colors
+                                                                          .white,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: TactileButton(
+                                                useAppleSpring: true,
+                                                onTap: (isBusy ||
+                                                        !isGoogleAuthenticated)
+                                                    ? () {}
+                                                    : () async {
+                                                        HapticFeedback
+                                                            .lightImpact();
+                                                        await _controller
+                                                            .fetchCloudBackups();
+                                                      },
+                                                child: Container(
+                                                  height: 44,
+                                                  decoration: BoxDecoration(
+                                                    color: viewCloudBackupsBg,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      'View Cloud Backups',
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: primaryTextColor,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        // Cloud Backup List
+                                        if (_controller.operationState ==
+                                            BackupOperationState
+                                                .loadingCloudBackups) ...[
+                                          const SizedBox(height: 16),
+                                          Center(
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(12.0),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  const SizedBox(
+                                                    width: 16,
+                                                    height: 16,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                            strokeWidth: 2),
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Text(
+                                                    'Fetching backups from Google Drive...',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 12,
+                                                      color: secondaryTextColor,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ] else if (_controller
+                                            .remoteBackups.isNotEmpty) ...[
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            'AVAILABLE CLOUD BACKUPS (${_controller.remoteBackups.length})',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 0.8,
+                                              color: const Color(0xFF8E8E93),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          ListView.separated(
+                                            shrinkWrap: true,
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
+                                            itemCount: _controller
+                                                .remoteBackups.length,
+                                            separatorBuilder:
+                                                (context, index) =>
+                                                    const SizedBox(height: 8),
+                                            itemBuilder: (context, index) {
+                                              final backup = _controller
+                                                  .remoteBackups[index];
+                                              return Container(
+                                                padding:
+                                                    const EdgeInsets.all(12.0),
+                                                decoration: BoxDecoration(
+                                                  color: remoteBackupRowBg,
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                  border: isDark
+                                                      ? Border.all(
+                                                          color: const Color(
+                                                              0xFF2C2C2E),
+                                                          width: 1.0,
+                                                        )
+                                                      : null,
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            backup.fileName,
+                                                            style: GoogleFonts
+                                                                .inter(
+                                                              fontSize: 13,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              color:
+                                                                  primaryTextColor,
+                                                            ),
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                          const SizedBox(
+                                                              height: 4),
+                                                          Text(
+                                                            '${backup.noteCount} Notes · ${backup.folderCount} Folders · ${backup.taskCount} Tasks · ${_formatBytes(backup.fileSizeBytes)}',
+                                                            style: GoogleFonts
+                                                                .inter(
+                                                              fontSize: 11,
+                                                              color:
+                                                                  secondaryTextColor,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                              height: 2),
+                                                          Text(
+                                                            'Created: ${_formatDate(backup.createdAt)}',
+                                                            style: GoogleFonts
+                                                                .inter(
+                                                              fontSize: 11,
+                                                              color: const Color(
+                                                                  0xFF8E8E93),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    GestureDetector(
+                                                      onTap: isBusy
+                                                          ? () {}
+                                                          : () async {
+                                                              HapticFeedback
+                                                                  .lightImpact();
+                                                              final confirmed =
+                                                                  await CloudDeleteConfirmationDialog
+                                                                      .show(
+                                                                context,
+                                                                remoteBackup:
+                                                                    backup,
+                                                              );
+                                                              if (confirmed ==
+                                                                      true &&
+                                                                  mounted) {
+                                                                await _controller
+                                                                    .deleteCloudBackup(
+                                                                        backup);
+                                                              }
+                                                            },
+                                                      behavior: HitTestBehavior
+                                                          .opaque,
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: trashBg,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                        ),
+                                                        child: Icon(
+                                                          Icons
+                                                              .delete_outline_rounded,
+                                                          color: trashIconColor,
+                                                          size: 18,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 20.0),
+
+                              // SECTION: Restore Data
+                              _buildSectionHeader('RESTORE DATA',
+                                  isWarning: true),
+                              const SizedBox(height: 8.0),
+                              GroupedListContainer(
+                                backgroundColor: groupedCardBg,
+                                border: groupedBorder,
+                                dividerColor: groupedDivider,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                                Icons.warning_amber_rounded,
+                                                color: Color(0xFFFF9500),
+                                                size: 18),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              'Restoring replaces active data',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark
+                                                    ? const Color(0xFFFF9500)
+                                                    : const Color(0xFFD97706),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'Restoring a backup replaces your active notes, folders, and tasks. A pre-restore safety snapshot will be created automatically.',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            color: secondaryTextColor,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: TactileButton(
+                                                useAppleSpring: true,
+                                                onTap: isBusy
+                                                    ? () {}
+                                                    : () async {
+                                                        HapticFeedback
+                                                            .lightImpact();
+
+                                                        File? candidateFile;
+                                                        final lastLocalPath =
+                                                            _controller
+                                                                .lastLocalBackupResult
+                                                                ?.filePath;
+                                                        if (lastLocalPath !=
+                                                                null &&
+                                                            File(lastLocalPath)
+                                                                .existsSync()) {
+                                                          candidateFile = File(
+                                                              lastLocalPath);
+                                                        } else {
+                                                          try {
+                                                            final docsDir =
+                                                                await getApplicationDocumentsDirectory();
+                                                            final backupsDir =
+                                                                Directory(p.join(
+                                                                    docsDir
+                                                                        .path,
+                                                                    'backups'));
+                                                            if (backupsDir
+                                                                .existsSync()) {
+                                                              final files = backupsDir
+                                                                  .listSync()
+                                                                  .whereType<
+                                                                      File>()
+                                                                  .where((f) => f
+                                                                      .path
+                                                                      .toLowerCase()
+                                                                      .endsWith(
+                                                                          '.qnb'))
+                                                                  .toList();
+                                                              if (files
+                                                                  .isNotEmpty) {
+                                                                files.sort((a, b) => b
+                                                                    .lastModifiedSync()
+                                                                    .compareTo(a
+                                                                        .lastModifiedSync()));
+                                                                candidateFile =
+                                                                    files.first;
+                                                              }
+                                                            }
+                                                          } catch (_) {}
+                                                        }
+
+                                                        if (candidateFile ==
+                                                                null ||
+                                                            !candidateFile
+                                                                .existsSync()) {
+                                                          return;
+                                                        }
+
+                                                        final metadata =
+                                                            await _controller
+                                                                .inspectLocalBackup(
+                                                                    candidateFile);
+                                                        if (metadata == null)
+                                                          return;
+
+                                                        final currentCounts =
+                                                            await _controller
+                                                                .fetchCurrentDataCounts();
+
+                                                        if (!mounted) return;
+                                                        final confirmed =
+                                                            await RestoreConfirmationDialog
+                                                                .show(
+                                                          context,
+                                                          remoteBackup:
+                                                              metadata,
+                                                          currentCounts:
+                                                              currentCounts,
+                                                        );
+
+                                                        if (confirmed == true &&
+                                                            mounted) {
+                                                          await _controller
+                                                              .restoreLocalBackup(
+                                                                  localFile:
+                                                                      candidateFile);
+                                                          if (_controller
+                                                                      .lastRestoreResult
+                                                                      ?.success ==
+                                                                  true &&
+                                                              mounted) {
+                                                            final notesProvider =
+                                                                Provider.of<
+                                                                        NotesProvider>(
+                                                                    context,
+                                                                    listen:
+                                                                        false);
+                                                            final tasksProvider =
+                                                                Provider.of<
+                                                                        TasksProvider>(
+                                                                    context,
+                                                                    listen:
+                                                                        false);
+                                                            await notesProvider
+                                                                .loadFolders();
+                                                            await notesProvider
+                                                                .loadNotes();
+                                                            await tasksProvider
+                                                                .refresh();
                                                           }
                                                         }
-                                                      } catch (_) {}
-                                                    }
-
-                                                    if (candidateFile == null ||
-                                                        !candidateFile
-                                                            .existsSync()) {
-                                                      return;
-                                                    }
-
-                                                    final metadata =
-                                                        await _controller
-                                                            .inspectLocalBackup(
-                                                                candidateFile);
-                                                    if (metadata == null)
-                                                      return;
-
-                                                    final currentCounts =
-                                                        await _controller
-                                                            .fetchCurrentDataCounts();
-
-                                                    if (!mounted) return;
-                                                    final confirmed =
-                                                        await RestoreConfirmationDialog
-                                                            .show(
-                                                      context,
-                                                      remoteBackup: metadata,
-                                                      currentCounts:
-                                                          currentCounts,
-                                                    );
-
-                                                    if (confirmed == true &&
-                                                        mounted) {
-                                                      await _controller
-                                                          .restoreLocalBackup(
-                                                              localFile:
-                                                                  candidateFile);
-                                                      if (_controller
-                                                                  .lastRestoreResult
-                                                                  ?.success ==
-                                                              true &&
-                                                          mounted) {
-                                                        final notesProvider =
-                                                            Provider.of<
-                                                                    NotesProvider>(
-                                                                context,
-                                                                listen: false);
-                                                        final tasksProvider =
-                                                            Provider.of<
-                                                                    TasksProvider>(
-                                                                context,
-                                                                listen: false);
-                                                        await notesProvider
-                                                            .loadFolders();
-                                                        await notesProvider
-                                                            .loadNotes();
-                                                        await tasksProvider
-                                                            .refresh();
-                                                      }
-                                                    }
-                                                  },
-                                            child: Container(
-                                              height: 44,
-                                              decoration: BoxDecoration(
-                                                color: isBusy
-                                                    ? const Color(0xFFE5E5EA)
-                                                    : const Color(0xFFFF9500),
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
+                                                      },
+                                                child: Container(
+                                                  height: 44,
+                                                  decoration: BoxDecoration(
+                                                    color: isBusy
+                                                        ? disabledControlBg
+                                                        : const Color(
+                                                            0xFFFF9500),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
+                                                  ),
+                                                  child: Center(
+                                                    child: Padding(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 6.0),
+                                                      child: FittedBox(
+                                                        fit: BoxFit.scaleDown,
+                                                        alignment:
+                                                            Alignment.center,
+                                                        child: Text(
+                                                          'Restore Local File',
+                                                          maxLines: 1,
+                                                          softWrap: false,
+                                                          overflow:
+                                                              TextOverflow.clip,
+                                                          style:
+                                                              GoogleFonts.inter(
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: isBusy
+                                                                ? const Color(
+                                                                    0xFF8E8E93)
+                                                                : Colors.white,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
                                               ),
-                                              child: Center(
-                                                child: Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 6.0),
-                                                  child: FittedBox(
-                                                    fit: BoxFit.scaleDown,
-                                                    alignment: Alignment.center,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: TactileButton(
+                                                useAppleSpring: true,
+                                                onTap: isBusy
+                                                    ? () {}
+                                                    : () async {
+                                                        HapticFeedback
+                                                            .lightImpact();
+                                                        if (_controller
+                                                            .remoteBackups
+                                                            .isEmpty) {
+                                                          await _controller
+                                                              .fetchCloudBackups();
+                                                        }
+                                                        if (_controller
+                                                            .remoteBackups
+                                                            .isEmpty) {
+                                                          return;
+                                                        }
+
+                                                        final selectedBackup =
+                                                            _controller
+                                                                .remoteBackups
+                                                                .first;
+                                                        final currentCounts =
+                                                            await _controller
+                                                                .fetchCurrentDataCounts();
+
+                                                        if (!mounted) return;
+                                                        final confirmed =
+                                                            await RestoreConfirmationDialog
+                                                                .show(
+                                                          context,
+                                                          remoteBackup:
+                                                              selectedBackup,
+                                                          currentCounts:
+                                                              currentCounts,
+                                                        );
+
+                                                        if (confirmed == true &&
+                                                            mounted) {
+                                                          final tempDir = Directory
+                                                              .systemTemp
+                                                              .createTempSync(
+                                                                  'drive_restore_');
+                                                          try {
+                                                            await _controller
+                                                                .downloadAndRestoreCloudBackup(
+                                                              remoteFileId:
+                                                                  selectedBackup
+                                                                      .remoteFileId,
+                                                              tempDownloadDir:
+                                                                  tempDir,
+                                                            );
+                                                            if (_controller
+                                                                        .lastRestoreResult
+                                                                        ?.success ==
+                                                                    true &&
+                                                                mounted) {
+                                                              final notesProvider =
+                                                                  Provider.of<
+                                                                          NotesProvider>(
+                                                                      context,
+                                                                      listen:
+                                                                          false);
+                                                              final tasksProvider =
+                                                                  Provider.of<
+                                                                          TasksProvider>(
+                                                                      context,
+                                                                      listen:
+                                                                          false);
+                                                              await notesProvider
+                                                                  .loadFolders();
+                                                              await notesProvider
+                                                                  .loadNotes();
+                                                              await tasksProvider
+                                                                  .refresh();
+                                                            }
+                                                          } finally {
+                                                            if (tempDir
+                                                                .existsSync()) {
+                                                              try {
+                                                                tempDir.deleteSync(
+                                                                    recursive:
+                                                                        true);
+                                                              } catch (_) {}
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                child: Container(
+                                                  height: 44,
+                                                  decoration: BoxDecoration(
+                                                    color: isBusy
+                                                        ? disabledControlBg
+                                                        : (isDark
+                                                            ? const Color(
+                                                                0xFFFF9500)
+                                                            : const Color(
+                                                                0xFFD97706)),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
+                                                  ),
+                                                  child: Center(
                                                     child: Text(
-                                                      'Restore Local File',
-                                                      maxLines: 1,
-                                                      softWrap: false,
-                                                      overflow:
-                                                          TextOverflow.clip,
+                                                      'Restore From Drive',
                                                       style: GoogleFonts.inter(
                                                         fontSize: 13,
                                                         fontWeight:
@@ -899,136 +1149,18 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: TactileButton(
-                                            useAppleSpring: true,
-                                            onTap: isBusy
-                                                ? () {}
-                                                : () async {
-                                                    HapticFeedback
-                                                        .lightImpact();
-                                                    if (_controller
-                                                        .remoteBackups
-                                                        .isEmpty) {
-                                                      await _controller
-                                                          .fetchCloudBackups();
-                                                    }
-                                                    if (_controller
-                                                        .remoteBackups
-                                                        .isEmpty) {
-                                                      return;
-                                                    }
-
-                                                    final selectedBackup =
-                                                        _controller
-                                                            .remoteBackups
-                                                            .first;
-                                                    final currentCounts =
-                                                        await _controller
-                                                            .fetchCurrentDataCounts();
-
-                                                    if (!mounted) return;
-                                                    final confirmed =
-                                                        await RestoreConfirmationDialog
-                                                            .show(
-                                                      context,
-                                                      remoteBackup:
-                                                          selectedBackup,
-                                                      currentCounts:
-                                                          currentCounts,
-                                                    );
-
-                                                    if (confirmed == true &&
-                                                        mounted) {
-                                                      final tempDir = Directory
-                                                          .systemTemp
-                                                          .createTempSync(
-                                                              'drive_restore_');
-                                                      try {
-                                                        await _controller
-                                                            .downloadAndRestoreCloudBackup(
-                                                          remoteFileId:
-                                                              selectedBackup
-                                                                  .remoteFileId,
-                                                          tempDownloadDir:
-                                                              tempDir,
-                                                        );
-                                                        if (_controller
-                                                                    .lastRestoreResult
-                                                                    ?.success ==
-                                                                true &&
-                                                            mounted) {
-                                                          final notesProvider =
-                                                              Provider.of<
-                                                                      NotesProvider>(
-                                                                  context,
-                                                                  listen:
-                                                                      false);
-                                                          final tasksProvider =
-                                                              Provider.of<
-                                                                      TasksProvider>(
-                                                                  context,
-                                                                  listen:
-                                                                      false);
-                                                          await notesProvider
-                                                              .loadFolders();
-                                                          await notesProvider
-                                                              .loadNotes();
-                                                          await tasksProvider
-                                                              .refresh();
-                                                        }
-                                                      } finally {
-                                                        if (tempDir
-                                                            .existsSync()) {
-                                                          try {
-                                                            tempDir.deleteSync(
-                                                                recursive:
-                                                                    true);
-                                                          } catch (_) {}
-                                                        }
-                                                      }
-                                                    }
-                                                  },
-                                            child: Container(
-                                              height: 44,
-                                              decoration: BoxDecoration(
-                                                color: isBusy
-                                                    ? const Color(0xFFE5E5EA)
-                                                    : const Color(0xFFD97706),
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  'Restore From Drive',
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: isBusy
-                                                        ? const Color(
-                                                            0xFF8E8E93)
-                                                        : Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                       ),
-                     ),
                   ),
                 ),
               ],
@@ -1041,6 +1173,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
   // ── Helper UI Builders ───────────────────────────────────────────────────
   Widget _buildSectionHeader(String title, {bool isWarning = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(left: 4.0),
       child: Text(
@@ -1049,28 +1182,37 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
-          color: isWarning ? const Color(0xFFD97706) : const Color(0xFF8E8E93),
+          color: isWarning
+              ? (isDark ? const Color(0xFFFF9500) : const Color(0xFFD97706))
+              : const Color(0xFF8E8E93),
         ),
       ),
     );
   }
 
   Widget _buildStatusBanner({required String message, required bool isError}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: isError ? const Color(0xFFFFE5E5) : const Color(0xFFE8F5E9),
+        color: isDark
+            ? (isError ? const Color(0x33FF453A) : const Color(0x2634C759))
+            : (isError ? const Color(0xFFFFE5E5) : const Color(0xFFE8F5E9)),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isError ? const Color(0xFFFF8080) : const Color(0xFFA5D6A7),
+          color: isDark
+              ? const Color(0xFF2C2C2E)
+              : (isError ? const Color(0xFFFF8080) : const Color(0xFFA5D6A7)),
         ),
       ),
       child: Row(
         children: [
           Icon(
             isError ? Icons.error_outline : Icons.check_circle_outline,
-            color: isError ? const Color(0xFFFF3B30) : const Color(0xFF34C759),
+            color: isDark
+                ? (isError ? const Color(0xFFFF453A) : const Color(0xFF34C759))
+                : (isError ? const Color(0xFFFF3B30) : const Color(0xFF34C759)),
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -1079,14 +1221,20 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
               message,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color:
-                    isError ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32),
+                color: isDark
+                    ? (isError
+                        ? const Color(0xFFFF453A)
+                        : const Color(0xFF34C759))
+                    : (isError
+                        ? const Color(0xFFD32F2F)
+                        : const Color(0xFF2E7D32)),
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close, size: 16),
+            icon: Icon(Icons.close,
+                size: 16, color: isDark ? const Color(0xFF8E8E93) : null),
             onPressed: () => _controller.clearMessages(),
           ),
         ],
@@ -1105,4 +1253,3 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     return '${utc.year}-${utc.month.toString().padLeft(2, '0')}-${utc.day.toString().padLeft(2, '0')} ${utc.hour.toString().padLeft(2, '0')}:${utc.minute.toString().padLeft(2, '0')} UTC';
   }
 }
-

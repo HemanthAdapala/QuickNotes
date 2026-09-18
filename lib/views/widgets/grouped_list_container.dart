@@ -22,6 +22,7 @@ class GroupedListContainer extends StatelessWidget {
   final double width;
   final double borderRadius;
   final Color? backgroundColor;
+  final Color? dividerColor;
   final List<BoxShadow>? shadows;
   final EdgeInsetsGeometry? padding;
   final BoxBorder? border;
@@ -32,6 +33,7 @@ class GroupedListContainer extends StatelessWidget {
     this.width = 322.0,
     this.borderRadius = 20.0,
     this.backgroundColor,
+    this.dividerColor,
     this.shadows = const [
       BoxShadow(
         color: Color(0x1A000000),
@@ -50,8 +52,8 @@ class GroupedListContainer extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final effectiveBg =
         backgroundColor ?? (isDark ? const Color(0xFF1E1E1E) : Colors.white);
-    final dividerColor =
-        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE6E6E6);
+    final effectiveDividerColor = dividerColor ??
+        (isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE6E6E6));
 
     // Auto-inject 1px hairline dividers between adjacent children
     final List<Widget> dividedChildren = [];
@@ -63,7 +65,7 @@ class GroupedListContainer extends StatelessWidget {
             width: double.infinity,
             height: 1,
             margin: const EdgeInsets.symmetric(horizontal: 16),
-            color: dividerColor,
+            color: effectiveDividerColor,
           ),
         );
       }
@@ -103,8 +105,10 @@ abstract class GroupedTile {
     bool scrollSafe = true,
     Color? textColor,
     double fontSize = 14.0,
+    Color? chevronColor,
   }) {
     final primaryColor = textColor ?? const Color(0xFF333333);
+    final effectiveChevronColor = chevronColor ?? primaryColor;
     return TactileButton(
       key: key,
       useAppleSpring: true,
@@ -135,6 +139,7 @@ abstract class GroupedTile {
             Expanded(
               child: Text(
                 title,
+                key: ValueKey('$title-$primaryColor'),
                 softWrap: true,
                 style: GoogleFonts.inter(
                   color: primaryColor,
@@ -152,7 +157,7 @@ abstract class GroupedTile {
                   width: 14,
                   height: 14,
                   colorFilter: ColorFilter.mode(
-                    primaryColor,
+                    effectiveChevronColor,
                     BlendMode.srcIn,
                   ),
                 ),
@@ -175,9 +180,13 @@ abstract class GroupedTile {
     double height = 52.0,
     List<TextInputFormatter>? inputFormatters,
     Color? textColor,
+    Color? fillColor,
+    Color? clearIconColor,
   }) {
     final primaryTextColor = textColor ?? const Color(0xFF333333);
     const hintColor = Color(0x4C3C3C43);
+    final effectiveClearIconColor =
+        clearIconColor ?? const Color(0xFF3C3C43).withValues(alpha: 0.3);
 
     return Container(
       key: key,
@@ -203,6 +212,8 @@ abstract class GroupedTile {
                 letterSpacing: -0.3,
               ),
               decoration: InputDecoration(
+                filled: fillColor != null,
+                fillColor: fillColor ?? Colors.transparent,
                 hintText: hintText,
                 hintStyle: GoogleFonts.inter(
                   color: hintColor,
@@ -236,7 +247,7 @@ abstract class GroupedTile {
                 child: Icon(
                   Icons.cancel,
                   size: 18,
-                  color: const Color(0xFF3C3C43).withValues(alpha: 0.3),
+                  color: effectiveClearIconColor,
                 ),
               ),
             ),
@@ -284,6 +295,7 @@ abstract class GroupedTile {
           Expanded(
             child: Text(
               title,
+              key: ValueKey('$title-$primaryColor'),
               softWrap: true,
               style: GoogleFonts.inter(
                 color: primaryColor,
@@ -338,7 +350,8 @@ abstract class GroupedTile {
                 iconPath,
                 width: 18,
                 height: 18,
-                colorFilter: ColorFilter.mode(effectiveTextColor, BlendMode.srcIn),
+                colorFilter:
+                    ColorFilter.mode(effectiveTextColor, BlendMode.srcIn),
               ),
               const SizedBox(width: 12),
             ],
@@ -360,7 +373,8 @@ abstract class GroupedTile {
               'assets/icons/angle-right.svg',
               width: 14,
               height: 14,
-              colorFilter: ColorFilter.mode(effectiveTextColor, BlendMode.srcIn),
+              colorFilter:
+                  ColorFilter.mode(effectiveTextColor, BlendMode.srcIn),
             ),
           ],
         ),
@@ -404,8 +418,8 @@ abstract class GroupedTile {
                 iconPath,
                 width: 18,
                 height: 18,
-                colorFilter: ColorFilter.mode(
-                    primaryTextColor, BlendMode.srcIn),
+                colorFilter:
+                    ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
               ),
               const SizedBox(width: 12),
             ],

@@ -39,6 +39,25 @@ class RestoreConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+    final secondaryTextColor = isDark ? const Color(0xFF8E8E93) : const Color(0xFF4B5563);
+    final warningNoticeColor = isDark ? const Color(0xFF8E8E93) : const Color(0xFF374151);
+    final tableCardBg = isDark ? const Color(0xFF242426) : const Color(0xFFF9FAFB);
+    final tableCardBorder = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E7EB);
+    final tableDividerColor = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    final backupMetricColor = isDark ? const Color(0xFF34C759) : const Color(0xFF059669);
+    final cancelBtnBg = isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF3F4F6);
+    final cancelBtnBorder = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E7EB);
+    final cancelBtnTextColor = isDark ? const Color(0xFFFFFFFF) : const Color(0xFF4B5563);
+    final warningBadgeBg = isDark ? const Color(0x26FF9500) : const Color(0xFFFEF3C7);
+    final warningBadgeIconColor = isDark ? const Color(0xFFFF9500) : const Color(0xFFD97706);
+    final warningTitleColor = isDark ? const Color(0xFFFF9500) : const Color(0xFF92400E);
+    final safetyCardBg = isDark ? const Color(0x2634C759) : const Color(0xFFECFDF5);
+    final safetyCardBorder = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFA7F3D0);
+    final safetyIconColor = isDark ? const Color(0xFF34C759) : const Color(0xFF059669);
+    final safetyTextColor = isDark ? const Color(0xFF34C759) : const Color(0xFF065F46);
+
     final currentNotes = currentCounts['notes'] ?? 0;
     final currentFolders = currentCounts['folders'] ?? 0;
     final currentTasks = currentCounts['tasks'] ?? 0;
@@ -53,9 +72,10 @@ class RestoreConfirmationDialog extends StatelessWidget {
         width: 340,
         padding: const EdgeInsets.all(20.0),
         decoration: ShapeDecoration(
-          color: Colors.white,
+          color: dialogBg,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
+            side: isDark ? const BorderSide(color: Color(0xFF2C2C2E), width: 1.0) : BorderSide.none,
           ),
           shadows: const [
             BoxShadow(
@@ -77,12 +97,12 @@ class RestoreConfirmationDialog extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
+                      color: warningBadgeBg,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.warning_amber_rounded,
-                      color: Color(0xFFD97706),
+                      color: warningBadgeIconColor,
                       size: 24,
                     ),
                   ),
@@ -96,7 +116,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF92400E),
+                            color: warningTitleColor,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -105,7 +125,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: const Color(0xFF4B5563),
+                            color: secondaryTextColor,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -122,7 +142,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   height: 1.35,
-                  color: const Color(0xFF374151),
+                  color: warningNoticeColor,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -132,9 +152,9 @@ class RestoreConfirmationDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
+                  color: tableCardBg,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  border: Border.all(color: tableCardBorder),
                 ),
                 child: Column(
                   children: [
@@ -146,7 +166,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF9CA3AF),
+                              color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF9CA3AF),
                             ),
                           ),
                         ),
@@ -158,7 +178,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF6B7280),
+                              color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF6B7280),
                             ),
                           ),
                         ),
@@ -170,24 +190,24 @@ class RestoreConfirmationDialog extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF059669),
+                              color: backupMetricColor,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const Divider(height: 12, thickness: 1),
+                    Divider(height: 12, thickness: 1, color: tableDividerColor),
                     _buildMetricRow(
-                        'Notes', currentNotes, remoteBackup.noteCount),
+                        'Notes', currentNotes, remoteBackup.noteCount, isDark),
                     const SizedBox(height: 6),
                     _buildMetricRow(
-                        'Folders', currentFolders, remoteBackup.folderCount),
+                        'Folders', currentFolders, remoteBackup.folderCount, isDark),
                     const SizedBox(height: 6),
                     _buildMetricRow(
-                        'Tasks', currentTasks, remoteBackup.taskCount),
+                        'Tasks', currentTasks, remoteBackup.taskCount, isDark),
                     const SizedBox(height: 6),
                     _buildMetricRow('Attachments', currentAttachments,
-                        remoteBackup.attachmentCount),
+                        remoteBackup.attachmentCount, isDark),
                   ],
                 ),
               ),
@@ -197,14 +217,14 @@ class RestoreConfirmationDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
+                  color: safetyCardBg,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFA7F3D0)),
+                  border: Border.all(color: safetyCardBorder),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.shield_outlined,
-                        color: Color(0xFF059669), size: 18),
+                    Icon(Icons.shield_outlined,
+                        color: safetyIconColor, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -212,7 +232,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF065F46),
+                          color: safetyTextColor,
                           height: 1.25,
                         ),
                       ),
@@ -234,9 +254,9 @@ class RestoreConfirmationDialog extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
+                          color: cancelBtnBg,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          border: Border.all(color: cancelBtnBorder),
                         ),
                         child: Center(
                           child: Text(
@@ -244,7 +264,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF4B5563),
+                              color: cancelBtnTextColor,
                             ),
                           ),
                         ),
@@ -261,7 +281,9 @@ class RestoreConfirmationDialog extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFD97706),
+                          color: isDark
+                              ? const Color(0xFFFF9500)
+                              : const Color(0xFFD97706),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Center(
@@ -286,7 +308,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricRow(String label, int current, int backup) {
+  Widget _buildMetricRow(String label, int current, int backup, bool isDark) {
     return Row(
       children: [
         Expanded(
@@ -295,7 +317,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF374151),
+              color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF374151),
             ),
           ),
         ),
@@ -307,7 +329,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF6B7280),
+              color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF6B7280),
             ),
           ),
         ),
@@ -319,7 +341,7 @@ class RestoreConfirmationDialog extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF059669),
+              color: isDark ? const Color(0xFF34C759) : const Color(0xFF059669),
             ),
           ),
         ),
