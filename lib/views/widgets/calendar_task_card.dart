@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -30,10 +30,12 @@ class CalendarTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: 67,
       decoration: ShapeDecoration(
-        color: Colors.white, // Background is white
+        color: isDark ? const Color(0xFF3A3A3C) : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -77,7 +79,9 @@ class CalendarTaskCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: const Color(0xFF1C1C1E),
+                      color: isDark
+                          ? const Color(0xFFFFFFFF)
+                          : const Color(0xFF1C1C1E),
                       fontSize: 16,
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w500,
@@ -85,7 +89,9 @@ class CalendarTaskCard extends StatelessWidget {
                       decoration: task.isCompleted
                           ? TextDecoration.lineThrough
                           : TextDecoration.none,
-                      decorationColor: const Color(0xFF1C1C1E),
+                      decorationColor: isDark
+                          ? const Color(0xFFFFFFFF)
+                          : const Color(0xFF1C1C1E),
                       decorationThickness: 1.5,
                     ),
                   ),
@@ -95,8 +101,10 @@ class CalendarTaskCard extends StatelessWidget {
                     task.subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF1C1C1E),
+                    style: TextStyle(
+                      color: isDark
+                          ? const Color(0xFF757575)
+                          : const Color(0xFF1C1C1E),
                       fontSize: 12,
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w400,
@@ -118,7 +126,7 @@ class CalendarTaskCard extends StatelessWidget {
             },
             child: task.isCompleted
                 ? const _BlueCheckCircle()
-                : const _GrayEmptyCircle(),
+                : _GrayEmptyCircle(isDark: isDark),
           ),
 
           const SizedBox(width: 22),
@@ -168,18 +176,20 @@ class _BlueCheckCircle extends StatelessWidget {
 
 // ── Gray outline circle (running / uncompleted state) — acts as toggle ────────
 class _GrayEmptyCircle extends StatelessWidget {
-  const _GrayEmptyCircle();
+  final bool isDark;
+
+  const _GrayEmptyCircle({this.isDark = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 20,
       height: 20,
-      decoration: const ShapeDecoration(
+      decoration: ShapeDecoration(
         shape: OvalBorder(
           side: BorderSide(
             width: 1,
-            color: Color(0x33787878),
+            color: isDark ? const Color(0xFF5A5A5A) : const Color(0x33787878),
           ),
         ),
       ),

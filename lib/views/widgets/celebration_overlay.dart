@@ -98,6 +98,8 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (_isReducedMotion) {
       // Immediate, static completion acknowledgement without particle physics animation
       return IgnorePointer(
@@ -106,11 +108,13 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
             padding: const EdgeInsets.symmetric(
                 horizontal: 26, vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF333333).withValues(alpha: 0.12),
+                  color: isDark
+                      ? const Color(0x3F000000)
+                      : const Color(0xFF333333).withValues(alpha: 0.12),
                   blurRadius: 24,
                   offset: const Offset(0, 6),
                 ),
@@ -118,11 +122,11 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
             ),
             child: Text(
               widget.message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1C1C1E),
+                color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E),
                 decoration: TextDecoration.none,
               ),
             ),
@@ -163,11 +167,13 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 26, vertical: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF333333).withValues(alpha: 0.12),
+                            color: isDark
+                                ? const Color(0x3F000000)
+                                : const Color(0xFF333333).withValues(alpha: 0.12),
                             blurRadius: 24,
                             offset: const Offset(0, 6),
                           ),
@@ -175,11 +181,13 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
                       ),
                       child: Text(
                         widget.message,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1C1C1E),
+                          color: isDark
+                              ? const Color(0xFFFFFFFF)
+                              : const Color(0xFF1C1C1E),
                           decoration: TextDecoration.none,
                         ),
                       ),

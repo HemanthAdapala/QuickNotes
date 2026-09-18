@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -26,6 +26,7 @@ class CalendarDayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isCompleted = taskState == DayTaskState.completed;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () {
@@ -41,12 +42,18 @@ class CalendarDayCell extends StatelessWidget {
             Positioned.fill(
               child: Container(
                 decoration: ShapeDecoration(
-                  color: isCompleted ? const Color(0xFF0088FF) : Colors.white,
+                  color: isCompleted
+                      ? const Color(0xFF0088FF)
+                      : (isDark ? const Color(0xFF2C2C2C) : Colors.white),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                     side: isSelected
                         ? BorderSide(
-                            color: isCompleted ? const Color(0xFF333333) : const Color(0xFF0088FF),
+                            color: isCompleted
+                                ? (isDark
+                                    ? const Color(0xFFFFFFFF)
+                                    : const Color(0xFF333333))
+                                : const Color(0xFF0088FF),
                             width: 1.5,
                           )
                         : BorderSide.none,
@@ -70,8 +77,10 @@ class CalendarDayCell extends StatelessWidget {
                 Center(
                   child: Text(
                     '$day',
-                    style: const TextStyle(
-                      color: Color(0xFF333333),
+                    style: TextStyle(
+                      color: isDark
+                          ? const Color(0xFFFFFFFF)
+                          : const Color(0xFF333333),
                       fontSize: 16,
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w500,
@@ -81,7 +90,7 @@ class CalendarDayCell extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 1),
-                Center(child: _buildCircle()),
+                Center(child: _buildCircle(isDark)),
                 const SizedBox(height: 4),
               ],
             ),
@@ -91,24 +100,26 @@ class CalendarDayCell extends StatelessWidget {
     );
   }
 
-  Widget _buildCircle() {
+  Widget _buildCircle(bool isDark) {
     switch (taskState) {
       case DayTaskState.none:
-        return _buildSolidCircle(const Color(0xFFE5E5EA));
+        return _buildSolidCircle(
+          isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA),
+        );
       case DayTaskState.task:
         return _buildSolidCircle(const Color(0xFF0088FF));
       case DayTaskState.notCompleted:
         return _buildIconCircle(
           bgColor: const Color(0xFF0088FF),
           iconAsset: 'assets/icons/calendar_cross.svg',
-          iconColor: const Color(0xFF333333),
+          iconColor: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333),
           iconSize: 10,
         );
       case DayTaskState.completed:
         return _buildIconCircle(
-          bgColor: Colors.white,
+          bgColor: isDark ? const Color(0xFF0088FF) : Colors.white,
           iconAsset: 'assets/icons/calendar_check.svg',
-          iconColor: const Color(0xFF333333),
+          iconColor: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333),
           iconSize: 12,
         );
     }

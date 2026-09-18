@@ -314,10 +314,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     Provider.of<TasksProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor:
+          isDark ? const Color(0xFF1E1E1E) : AppColors.background,
       body: PrimaryScreenSurface(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         child: SafeArea(
           bottom: false,
           child: Column(
@@ -350,8 +353,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               'assets/icons/angle_left.svg',
                               width: 22,
                               height: 22,
-                              colorFilter: const ColorFilter.mode(
-                                Color(0xFF1C1C1E),
+                              colorFilter: ColorFilter.mode(
+                                isDark
+                                    ? const Color(0xFFFFFFFF)
+                                    : const Color(0xFF1C1C1E),
                                 BlendMode.srcIn,
                               ),
                             ),
@@ -384,10 +389,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               ),
                             ));
                           },
-                          child: const Center(
+                          child: Center(
                             child: Icon(
                               Icons.search_rounded,
-                              color: Color(0xFF1C1C1E),
+                              color: isDark
+                                  ? const Color(0xFFFFFFFF)
+                                  : const Color(0xFF1C1C1E),
                               size: 22,
                             ),
                           ),

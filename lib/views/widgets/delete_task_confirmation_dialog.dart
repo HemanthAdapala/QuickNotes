@@ -28,6 +28,8 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding:
@@ -38,7 +40,7 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
           width: 303,
           height: isRecurring ? 296 : 223,
           decoration: ShapeDecoration(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30),
             ),
@@ -66,7 +68,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                       title,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF333333),
+                        color: isDark
+                            ? const Color(0xFFFFFFFF)
+                            : const Color(0xFF333333),
                         fontSize: 20,
                         fontWeight: FontWeight.w400,
                       ),
@@ -76,7 +80,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                       message,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF333333),
+                        color: isDark
+                            ? const Color(0xFF757575)
+                            : const Color(0xFF333333),
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         height: 1.25,
@@ -102,7 +108,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                               width: 275,
                               height: 40,
                               decoration: ShapeDecoration(
-                                color: const Color(0x33787878),
+                                color: isDark
+                                    ? const Color(0xFF3A3A3C)
+                                    : const Color(0x33787878),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
@@ -112,7 +120,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                                   'Delete Forever',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFFFF383C),
+                                    color: isDark
+                                        ? const Color(0xFFFF453A)
+                                        : const Color(0xFFFF383C),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -130,7 +140,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                               width: 275,
                               height: 40,
                               decoration: ShapeDecoration(
-                                color: const Color(0x33787878),
+                                color: isDark
+                                    ? const Color(0xFF3A3A3C)
+                                    : const Color(0x33787878),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
@@ -158,7 +170,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                               width: 275,
                               height: 40,
                               decoration: ShapeDecoration(
-                                color: const Color(0x33787878),
+                                color: isDark
+                                    ? const Color(0xFF3A3A3C)
+                                    : const Color(0x33787878),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
@@ -168,7 +182,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                                   'Cancel',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFF333333),
+                                    color: isDark
+                                        ? const Color(0xFF757575)
+                                        : const Color(0xFF333333),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -189,7 +205,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                               width: 125,
                               height: 40,
                               decoration: ShapeDecoration(
-                                color: const Color(0x33787878),
+                                color: isDark
+                                    ? const Color(0xFF3A3A3C)
+                                    : const Color(0x33787878),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
@@ -199,7 +217,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                                   'Cancel',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFF333333),
+                                    color: isDark
+                                        ? const Color(0xFF757575)
+                                        : const Color(0xFF333333),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -216,7 +236,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                               width: 125,
                               height: 40,
                               decoration: ShapeDecoration(
-                                color: const Color(0x33787878),
+                                color: isDark
+                                    ? const Color(0xFF3A3A3C)
+                                    : const Color(0x33787878),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
@@ -226,7 +248,9 @@ class DeleteTaskConfirmationDialog extends StatelessWidget {
                                   'Delete',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFFFF383C),
+                                    color: isDark
+                                        ? const Color(0xFFFF453A)
+                                        : const Color(0xFFFF383C),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -256,7 +280,7 @@ Future<String?> showDeleteTaskDialog(
   return showDialog<String>(
     context: context,
     barrierDismissible: true,
-    barrierColor: Color(0xFF333333).withValues(alpha: 0.40),
+    barrierColor: const Color(0xFF333333).withValues(alpha: 0.40),
     builder: (ctx) => DeleteTaskConfirmationDialog(
       title: title,
       message: message,

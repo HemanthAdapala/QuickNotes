@@ -23,6 +23,8 @@ class MonthContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SizedBox(
       width: 193,
       height: 44,
@@ -36,7 +38,9 @@ class MonthContainer extends StatelessWidget {
               width: 193,
               height: 44,
               decoration: ShapeDecoration(
-                color: Colors.white, // Backgrounds-Primary
+                color: isDark
+                    ? const Color(0xFF3A3A3C)
+                    : Colors.white, // Backgrounds-Primary
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -58,8 +62,10 @@ class MonthContainer extends StatelessWidget {
               child: Text(
                 label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF333333),
+                style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFFFFFFFF)
+                      : const Color(0xFF333333),
                   fontSize: 17,
                   fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w500,
@@ -83,8 +89,10 @@ class MonthContainer extends StatelessWidget {
                   'assets/icons/calendar_angle_left.svg',
                   width: 17,
                   height: 17,
-                  colorFilter: const ColorFilter.mode(
-                    Color(0xFF333333),
+                  colorFilter: ColorFilter.mode(
+                    isDark
+                        ? const Color(0xFFFFFFFF)
+                        : const Color(0xFF333333),
                     BlendMode.srcIn,
                   ),
                 ),
@@ -106,8 +114,10 @@ class MonthContainer extends StatelessWidget {
                   'assets/icons/calendar_angle_right.svg',
                   width: 17,
                   height: 17,
-                  colorFilter: const ColorFilter.mode(
-                    Color(0xFF333333),
+                  colorFilter: ColorFilter.mode(
+                    isDark
+                        ? const Color(0xFFFFFFFF)
+                        : const Color(0xFF333333),
                     BlendMode.srcIn,
                   ),
                 ),

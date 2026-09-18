@@ -57,84 +57,100 @@ class TaskWidgetsContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).viewPadding.bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Stack(
-      children: [
-        // ── 1. Scrollable task list (bottom layer) ──────────────────────
-        Positioned.fill(
-          child: tasks.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 60.0),
-                  child: _EmptyState(),
-                )
-              : ListView.separated(
-                  clipBehavior: Clip.none,
-                  padding: EdgeInsets.only(
-                    left: 24,
-                    right: 24,
-                    top: 68,
-                    bottom: bottomPad + 80,
-                  ),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: tasks.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, i) {
-                    final task = tasks[i];
-                    return _SwipableCalendarTaskCard(
-                      key: ValueKey(task.id),
-                      task: task,
-                      onToggle: () => onToggleTask?.call(task.id),
-                      onDismiss: () => onDismissTask?.call(task.id),
-                      onTap: () => onTapTask?.call(task.id),
-                    );
-                  },
-                ),
+    return Container(
+      decoration: ShapeDecoration(
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
+      ),
+      child: Stack(
+        children: [
+          // ── 1. Scrollable task list (bottom layer) ──────────────────────
+          Positioned.fill(
+            child: tasks.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 60.0),
+                    child: _EmptyState(),
+                  )
+                : ListView.separated(
+                    clipBehavior: Clip.none,
+                    padding: EdgeInsets.only(
+                      left: 24,
+                      right: 24,
+                      top: 68,
+                      bottom: bottomPad + 80,
+                    ),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: tasks.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) {
+                      final task = tasks[i];
+                      return _SwipableCalendarTaskCard(
+                        key: ValueKey(task.id),
+                        task: task,
+                        onToggle: () => onToggleTask?.call(task.id),
+                        onDismiss: () => onDismissTask?.call(task.id),
+                        onTap: () => onTapTask?.call(task.id),
+                      );
+                    },
+                  ),
+          ),
 
-        // ── 2. Fixed Gradient Header (top layer, height: 60px) ─────────
-        Positioned(
-          left: 0,
-          right: 0,
-          top: 0,
-          height: 60,
-          child: Container(
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: const Alignment(0.50, 0.00),
-                end: const Alignment(0.50, 1.00),
-                colors: [
-                  Colors.white,
-                  Colors.white.withValues(alpha: 0.25),
-                ],
+          // ── 2. Fixed Gradient Header (top layer, height: 60px) ─────────
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            height: 60,
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: const Alignment(0.50, 0.00),
+                  end: const Alignment(0.50, 1.00),
+                  colors: isDark
+                      ? [
+                          const Color(0xFF2C2C2C),
+                          const Color(0xFF2C2C2C).withValues(alpha: 0.25),
+                        ]
+                      : [
+                          Colors.white,
+                          Colors.white.withValues(alpha: 0.25),
+                        ],
+                ),
               ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                children: [
-                  // "Tasks for June 16"
-                  Expanded(
-                    child: Text(
-                      _dateLabel,
-                      style: const TextStyle(
-                        color: Color(0xFF333333),
-                        fontSize: 16,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -0.43,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Row(
+                  children: [
+                    // "Tasks for June 16"
+                    Expanded(
+                      child: Text(
+                        _dateLabel,
+                        style: TextStyle(
+                          color: isDark
+                              ? const Color(0xFFFFFFFF)
+                              : const Color(0xFF333333),
+                          fontSize: 16,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.43,
+                        ),
                       ),
                     ),
-                  ),
 
-                  // "+ Add Task" button
-                  _AddTaskButton(onTap: onAddTask),
-                ],
+                    // "+ Add Task" button
+                    _AddTaskButton(onTap: onAddTask),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -227,6 +243,7 @@ class _SwipableCalendarTaskCardState extends State<_SwipableCalendarTaskCard>
   Widget build(BuildContext context) {
     final bool showDeleteButton = _dragX < 0.0;
     final double opacity = (_dragX.abs() / 69.0).clamp(0.0, 1.0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onHorizontalDragUpdate: _onHorizontalDragUpdate,
@@ -278,7 +295,9 @@ class _SwipableCalendarTaskCardState extends State<_SwipableCalendarTaskCard>
                                 values: [
                                   ValueDelegate.color(
                                     const ['**'],
-                                    value: const Color(0xFF333333),
+                                    value: isDark
+                                        ? const Color(0xFFFFFFFF)
+                                        : const Color(0xFF333333),
                                   ),
                                 ],
                               ),
@@ -316,6 +335,8 @@ class _AddTaskButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
@@ -325,7 +346,7 @@ class _AddTaskButton extends StatelessWidget {
         width: 110,
         height: 36,
         decoration: ShapeDecoration(
-          color: const Color(0x33787878),
+          color: isDark ? const Color(0xFF3A3A3C) : const Color(0x33787878),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -337,16 +358,16 @@ class _AddTaskButton extends StatelessWidget {
               'assets/icons/calendar_plus.svg',
               width: 14,
               height: 14,
-              colorFilter: const ColorFilter.mode(
-                Color(0xFF333333),
+              colorFilter: ColorFilter.mode(
+                isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333),
                 BlendMode.srcIn,
               ),
             ),
             const SizedBox(width: 5),
-            const Text(
+            Text(
               'Add Task',
               style: TextStyle(
-                color: Color(0xFF333333),
+                color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333),
                 fontSize: 15,
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w500,
@@ -364,11 +385,13 @@ class _AddTaskButton extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Center(
       child: Text(
         'No tasks for this day',
         style: TextStyle(
-          color: Color(0x80000000),
+          color: isDark ? const Color(0xFF757575) : const Color(0x80000000),
           fontSize: 14,
           fontFamily: 'Inter',
           fontWeight: FontWeight.w400,
