@@ -64,27 +64,46 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
     showDialog(
       context: context,
       builder: (context) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
         return AlertDialog(
-          backgroundColor: const Color(0xFFF2F2EE),
+          backgroundColor:
+              isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF2F2EE),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             "New Category",
             style: GoogleFonts.inter(
-                fontWeight: FontWeight.bold, color: Color(0xFF333333)),
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : const Color(0xFF333333),
+            ),
           ),
           content: TextField(
             controller: _categoryNameController,
             autofocus: true,
-            style: GoogleFonts.inter(color: Color(0xFF333333)),
+            style: GoogleFonts.inter(
+              color: isDark ? Colors.white : const Color(0xFF333333),
+            ),
             decoration: InputDecoration(
               labelText: "Category Name",
-              labelStyle: GoogleFonts.inter(color: const Color(0xFF8C8987)),
-              enabledBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFE6E3D2)),
+              labelStyle: GoogleFonts.inter(
+                color:
+                    isDark ? const Color(0xFF8E8E93) : const Color(0xFF8C8987),
               ),
-              focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF222222), width: 1.5),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : const Color(0xFFE6E3D2),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: isDark
+                      ? const Color(0xFF0088FF)
+                      : const Color(0xFF222222),
+                  width: 1.5,
+                ),
               ),
             ),
           ),
@@ -94,9 +113,14 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                 _categoryNameController.clear();
                 Navigator.pop(context);
               },
-              child: Text("Cancel",
-                  style: GoogleFonts.plusJakartaSans(
-                      color: const Color(0xFF8C8987))),
+              child: Text(
+                "Cancel",
+                style: GoogleFonts.plusJakartaSans(
+                  color: isDark
+                      ? const Color(0xFF8E8E93)
+                      : const Color(0xFF8C8987),
+                ),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -110,20 +134,23 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                   // Dismiss bottom sheet after a short delay
                   Future.delayed(const Duration(milliseconds: 150), () {
                     if (mounted) {
-                      Navigator.pop(context);
+                      Navigator.pop(this.context);
                     }
                   });
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF222222),
-                foregroundColor: const Color(0xFFF2F2EE),
+                backgroundColor:
+                    isDark ? const Color(0xFF0088FF) : const Color(0xFF222222),
+                foregroundColor:
+                    isDark ? Colors.white : const Color(0xFFF2F2EE),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20)),
               ),
-              child: Text("Create",
-                  style:
-                      GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+              child: Text(
+                "Create",
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         );
@@ -133,6 +160,8 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final notesProvider = Provider.of<NotesProvider>(context);
 
     // Dynamic categories list (default categories + any unique custom category used in active notes + current category)
@@ -174,10 +203,10 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 402),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF2F2EE),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF2F2EE),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 40,
@@ -198,7 +227,9 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(top: 12, bottom: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE6E3D2),
+                  color: isDark
+                      ? const Color(0xFF5A5A5A)
+                      : const Color(0xFFE6E3D2),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -220,7 +251,8 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                           style: GoogleFonts.inter(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF333333),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF333333),
                             height: 1.1,
                           ),
                         ),
@@ -229,7 +261,9 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                           "Organize this note",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 16,
-                            color: const Color(0xFF8C8987),
+                            color: isDark
+                                ? const Color(0xFF8E8E93)
+                                : const Color(0xFF8C8987),
                           ),
                         ),
                       ],
@@ -240,14 +274,16 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                     child: Container(
                       width: 32,
                       height: 32,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEBE9D8),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF3A3A3C)
+                            : const Color(0xFFEBE9D8),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.close,
                         size: 18,
-                        color: Color(0xFF333333),
+                        color: isDark ? Colors.white : const Color(0xFF333333),
                       ),
                     ),
                   ),
@@ -277,6 +313,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                                     widget.currentCategory == rowItems[0],
                                 color: _getCustomCategoryColor(
                                     rowItems[0], customCategoriesOnly),
+                                isDark: isDark,
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -288,6 +325,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                                           widget.currentCategory == rowItems[1],
                                       color: _getCustomCategoryColor(
                                           rowItems[1], customCategoriesOnly),
+                                      isDark: isDark,
                                     )
                                   : const SizedBox.shrink(),
                             ),
@@ -304,6 +342,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                             'uncategorized',
                         color: Colors.transparent,
                         isFullWidth: true,
+                        isDark: isDark,
                       ),
                     ),
                   ],
@@ -313,10 +352,12 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
             const SizedBox(height: 8),
             // Action Footer
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: Color(0x80E6E3D2),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : const Color(0x80E6E3D2),
                     width: 1.0,
                   ),
                 ),
@@ -334,10 +375,12 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.add,
                         size: 18,
-                        color: Color(0xFF8C8987),
+                        color: isDark
+                            ? const Color(0xFF8E8E93)
+                            : const Color(0xFF8C8987),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -346,7 +389,9 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.05 * 12, // conversion for em spacing
-                          color: const Color(0xFF8C8987),
+                          color: isDark
+                              ? const Color(0xFF8E8E93)
+                              : const Color(0xFF8C8987),
                         ),
                       ),
                     ],
@@ -366,6 +411,7 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
     required bool isSelected,
     required Color color,
     bool isFullWidth = false,
+    required bool isDark,
   }) {
     return TactileButton(
       onTap: () {
@@ -381,12 +427,16 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF222222) : const Color(0xFFF2F2EE),
+          color: isSelected
+              ? (isDark ? const Color(0xFF3A3A3C) : const Color(0xFF222222))
+              : (isDark ? Colors.transparent : const Color(0xFFF2F2EE)),
           borderRadius: BorderRadius.circular(20),
           border: isSelected
               ? null
               : Border.all(
-                  color: const Color(0xFFEBE9D8),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : const Color(0xFFEBE9D8),
                   width: 1.0,
                 ),
           boxShadow: isSelected
@@ -416,8 +466,12 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                     border: color == Colors.transparent
                         ? Border.all(
                             color: isSelected
-                                ? const Color(0xFFF2F2EE)
-                                : const Color(0xFF747878),
+                                ? (isDark
+                                    ? Colors.white
+                                    : const Color(0xFFF2F2EE))
+                                : (isDark
+                                    ? const Color(0xFF8E8E93)
+                                    : const Color(0xFF747878)),
                             width: 1.5,
                           )
                         : null,
@@ -429,15 +483,18 @@ class _CategorySelectionSheetState extends State<CategorySelectionSheet> {
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
-                    color: isSelected ? const Color(0xFFF2F2EE) : Color(0xFF333333),
+                    color: isSelected
+                        ? (isDark ? Colors.white : const Color(0xFFF2F2EE))
+                        : (isDark ? Colors.white : const Color(0xFF333333)),
                   ),
                 ),
               ],
             ),
             if (isSelected)
-              const Icon(
+              Icon(
                 Icons.check,
-                color: Color(0xFFF2F2EE),
+                color:
+                    isDark ? const Color(0xFF0088FF) : const Color(0xFFF2F2EE),
                 size: 18,
               ),
           ],

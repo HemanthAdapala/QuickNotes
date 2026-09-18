@@ -39,6 +39,7 @@ class _NewImageWidgetState extends State<NewImageWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isFile = !widget.imagePath.startsWith('http://') &&
         !widget.imagePath.startsWith('https://');
 
@@ -80,12 +81,16 @@ class _NewImageWidgetState extends State<NewImageWidget> {
                 border: Border.all(
                   color: widget.isSelected
                       ? theme.primaryColor
-                      : Color(0xFF333333).withOpacity(0.08),
+                      : (isDark
+                          ? Colors.white.withValues(alpha: 0.12)
+                          : const Color(0xFF333333).withValues(alpha: 0.08)),
                   width: widget.isSelected ? 2.5 : 1.0,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFF333333).withOpacity(0.04),
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.25)
+                        : const Color(0xFF333333).withValues(alpha: 0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -101,16 +106,27 @@ class _NewImageWidgetState extends State<NewImageWidget> {
                     return Container(
                       width: currentWidth,
                       height: 150,
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: const Column(
+                      color: isDark
+                          ? const Color(0xFF3A3A3C)
+                          : theme.colorScheme.surfaceContainerHighest,
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.broken_image_outlined,
-                              size: 40, color: Colors.grey),
-                          SizedBox(height: 4),
+                          Icon(
+                            Icons.broken_image_outlined,
+                            size: 40,
+                            color:
+                                isDark ? const Color(0xFF8E8E93) : Colors.grey,
+                          ),
+                          const SizedBox(height: 4),
                           Text(
                             "Error loading image",
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? const Color(0xFF8E8E93)
+                                  : Colors.grey,
+                            ),
                           ),
                         ],
                       ),
@@ -129,7 +145,9 @@ class _NewImageWidgetState extends State<NewImageWidget> {
                     : '📍 ${widget.caption}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontStyle: FontStyle.italic,
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.70)
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.70),
                 ),
               ),
             ),
@@ -144,20 +162,32 @@ class _NewImageWidgetState extends State<NewImageWidget> {
 
   Widget _buildActionPanel(double maxWidth, double currentWidth) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     if (_showSlider) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainer,
+          color: isDark
+              ? const Color(0xFF3A3A3C)
+              : theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.dividerColor, width: 0.8),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.15)
+                : theme.dividerColor,
+            width: 0.8,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.arrow_back, size: 20),
+              icon: Icon(
+                Icons.arrow_back,
+                size: 20,
+                color: isDark ? Colors.white : null,
+              ),
               onPressed: () {
                 setState(() {
                   _showSlider = false;
@@ -178,9 +208,10 @@ class _NewImageWidgetState extends State<NewImageWidget> {
             Text(
               "${currentWidth.toInt()}px",
               style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : theme.colorScheme.onSurface,
+              ),
             ),
             const SizedBox(width: 8),
           ],
@@ -191,9 +222,16 @@ class _NewImageWidgetState extends State<NewImageWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
+        color: isDark
+            ? const Color(0xFF3A3A3C)
+            : theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor, width: 0.8),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.15)
+              : theme.dividerColor,
+          width: 0.8,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -216,23 +254,30 @@ class _NewImageWidgetState extends State<NewImageWidget> {
       IconData icon, String tooltip, VoidCallback onPressed,
       {Color? color}) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final defaultIconColor = isDark
+        ? Colors.white
+        : theme.colorScheme.onSurface.withValues(alpha: 0.7);
     return IconButton(
       visualDensity: VisualDensity.compact,
       tooltip: tooltip,
       onPressed: onPressed,
-      icon: Icon(icon,
-          size: 20,
-          color: color ?? theme.colorScheme.onSurface.withOpacity(0.7)),
+      icon: Icon(
+        icon,
+        size: 20,
+        color: color ?? defaultIconColor,
+      ),
     );
   }
 
   Widget _buildActionDivider() {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2.0),
       width: 1.0,
       height: 16.0,
-      color: theme.dividerColor,
+      color: isDark ? Colors.white.withValues(alpha: 0.15) : theme.dividerColor,
     );
   }
 }

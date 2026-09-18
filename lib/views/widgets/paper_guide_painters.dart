@@ -19,7 +19,7 @@ class GlobalPaperGuidePainter extends CustomPainter {
     if (guideType == 'plain') return;
 
     final paint = Paint()
-      ..color = color.withOpacity(opacity)
+      ..color = color.withValues(alpha: opacity)
       ..strokeWidth = 1.0;
 
     if (guideType.startsWith('lines') || guideType == 'custom') {
@@ -29,7 +29,7 @@ class GlobalPaperGuidePainter extends CustomPainter {
       }
     } else if (guideType == 'dots') {
       final dotPaint = Paint()
-        ..color = color.withOpacity(opacity)
+        ..color = color.withValues(alpha: opacity)
         ..style = PaintingStyle.fill;
       const double dotRadius = 1.2;
 
@@ -80,7 +80,7 @@ class BlockPaperGuidePainter extends CustomPainter {
     if (!guideType.startsWith('lines') && guideType != 'custom') return;
 
     final paint = Paint()
-      ..color = color.withOpacity(opacity)
+      ..color = color.withValues(alpha: opacity)
       ..strokeWidth = 1.0;
 
     // Draw horizontal lines at multiples of lineHeight

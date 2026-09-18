@@ -769,7 +769,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
 
   Color _getPaperGuideColor(bool isDark) {
     if (_paperGuideColor == 0) {
-      return isDark ? Colors.white : Color(0xFF333333);
+      return isDark ? Colors.white : const Color(0xFF333333);
     }
     return Color(_paperGuideColor);
   }
@@ -803,7 +803,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
               child: showLines
                   ? CustomPaint(
                       key: ValueKey(
-                          '${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
+                          '${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}_$isDark'),
                       painter: BlockPaperGuidePainter(
                         guideType: _paperGuideType,
                         lineHeight: 20.0 * _paperGuideHeight,
@@ -1151,7 +1151,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                 decoration: block.isChecked
                     ? const BoxDecoration(color: Color(0xFF222222))
                     : BoxDecoration(
-                        border: Border.all(color: Color(0xFF333333), width: 1.0)),
+                        border:
+                            Border.all(color: Color(0xFF333333), width: 1.0)),
                 child: block.isChecked
                     ? Center(
                         child: SvgPicture.asset(
@@ -1972,6 +1973,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
 
   Future<void> _showGalleryBottomSheet(BuildContext context) async {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final List<String> sampleUrls = [
       'https://images.unsplash.com/photo-1517842645767-c639042777db?w=500&q=80',
       'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&q=80',
@@ -1990,6 +1992,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     }
     await showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? const Color(0xFF2C2C2C) : null,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
       ),
@@ -2003,6 +2006,20 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Muted Handle
+                    Center(
+                      child: Container(
+                        width: 48,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF5A5A5A)
+                              : Colors.black.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -2011,6 +2028,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                           style: GoogleFonts.outfit(
                             fontSize: 18.0,
                             fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : null,
                           ),
                         ),
                         if (selectedPaths.isNotEmpty)
@@ -2029,8 +2047,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                             },
                             child: Text(
                               "Insert (${selectedPaths.length})",
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? const Color(0xFF0088FF) : null,
+                              ),
                             ),
                           ),
                       ],
@@ -2071,17 +2091,27 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                               borderRadius: BorderRadius.circular(20),
                               child: Container(
                                 decoration: BoxDecoration(
+                                  color:
+                                      isDark ? const Color(0xFF3A3A3C) : null,
                                   border: Border.all(
-                                      color: theme.colorScheme.outlineVariant),
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.15)
+                                          : theme.colorScheme.outlineVariant),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: const Column(
+                                child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.camera_alt_outlined, size: 28),
-                                    SizedBox(height: 4),
+                                    Icon(Icons.camera_alt_outlined,
+                                        size: 28,
+                                        color: isDark ? Colors.white : null),
+                                    const SizedBox(height: 4),
                                     Text("Camera",
-                                        style: TextStyle(fontSize: 12)),
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: isDark
+                                                ? const Color(0xFF8E8E93)
+                                                : null)),
                                   ],
                                 ),
                               ),
@@ -2112,18 +2142,27 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                               borderRadius: BorderRadius.circular(20),
                               child: Container(
                                 decoration: BoxDecoration(
+                                  color:
+                                      isDark ? const Color(0xFF3A3A3C) : null,
                                   border: Border.all(
-                                      color: theme.colorScheme.outlineVariant),
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.15)
+                                          : theme.colorScheme.outlineVariant),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: const Column(
+                                child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.photo_library_outlined,
-                                        size: 28),
-                                    SizedBox(height: 4),
+                                        size: 28,
+                                        color: isDark ? Colors.white : null),
+                                    const SizedBox(height: 4),
                                     Text("System Gallery",
-                                        style: const TextStyle(fontSize: 12),
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: isDark
+                                                ? const Color(0xFF8E8E93)
+                                                : null),
                                         textAlign: TextAlign.center),
                                   ],
                                 ),
@@ -2170,7 +2209,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                           borderRadius:
                                               BorderRadius.circular(20),
                                           border: Border.all(
-                                              color: theme.colorScheme.primary,
+                                              color: isDark
+                                                  ? const Color(0xFF0088FF)
+                                                  : theme.colorScheme.primary,
                                               width: 3),
                                         ),
                                       ),
@@ -2180,8 +2221,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                       right: 8,
                                       child: CircleAvatar(
                                         radius: 10,
-                                        backgroundColor:
-                                            theme.colorScheme.primary,
+                                        backgroundColor: isDark
+                                            ? const Color(0xFF0088FF)
+                                            : theme.colorScheme.primary,
                                         child: Text(
                                           "$selectIdx",
                                           style: const TextStyle(
@@ -2323,6 +2365,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   Future<void> _showReplaceGalleryBottomSheet(int index,
       {int? stackImageIndex}) async {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final List<String> sampleUrls = [
       'https://images.unsplash.com/photo-1517842645767-c639042777db?w=500&q=80',
       'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&q=80',
@@ -2334,6 +2377,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
 
     await showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? const Color(0xFF2C2C2C) : null,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
       ),
@@ -2345,11 +2389,26 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Muted Handle
+                Center(
+                  child: Container(
+                    width: 48,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF5A5A5A)
+                          : Colors.black.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
                 Text(
                   "Replace Photo",
                   style: GoogleFonts.outfit(
                     fontSize: 18.0,
                     fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : null,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -2378,16 +2437,26 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
                             decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF3A3A3C) : null,
                               border: Border.all(
-                                  color: theme.colorScheme.outlineVariant),
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.15)
+                                      : theme.colorScheme.outlineVariant),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Column(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.camera_alt_outlined, size: 28),
-                                SizedBox(height: 4),
-                                Text("Camera", style: TextStyle(fontSize: 12)),
+                                Icon(Icons.camera_alt_outlined,
+                                    size: 28,
+                                    color: isDark ? Colors.white : null),
+                                const SizedBox(height: 4),
+                                Text("Camera",
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark
+                                            ? const Color(0xFF8E8E93)
+                                            : null)),
                               ],
                             ),
                           ),
@@ -2406,17 +2475,26 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
                             decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF3A3A3C) : null,
                               border: Border.all(
-                                  color: theme.colorScheme.outlineVariant),
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.15)
+                                      : theme.colorScheme.outlineVariant),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Column(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.photo_library_outlined, size: 28),
-                                SizedBox(height: 4),
+                                Icon(Icons.photo_library_outlined,
+                                    size: 28,
+                                    color: isDark ? Colors.white : null),
+                                const SizedBox(height: 4),
                                 Text("System Gallery",
-                                    style: TextStyle(fontSize: 12)),
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark
+                                            ? const Color(0xFF8E8E93)
+                                            : null)),
                               ],
                             ),
                           ),
@@ -3169,9 +3247,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   }
 
   void _showPaperSettingsBottomSheet() {
+    final rootTheme = Theme.of(context);
+    final isRootDark = rootTheme.brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isRootDark ? const Color(0xFF2C2C2C) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
       ),
@@ -3221,10 +3303,30 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
 
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(28.0)),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Muted Handle
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF5A5A5A)
+                            : Colors.black.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -3237,7 +3339,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -3253,7 +3358,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                         style: GoogleFonts.inter(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white70 : Colors.black54,
+                          color:
+                              isDark ? const Color(0xFF8E8E93) : Colors.black54,
                         ),
                       ),
                       Switch(
@@ -3271,7 +3377,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                       ),
                     ],
                   ),
-                  const Divider(height: 24),
+                  Divider(
+                    height: 24,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : theme.dividerColor,
+                  ),
 
                   if (_paperGuideVisible) ...[
                     Text(
@@ -3279,6 +3390,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                       style: GoogleFonts.outfit(
                         fontSize: 15.0,
                         fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -3323,9 +3435,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? theme.colorScheme.primary
-                                        .withOpacity(0.15)
+                                        .withValues(alpha: 0.15)
                                     : (isDark
-                                        ? const Color(0xFF1E1E1E)
+                                        ? const Color(0xFF3A3A3C)
                                         : const Color(0xFFF5F3EF)),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
@@ -3359,7 +3471,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                       color: isSelected
                                           ? theme.colorScheme.primary
                                           : (isDark
-                                              ? Colors.white60
+                                              ? const Color(0xFF8E8E93)
                                               : Colors.black87),
                                     ),
                                   ),
@@ -3380,12 +3492,17 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                           Text(
                             "Line Height Factor: ${_paperGuideHeight.toStringAsFixed(2)}",
                             style: GoogleFonts.inter(
-                                fontSize: 14, fontWeight: FontWeight.w500),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
                           ),
                           Text(
                             "${(_paperGuideHeight * 20).toInt()} px",
                             style: GoogleFonts.jetBrainsMono(
-                                fontSize: 12, color: theme.colorScheme.primary),
+                              fontSize: 12,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                         ],
                       ),
@@ -3394,6 +3511,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                         min: 1.0,
                         max: 2.5,
                         divisions: 30,
+                        activeColor: theme.colorScheme.primary,
+                        inactiveColor: isDark
+                            ? const Color(0xFF3A3A3C)
+                            : theme.disabledColor,
                         onChanged: (val) {
                           setSheetState(() {
                             _paperGuideHeight = val;
@@ -3414,7 +3535,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                         Text(
                           "Guide Opacity: ${(_paperGuideOpacity * 100).toInt()}%",
                           style: GoogleFonts.inter(
-                              fontSize: 14, fontWeight: FontWeight.w500),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
                         ),
                       ],
                     ),
@@ -3423,6 +3547,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                       min: 0.05,
                       max: 0.60,
                       divisions: 11,
+                      activeColor: theme.colorScheme.primary,
+                      inactiveColor: isDark
+                          ? const Color(0xFF3A3A3C)
+                          : theme.disabledColor,
                       onChanged: (val) {
                         setSheetState(() {
                           _paperGuideOpacity = val;
@@ -3442,6 +3570,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                         style: GoogleFonts.outfit(
                           fontSize: 14.0,
                           fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -3456,8 +3585,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
 
                             Color displayCol;
                             if (colVal == 0) {
-                              displayCol =
-                                  isDark ? Colors.white60 : Colors.black45;
+                              displayCol = isDark
+                                  ? Colors.white
+                                  : const Color(0xFF333333);
                             } else {
                               displayCol = Color(colVal);
                             }
@@ -3477,12 +3607,20 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                 height: 32,
                                 margin: const EdgeInsets.only(right: 12),
                                 decoration: BoxDecoration(
-                                  color: displayCol.withOpacity(0.4),
+                                  color: colVal == 0
+                                      ? (isDark
+                                          ? Colors.white.withValues(alpha: 0.2)
+                                          : const Color(0xFF333333)
+                                              .withValues(alpha: 0.15))
+                                      : displayCol.withValues(alpha: 0.4),
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: isSelected
                                         ? theme.colorScheme.primary
-                                        : displayCol,
+                                        : (colVal == 0 && isDark
+                                            ? Colors.white
+                                                .withValues(alpha: 0.4)
+                                            : displayCol),
                                     width: isSelected ? 3.0 : 1.5,
                                   ),
                                 ),
@@ -3492,8 +3630,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                           Icons.autorenew_rounded,
                                           size: 14,
                                           color: isDark
-                                              ? Colors.white70
-                                              : Colors.black87,
+                                              ? Colors.white
+                                              : const Color(0xFF333333),
                                         ),
                                       )
                                     : null,
@@ -3930,7 +4068,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                         color: color,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSelected ? Color(0xFF333333) : Colors.black12,
+                          color:
+                              isSelected ? Color(0xFF333333) : Colors.black12,
                           width: isSelected ? 2 : 1,
                         ),
                       ),
@@ -4176,8 +4315,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     final double clampedWidth = screenWidth > (maxToolbarWidth + 48.0)
         ? maxToolbarWidth
         : (screenWidth - 48.0);
-    final double targetWidth =
-        _isFormattingBarExpanded ? clampedWidth : 48.0;
+    final double targetWidth = _isFormattingBarExpanded ? clampedWidth : 48.0;
     final double targetHeight = !_isFormattingBarExpanded
         ? 48.0
         : (_activeCategory != _ActiveCategory.none ? 100.0 : 50.0);
@@ -4185,11 +4323,19 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
         ? (screenWidth - clampedWidth) / 2.0
         : (screenWidth - targetWidth - 24.0);
 
-    const textColor = Color(0xFF1C1C1E);
-    const titleColor = Color(0xFF1C1C1E);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final textColor =
+        isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E);
+    final titleColor =
+        isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E);
+    final titleHintColor = isDark
+        ? const Color(0xFF8E8E93)
+        : const Color(0xFF1C1C1E).withValues(alpha: 0.3);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       body: SafeArea(
         bottom: false,
         child: Stack(
@@ -4213,7 +4359,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                             color: Colors.transparent,
                             boxShadow: [
                               BoxShadow(
-                                color: Color(0xFF333333).withOpacity(0.06),
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.3)
+                                    : const Color(0xFF333333)
+                                        .withValues(alpha: 0.06),
                                 blurRadius: 20.0,
                                 offset: const Offset(0, -4),
                               ),
@@ -4242,9 +4391,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                 right: 0,
                                 bottom: 0,
                                 child: Container(
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.only(
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF2C2C2C)
+                                        : Colors.white,
+                                    borderRadius: const BorderRadius.only(
                                       topLeft: Radius.circular(30.0),
                                       topRight: Radius.circular(30.0),
                                     ),
@@ -4278,7 +4429,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                         child: IgnorePointer(
                           child: CustomPaint(
                             key: ValueKey(
-                                '${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}'),
+                                '${_paperGuideType}_${_paperGuideColor}_${_paperGuideOpacity}_$isDark'),
                             painter: GlobalPaperGuidePainter(
                               guideType: _paperGuideType,
                               spacing: (NoteEditorScreen
@@ -4302,336 +4453,360 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                         Positioned.fill(
                           child: Center(
                             child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 700.0),
+                              constraints:
+                                  const BoxConstraints(maxWidth: 700.0),
                               child: Listener(
                                 behavior: HitTestBehavior.opaque,
-                            onPointerDown: (event) {
-                              _pointerDownPos = event.position;
-                              _activeDragImage = null;
-                              _dragDirection = 0;
+                                onPointerDown: (event) {
+                                  _pointerDownPos = event.position;
+                                  _activeDragImage = null;
+                                  _dragDirection = 0;
 
-                              final controller = _contentController;
-                              for (final entry
-                                  in controller.imageKeys.entries) {
-                                final key = entry.value;
-                                final context = key.currentContext;
-                                if (context != null) {
-                                  final RenderBox? box =
-                                      context.findRenderObject() as RenderBox?;
-                                  if (box != null && box.hasSize) {
-                                    final position =
-                                        box.localToGlobal(Offset.zero);
-                                    final size = box.size;
-                                    final rect = position & size;
-                                    if (rect.contains(event.position)) {
-                                      _activeDragImage = key.currentState
-                                          as ResizableImageWidgetState?;
-                                      if (_activeDragImage != null) {
-                                        final isControlsShown =
-                                            _activeDragImage!.showControls;
-                                        final localX =
-                                            event.position.dx - position.dx;
-                                        if (isControlsShown && localX < 30.0) {
-                                          _dragDirection = -1; // Left handle
-                                        } else if (isControlsShown &&
-                                            localX > size.width - 30.0) {
-                                          _dragDirection = 1; // Right handle
-                                        } else {
-                                          _dragDirection =
-                                              0; // Tap/double-tap area
-                                        }
-                                      }
-                                      break;
-                                    }
-                                  }
-                                }
-                              }
-                            },
-                            onPointerMove: (event) {
-                              if (_activeDragImage != null &&
-                                  _dragDirection != 0) {
-                                _activeDragImage!.updateWidth(
-                                    event.delta.dx, _dragDirection);
-                              }
-                            },
-                            onPointerUp: (event) {
-                              if (_activeDragImage != null) {
-                                final dist = _pointerDownPos != null
-                                    ? (event.position - _pointerDownPos!)
-                                        .distance
-                                    : 0.0;
-                                if (dist < 10.0 && _dragDirection == 0) {
-                                  _activeDragImage!.toggleControls();
-                                }
-                                _activeDragImage = null;
-                                _dragDirection = 0;
-                              } else {
-                                final dist = _pointerDownPos != null
-                                    ? (event.position - _pointerDownPos!)
-                                        .distance
-                                    : 0.0;
-                                if (dist < 10.0) {
-                                  if (NoteEditorScreen
-                                      .useSingleDocumentEditor) {
-                                    bool isInsideSDE = false;
-                                    final BuildContext? sdeContext =
-                                        _sdeKey.currentContext;
-                                    if (sdeContext != null) {
-                                      final RenderBox? box = sdeContext
+                                  final controller = _contentController;
+                                  for (final entry
+                                      in controller.imageKeys.entries) {
+                                    final key = entry.value;
+                                    final context = key.currentContext;
+                                    if (context != null) {
+                                      final RenderBox? box = context
                                           .findRenderObject() as RenderBox?;
                                       if (box != null && box.hasSize) {
                                         final position =
                                             box.localToGlobal(Offset.zero);
-                                        final rect = position & box.size;
+                                        final size = box.size;
+                                        final rect = position & size;
                                         if (rect.contains(event.position)) {
-                                          isInsideSDE = true;
-                                        }
-                                      }
-                                    }
-                                    if (!isInsideSDE) {
-                                      bool isInsideTitle = false;
-                                      final BuildContext? titleContext =
-                                          _titleFocusNode.context;
-                                      if (titleContext != null) {
-                                        final RenderBox? box = titleContext
-                                            .findRenderObject() as RenderBox?;
-                                        if (box != null && box.hasSize) {
-                                          final position =
-                                              box.localToGlobal(Offset.zero);
-                                          final rect = position & box.size;
-                                          if (rect.contains(event.position)) {
-                                            isInsideTitle = true;
+                                          _activeDragImage = key.currentState
+                                              as ResizableImageWidgetState?;
+                                          if (_activeDragImage != null) {
+                                            final isControlsShown =
+                                                _activeDragImage!.showControls;
+                                            final localX =
+                                                event.position.dx - position.dx;
+                                            if (isControlsShown &&
+                                                localX < 30.0) {
+                                              _dragDirection =
+                                                  -1; // Left handle
+                                            } else if (isControlsShown &&
+                                                localX > size.width - 30.0) {
+                                              _dragDirection =
+                                                  1; // Right handle
+                                            } else {
+                                              _dragDirection =
+                                                  0; // Tap/double-tap area
+                                            }
                                           }
+                                          break;
                                         }
-                                      }
-                                      if (!isInsideTitle) {
-                                        _contentFocusNode.requestFocus();
-                                        final len =
-                                            _contentController.text.length;
-                                        _contentController.selection =
-                                            TextSelection.collapsed(
-                                                offset: len);
                                       }
                                     }
                                   }
-                                }
-                              }
-                              _pointerDownPos = null;
-                            },
-                            child: RepaintBoundary(
-                              child: (NoteEditorScreen
-                                          .useSingleDocumentEditor &&
-                                      !_isPreviewMarkdown)
-                                  ? SingleDocumentDragOverlay(
-                                      controller: _contentController,
-                                      sdeKey: _sdeKey,
-                                      scrollController: _scrollController,
-                                      isSelectionMode: true,
-                                      child: NewSingleDocumentEditor(
-                                        key: _sdeKey,
-                                        controller: _contentController,
-                                        focusNode: _contentFocusNode,
-                                        textColor: textColor,
-                                        paperGuideHeight: _paperGuideHeight,
-                                        contextMenuBuilder: _buildContextMenu,
-                                        formattingToolbarHeight: targetHeight,
-                                        onBackspaceAtStart: _focusTitleArea,
-                                        header: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Focus(
-                                              onKeyEvent: (node, event) {
-                                                if (event is KeyDownEvent &&
-                                                    (event.logicalKey ==
-                                                            LogicalKeyboardKey
-                                                                .enter ||
-                                                        event.logicalKey ==
-                                                            LogicalKeyboardKey
-                                                                .numpadEnter)) {
-                                                  _focusContentArea();
-                                                  return KeyEventResult.handled;
-                                                }
-                                                return KeyEventResult.ignored;
-                                              },
-                                              child: TextField(
-                                                controller: _titleController,
-                                                focusNode: _titleFocusNode,
-                                                textCapitalization:
-                                                    TextCapitalization
-                                                        .sentences,
-                                                maxLines: 1,
-                                                textInputAction:
-                                                    TextInputAction.next,
-                                                onEditingComplete:
-                                                    _focusContentArea,
-                                                selectionControls:
-                                                    EmptyTextSelectionControls(),
-                                                contextMenuBuilder:
-                                                    _buildContextMenu,
-                                                scrollPadding: EdgeInsets.only(
-                                                    bottom:
-                                                        _getDynamicBottomScrollPadding()),
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 24.0,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: titleColor,
-                                                  decoration:
-                                                      TextDecoration.none,
-                                                  height: 1.15,
-                                                ),
-                                                decoration: InputDecoration(
-                                                  hintText: "Title",
-                                                  hintStyle: GoogleFonts.inter(
-                                                    fontSize: 24.0,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: titleColor
-                                                        .withOpacity(0.3),
-                                                    height: 1.15,
-                                                    decoration:
-                                                        TextDecoration.none,
-                                                  ),
-                                                  border: InputBorder.none,
-                                                  contentPadding:
-                                                      EdgeInsets.zero,
-                                                  filled: false,
-                                                ),
-                                                onChanged: (val) {
-                                                  setState(() {
-                                                    _hasChanges = true;
-                                                  });
-                                                },
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4.0),
-                                          ],
-                                        ),
-                                        scrollController: _scrollController,
-                                        padding: const EdgeInsets.only(
-                                          left: 24.0,
-                                          right: 24.0,
-                                          top: 59.0,
-                                          bottom: 120.0,
-                                        ),
-                                        physics: const BouncingScrollPhysics(),
-                                      ),
-                                    )
-                                  : SingleChildScrollView(
-                                      controller: _scrollController,
-                                      padding: const EdgeInsets.only(
-                                        left: 24.0,
-                                        right: 24.0,
-                                        top:
-                                            59.0, // Date bar (50) + padding (9)
-                                        bottom: 120.0,
-                                      ),
-                                      physics: const BouncingScrollPhysics(),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // Title
-                                          Focus(
-                                            onKeyEvent: (node, event) {
-                                              if (event is KeyDownEvent &&
-                                                  (event.logicalKey ==
-                                                          LogicalKeyboardKey
-                                                              .enter ||
-                                                      event.logicalKey ==
-                                                          LogicalKeyboardKey
-                                                              .numpadEnter)) {
-                                                _focusContentArea();
-                                                return KeyEventResult.handled;
+                                },
+                                onPointerMove: (event) {
+                                  if (_activeDragImage != null &&
+                                      _dragDirection != 0) {
+                                    _activeDragImage!.updateWidth(
+                                        event.delta.dx, _dragDirection);
+                                  }
+                                },
+                                onPointerUp: (event) {
+                                  if (_activeDragImage != null) {
+                                    final dist = _pointerDownPos != null
+                                        ? (event.position - _pointerDownPos!)
+                                            .distance
+                                        : 0.0;
+                                    if (dist < 10.0 && _dragDirection == 0) {
+                                      _activeDragImage!.toggleControls();
+                                    }
+                                    _activeDragImage = null;
+                                    _dragDirection = 0;
+                                  } else {
+                                    final dist = _pointerDownPos != null
+                                        ? (event.position - _pointerDownPos!)
+                                            .distance
+                                        : 0.0;
+                                    if (dist < 10.0) {
+                                      if (NoteEditorScreen
+                                          .useSingleDocumentEditor) {
+                                        bool isInsideSDE = false;
+                                        final BuildContext? sdeContext =
+                                            _sdeKey.currentContext;
+                                        if (sdeContext != null) {
+                                          final RenderBox? box = sdeContext
+                                              .findRenderObject() as RenderBox?;
+                                          if (box != null && box.hasSize) {
+                                            final position =
+                                                box.localToGlobal(Offset.zero);
+                                            final rect = position & box.size;
+                                            if (rect.contains(event.position)) {
+                                              isInsideSDE = true;
+                                            }
+                                          }
+                                        }
+                                        if (!isInsideSDE) {
+                                          bool isInsideTitle = false;
+                                          final BuildContext? titleContext =
+                                              _titleFocusNode.context;
+                                          if (titleContext != null) {
+                                            final RenderBox? box =
+                                                titleContext.findRenderObject()
+                                                    as RenderBox?;
+                                            if (box != null && box.hasSize) {
+                                              final position = box
+                                                  .localToGlobal(Offset.zero);
+                                              final rect = position & box.size;
+                                              if (rect
+                                                  .contains(event.position)) {
+                                                isInsideTitle = true;
                                               }
-                                              return KeyEventResult.ignored;
-                                            },
-                                            child: TextField(
-                                              controller: _titleController,
-                                              focusNode: _titleFocusNode,
-                                              textCapitalization:
-                                                  TextCapitalization.sentences,
-                                              maxLines: 1,
-                                              textInputAction:
-                                                  TextInputAction.next,
-                                              onEditingComplete:
-                                                  _focusContentArea,
-                                              selectionControls:
-                                                  EmptyTextSelectionControls(),
-                                              contextMenuBuilder:
-                                                  _buildContextMenu,
-                                              scrollPadding: EdgeInsets.only(
-                                                  bottom:
-                                                      _getDynamicBottomScrollPadding()),
-                                              style: GoogleFonts.inter(
-                                                fontSize: 24.0,
-                                                fontWeight: FontWeight.bold,
-                                                color: titleColor,
-                                                decoration: TextDecoration.none,
-                                                height: 1.15,
-                                              ),
-                                              decoration: InputDecoration(
-                                                hintText: "Title",
-                                                hintStyle: GoogleFonts.inter(
-                                                  fontSize: 24.0,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: titleColor
-                                                      .withOpacity(0.3),
-                                                  height: 1.15,
-                                                  decoration:
-                                                      TextDecoration.none,
-                                                ),
-                                                border: InputBorder.none,
-                                                contentPadding: EdgeInsets.zero,
-                                                filled: false,
-                                              ),
-                                              onChanged: (val) {
-                                                setState(() {
-                                                  _hasChanges = true;
-                                                });
-                                              },
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4.0),
-
-                                          if (_isPreviewMarkdown)
-                                            _buildMarkdownPreview(textColor)
-                                          else
-                                            Column(
+                                            }
+                                          }
+                                          if (!isInsideTitle) {
+                                            _contentFocusNode.requestFocus();
+                                            final len =
+                                                _contentController.text.length;
+                                            _contentController.selection =
+                                                TextSelection.collapsed(
+                                                    offset: len);
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                  _pointerDownPos = null;
+                                },
+                                child: RepaintBoundary(
+                                  child: (NoteEditorScreen
+                                              .useSingleDocumentEditor &&
+                                          !_isPreviewMarkdown)
+                                      ? SingleDocumentDragOverlay(
+                                          controller: _contentController,
+                                          sdeKey: _sdeKey,
+                                          scrollController: _scrollController,
+                                          isSelectionMode: true,
+                                          child: NewSingleDocumentEditor(
+                                            key: _sdeKey,
+                                            controller: _contentController,
+                                            focusNode: _contentFocusNode,
+                                            textColor: textColor,
+                                            paperGuideHeight: _paperGuideHeight,
+                                            contextMenuBuilder:
+                                                _buildContextMenu,
+                                            formattingToolbarHeight:
+                                                targetHeight,
+                                            onBackspaceAtStart: _focusTitleArea,
+                                            header: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                ...() {
-                                                  final List<Widget> list = [];
-                                                  for (int i = 0;
-                                                      i < _blocks.length;
-                                                      i++) {
-                                                    list.add(_buildBlockWidget(
-                                                        _blocks[i],
-                                                        textColor,
-                                                        titleColor));
-                                                    if (i <
-                                                        _blocks.length - 1) {
-                                                      final spacing =
-                                                          _getSpacingBetween(
-                                                              _blocks[i],
-                                                              _blocks[i + 1]);
-                                                      list.add(SizedBox(
-                                                          height: spacing));
+                                                Focus(
+                                                  onKeyEvent: (node, event) {
+                                                    if (event is KeyDownEvent &&
+                                                        (event.logicalKey ==
+                                                                LogicalKeyboardKey
+                                                                    .enter ||
+                                                            event.logicalKey ==
+                                                                LogicalKeyboardKey
+                                                                    .numpadEnter)) {
+                                                      _focusContentArea();
+                                                      return KeyEventResult
+                                                          .handled;
                                                     }
-                                                  }
-                                                  return list;
-                                                }(),
+                                                    return KeyEventResult
+                                                        .ignored;
+                                                  },
+                                                  child: TextField(
+                                                    controller:
+                                                        _titleController,
+                                                    focusNode: _titleFocusNode,
+                                                    textCapitalization:
+                                                        TextCapitalization
+                                                            .sentences,
+                                                    maxLines: 1,
+                                                    textInputAction:
+                                                        TextInputAction.next,
+                                                    onEditingComplete:
+                                                        _focusContentArea,
+                                                    selectionControls:
+                                                        EmptyTextSelectionControls(),
+                                                    contextMenuBuilder:
+                                                        _buildContextMenu,
+                                                    scrollPadding: EdgeInsets.only(
+                                                        bottom:
+                                                            _getDynamicBottomScrollPadding()),
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 24.0,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: titleColor,
+                                                      decoration:
+                                                          TextDecoration.none,
+                                                      height: 1.15,
+                                                    ),
+                                                    decoration: InputDecoration(
+                                                      hintText: "Title",
+                                                      hintStyle:
+                                                          GoogleFonts.inter(
+                                                        fontSize: 24.0,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: titleHintColor,
+                                                        height: 1.15,
+                                                        decoration:
+                                                            TextDecoration.none,
+                                                      ),
+                                                      border: InputBorder.none,
+                                                      contentPadding:
+                                                          EdgeInsets.zero,
+                                                      filled: false,
+                                                    ),
+                                                    onChanged: (val) {
+                                                      setState(() {
+                                                        _hasChanges = true;
+                                                      });
+                                                    },
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4.0),
                                               ],
                                             ),
-                                        ],
-                                      ),
-                                    ),
-                                  ), // RepaintBoundary
-                                ), // Listener
-                              ), // ConstrainedBox
-                            ), // Center
-                          ), // Positioned.fill
+                                            scrollController: _scrollController,
+                                            padding: const EdgeInsets.only(
+                                              left: 24.0,
+                                              right: 24.0,
+                                              top: 59.0,
+                                              bottom: 120.0,
+                                            ),
+                                            physics:
+                                                const BouncingScrollPhysics(),
+                                          ),
+                                        )
+                                      : SingleChildScrollView(
+                                          controller: _scrollController,
+                                          padding: const EdgeInsets.only(
+                                            left: 24.0,
+                                            right: 24.0,
+                                            top:
+                                                59.0, // Date bar (50) + padding (9)
+                                            bottom: 120.0,
+                                          ),
+                                          physics:
+                                              const BouncingScrollPhysics(),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Title
+                                              Focus(
+                                                onKeyEvent: (node, event) {
+                                                  if (event is KeyDownEvent &&
+                                                      (event.logicalKey ==
+                                                              LogicalKeyboardKey
+                                                                  .enter ||
+                                                          event.logicalKey ==
+                                                              LogicalKeyboardKey
+                                                                  .numpadEnter)) {
+                                                    _focusContentArea();
+                                                    return KeyEventResult
+                                                        .handled;
+                                                  }
+                                                  return KeyEventResult.ignored;
+                                                },
+                                                child: TextField(
+                                                  controller: _titleController,
+                                                  focusNode: _titleFocusNode,
+                                                  textCapitalization:
+                                                      TextCapitalization
+                                                          .sentences,
+                                                  maxLines: 1,
+                                                  textInputAction:
+                                                      TextInputAction.next,
+                                                  onEditingComplete:
+                                                      _focusContentArea,
+                                                  selectionControls:
+                                                      EmptyTextSelectionControls(),
+                                                  contextMenuBuilder:
+                                                      _buildContextMenu,
+                                                  scrollPadding: EdgeInsets.only(
+                                                      bottom:
+                                                          _getDynamicBottomScrollPadding()),
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 24.0,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: titleColor,
+                                                    decoration:
+                                                        TextDecoration.none,
+                                                    height: 1.15,
+                                                  ),
+                                                  decoration: InputDecoration(
+                                                    hintText: "Title",
+                                                    hintStyle:
+                                                        GoogleFonts.inter(
+                                                      fontSize: 24.0,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: titleHintColor,
+                                                      height: 1.15,
+                                                      decoration:
+                                                          TextDecoration.none,
+                                                    ),
+                                                    border: InputBorder.none,
+                                                    contentPadding:
+                                                        EdgeInsets.zero,
+                                                    filled: false,
+                                                  ),
+                                                  onChanged: (val) {
+                                                    setState(() {
+                                                      _hasChanges = true;
+                                                    });
+                                                  },
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4.0),
+
+                                              if (_isPreviewMarkdown)
+                                                _buildMarkdownPreview(textColor)
+                                              else
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    ...() {
+                                                      final List<Widget> list =
+                                                          [];
+                                                      for (int i = 0;
+                                                          i < _blocks.length;
+                                                          i++) {
+                                                        list.add(
+                                                            _buildBlockWidget(
+                                                                _blocks[i],
+                                                                textColor,
+                                                                titleColor));
+                                                        if (i <
+                                                            _blocks.length -
+                                                                1) {
+                                                          final spacing =
+                                                              _getSpacingBetween(
+                                                                  _blocks[i],
+                                                                  _blocks[
+                                                                      i + 1]);
+                                                          list.add(SizedBox(
+                                                              height: spacing));
+                                                        }
+                                                      }
+                                                      return list;
+                                                    }(),
+                                                  ],
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                ), // RepaintBoundary
+                              ), // Listener
+                            ), // ConstrainedBox
+                          ), // Center
+                        ), // Positioned.fill
 
                         // Sticky Yellow Header with Blur
                         Positioned(
@@ -4692,7 +4867,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
               child: HeaderExpandedInteraction(
                 isExpanded: _isNoteOptionsOpen,
                 onDismiss: () => setState(() => _isNoteOptionsOpen = false),
-                barrierColor: const Color(0xFF333333).withValues(alpha: 0.08),
+                barrierColor: isDark
+                    ? Colors.black.withValues(alpha: 0.25)
+                    : const Color(0xFF333333).withValues(alpha: 0.08),
               ),
             ),
 
@@ -4771,8 +4948,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                             'assets/icons/angle_left.svg',
                             width: 22,
                             height: 22,
-                            colorFilter: const ColorFilter.mode(
-                                Color(0xFF1C1C1E), BlendMode.srcIn),
+                            colorFilter: ColorFilter.mode(
+                                isDark
+                                    ? const Color(0xFFFFFFFF)
+                                    : const Color(0xFF1C1C1E),
+                                BlendMode.srcIn),
                           ),
                           rightWidth: 192.0,
                           rightChild: Row(
@@ -4797,9 +4977,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                           Icons.undo_rounded,
                                           size: 22,
                                           color: canUndo
-                                              ? const Color(0xFF1C1C1E)
-                                              : const Color(0xFF1C1C1E)
-                                                  .withOpacity(0.3),
+                                              ? (isDark
+                                                  ? const Color(0xFFFFFFFF)
+                                                  : const Color(0xFF1C1C1E))
+                                              : (isDark
+                                                  ? const Color(0xFFFFFFFF)
+                                                      .withValues(alpha: 0.3)
+                                                  : const Color(0xFF1C1C1E)
+                                                      .withValues(alpha: 0.3)),
                                         ),
                                       ),
                                     );
@@ -4826,9 +5011,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                           Icons.redo_rounded,
                                           size: 22,
                                           color: canRedo
-                                              ? const Color(0xFF1C1C1E)
-                                              : const Color(0xFF1C1C1E)
-                                                  .withOpacity(0.3),
+                                              ? (isDark
+                                                  ? const Color(0xFFFFFFFF)
+                                                  : const Color(0xFF1C1C1E))
+                                              : (isDark
+                                                  ? const Color(0xFFFFFFFF)
+                                                      .withValues(alpha: 0.3)
+                                                  : const Color(0xFF1C1C1E)
+                                                      .withValues(alpha: 0.3)),
                                         ),
                                       ),
                                     );
@@ -4839,8 +5029,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                               Container(
                                 width: 1.0,
                                 height: 18.0,
-                                color:
-                                    const Color(0xFF1C1C1E).withOpacity(0.15),
+                                color: isDark
+                                    ? const Color(0xFFFFFFFF)
+                                        .withValues(alpha: 0.15)
+                                    : const Color(0xFF1C1C1E)
+                                        .withValues(alpha: 0.15),
                               ),
                               // Folder Select Button
                               Expanded(
@@ -4853,8 +5046,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                       'assets/icons/bottom_navigation/folder-open.svg',
                                       width: 22,
                                       height: 22,
-                                      colorFilter: const ColorFilter.mode(
-                                          Color(0xFF1C1C1E), BlendMode.srcIn),
+                                      colorFilter: ColorFilter.mode(
+                                          isDark
+                                              ? const Color(0xFFFFFFFF)
+                                              : const Color(0xFF1C1C1E),
+                                          BlendMode.srcIn),
                                     ),
                                   ),
                                 ),
@@ -4867,11 +5063,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                       _isNoteOptionsOpen = !_isNoteOptionsOpen;
                                     });
                                   },
-                                  child: const Center(
+                                  child: Center(
                                     child: Icon(
                                       Icons.more_horiz_rounded,
                                       size: 22,
-                                      color: Color(0xFF1C1C1E),
+                                      color: isDark
+                                          ? const Color(0xFFFFFFFF)
+                                          : const Color(0xFF1C1C1E),
                                     ),
                                   ),
                                 ),
@@ -4928,12 +5126,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                   _isFormattingBarExpanded = true;
                                 });
                               },
-                              child: const SizedBox(
+                              child: SizedBox(
                                 width: 48,
                                 height: 48,
                                 child: Icon(
                                   Icons.edit_note_rounded,
-                                  color: Color(0xFF333333),
+                                  color: isDark
+                                      ? const Color(0xFF8E8E93)
+                                      : const Color(0xFF333333),
                                   size: 24,
                                 ),
                               ),
@@ -5145,7 +5345,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     required bool isActive,
     required String tooltip,
   }) {
-    final inactiveColor = const Color(0xFF333333);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inactiveColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333);
     final activeColor = _tintColor;
     final activeBgColor = activeColor.withValues(alpha: 0.15);
 
@@ -5183,7 +5385,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     required TextStyle style,
     required String tooltip,
   }) {
-    final inactiveColor = const Color(0xFF333333);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inactiveColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333);
     final activeColor = _tintColor;
     final activeBgColor = activeColor.withValues(alpha: 0.15);
 
@@ -5508,7 +5712,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     required bool isActive,
     bool isEnabled = true,
   }) {
-    final inactiveColor = const Color(0xFF333333);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inactiveColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333);
 
     return Opacity(
       opacity: isEnabled ? 1.0 : 0.35,
@@ -5561,7 +5767,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
               fontWeight: FontWeight.bold,
               color: _activeCategory == _ActiveCategory.aa
                   ? Colors.white
-                  : const Color(0xFF333333),
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF8E8E93)
+                      : const Color(0xFF333333)),
             ),
           ),
           onTap: () {
@@ -5694,103 +5902,121 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   }
 
   Widget _buildDeletePopup() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Positioned.fill(
-      child: Container(
-        color: Color(0xFF333333).withOpacity(0.4),
-        child: Center(
-          child: Container(
-            width: 262,
-            height: 156,
-            decoration: BoxDecoration(
-              color: const Color(0xFF222222),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(
-                    color: Colors.black45, blurRadius: 20, spreadRadius: 1),
-              ],
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 16,
-                  top: 18,
-                  width: 231,
-                  height: 83,
-                  child: Center(
-                    child: Text(
-                      "Are you sure",
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _showDeletePopup = false;
+          });
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          color: Colors.black.withValues(alpha: 0.4),
+          child: Center(
+            child: Container(
+              width: 262,
+              height: 156,
+              decoration: BoxDecoration(
+                color:
+                    isDark ? const Color(0xFF2C2C2C) : const Color(0xFF222222),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                      color: Colors.black45, blurRadius: 20, spreadRadius: 1),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: 16,
+                    top: 18,
+                    width: 231,
+                    height: 83,
+                    child: Center(
+                      child: Text(
+                        "Are you sure",
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: 35,
-                  top: 101,
-                  width: 80,
-                  height: 35,
-                  child: GestureDetector(
-                    onTap: () async {
-                      final provider =
-                          Provider.of<NotesProvider>(context, listen: false);
-                      if (widget.note != null) {
-                        await provider.trashNote(widget.note!.id);
-                      }
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Center(
-                        child: Text(
-                          "Delete",
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: const Color(0xFF222222),
+                  Positioned(
+                    left: 35,
+                    top: 101,
+                    width: 80,
+                    height: 35,
+                    child: GestureDetector(
+                      onTap: () async {
+                        final provider =
+                            Provider.of<NotesProvider>(context, listen: false);
+                        if (widget.note != null) {
+                          await provider.trashNote(widget.note!.id);
+                        }
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color:
+                              isDark ? const Color(0xFFFF3B30) : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "Delete",
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF222222),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: 145,
-                  top: 101,
-                  width: 80,
-                  height: 35,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _showDeletePopup = false;
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Center(
-                        child: Text(
-                          "Cancel",
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: const Color(0xFF222222),
+                  Positioned(
+                    left: 145,
+                    top: 101,
+                    width: 80,
+                    height: 35,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _showDeletePopup = false;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color:
+                              isDark ? const Color(0xFF3A3A3C) : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF222222),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

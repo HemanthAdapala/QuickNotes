@@ -15,6 +15,9 @@ class RichTextSelectionToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     // Check which actions are enabled in the current editable text state
     final bool canSelectAll = editableTextState.selectAllEnabled;
     final bool canCopy = editableTextState.copyEnabled;
@@ -113,7 +116,7 @@ class RichTextSelectionToolbar extends StatelessWidget {
           Container(
             width: 0.6,
             height: 16,
-            color: Colors.white.withValues(alpha: 0.2),
+            color: Colors.white.withValues(alpha: 0.15),
           ),
         );
       }
@@ -135,7 +138,7 @@ class RichTextSelectionToolbar extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              color: const Color(0xEC222226),
+              color: isDark ? const Color(0xEC3A3A3C) : const Color(0xEC222226),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.15),
                 width: 0.8,
@@ -145,7 +148,9 @@ class RichTextSelectionToolbar extends StatelessWidget {
                   offset: const Offset(0, 6),
                   blurRadius: 16,
                   spreadRadius: 0,
-                  color: Color(0xFF333333).withValues(alpha: 0.25),
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.3)
+                      : const Color(0xFF333333).withValues(alpha: 0.25),
                 ),
               ],
             ),

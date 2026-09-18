@@ -36,6 +36,7 @@ class NoteEditorOptionsPopup extends StatelessWidget {
     required VoidCallback? onTap,
     required bool hasBottomDivider,
     Color textColor = const Color(0xFF333333),
+    Color dividerColor = const Color(0x33000000),
   }) {
     return Semantics(
       button: true,
@@ -68,9 +69,9 @@ class NoteEditorOptionsPopup extends StatelessWidget {
                     child: Container(
                       width: 192,
                       height: 1,
-                      decoration: const ShapeDecoration(
+                      decoration: ShapeDecoration(
                         shape: RoundedRectangleBorder(
-                          side: BorderSide(width: 0.20, color: Color(0x33000000)),
+                          side: BorderSide(width: 0.20, color: dividerColor),
                         ),
                       ),
                     ),
@@ -115,11 +116,23 @@ class NoteEditorOptionsPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const textColor = Color(0xFF333333);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return SizedBox(
+    final primaryTextColor =
+        isDark ? const Color(0xFFFFFFFF) : const Color(0xFF333333);
+    final iconColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333);
+    final dividerColor =
+        isDark ? const Color(0x33FFFFFF) : const Color(0x33000000);
+
+    return Container(
       width: 192,
       height: 250,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,12 +142,17 @@ class NoteEditorOptionsPopup extends StatelessWidget {
             icon: Icon(
               isPinned ? Icons.push_pin : Icons.push_pin_outlined,
               size: 16,
-              color:
-                  isPinned ? Theme.of(context).colorScheme.primary : textColor,
+              color: isPinned
+                  ? (isDark
+                      ? const Color(0xFF0088FF)
+                      : theme.colorScheme.primary)
+                  : iconColor,
             ),
             label: isPinned ? 'Unpin Note' : 'Pin Note',
             onTap: onTogglePin,
             hasBottomDivider: true,
+            textColor: primaryTextColor,
+            dividerColor: dividerColor,
           ),
 
           // 2. Add / Remove Favourite
@@ -142,38 +160,44 @@ class NoteEditorOptionsPopup extends StatelessWidget {
             icon: Icon(
               isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
               size: 16,
-              color: isFavorite ? const Color(0xFFFFCC00) : textColor,
+              color: isFavorite ? const Color(0xFFFFCC00) : iconColor,
             ),
             label: isFavorite ? 'Remove Favorite' : 'Add Favorite',
             onTap: onToggleFavorite,
             hasBottomDivider: true,
+            textColor: primaryTextColor,
+            dividerColor: dividerColor,
           ),
 
           // 3. Find in Note
           _buildMenuItem(
-            icon: const Icon(
+            icon: Icon(
               Icons.search_rounded,
               size: 16,
-              color: textColor,
+              color: iconColor,
             ),
             label: 'Find in Note',
             onTap: onFindInNote,
             hasBottomDivider: true,
+            textColor: primaryTextColor,
+            dividerColor: dividerColor,
           ),
 
           // 4. Export and Share
           _buildMenuItem(
-            icon: const Icon(
+            icon: Icon(
               Icons.share_rounded,
               size: 16,
-              color: textColor,
+              color: iconColor,
             ),
             label: 'Export & Share',
             onTap: onExportAndShare,
             hasBottomDivider: true,
+            textColor: primaryTextColor,
+            dividerColor: dividerColor,
           ),
 
-          // 4. Delete Note
+          // 5. Delete Note
           _buildMenuItem(
             icon: SvgPicture.asset(
               'assets/icons/trash.svg',
@@ -186,6 +210,7 @@ class NoteEditorOptionsPopup extends StatelessWidget {
             onTap: onDeleteNote,
             hasBottomDivider: false,
             textColor: Colors.redAccent,
+            dividerColor: dividerColor,
           ),
         ],
       ),

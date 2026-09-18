@@ -19,6 +19,9 @@ class RichTextFormattingPillContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = borderRadius ?? BorderRadius.circular(20.0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inactiveColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333);
 
     return BottomBarGlassSurface(
       width: width,
@@ -28,13 +31,13 @@ class RichTextFormattingPillContainer extends StatelessWidget {
         width: width,
         height: height,
         child: IconTheme.merge(
-          data: const IconThemeData(
-            color: Color(0xFF333333),
+          data: IconThemeData(
+            color: inactiveColor,
             size: 22,
           ),
           child: DefaultTextStyle.merge(
-            style: const TextStyle(
-              color: Color(0xFF333333),
+            style: TextStyle(
+              color: inactiveColor,
             ),
             child: child,
           ),

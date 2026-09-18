@@ -23,24 +23,24 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
   final TextEditingController _folderNameController = TextEditingController();
 
   void _showCreateFolderDialog() {
-    String? selectedParentId = widget.currentFolderId;
     showDialog(
       context: context,
       builder: (context) {
         final theme = Theme.of(context);
-        final provider = Provider.of<NotesProvider>(context, listen: false);
-        final hierarchical =
-            FolderUtils.getHierarchicalFolders(provider.folders);
+        final isDark = theme.brightness == Brightness.dark;
 
         return StatefulBuilder(builder: (context, setDialogState) {
           return AlertDialog(
-            backgroundColor: const Color(0xFFF2F2EE),
+            backgroundColor:
+                isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF2F2EE),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
               "New Folder",
               style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold, color: Color(0xFF333333)),
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFF333333),
+              ),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -49,17 +49,30 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                 TextField(
                   controller: _folderNameController,
                   autofocus: true,
-                  style: GoogleFonts.inter(color: Color(0xFF333333)),
+                  style: GoogleFonts.inter(
+                    color: isDark ? Colors.white : const Color(0xFF333333),
+                  ),
                   decoration: InputDecoration(
                     labelText: "Folder Name",
-                    labelStyle:
-                        GoogleFonts.inter(color: const Color(0xFF8C8987)),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFE6E3D2)),
+                    labelStyle: GoogleFonts.inter(
+                      color: isDark
+                          ? const Color(0xFF8E8E93)
+                          : const Color(0xFF8C8987),
                     ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Color(0xFF222222), width: 1.5),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : const Color(0xFFE6E3D2),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: isDark
+                            ? const Color(0xFF0088FF)
+                            : const Color(0xFF222222),
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -71,9 +84,14 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                   _folderNameController.clear();
                   Navigator.pop(context);
                 },
-                child: Text("Cancel",
-                    style: GoogleFonts.plusJakartaSans(
-                        color: const Color(0xFF8C8987))),
+                child: Text(
+                  "Cancel",
+                  style: GoogleFonts.plusJakartaSans(
+                    color: isDark
+                        ? const Color(0xFF8E8E93)
+                        : const Color(0xFF8C8987),
+                  ),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -89,14 +107,20 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF222222),
-                  foregroundColor: const Color(0xFFF2F2EE),
+                  backgroundColor: isDark
+                      ? const Color(0xFF0088FF)
+                      : const Color(0xFF222222),
+                  foregroundColor:
+                      isDark ? Colors.white : const Color(0xFFF2F2EE),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20)),
                 ),
-                child: Text("Create",
-                    style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.bold)),
+                child: Text(
+                  "Create",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           );
@@ -107,6 +131,8 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final notesProvider = Provider.of<NotesProvider>(context);
     final folders = notesProvider.folders;
     final activeNotes = notesProvider.allActiveNotes;
@@ -122,10 +148,10 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 402),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF2F2EE),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF2F2EE),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 50,
@@ -146,7 +172,9 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(top: 12, bottom: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD9D9D9).withOpacity(0.4),
+                  color: isDark
+                      ? const Color(0xFF5A5A5A)
+                      : const Color(0xFFD9D9D9).withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -168,7 +196,8 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                           style: GoogleFonts.inter(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF333333),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF333333),
                             height: 1.1,
                           ),
                         ),
@@ -177,7 +206,9 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                           "Choose where this note belongs",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
-                            color: const Color(0xFF8C8987),
+                            color: isDark
+                                ? const Color(0xFF8E8E93)
+                                : const Color(0xFF8C8987),
                           ),
                         ),
                       ],
@@ -188,14 +219,16 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                     child: Container(
                       width: 32,
                       height: 32,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEBE9D8),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF3A3A3C)
+                            : const Color(0xFFEBE9D8),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.close,
                         size: 18,
-                        color: Color(0xFF333333),
+                        color: isDark ? Colors.white : const Color(0xFF333333),
                       ),
                     ),
                   ),
@@ -219,6 +252,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                       depth: 0,
                       noteCount: rootNoteCount,
                       isSelected: widget.currentFolderId == null,
+                      isDark: isDark,
                     ),
                     const SizedBox(height: 8),
                     // Indented Hierarchical Folders
@@ -238,6 +272,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                           depth: depth,
                           noteCount: noteCount,
                           isSelected: isSelected,
+                          isDark: isDark,
                         ),
                       );
                     }),
@@ -248,10 +283,12 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
             const SizedBox(height: 16),
             // Footer action
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: Color(0x1AD9D9D9),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : const Color(0x1AD9D9D9),
                     width: 1.0,
                   ),
                 ),
@@ -265,10 +302,10 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.add,
                         size: 20,
-                        color: Color(0xB3000000),
+                        color: isDark ? Colors.white : const Color(0xB3000000),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -276,7 +313,8 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
-                          color: const Color(0xB3000000),
+                          color:
+                              isDark ? Colors.white : const Color(0xB3000000),
                         ),
                       ),
                     ],
@@ -297,6 +335,7 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
     required int depth,
     required int noteCount,
     required bool isSelected,
+    required bool isDark,
   }) {
     final paddingLeft = 16.0 + (depth * 16.0);
 
@@ -315,7 +354,9 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.fromLTRB(paddingLeft, 14, 16, 14),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF222222) : Colors.transparent,
+          color: isSelected
+              ? (isDark ? const Color(0xFF3A3A3C) : const Color(0xFF222222))
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           boxShadow: isSelected
               ? const [
@@ -332,8 +373,10 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
             Icon(
               isSelected ? Icons.folder : Icons.folder_open_outlined,
               color: isSelected
-                  ? const Color(0xFFF2F2EE)
-                  : const Color(0xFF8C8987),
+                  ? (isDark ? Colors.white : const Color(0xFFF2F2EE))
+                  : (isDark
+                      ? const Color(0xFF8E8E93)
+                      : const Color(0xFF8C8987)),
               size: 22,
             ),
             const SizedBox(width: 12),
@@ -343,16 +386,19 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
-                  color: isSelected ? const Color(0xFFF2F2EE) : Color(0xFF333333),
+                  color: isSelected
+                      ? (isDark ? Colors.white : const Color(0xFFF2F2EE))
+                      : (isDark ? Colors.white : const Color(0xFF333333)),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             if (isSelected)
-              const Icon(
+              Icon(
                 Icons.check,
-                color: Color(0xFFF2F2EE),
+                color:
+                    isDark ? const Color(0xFF0088FF) : const Color(0xFFF2F2EE),
                 size: 18,
               )
             else
@@ -361,7 +407,10 @@ class _FolderSelectionSheetState extends State<FolderSelectionSheet> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF8C8987).withOpacity(0.6),
+                  color: (isDark
+                          ? const Color(0xFF8E8E93)
+                          : const Color(0xFF8C8987))
+                      .withValues(alpha: 0.6),
                 ),
               ),
           ],

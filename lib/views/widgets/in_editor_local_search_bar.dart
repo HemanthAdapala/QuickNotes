@@ -76,6 +76,9 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return SizedBox(
       height: 44.0,
       child: Row(
@@ -86,16 +89,22 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
             height: 44.0,
             borderRadius: BorderRadius.circular(22.0),
             useFrost: true,
-            child: TactileButton(
-              useAppleSpring: true,
-              compressionScale: 0.7,
-              settleDuration: const Duration(milliseconds: 1000),
-              onTap: _handleClose,
-              child: const Center(
-                child: Icon(
-                  Icons.close_rounded,
-                  color: Color(0xFF1C1C1E),
-                  size: 22,
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF3A3A3C) : Colors.transparent,
+                borderRadius: BorderRadius.circular(22.0),
+              ),
+              child: TactileButton(
+                useAppleSpring: true,
+                compressionScale: 0.7,
+                settleDuration: const Duration(milliseconds: 1000),
+                onTap: _handleClose,
+                child: Center(
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: isDark ? Colors.white : const Color(0xFF1C1C1E),
+                    size: 22,
+                  ),
                 ),
               ),
             ),
@@ -109,13 +118,19 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
               height: 44.0,
               borderRadius: BorderRadius.circular(22.0),
               useFrost: true,
-              child: Padding(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF3A3A3C) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(22.0),
+                ),
                 padding: const EdgeInsets.symmetric(horizontal: 14.0),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.search_rounded,
-                      color: Color(0xFFD49200),
+                      color: isDark
+                          ? const Color(0xFFFFCC00)
+                          : const Color(0xFFD49200),
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -126,7 +141,9 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
                         autofocus: true,
                         style: GoogleFonts.inter(
                           fontSize: 14,
-                          color: const Color(0xFF1C1C1E),
+                          color: isDark
+                              ? const Color(0xFFFFFFFF)
+                              : const Color(0xFF1C1C1E),
                           fontWeight: FontWeight.w400,
                         ),
                         decoration: InputDecoration(
@@ -156,7 +173,9 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(0x1A787880),
+                            color: isDark
+                                ? const Color(0x33FFFFFF)
+                                : const Color(0x1A787880),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -164,7 +183,9 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF555558),
+                              color: isDark
+                                  ? const Color(0xFF8E8E93)
+                                  : const Color(0xFF555558),
                             ),
                           ),
                         );
@@ -188,51 +209,72 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
                 height: 44.0,
                 borderRadius: BorderRadius.circular(22.0),
                 useFrost: true,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TactileButton(
-                        useAppleSpring: true,
-                        compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
-                        onTap: hasMatches
-                            ? () {
-                                HapticFeedback.selectionClick();
-                                widget.searchController.previousMatch();
-                              }
-                            : () {},
-                        child: const Center(
-                          child: Icon(
-                            Icons.keyboard_arrow_up_rounded,
-                            color: Color(0xFF1C1C1E),
-                            size: 20,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color:
+                        isDark ? const Color(0xFF3A3A3C) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(22.0),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TactileButton(
+                          useAppleSpring: true,
+                          compressionScale: 0.7,
+                          settleDuration: const Duration(milliseconds: 1000),
+                          onTap: hasMatches
+                              ? () {
+                                  HapticFeedback.selectionClick();
+                                  widget.searchController.previousMatch();
+                                }
+                              : () {},
+                          child: Center(
+                            child: Icon(
+                              Icons.keyboard_arrow_up_rounded,
+                              color: isDark
+                                  ? (hasMatches ? Colors.white : Colors.white38)
+                                  : (hasMatches
+                                      ? const Color(0xFF1C1C1E)
+                                      : const Color(0xFF1C1C1E)
+                                          .withValues(alpha: 0.3)),
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Container(
-                        width: 1, height: 20, color: const Color(0x33000000)),
-                    Expanded(
-                      child: TactileButton(
-                        useAppleSpring: true,
-                        compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
-                        onTap: hasMatches
-                            ? () {
-                                HapticFeedback.selectionClick();
-                                widget.searchController.nextMatch();
-                              }
-                            : () {},
-                        child: const Center(
-                          child: Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: Color(0xFF1C1C1E),
-                            size: 20,
+                      Container(
+                          width: 1,
+                          height: 20,
+                          color: isDark
+                              ? const Color(0x33FFFFFF)
+                              : const Color(0x33000000)),
+                      Expanded(
+                        child: TactileButton(
+                          useAppleSpring: true,
+                          compressionScale: 0.7,
+                          settleDuration: const Duration(milliseconds: 1000),
+                          onTap: hasMatches
+                              ? () {
+                                  HapticFeedback.selectionClick();
+                                  widget.searchController.nextMatch();
+                                }
+                              : () {},
+                          child: Center(
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: isDark
+                                  ? (hasMatches ? Colors.white : Colors.white38)
+                                  : (hasMatches
+                                      ? const Color(0xFF1C1C1E)
+                                      : const Color(0xFF1C1C1E)
+                                          .withValues(alpha: 0.3)),
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },

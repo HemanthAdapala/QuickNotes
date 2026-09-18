@@ -173,11 +173,12 @@ class InteractiveCheckbox extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final uncheckedBorderColor =
-        isDark ? Colors.white.withOpacity(0.4) : Color(0xFF333333).withOpacity(0.3);
+    final uncheckedBorderColor = isDark
+        ? Colors.white.withValues(alpha: 0.4)
+        : const Color(0xFF333333).withValues(alpha: 0.3);
 
-    final checkedBgColor = const Color(0xFFFFCC00);
-    final checkIconColor = const Color(0xFF333333);
+    const checkedBgColor = Color(0xFFFFCC00);
+    const checkIconColor = Color(0xFF333333);
 
     return TactileButton(
       onTap: onTap,
@@ -350,7 +351,9 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
     required ThemeData theme,
     Color? color,
   }) {
-    final textColor = color ?? theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor =
+        color ?? (isDark ? Colors.white : theme.colorScheme.primary);
     return TextButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, size: 16, color: textColor),
@@ -364,8 +367,9 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
       ),
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        backgroundColor:
-            (color ?? theme.colorScheme.primary).withValues(alpha: 0.08),
+        backgroundColor: (color ??
+                (isDark ? const Color(0xFF3A3A3C) : theme.colorScheme.primary))
+            .withValues(alpha: isDark ? 0.35 : 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -399,6 +403,7 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
           "Relevant state: image path=${widget.imagePath}, index=${widget.index}, stackImageIndex=${widget.stackImageIndex}");
     }
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isFile = !widget.imagePath.startsWith('http://') &&
         !widget.imagePath.startsWith('https://');
 
@@ -531,7 +536,9 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
                                 ? double.infinity
                                 : currentWidth,
                             height: currentHeight,
-                            color: theme.colorScheme.surfaceContainerHighest,
+                            color: isDark
+                                ? const Color(0xFF3A3A3C)
+                                : theme.colorScheme.surfaceContainerHighest,
                             child: const Center(
                               child: SizedBox(
                                 width: 24,
@@ -556,16 +563,29 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
                         return Container(
                           width: widget.isStacked ? double.infinity : 200,
                           height: 150,
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          child: const Column(
+                          color: isDark
+                              ? const Color(0xFF3A3A3C)
+                              : theme.colorScheme.surfaceContainerHighest,
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.broken_image_outlined,
-                                  size: 40, color: Colors.grey),
-                              SizedBox(height: 4),
-                              Text("Error loading image",
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.grey)),
+                              Icon(
+                                Icons.broken_image_outlined,
+                                size: 40,
+                                color: isDark
+                                    ? const Color(0xFF8E8E93)
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Error loading image",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? const Color(0xFF8E8E93)
+                                      : Colors.grey,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -640,7 +660,9 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
               displayCaption,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontStyle: FontStyle.italic,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.70)
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.70),
               ),
             ),
           ),
@@ -2016,8 +2038,8 @@ class RichTextEditingController extends TextEditingController {
             alignment: Alignment.center,
             child: Container(
               height: 1.5,
-              color: baseStyle.color?.withOpacity(0.2) ??
-                  Colors.grey.withOpacity(0.2),
+              color: baseStyle.color?.withValues(alpha: 0.2) ??
+                  Colors.grey.withValues(alpha: 0.2),
             ),
           ),
         ));
@@ -2118,8 +2140,8 @@ class RichTextEditingController extends TextEditingController {
         children.add(TextSpan(
           text: '│ ',
           style: baseStyle.copyWith(
-            color:
-                (baseStyle.color ?? const Color(0xFF6B7280)).withOpacity(0.5),
+            color: (baseStyle.color ?? const Color(0xFF6B7280))
+                .withValues(alpha: 0.5),
             fontWeight: FontWeight.w300,
           ),
         ));
@@ -2147,7 +2169,7 @@ class RichTextEditingController extends TextEditingController {
               ? FontStyle.italic
               : (currentStyle.italic ? FontStyle.italic : FontStyle.normal),
           color: currentStyle.listType == 'quote'
-              ? (currentStyle.color ?? baseStyle.color)?.withOpacity(0.7)
+              ? (currentStyle.color ?? baseStyle.color)?.withValues(alpha: 0.7)
               : (currentStyle.color ?? baseStyle.color),
           backgroundColor: currentStyle.highlight,
         );
@@ -2965,8 +2987,8 @@ class RangeTextEditingController extends TextEditingController {
       Color? displayColor = currentStyle.color ?? baseStyle.color;
       if (isCheckedCheckbox) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final defaultColor = isDark ? Colors.white : Color(0xFF333333);
-        displayColor = (displayColor ?? defaultColor).withOpacity(0.4);
+        final defaultColor = isDark ? Colors.white : const Color(0xFF333333);
+        displayColor = (displayColor ?? defaultColor).withValues(alpha: 0.4);
       }
 
       TextStyle runStyle = baseStyle.copyWith(
@@ -2975,7 +2997,7 @@ class RangeTextEditingController extends TextEditingController {
             ? FontStyle.italic
             : (currentStyle.italic ? FontStyle.italic : FontStyle.normal),
         color: currentStyle.listType == 'quote'
-            ? (currentStyle.color ?? baseStyle.color)?.withOpacity(0.7)
+            ? (currentStyle.color ?? baseStyle.color)?.withValues(alpha: 0.7)
             : displayColor,
         backgroundColor: currentStyle.highlight,
       );

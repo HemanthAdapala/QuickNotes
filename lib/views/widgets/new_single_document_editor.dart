@@ -948,6 +948,7 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
     final textField = TextSelectionTheme(
       data: const TextSelectionThemeData(
         selectionColor: Colors.transparent,
+        cursorColor: Color(0xFF0088FF),
       ),
       child: TextField(
         key: key,
@@ -970,7 +971,7 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
               : null,
           hintStyle: GoogleFonts.inter(
             fontSize: fontSize,
-            color: widget.textColor.withOpacity(0.3),
+            color: widget.textColor.withValues(alpha: 0.3),
           ),
           border: InputBorder.none,
           contentPadding: EdgeInsets.zero,
@@ -1034,7 +1035,7 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
                 width: 6,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: widget.textColor.withOpacity(0.5),
+                  color: widget.textColor.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -1055,7 +1056,7 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 16.0,
-                color: widget.textColor.withOpacity(0.5),
+                color: widget.textColor.withValues(alpha: 0.5),
               ),
             ),
           ),
@@ -1067,7 +1068,7 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
         decoration: BoxDecoration(
           border: Border(
             left: BorderSide(
-              color: widget.textColor.withOpacity(0.2),
+              color: widget.textColor.withValues(alpha: 0.2),
               width: 3.0,
             ),
           ),
