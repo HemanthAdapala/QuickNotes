@@ -113,13 +113,21 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF0088FF),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF333333),
-            ),
+            colorScheme: isDark
+                ? const ColorScheme.dark(
+                    primary: Color(0xFF0088FF),
+                    onPrimary: Colors.white,
+                    surface: Color(0xFF2C2C2C),
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: Color(0xFF0088FF),
+                    onPrimary: Colors.white,
+                    onSurface: Color(0xFF333333),
+                  ),
           ),
           child: child!,
         );
@@ -138,13 +146,21 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
       context: context,
       initialTime: _selectedTime,
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF0088FF),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF333333),
-            ),
+            colorScheme: isDark
+                ? const ColorScheme.dark(
+                    primary: Color(0xFF0088FF),
+                    onPrimary: Colors.white,
+                    surface: Color(0xFF2C2C2C),
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: Color(0xFF0088FF),
+                    onPrimary: Colors.white,
+                    onSurface: Color(0xFF333333),
+                  ),
           ),
           child: child!,
         );
@@ -404,7 +420,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                 Text(
                                   'Task Title',
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFF333333),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF333333),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                     letterSpacing: -0.43,
@@ -415,7 +433,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                   height: 45,
                                   clipBehavior: Clip.antiAlias,
                                   decoration: ShapeDecoration(
-                                    color: const Color(0x28787880),
+                                    color: isDark
+                                        ? const Color(0xFF242426)
+                                        : const Color(0x28787880),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
                                     ),
@@ -423,14 +443,18 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                   child: TextField(
                                     controller: _titleController,
                                     style: GoogleFonts.inter(
-                                      color: const Color(0xFF333333),
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF333333),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w400,
                                     ),
                                     decoration: InputDecoration(
                                       hintText: 'Add a task title',
                                       hintStyle: GoogleFonts.inter(
-                                        color: const Color(0x993C3C43),
+                                        color: isDark
+                                            ? const Color(0xFF8E8E93)
+                                            : const Color(0x993C3C43),
                                         fontSize: 14,
                                         fontWeight: FontWeight.w400,
                                         letterSpacing: -0.43,
@@ -461,8 +485,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                               Text(
                                                 'Due Date',
                                                 style: GoogleFonts.inter(
-                                                  color:
-                                                      const Color(0xFF333333),
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : const Color(0xFF333333),
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.w500,
                                                   letterSpacing: -0.43,
@@ -476,8 +501,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                   padding: const EdgeInsets
                                                       .symmetric(horizontal: 8),
                                                   decoration: ShapeDecoration(
-                                                    color:
-                                                        const Color(0x28787880),
+                                                    color: isDark
+                                                        ? const Color(0xFF242426)
+                                                        : const Color(0x28787880),
                                                     shape:
                                                         RoundedRectangleBorder(
                                                       borderRadius:
@@ -498,8 +524,10 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                               .ellipsis,
                                                           style:
                                                               GoogleFonts.inter(
-                                                            color: const Color(
-                                                                0x993C3C43),
+                                                            color: isDark
+                                                                ? Colors.white
+                                                                : const Color(
+                                                                    0x993C3C43),
                                                             fontSize: 12,
                                                             fontWeight:
                                                                 FontWeight.w400,
@@ -512,9 +540,10 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                         width: 14,
                                                         height: 14,
                                                         colorFilter:
-                                                            const ColorFilter
-                                                                .mode(
-                                                          Color(0x993C3C43),
+                                                            ColorFilter.mode(
+                                                          isDark
+                                                              ? const Color(0xFF8E8E93)
+                                                              : const Color(0x993C3C43),
                                                           BlendMode.srcIn,
                                                         ),
                                                       ),
@@ -538,8 +567,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                               Text(
                                                 'Time',
                                                 style: GoogleFonts.inter(
-                                                  color:
-                                                      const Color(0xFF333333),
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : const Color(0xFF333333),
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.w500,
                                                   letterSpacing: -0.43,
@@ -553,8 +583,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                   padding: const EdgeInsets
                                                       .symmetric(horizontal: 6),
                                                   decoration: ShapeDecoration(
-                                                    color:
-                                                        const Color(0x28787880),
+                                                    color: isDark
+                                                        ? const Color(0xFF242426)
+                                                        : const Color(0x28787880),
                                                     shape:
                                                         RoundedRectangleBorder(
                                                       borderRadius:
@@ -575,8 +606,10 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                               .ellipsis,
                                                           style:
                                                               GoogleFonts.inter(
-                                                            color: const Color(
-                                                                0x993C3C43),
+                                                            color: isDark
+                                                                ? Colors.white
+                                                                : const Color(
+                                                                    0x993C3C43),
                                                             fontSize: 12,
                                                             fontWeight:
                                                                 FontWeight.w400,
@@ -589,9 +622,10 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                         width: 14,
                                                         height: 14,
                                                         colorFilter:
-                                                            const ColorFilter
-                                                                .mode(
-                                                          Color(0x993C3C43),
+                                                            ColorFilter.mode(
+                                                          isDark
+                                                              ? const Color(0xFF8E8E93)
+                                                              : const Color(0x993C3C43),
                                                           BlendMode.srcIn,
                                                         ),
                                                       ),
@@ -615,8 +649,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                               Text(
                                                 'Priority',
                                                 style: GoogleFonts.inter(
-                                                  color:
-                                                      const Color(0xFF333333),
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : const Color(0xFF333333),
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.w500,
                                                   letterSpacing: -0.43,
@@ -735,7 +770,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                 Text(
                                   'Task Description (Optional)',
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFF333333),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF333333),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                     letterSpacing: -0.43,
@@ -747,7 +784,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 16, vertical: 4),
                                   decoration: ShapeDecoration(
-                                    color: const Color(0x28787880),
+                                    color: isDark
+                                        ? const Color(0xFF242426)
+                                        : const Color(0x28787880),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
                                     ),
@@ -757,14 +796,18 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                     maxLines: null,
                                     keyboardType: TextInputType.multiline,
                                     style: GoogleFonts.inter(
-                                      color: const Color(0xFF333333),
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF333333),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w400,
                                     ),
                                     decoration: InputDecoration(
                                       hintText: 'Add details',
                                       hintStyle: GoogleFonts.inter(
-                                        color: const Color(0x993C3C43),
+                                        color: isDark
+                                            ? const Color(0xFF8E8E93)
+                                            : const Color(0x993C3C43),
                                         fontSize: 14,
                                         fontWeight: FontWeight.w400,
                                         letterSpacing: -0.43,

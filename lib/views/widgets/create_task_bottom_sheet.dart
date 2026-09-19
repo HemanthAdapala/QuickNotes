@@ -138,13 +138,55 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       initialDate: _selectedDate,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: isDark
+                ? const ColorScheme.dark(
+                    primary: Color(0xFF0088FF),
+                    onPrimary: Colors.white,
+                    surface: Color(0xFF2C2C2C),
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: Color(0xFF0088FF),
+                    onPrimary: Colors.white,
+                    onSurface: Color(0xFF333333),
+                  ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null && mounted) setState(() => _selectedDate = picked);
   }
 
   Future<void> _pickStartTime() async {
-    final picked =
-        await showTimePicker(context: context, initialTime: _startTime);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _startTime,
+      builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: isDark
+                ? const ColorScheme.dark(
+                    primary: Color(0xFF0088FF),
+                    onPrimary: Colors.white,
+                    surface: Color(0xFF2C2C2C),
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: Color(0xFF0088FF),
+                    onPrimary: Colors.white,
+                    onSurface: Color(0xFF333333),
+                  ),
+          ),
+          child: child!,
+        );
+      },
+    );
     if (picked != null && mounted) setState(() => _startTime = picked);
   }
 
@@ -578,25 +620,29 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
 
   // ── Widget builders ────────────────────────────────────────────────────────
 
-  Widget _sectionLabel(String text) => Text(
-        text,
-        style: const TextStyle(
-          color: Color(0xFF333333),
-          fontSize: 16,
-          fontFamily: 'Inter',
-          fontWeight: FontWeight.w500,
-          letterSpacing: -0.43,
-        ),
-      );
+  Widget _sectionLabel(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Text(
+      text,
+      style: TextStyle(
+        color: isDark ? Colors.white : const Color(0xFF333333),
+        fontSize: 16,
+        fontFamily: 'Inter',
+        fontWeight: FontWeight.w500,
+        letterSpacing: -0.43,
+      ),
+    );
+  }
 
   Widget _inputField({
     required TextEditingController controller,
     required String hint,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 45,
       decoration: ShapeDecoration(
-        color: const Color(0x28787880),
+        color: isDark ? const Color(0xFF242426) : const Color(0x28787880),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -606,8 +652,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         child: Center(
           child: TextField(
             controller: controller,
-            style: const TextStyle(
-              color: Color(0xFF333333),
+            style: TextStyle(
+              color: isDark ? Colors.white : const Color(0xFF333333),
               fontSize: 14,
               fontFamily: 'Inter',
               fontWeight: FontWeight.w400,
@@ -615,8 +661,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(
-                color: Color(0x993C3C43),
+              hintStyle: TextStyle(
+                color: isDark ? const Color(0xFF8E8E93) : const Color(0x993C3C43),
                 fontSize: 14,
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w400,
@@ -633,6 +679,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
 
   /// Date pill with calendar icon on the right.
   Widget _dateField() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
         if (_showPriorityPopup) setState(() => _showPriorityPopup = false);
@@ -641,7 +688,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       child: Container(
         height: 45,
         decoration: ShapeDecoration(
-          color: const Color(0x28787880),
+          color: isDark ? const Color(0xFF242426) : const Color(0x28787880),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -655,8 +702,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                 child: Text(
                   _formattedDate,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0x993C3C43),
+                  style: TextStyle(
+                    color: isDark ? Colors.white : const Color(0x993C3C43),
                     fontSize: 13,
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w400,
@@ -669,8 +716,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                 'assets/icons/calendar_icon.svg',
                 width: 14,
                 height: 14,
-                colorFilter: const ColorFilter.mode(
-                  Color(0xFF888888),
+                colorFilter: ColorFilter.mode(
+                  isDark ? const Color(0xFF8E8E93) : const Color(0xFF888888),
                   BlendMode.srcIn,
                 ),
               ),
@@ -683,6 +730,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
 
   /// Time pill with alarm-clock icon on the right.
   Widget _timeField(TimeOfDay time, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
         if (_showPriorityPopup) setState(() => _showPriorityPopup = false);
@@ -691,7 +739,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
       child: Container(
         height: 45,
         decoration: ShapeDecoration(
-          color: const Color(0x28787880),
+          color: isDark ? const Color(0xFF242426) : const Color(0x28787880),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -705,8 +753,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                 child: Text(
                   _formatTime(time),
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0x993C3C43),
+                  style: TextStyle(
+                    color: isDark ? Colors.white : const Color(0x993C3C43),
                     fontSize: 12,
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w400,
@@ -719,8 +767,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                 'assets/icons/alarm_clock.svg',
                 width: 13,
                 height: 13,
-                colorFilter: const ColorFilter.mode(
-                  Color(0xFF888888),
+                colorFilter: ColorFilter.mode(
+                  isDark ? const Color(0xFF8E8E93) : const Color(0xFF888888),
                   BlendMode.srcIn,
                 ),
               ),

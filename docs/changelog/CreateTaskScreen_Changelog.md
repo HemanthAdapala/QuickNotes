@@ -127,3 +127,85 @@ Known Edge Cases: None.
 ## Final Result
 Both `TaskEditorScreen` and `CreateTaskBottomSheet` shells seamlessly adapt to `#1E1E1E` and `#2C2C2C` Dark Mode foundations while 100% preserving existing Light Mode visual aesthetics and geometry.
 
+---
+
+## Version
+v1.2.0
+
+## Date
+2026-09-19
+
+## Author
+Anti Gravity
+
+## Type
+- UI
+- Improvement
+- Bug Fix
+
+## Summary
+Migrated Task Editor fields, labels, due date & time controls, and native date/time pickers to Dark Mode as part of Phase D6-F2. Resolves the hardcoded `ColorScheme.light` dialog theme leak identified in D6-F0, bringing full brightness-awareness to native Material `DatePicker` and `TimePicker`.
+
+## Detailed Changes
+- **Native Pickers Theme Leak Resolution**: Replaced the hardcoded `const ColorScheme.light(...)` builder wrappers in `create_task_screen.dart` (`_selectDate` and `_selectTime`) and added matching theme-aware builders to `create_task_bottom_sheet.dart` (`_pickDate` and `_pickStartTime`).
+  - In Dark Mode: dynamically applies `ColorScheme.dark` with primary `#0088FF`, onPrimary `#FFFFFF`, surface `#2C2C2C`, and onSurface `#FFFFFF`.
+  - In Light Mode: preserves the exact original `ColorScheme.light` appearance with primary `#0088FF` and onSurface `#333333`.
+- **Title Field**:
+  - Title input container adapts from `0x28787880` to `#242426` in Dark Mode.
+  - Entered title text adapts from `#333333` to `#FFFFFF`.
+  - Placeholder / hint adapts from `0x993C3C43` to `#8E8E93`.
+- **Description Field**:
+  - Description input container adapts from `0x28787880` to `#242426` in Dark Mode.
+  - Entered description text adapts from `#333333` to `#FFFFFF`.
+  - Placeholder / hint adapts from `0x993C3C43` to `#8E8E93`.
+- **Field Labels**:
+  - Primary field labels ('Task Title', 'Due Date', 'Time', 'Priority', 'Task Description (Optional)') adapt from `#333333` to `#FFFFFF` in Dark Mode.
+- **Due Date & Due Time Controls**:
+  - Container backgrounds adapt from `0x28787880` to `#242426` in Dark Mode.
+  - Formatted date & time texts adapt from `0x993C3C43` to `#FFFFFF`.
+  - Calendar and alarm clock icons adapt from `0x993C3C43` / `0xFF888888` to `#8E8E93`.
+- **Locked Boundaries Maintained**:
+  - Priority option list, priority popup, reminder segmented control, and recurrence chips remain strictly untouched (scheduled for Phase D6-F3).
+  - All geometries, radii (20px/16px/14px), font sizes, weights, haptics, and task persistence semantics are locked and unchanged.
+- **Tests**:
+  - Created `test/views/task_editor_fields_dark_mode_test.dart` containing 5 comprehensive widget tests verifying Light and Dark Mode fields, labels, date/time chips, and native dialog picker themes.
+
+## Why was this change made?
+Phase D6-F2 delivers legible, high-contrast, theme-consistent text inputs and date/time controls while eliminating the glaring white native picker dialogs in Dark Mode.
+
+## Architecture Impact
+None. Presentation-level styling and local picker builder adaptation only.
+
+## Files Created
+- `test/views/task_editor_fields_dark_mode_test.dart`
+
+## Files Modified
+- `lib/views/screens/create_task_screen.dart`
+- `lib/views/widgets/create_task_bottom_sheet.dart`
+- `docs/changelog/CreateTaskScreen_Changelog.md`
+
+## Dependencies Added
+None.
+
+## Breaking Changes
+None.
+
+## Migration Notes
+None.
+
+## Future Improvements
+Implement Phase D6-F3 (Priority selector & popup, Reminder segmented pill, and Recurrence chips).
+
+## Known Issues
+None.
+
+## Testing Status
+Manual Tests: Verified automated widget tests for inputs, labels, and pickers.
+Automated Tests: Passed 116/116 tests across the full task regression suite (`task_editor_fields_dark_mode_test.dart`, `task_editor_shell_dark_mode_test.dart`, `tasks_provider_test.dart`, `task_engine_test.dart`, `task_engine_recurrence_test.dart`, `calendar_dark_mode_palette_test.dart`). Passed static analysis with 0 errors.
+Pending Tests: Physical device verification.
+Known Edge Cases: None.
+
+## Final Result
+All Task Editor input fields, labels, date/time chips, and native date/time pickers seamlessly adapt to the D6 Dark Mode contract while 100% preserving Light Mode visual fidelity and data integrity.
+
+
