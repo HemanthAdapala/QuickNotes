@@ -271,6 +271,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final keyboardPad = MediaQuery.of(context).viewInsets.bottom;
     final bottomPad = MediaQuery.of(context).viewPadding.bottom;
 
@@ -284,13 +286,13 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
           maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
             ),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: Color(0x3F000000),
                 blurRadius: 16,
@@ -309,7 +311,9 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                 width: 36,
                 height: 4,
                 decoration: ShapeDecoration(
-                  color: const Color(0x4C3C3C43),
+                  color: isDark
+                      ? const Color(0xFF5A5A5A)
+                      : const Color(0x4C3C3C43),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(2),
                   ),
@@ -329,7 +333,9 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                         width: 44,
                         height: 44,
                         decoration: ShapeDecoration(
-                          color: const Color(0x19000000),
+                          color: isDark
+                              ? const Color(0xFF3A3A3C)
+                              : const Color(0x19000000),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(22),
                           ),
@@ -339,8 +345,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                           'assets/icons/cross.svg',
                           width: 16,
                           height: 16,
-                          colorFilter: const ColorFilter.mode(
-                            Color(0xFF1C1C1E),
+                          colorFilter: ColorFilter.mode(
+                            isDark ? Colors.white : const Color(0xFF1C1C1E),
                             BlendMode.srcIn,
                           ),
                         ),

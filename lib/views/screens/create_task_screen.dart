@@ -301,6 +301,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     // Format Header Date & Time Strings
     final String dateHeaderStr =
         DateFormat('EEE, d MMMM yyyy').format(_selectedDate);
@@ -309,7 +312,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       body: SafeArea(
         bottom:
             false, // top safe area handled by system — mirrors NoteEditorScreen
@@ -329,13 +332,15 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.transparent,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFF333333).withOpacity(0.06),
-                            blurRadius: 20.0,
-                            offset: const Offset(0, -4),
-                          ),
-                        ],
+                        boxShadow: isDark
+                            ? const []
+                            : [
+                                BoxShadow(
+                                  color: const Color(0xFF333333).withValues(alpha: 0.06),
+                                  blurRadius: 20.0,
+                                  offset: const Offset(0, -4),
+                                ),
+                              ],
                       ),
                       child: Stack(
                         children: [
@@ -362,9 +367,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                             right: 0,
                             bottom: 0,
                             child: Container(
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.only(
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                                borderRadius: const BorderRadius.only(
                                   topLeft: Radius.circular(30.0),
                                   topRight: Radius.circular(30.0),
                                 ),
@@ -902,7 +907,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         child: Container(
                                           height: 50,
                                           decoration: ShapeDecoration(
-                                            color: const Color(0x28787880),
+                                            color: isDark
+                                                ? const Color(0xFF3A3A3C)
+                                                : const Color(0x28787880),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(20),
@@ -912,7 +919,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                             child: Text(
                                               'Cancel',
                                               style: GoogleFonts.inter(
-                                                color: const Color(0x993C3C43),
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : const Color(0x993C3C43),
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w400,
                                                 letterSpacing: -0.43,
@@ -1030,16 +1039,17 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                   'assets/icons/angle_left.svg',
                   width: 22,
                   height: 22,
-                  colorFilter: const ColorFilter.mode(
-                      Color(0xFF1C1C1E), BlendMode.srcIn),
+                  colorFilter: ColorFilter.mode(
+                      isDark ? Colors.white : const Color(0xFF1C1C1E),
+                      BlendMode.srcIn),
                 ),
                 rightWidth: 44.0,
                 rightHeroTag: 'hero_task_editor_more',
-                rightChild: const Center(
+                rightChild: Center(
                   child: Icon(
                     Icons.more_horiz_rounded,
                     size: 20,
-                    color: Color(0xFF1C1C1E),
+                    color: isDark ? Colors.white : const Color(0xFF1C1C1E),
                   ),
                 ),
               ),
