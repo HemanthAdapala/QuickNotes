@@ -511,10 +511,11 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
   }
 
   Widget _reminderSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: ShapeDecoration(
-        color: const Color(0x28787880),
+        color: isDark ? const Color(0x14FFFFFF) : const Color(0x28787880),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -537,7 +538,9 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                       ? const Color(0xFFFF9500)
                       : (_selectedReminderMode == ReminderMode.notification
                           ? const Color(0xFF0088FF)
-                          : const Color(0x993C3C43)),
+                          : (isDark
+                              ? const Color(0xFF8E8E93)
+                              : const Color(0x993C3C43))),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -545,7 +548,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF333333),
+                    color: isDark ? Colors.white : const Color(0xFF333333),
                     letterSpacing: -0.43,
                   ),
                 ),
@@ -556,7 +559,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
             height: 40,
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: const Color(0x1F787880),
+              color: isDark ? const Color(0xFF242426) : const Color(0x1F787880),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
@@ -576,6 +579,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
 
   Widget _buildReminderModePill(
       ReminderMode mode, String label, Color? activeColor) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSelected = _selectedReminderMode == mode;
     return Expanded(
       child: GestureDetector(
@@ -587,16 +591,20 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
           });
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOutCubic,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
+            color: isSelected
+                ? (isDark ? const Color(0xFF3A3A3C) : Colors.white)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(11),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Color(0xFF333333).withOpacity(0.08),
+                      color: isDark
+                          ? Colors.black.withOpacity(0.25)
+                          : const Color(0xFF333333).withOpacity(0.08),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -609,8 +617,12 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               color: isSelected
-                  ? (activeColor ?? const Color(0xFF333333))
-                  : const Color(0x993C3C43),
+                  ? (isDark
+                      ? (activeColor ?? Colors.white)
+                      : (activeColor ?? const Color(0xFF333333)))
+                  : (isDark
+                      ? const Color(0xFF8E8E93)
+                      : const Color(0x993C3C43)),
             ),
           ),
         ),
@@ -780,11 +792,12 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
   }
 
   Widget _inlinePriorityPill() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = switch (_selectedPriority) {
       TaskPriority.red => const Color(0xFFFF453A),
       TaskPriority.yellow => const Color(0xFFFF9F0A),
       TaskPriority.green => const Color(0xFF30D158),
-      null => const Color(0x993C3C43),
+      null => isDark ? const Color(0xFF8E8E93) : const Color(0x993C3C43),
     };
     final label = switch (_selectedPriority) {
       TaskPriority.red => 'High',
@@ -840,19 +853,25 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
   }
 
   Widget _priorityPopup() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 230,
       height: 45,
       decoration: ShapeDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
+          side: isDark
+              ? const BorderSide(color: Color(0x26FFFFFF), width: 1)
+              : BorderSide.none,
         ),
-        shadows: const [
+        shadows: [
           BoxShadow(
-            color: Color(0x3F000000),
+            color: isDark
+                ? Colors.black.withOpacity(0.35)
+                : const Color(0x3F000000),
             blurRadius: 16,
-            offset: Offset(0, 0),
+            offset: const Offset(0, 0),
             spreadRadius: 0,
           ),
         ],
@@ -871,6 +890,14 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
 
   /// A single option row inside the priority popup (dot + label).
   Widget _priorityOption(String label, Color dotColor, TaskPriority priority) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveDotColor = isDark
+        ? (switch (priority) {
+            TaskPriority.red => const Color(0xFFFF453A),
+            TaskPriority.yellow => const Color(0xFFFF9F0A),
+            TaskPriority.green => const Color(0xFF30D158),
+          })
+        : dotColor;
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -886,15 +913,15 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
             width: 20,
             height: 20,
             decoration: ShapeDecoration(
-              color: dotColor,
+              color: effectiveDotColor,
               shape: const OvalBorder(),
             ),
           ),
           const SizedBox(width: 3),
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF333333),
+            style: TextStyle(
+              color: isDark ? Colors.white : const Color(0xFF333333),
               fontSize: 15,
               fontFamily: 'Inter',
               fontWeight: FontWeight.w500,
@@ -934,6 +961,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
   }
 
   Widget _recurrenceChip(RecurrenceType? type, String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSelected = _selectedRecurrence == type;
     return GestureDetector(
       onTap: () {
@@ -948,13 +976,17 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 14),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0088FF) : const Color(0x28787880),
+          color: isSelected
+              ? const Color(0xFF0088FF)
+              : (isDark ? const Color(0xFF3A3A3C) : const Color(0x28787880)),
           borderRadius: BorderRadius.circular(19),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF333333),
+            color: isSelected
+                ? Colors.white
+                : (isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333)),
             fontSize: 13,
             fontFamily: 'Inter',
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,

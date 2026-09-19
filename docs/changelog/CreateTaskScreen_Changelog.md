@@ -205,7 +205,95 @@ Automated Tests: Passed 116/116 tests across the full task regression suite (`ta
 Pending Tests: Physical device verification.
 Known Edge Cases: None.
 
+
+
+---
+
+## Version
+v1.3.0
+
+## Date
+2026-09-19
+
+## Author
+Anti Gravity
+
+## Type
+- UI
+- Improvement
+
+## Summary
+Migrated Task Editor interactive controls and overlays to Dark Mode as part of Phase D6-F3. Adapts the inline Priority control, floating Priority popup overlay, Reminder segmented pill control, and Recurrence chips to the established Quick Notes Dark Mode visual hierarchy, while strictly locking priority semantic colors, existing Light Mode appearances, geometry, typography, animations, and task persistence.
+
+## Detailed Changes
+- **Priority Semantic Colors Locked**:
+  - High: `#FF453A` (`Color(0xFFFF453A)`)
+  - Medium: `#FF9F0A` (`Color(0xFFFF9F0A)`)
+  - Low: `#30D158` (`Color(0xFF30D158)`)
+  - Invariant across all themes and states.
+- **Priority Inline Control**:
+  - In Dark Mode, unselected/none priority displays `#8E8E93` inactive text and icon.
+  - Selected priority displays its locked semantic color with existing `color.withOpacity(0.12)` container wash and `color.withOpacity(0.4)` border.
+  - In Light Mode, exact existing styling with `Color(0x993C3C43)` for unselected is 100% preserved.
+- **Priority Floating Popup Overlay**:
+  - Surface: adapts from `Colors.white` to `#2C2C2C` in Dark Mode.
+  - Subtle border: adds light-on-dark border `Color(0x26FFFFFF)` in Dark Mode; preserves `BorderSide.none` / no border in Light Mode.
+  - Shadow: adapts to soft dark elevation in Dark Mode (`BoxShadow(color: Colors.black.withOpacity(0.30/0.35))`), preserving original Light Mode shadow.
+  - Text: adapts to `#FFFFFF` in Dark Mode, with inactive options using `#8E8E93`; preserves `#333333` in Light Mode.
+  - Indicator dots: retain High `#FF453A`, Medium `#FF9F0A`, and Low `#30D158`.
+  - Geometry and animation locked: width 230px, height 45px, radius 20px, easeOutCubic 150ms.
+- **Reminder Mode Segmented Pill Control**:
+  - Outer grouping card: adapts from `Color(0x28787880)` to `Color(0x14FFFFFF)` in Dark Mode.
+  - Segmented track: adapts from `Color(0x1F787880)` to recessed `#242426` in Dark Mode.
+  - Sliding thumb: adapts from `Colors.white` to elevated control `#3A3A3C` in Dark Mode.
+  - Text states: active segment text resolves to `#FFFFFF` (or semantic `#0088FF` for Notification, `#FF9500` for Alarm); inactive segment text resolves to `#8E8E93`.
+  - Motion locked: strictly preserves `const Duration(milliseconds: 200)` and `Curves.easeInOutCubic`.
+- **Recurrence Chips**:
+  - Section header label: adapts from `#333333` to `#FFFFFF` in Dark Mode.
+  - Selected chip: retains Task Blue `#0088FF` with `#FFFFFF` text.
+  - Unselected chip: adapts from `Color(0x28787880)` to `#3A3A3C` in Dark Mode with `#8E8E93` text; preserves existing Light Mode fill and text.
+  - Geometry locked: preserves exact existing production dimensions in each respective surface (TaskEditorScreen 45px/20px; CreateTaskBottomSheet 38px/19px).
+- **Zero Prohibited Color Occurrences**: Verified 0 occurrences of `#444444` across entire `lib/`.
+- **Tests**:
+  - Created `test/views/task_editor_controls_dark_mode_test.dart` with 5 comprehensive widget tests covering Priority inline controls, Priority popup overlay, Reminder segmented control, Recurrence chips, and explicit semantic color assertions.
+
+## Why was this change made?
+Completes the Dark Mode migration of all remaining interactive controls and overlay surfaces in the Task Editor ecosystem, ensuring complete theme immersion, high contrast, and visual consistency with the established Quick Notes Dark Mode palette.
+
+## Architecture Impact
+None. Presentation-level styling and color mapping only.
+
+## Files Created
+- `test/views/task_editor_controls_dark_mode_test.dart`
+
+## Files Modified
+- `lib/views/screens/create_task_screen.dart`
+- `lib/views/widgets/create_task_bottom_sheet.dart`
+- `docs/changelog/CreateTaskScreen_Changelog.md`
+
+## Dependencies Added
+None.
+
+## Breaking Changes
+None.
+
+## Migration Notes
+None.
+
+## Future Improvements
+Phase D6-F4 (Task Editor final validation and forensic audit).
+
+## Known Issues
+None.
+
+## Testing Status
+Manual Tests: Verified automated widget tests for priority, popup, reminder, and recurrence controls in Light and Dark modes.
+Automated Tests: Passed 121/121 tests across the full task regression suite (`task_editor_controls_dark_mode_test.dart`, `task_editor_fields_dark_mode_test.dart`, `task_editor_shell_dark_mode_test.dart`, `tasks_provider_test.dart`, `task_engine_test.dart`, `task_engine_recurrence_test.dart`, `calendar_dark_mode_palette_test.dart`). Passed static analysis with 0 errors.
+Pending Tests: Physical device verification (device disconnected).
+Known Edge Cases: None.
+
 ## Final Result
-All Task Editor input fields, labels, date/time chips, and native date/time pickers seamlessly adapt to the D6 Dark Mode contract while 100% preserving Light Mode visual fidelity and data integrity.
+All Task Editor interactive controls and overlays seamlessly adapt to the Quick Notes Dark Mode hierarchy with zero regressions, locked semantic colors, locked geometry, and preserved Light Mode fidelity.
+
 
 

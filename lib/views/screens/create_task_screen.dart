@@ -302,7 +302,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
   }
 
   // Priority Flag Color Helper
-  Color _getPriorityColor(String priority) {
+  Color _getPriorityColor(String priority, {bool isDark = false}) {
     switch (priority.toLowerCase()) {
       case 'high':
         return const Color(0xFFFF453A);
@@ -311,7 +311,7 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
       case 'low':
         return const Color(0xFF30D158);
       default:
-        return const Color(0x993C3C43);
+        return isDark ? const Color(0xFF8E8E93) : const Color(0x993C3C43);
     }
   }
 
@@ -715,7 +715,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                             fontWeight:
                                                                 FontWeight.w600,
                                                             color: _getPriorityColor(
-                                                                _selectedPriority),
+                                                                _selectedPriority,
+                                                                isDark: isDark),
                                                           ),
                                                         ),
                                                       ),
@@ -733,13 +734,24 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: isDark
+                                              ? const Color(0xFF2C2C2C)
+                                              : Colors.white,
                                           borderRadius:
                                               BorderRadius.circular(20),
+                                          border: isDark
+                                              ? Border.all(
+                                                  color: const Color(
+                                                      0x26FFFFFF),
+                                                  width: 1)
+                                              : null,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Color(0xFF333333)
-                                                  .withOpacity(0.08),
+                                              color: isDark
+                                                  ? Colors.black
+                                                      .withOpacity(0.30)
+                                                  : const Color(0xFF333333)
+                                                      .withOpacity(0.08),
                                               blurRadius: 10,
                                               offset: const Offset(0, 4),
                                             ),
@@ -750,13 +762,19 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                           runSpacing: 8,
                                           children: [
                                             _buildPriorityOption('High',
-                                                const Color(0xFFFF453A)),
+                                                const Color(0xFFFF453A),
+                                                isDark: isDark),
                                             _buildPriorityOption('Medium',
-                                                const Color(0xFFFF9F0A)),
+                                                const Color(0xFFFF9F0A),
+                                                isDark: isDark),
                                             _buildPriorityOption(
-                                                'Low', const Color(0xFF30D158)),
+                                                'Low', const Color(0xFF30D158),
+                                                isDark: isDark),
                                             _buildPriorityOption('None',
-                                                const Color(0x993C3C43)),
+                                                isDark
+                                                    ? const Color(0xFF8E8E93)
+                                                    : const Color(0x993C3C43),
+                                                isDark: isDark),
                                           ],
                                         ),
                                       ),
@@ -826,7 +844,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: ShapeDecoration(
-                                    color: const Color(0x28787880),
+                                    color: isDark
+                                        ? const Color(0x14FFFFFF)
+                                        : const Color(0x28787880),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
                                     ),
@@ -859,8 +879,11 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                                           ReminderMode
                                                               .notification
                                                       ? const Color(0xFF0088FF)
-                                                      : const Color(
-                                                          0x993C3C43)),
+                                                      : (isDark
+                                                          ? const Color(
+                                                              0xFF8E8E93)
+                                                          : const Color(
+                                                              0x993C3C43))),
                                             ),
                                             const SizedBox(width: 8),
                                             Text(
@@ -868,7 +891,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                               style: GoogleFonts.inter(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w500,
-                                                color: const Color(0xFF333333),
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : const Color(0xFF333333),
                                                 letterSpacing: -0.43,
                                               ),
                                             ),
@@ -879,22 +904,27 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                         height: 42,
                                         padding: const EdgeInsets.all(3),
                                         decoration: BoxDecoration(
-                                          color: const Color(0x1F787880),
+                                          color: isDark
+                                              ? const Color(0xFF242426)
+                                              : const Color(0x1F787880),
                                           borderRadius:
                                               BorderRadius.circular(20),
                                         ),
                                         child: Row(
                                           children: [
                                             _buildReminderModePill(
-                                                ReminderMode.off, 'Off', null),
+                                                ReminderMode.off, 'Off', null,
+                                                isDark: isDark),
                                             _buildReminderModePill(
                                                 ReminderMode.notification,
                                                 '🔔 Notification',
-                                                const Color(0xFF0088FF)),
+                                                const Color(0xFF0088FF),
+                                                isDark: isDark),
                                             _buildReminderModePill(
                                                 ReminderMode.alarm,
                                                 '⏰ Alarm',
-                                                const Color(0xFFFF9500)),
+                                                const Color(0xFFFF9500),
+                                                isDark: isDark),
                                           ],
                                         ),
                                       ),
@@ -908,7 +938,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                 Text(
                                   'Repeat',
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFF333333),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF333333),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                     letterSpacing: -0.43,
@@ -924,13 +956,16 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
                                     physics: const BouncingScrollPhysics(),
                                     child: Row(
                                       children: [
-                                        _buildRepeatPill(null, 'Never', 88),
+                                        _buildRepeatPill(null, 'Never', 88,
+                                            isDark: isDark),
                                         const SizedBox(width: 9),
-                                        _buildRepeatPill(
-                                            RecurrenceType.daily, 'Daily', 88),
+                                        _buildRepeatPill(RecurrenceType.daily,
+                                            'Daily', 88,
+                                            isDark: isDark),
                                         const SizedBox(width: 9),
                                         _buildRepeatPill(RecurrenceType.weekly,
-                                            'Weekly', 97),
+                                            'Weekly', 97,
+                                            isDark: isDark),
                                         const SizedBox(width: 9),
                                         _buildRepeatPill(RecurrenceType.monthly,
                                             'Monthly', 112),
@@ -1104,7 +1139,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
   }
 
   // Priority Option Helper
-  Widget _buildPriorityOption(String level, Color color) {
+  Widget _buildPriorityOption(String level, Color color,
+      {bool isDark = false}) {
     final bool isSelected =
         _selectedPriority.toLowerCase() == level.toLowerCase();
     return TactileButton(
@@ -1139,7 +1175,11 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF333333),
+                color: isSelected
+                    ? (isDark ? Colors.white : const Color(0xFF333333))
+                    : (isDark
+                        ? const Color(0xFF8E8E93)
+                        : const Color(0xFF333333)),
               ),
             ),
           ],
@@ -1149,7 +1189,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
   }
 
   // Repeat Pill Helper Widget
-  Widget _buildRepeatPill(RecurrenceType? type, String label, double width) {
+  Widget _buildRepeatPill(RecurrenceType? type, String label, double width,
+      {bool isDark = false}) {
     final bool isSelected = _selectedRecurrence == type;
 
     return TactileButton(
@@ -1164,7 +1205,9 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
         width: width,
         height: 45,
         decoration: ShapeDecoration(
-          color: isSelected ? const Color(0xFF0088FF) : const Color(0x28787880),
+          color: isSelected
+              ? const Color(0xFF0088FF)
+              : (isDark ? const Color(0xFF3A3A3C) : const Color(0x28787880)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -1173,7 +1216,11 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
           child: Text(
             label,
             style: GoogleFonts.inter(
-              color: isSelected ? Colors.white : const Color(0x993C3C43),
+              color: isSelected
+                  ? Colors.white
+                  : (isDark
+                      ? const Color(0xFF8E8E93)
+                      : const Color(0x993C3C43)),
               fontSize: 14,
               fontWeight: FontWeight.w400,
               letterSpacing: -0.43,
@@ -1186,7 +1233,8 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
 
   // Reminder Mode Pill Helper Widget
   Widget _buildReminderModePill(
-      ReminderMode mode, String label, Color? activeColor) {
+      ReminderMode mode, String label, Color? activeColor,
+      {bool isDark = false}) {
     final isSelected = _selectedReminderMode == mode;
     return Expanded(
       child: GestureDetector(
@@ -1198,16 +1246,20 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
           });
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOutCubic,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
+            color: isSelected
+                ? (isDark ? const Color(0xFF3A3A3C) : Colors.white)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(13),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Color(0xFF333333).withOpacity(0.08),
+                      color: isDark
+                          ? Colors.black.withOpacity(0.25)
+                          : const Color(0xFF333333).withOpacity(0.08),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -1220,8 +1272,12 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               color: isSelected
-                  ? (activeColor ?? const Color(0xFF333333))
-                  : const Color(0x993C3C43),
+                  ? (isDark
+                      ? (activeColor ?? Colors.white)
+                      : (activeColor ?? const Color(0xFF333333)))
+                  : (isDark
+                      ? const Color(0xFF8E8E93)
+                      : const Color(0x993C3C43)),
             ),
           ),
         ),
