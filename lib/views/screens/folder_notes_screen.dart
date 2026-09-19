@@ -162,19 +162,31 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
   }
 
   // ── Rename Folder Dialog ──────────────────────────────────────────────────
+  // Step 13: Dialog explicitly theme-aware for Dark Mode
   void _showRenameFolderDialog(NotesProvider provider) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     _folderNameController.text = widget.folder.name;
     showAnimatedDialog(
       context: context,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Rename Folder",
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        backgroundColor: isDark ? const Color(0xFF2C2C2C) : null,
+        title: Text(
+          "Rename Folder",
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : null,
+          ),
+        ),
         content: TextField(
           controller: _folderNameController,
           autofocus: true,
-          decoration: const InputDecoration(
+          style: TextStyle(color: isDark ? Colors.white : null),
+          decoration: InputDecoration(
             hintText: "Folder Name",
+            hintStyle: TextStyle(
+              color: isDark ? const Color(0xFF757575) : null,
+            ),
           ),
         ),
         actions: [
@@ -200,8 +212,10 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
     );
   }
 
-  // ── Sort Picker Sheet ──────────────────────────────────────────────────────
+  // ── Sort Picker Sheet ─────────────────────────────────────────────────────
+  // Step 12: check icons adapt to dark; sheet surface inherits from ThemeData
   void _showSortPicker() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     showAnimatedBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -223,7 +237,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
             ListTile(
               title: const Text('Date Modified (Newest First)'),
               trailing: _currentSort == FolderSortOption.newest
-                  ? const Icon(Icons.check, color: Color(0xFF1C1C1E))
+                  // Step 12: check icon — white in dark
+                  ? Icon(Icons.check, color: isDark ? Colors.white : const Color(0xFF1C1C1E))
                   : null,
               onTap: () {
                 setState(() => _currentSort = FolderSortOption.newest);
@@ -233,7 +248,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
             ListTile(
               title: const Text('Date Modified (Oldest First)'),
               trailing: _currentSort == FolderSortOption.oldest
-                  ? const Icon(Icons.check, color: Color(0xFF1C1C1E))
+                  ? Icon(Icons.check, color: isDark ? Colors.white : const Color(0xFF1C1C1E))
                   : null,
               onTap: () {
                 setState(() => _currentSort = FolderSortOption.oldest);
@@ -243,7 +258,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
             ListTile(
               title: const Text('Title (Alphabetical)'),
               trailing: _currentSort == FolderSortOption.alphabetical
-                  ? const Icon(Icons.check, color: Color(0xFF1C1C1E))
+                  ? Icon(Icons.check, color: isDark ? Colors.white : const Color(0xFF1C1C1E))
                   : null,
               onTap: () {
                 setState(() => _currentSort = FolderSortOption.alphabetical);
@@ -257,15 +272,25 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
   }
 
   // ── Delete Folder Confirmation ────────────────────────────────────────────
+  // Step 14: Dialog explicitly theme-aware for Dark Mode
   void _confirmDeleteFolder(NotesProvider provider) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     showAnimatedDialog(
       context: context,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Delete Folder?",
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: const Text(
-            "Deleting this folder will move its notes to Uncategorized. Notes will not be deleted."),
+        backgroundColor: isDark ? const Color(0xFF2C2C2C) : null,
+        title: Text(
+          "Delete Folder?",
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : null,
+          ),
+        ),
+        content: Text(
+          "Deleting this folder will move its notes to Uncategorized. Notes will not be deleted.",
+          style: TextStyle(color: isDark ? const Color(0xFF757575) : null),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -280,7 +305,13 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                 Navigator.pop(context); // Pop screen back to Folders tab
               }
             },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            // Step 14: destructive red — #FF453A in dark
+            child: Text(
+              "Delete",
+              style: TextStyle(
+                color: isDark ? const Color(0xFFFF453A) : Colors.red,
+              ),
+            ),
           ),
         ],
       ),
@@ -291,11 +322,15 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
   void _bulkMoveNotes(NotesProvider provider) {
     final availableFolders =
         provider.folders.where((f) => f.id != widget.folder.id).toList();
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     showAnimatedBottomSheet(
       context: context,
-      barrierColor: Color(0xFF333333).withValues(alpha: 0.20),
-      backgroundColor: Colors.white,
+      // Step 15: barrier — dark equivalent in dark mode
+      barrierColor: isDark
+          ? const Color(0xFF1C1C1E).withValues(alpha: 0.50)
+          : const Color(0xFF333333).withValues(alpha: 0.20),
+      backgroundColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -317,19 +352,19 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF333333),
+                        color: isDark ? Colors.white : const Color(0xFF333333),
                         letterSpacing: -0.43,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded,
-                          color: Color(0xFF828282), size: 20),
+                      icon: Icon(Icons.close_rounded,
+                          color: isDark ? const Color(0xFF757575) : const Color(0xFF828282), size: 20),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: Color(0x1F000000)),
+              Divider(height: 1, color: isDark ? const Color(0x1FFFFFFF) : const Color(0x1F000000)),
               Flexible(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
@@ -346,15 +381,15 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                           'assets/icons/bottom_navigation/folder-open.svg',
                           width: 22,
                           height: 22,
-                          colorFilter: const ColorFilter.mode(
-                              Color(0xFF828282), BlendMode.srcIn),
+                          colorFilter: ColorFilter.mode(
+                              isDark ? const Color(0xFF757575) : const Color(0xFF828282), BlendMode.srcIn),
                         ),
                         title: Text(
                           'Uncategorized (No Folder)',
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: const Color(0xFF333333),
+                            color: isDark ? Colors.white : const Color(0xFF333333),
                             letterSpacing: -0.43,
                             height: 1.0,
                           ),
@@ -394,7 +429,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: const Color(0xFF333333),
+                              color: isDark ? Colors.white : const Color(0xFF333333),
                               letterSpacing: -0.43,
                               height: 1.0,
                             ),
@@ -448,8 +483,9 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
     });
   }
 
-  // ── Empty State ───────────────────────────────────────────────────────────
-  Widget _buildEmptyState() {
+  // ── Empty State ─────────────────────────────────────────────────────
+  // Step 6: icon and heading adapt to dark; yellow CTA remains invariant
+  Widget _buildEmptyState({required bool isDark}) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -461,7 +497,9 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
               width: 56,
               height: 56,
               colorFilter: ColorFilter.mode(
-                const Color(0xFF1C1C1E).withValues(alpha: 0.3),
+                isDark
+                    ? Colors.white.withValues(alpha: 0.3)
+                    : const Color(0xFF1C1C1E).withValues(alpha: 0.3),
                 BlendMode.srcIn,
               ),
             ),
@@ -471,7 +509,9 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF1C1C1E).withValues(alpha: 0.5),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.5)
+                    : const Color(0xFF1C1C1E).withValues(alpha: 0.5),
                 letterSpacing: -0.43,
               ),
             ),
@@ -490,7 +530,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFCC00), // Vibrant Yellow pill
+                  color: const Color(0xFFFFCC00), // Vibrant Yellow pill — invariant
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -520,6 +560,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
     final double screenHeight = MediaQuery.of(context).size.height;
     final double panelTop = MediaQuery.paddingOf(context).top + 69.0;
     final provider = Provider.of<NotesProvider>(context);
+    // ── Dark Mode context ──────────────────────────────────────────────────
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final allFolderNotes = provider.notesSummary
         .where((n) => n.folderId == widget.folder.id && !n.isDeleted)
@@ -554,7 +596,8 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        // Step 2: Scaffold background — Dark canvas vs light canvas
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : AppColors.background,
         body: Stack(
           children: [
             // White Bottom Sheet Content Panel
@@ -571,12 +614,14 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                     )
                   ],
                 ),
+                // Step 3: Explicit content sheet colour (#2C2C2C dark, white light)
                 child: PrimaryScreenSurface(
+                  color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                   child: Center(
                     child: SizedBox(
                       width: screenWidth.clamp(0.0, 402.0),
                       child: allFolderNotes.isEmpty
-                        ? _buildEmptyState()
+                        ? _buildEmptyState(isDark: isDark)
                         : CustomScrollView(
                             physics: const BouncingScrollPhysics(),
                             slivers: [
@@ -592,12 +637,13 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
+                                       // Step 4: Folder name — white in dark
+                                       Text(
                                         widget.folder.name,
                                         style: GoogleFonts.inter(
                                           fontSize: 20,
                                           fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF333333),
+                                          color: isDark ? Colors.white : const Color(0xFF333333),
                                           height: 0.75,
                                           letterSpacing: -0.43,
                                         ),
@@ -610,7 +656,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                         style: GoogleFonts.inter(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
-                                          color: const Color(0x993C3C43),
+                                          color: isDark ? const Color(0x99FFFFFF) : const Color(0x993C3C43),
                                           height: 1.0,
                                           letterSpacing: -0.43,
                                         ),
@@ -631,13 +677,14 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                         const Icon(Icons.push_pin_rounded,
                                             size: 12, color: Color(0xFFF5A623)),
                                         const SizedBox(width: 4),
+                                        // Step 5: "PINNED" label — #757575 in dark
                                         Text(
                                           "PINNED",
                                           style: GoogleFonts.inter(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                             letterSpacing: 1.0,
-                                            color: const Color(0xFF828282),
+                                            color: isDark ? const Color(0xFF757575) : const Color(0xFF828282),
                                           ),
                                         ),
                                       ],
@@ -689,7 +736,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                           fontSize: 11,
                                           fontWeight: FontWeight.bold,
                                           letterSpacing: 1.0,
-                                          color: const Color(0xFF828282),
+                                          color: isDark ? const Color(0xFF757575) : const Color(0xFF828282),
                                         ),
                                       ),
                                     ),
@@ -753,8 +800,11 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                   child: AnimatedOpacity(
                     duration: const Duration(milliseconds: 250),
                     opacity: _isFolderOptionsOpen ? 1.0 : 0.0,
+                    // Step 10: Dismissal overlay — white@5% in dark, black@5% in light
                     child: Container(
-                      color: Color(0xFF333333).withValues(alpha: 0.05),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : const Color(0xFF333333).withValues(alpha: 0.05),
                     ),
                   ),
                 ),
@@ -779,10 +829,11 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                             defaultFolderId: widget.folder.id)),
                       );
                     },
-                    child: const Center(
+                    // Step 8: FAB + icon — white in dark
+                    child: Center(
                       child: Icon(
                         Icons.add_rounded,
-                        color: Color(0xFF1C1C1E),
+                        color: isDark ? Colors.white : const Color(0xFF1C1C1E),
                         size: 28,
                       ),
                     ),
@@ -805,37 +856,40 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // Step 9: Bulk action bar — primary white in dark
                         Text(
                           '${_selectedNoteIds.length} Selected',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
-                            color: const Color(0xFF333333),
+                            color: isDark ? Colors.white : const Color(0xFF333333),
                           ),
                         ),
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.drive_file_move_outlined,
-                                  color: Color(0xFF333333)),
+                              icon: Icon(Icons.drive_file_move_outlined,
+                                  color: isDark ? Colors.white : const Color(0xFF333333)),
                               tooltip: 'Move to Folder',
                               onPressed: () => _bulkMoveNotes(provider),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.push_pin_outlined,
-                                  color: Color(0xFF333333)),
+                              icon: Icon(Icons.push_pin_outlined,
+                                  color: isDark ? Colors.white : const Color(0xFF333333)),
                               tooltip: 'Pin/Unpin',
                               onPressed: () => _bulkPinNotes(provider),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline_rounded,
-                                  color: Colors.red),
+                              // Step 9: delete icon — #FF453A in dark
+                              icon: Icon(Icons.delete_outline_rounded,
+                                  color: isDark ? const Color(0xFFFF453A) : Colors.red),
                               tooltip: 'Delete Selected',
                               onPressed: () => _bulkDeleteNotes(provider),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close_rounded,
-                                  color: Colors.grey),
+                              // Step 9: close icon — #757575 in dark
+                              icon: Icon(Icons.close_rounded,
+                                  color: isDark ? const Color(0xFF757575) : Colors.grey),
                               tooltip: 'Cancel',
                               onPressed: () {
                                 setState(() {
@@ -890,12 +944,13 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                               Navigator.of(context).maybePop();
                             }
                           },
+                          // Step 7: Back chevron — white in dark
                           leftChild: SvgPicture.asset(
                             'assets/icons/angle_left.svg',
                             width: 22,
                             height: 22,
-                            colorFilter: const ColorFilter.mode(
-                              Color(0xFF1C1C1E),
+                            colorFilter: ColorFilter.mode(
+                              isDark ? Colors.white : const Color(0xFF1C1C1E),
                               BlendMode.srcIn,
                             ),
                           ),
@@ -903,7 +958,9 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                           isExpanded: _isFolderOptionsOpen,
                           expandedWidth: 192.0,
                           expandedHeight: _isSortSubmenuActive ? 200.0 : 150.0,
+                          // Step 11: FolderOptionsPopup receives isDark
                           expandedChild: FolderOptionsPopup(
+                            isDark: isDark,
                             currentSort: _currentSort,
                             isSortSubmenuOpen: _isSortSubmenuActive,
                             onSubmenuToggle: (open) {
@@ -950,11 +1007,12 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                       ),
                                     ));
                                   },
-                                  child: const Center(
+                                  // Step 7: Search icon — white in dark
+                                  child: Center(
                                     child: Icon(
                                       Icons.search_rounded,
                                       size: 20,
-                                      color: Color(0xFF1C1C1E),
+                                      color: isDark ? Colors.white : const Color(0xFF1C1C1E),
                                     ),
                                   ),
                                 ),
@@ -971,11 +1029,12 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                                           !_isFolderOptionsOpen;
                                     });
                                   },
-                                  child: const Center(
+                                  // Step 7: More-options icon — white in dark
+                                  child: Center(
                                     child: Icon(
                                       Icons.more_horiz_rounded,
                                       size: 20,
-                                      color: Color(0xFF1C1C1E),
+                                      color: isDark ? Colors.white : const Color(0xFF1C1C1E),
                                     ),
                                   ),
                                 ),

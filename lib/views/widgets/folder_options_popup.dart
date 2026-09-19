@@ -8,7 +8,10 @@ import '../../core/motion/quick_notes_haptics.dart';
 //
 // Liquid glass popup for FolderNotesScreen matching MoreOptionsPopup.
 // Supports main menu and animated inline Sort Submenu with Back navigation.
-// Typography: GoogleFonts.inter, fontSize: 14, letterSpacing: -0.43, height: 1.0, color: #333333
+// Typography: GoogleFonts.inter, fontSize: 14, letterSpacing: -0.43, height: 1.0
+// Text/icon color adapts via isDark:
+//   Light → #333333
+//   Dark  → #FFFFFF
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum FolderSortOption { newest, oldest, alphabetical }
@@ -20,6 +23,7 @@ class FolderOptionsPopup extends StatelessWidget {
   final FolderSortOption currentSort;
   final bool isSortSubmenuOpen;
   final ValueChanged<bool>? onSubmenuToggle;
+  final bool isDark;
 
   const FolderOptionsPopup({
     super.key,
@@ -29,6 +33,7 @@ class FolderOptionsPopup extends StatelessWidget {
     this.currentSort = FolderSortOption.newest,
     this.isSortSubmenuOpen = false,
     this.onSubmenuToggle,
+    this.isDark = false,
   });
 
   Widget _buildMenuItem({
@@ -36,10 +41,10 @@ class FolderOptionsPopup extends StatelessWidget {
     required String label,
     required VoidCallback? onTap,
     required bool hasBottomDivider,
+    required Color textColor,
+    required Color dividerColor,
     Widget? trailingWidget,
   }) {
-    const textColor = Color(0xFF333333);
-
     return Semantics(
       button: true,
       child: FocusableActionDetector(
@@ -71,9 +76,9 @@ class FolderOptionsPopup extends StatelessWidget {
                     child: Container(
                       width: 192,
                       height: 1,
-                      decoration: const ShapeDecoration(
+                      decoration: ShapeDecoration(
                         shape: RoundedRectangleBorder(
-                          side: BorderSide(width: 0.20, color: Color(0x33000000)),
+                          side: BorderSide(width: 0.20, color: dividerColor),
                         ),
                       ),
                     ),
@@ -85,7 +90,7 @@ class FolderOptionsPopup extends StatelessWidget {
                     iconAsset,
                     width: 16,
                     height: 16,
-                    colorFilter: const ColorFilter.mode(textColor, BlendMode.srcIn),
+                    colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
                   ),
                 ),
                 Positioned(
@@ -125,7 +130,12 @@ class FolderOptionsPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const textColor = Color(0xFF333333);
+    // Dark Mode palette:  text/icons → #FFFFFF,  divider → 20% white
+    // Light Mode palette: text/icons → #333333,  divider → 20% black
+    final Color textColor =
+        isDark ? Colors.white : const Color(0xFF333333);
+    final Color dividerColor =
+        isDark ? const Color(0x33FFFFFF) : const Color(0x33000000);
 
     if (isSortSubmenuOpen) {
       return SizedBox(
@@ -141,6 +151,8 @@ class FolderOptionsPopup extends StatelessWidget {
               label: 'Sort Notes',
               onTap: () => onSubmenuToggle?.call(false),
               hasBottomDivider: true,
+              textColor: textColor,
+              dividerColor: dividerColor,
             ),
 
             // Option 1: Newest First
@@ -152,8 +164,10 @@ class FolderOptionsPopup extends StatelessWidget {
                 onSubmenuToggle?.call(false);
               },
               hasBottomDivider: true,
+              textColor: textColor,
+              dividerColor: dividerColor,
               trailingWidget: currentSort == FolderSortOption.newest
-                  ? const Icon(Icons.check_rounded, size: 16, color: textColor)
+                  ? Icon(Icons.check_rounded, size: 16, color: textColor)
                   : null,
             ),
 
@@ -166,8 +180,10 @@ class FolderOptionsPopup extends StatelessWidget {
                 onSubmenuToggle?.call(false);
               },
               hasBottomDivider: true,
+              textColor: textColor,
+              dividerColor: dividerColor,
               trailingWidget: currentSort == FolderSortOption.oldest
-                  ? const Icon(Icons.check_rounded, size: 16, color: textColor)
+                  ? Icon(Icons.check_rounded, size: 16, color: textColor)
                   : null,
             ),
 
@@ -180,8 +196,10 @@ class FolderOptionsPopup extends StatelessWidget {
                 onSubmenuToggle?.call(false);
               },
               hasBottomDivider: false,
+              textColor: textColor,
+              dividerColor: dividerColor,
               trailingWidget: currentSort == FolderSortOption.alphabetical
-                  ? const Icon(Icons.check_rounded, size: 16, color: textColor)
+                  ? Icon(Icons.check_rounded, size: 16, color: textColor)
                   : null,
             ),
           ],
@@ -202,6 +220,8 @@ class FolderOptionsPopup extends StatelessWidget {
             label: 'Rename Folder',
             onTap: onRenameFolder,
             hasBottomDivider: true,
+            textColor: textColor,
+            dividerColor: dividerColor,
           ),
 
           // Sort Notes (Refresh icon + angle-right chevron)
@@ -210,11 +230,13 @@ class FolderOptionsPopup extends StatelessWidget {
             label: 'Sort Notes',
             onTap: () => onSubmenuToggle?.call(true),
             hasBottomDivider: true,
+            textColor: textColor,
+            dividerColor: dividerColor,
             trailingWidget: SvgPicture.asset(
               'assets/icons/angle-right.svg',
               width: 12,
               height: 12,
-              colorFilter: const ColorFilter.mode(textColor, BlendMode.srcIn),
+              colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
             ),
           ),
 
@@ -224,6 +246,8 @@ class FolderOptionsPopup extends StatelessWidget {
             label: 'Delete Folder',
             onTap: onDeleteFolder,
             hasBottomDivider: false,
+            textColor: textColor,
+            dividerColor: dividerColor,
           ),
         ],
       ),
