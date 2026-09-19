@@ -40,17 +40,31 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Find the direct root Container of NoteEditorOptionsPopup
+      // Verify geometry: 192 x 250
       final popupFinder = find.byType(NoteEditorOptionsPopup);
-      final containerFinder = find
-          .descendant(
-            of: popupFinder,
-            matching: find.byType(Container),
-          )
-          .first;
-      final popupContainer = tester.widget<Container>(containerFinder);
-      final boxDeco = popupContainer.decoration as BoxDecoration?;
-      expect(boxDeco?.color, Colors.transparent);
+      final sizedBox = tester.widget<SizedBox>(
+        find.descendant(of: popupFinder, matching: find.byType(SizedBox)).first,
+      );
+      expect(sizedBox.width, 192.0);
+      expect(sizedBox.height, 250.0);
+
+      // Verify no opaque surface
+      final containers = tester.widgetList<Container>(
+        find.descendant(of: popupFinder, matching: find.byType(Container)),
+      );
+      for (final c in containers) {
+        expect(c.color, isNot(const Color(0xFF2C2C2C)));
+        if (c.decoration is BoxDecoration) {
+          expect((c.decoration as BoxDecoration).color,
+              isNot(const Color(0xFF2C2C2C)));
+        }
+      }
+
+      expect(find.text('Pin Note'), findsOneWidget);
+      expect(find.text('Add Favorite'), findsOneWidget);
+      expect(find.text('Find in Note'), findsOneWidget);
+      expect(find.text('Export & Share'), findsOneWidget);
+      expect(find.text('Delete Note'), findsOneWidget);
 
       final pinText = tester.widget<Text>(find.text('Pin Note'));
       expect(pinText.style?.color, const Color(0xFF333333));
@@ -81,16 +95,31 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // Verify geometry: 192 x 250
       final popupFinder = find.byType(NoteEditorOptionsPopup);
-      final containerFinder = find
-          .descendant(
-            of: popupFinder,
-            matching: find.byType(Container),
-          )
-          .first;
-      final popupContainer = tester.widget<Container>(containerFinder);
-      final boxDeco = popupContainer.decoration as BoxDecoration?;
-      expect(boxDeco?.color, const Color(0xFF2C2C2C));
+      final sizedBox = tester.widget<SizedBox>(
+        find.descendant(of: popupFinder, matching: find.byType(SizedBox)).first,
+      );
+      expect(sizedBox.width, 192.0);
+      expect(sizedBox.height, 250.0);
+
+      // Verify no opaque #2C2C2C surface color
+      final containers = tester.widgetList<Container>(
+        find.descendant(of: popupFinder, matching: find.byType(Container)),
+      );
+      for (final c in containers) {
+        expect(c.color, isNot(const Color(0xFF2C2C2C)));
+        if (c.decoration is BoxDecoration) {
+          expect((c.decoration as BoxDecoration).color,
+              isNot(const Color(0xFF2C2C2C)));
+        }
+      }
+
+      expect(find.text('Pin Note'), findsOneWidget);
+      expect(find.text('Add Favorite'), findsOneWidget);
+      expect(find.text('Find in Note'), findsOneWidget);
+      expect(find.text('Export & Share'), findsOneWidget);
+      expect(find.text('Delete Note'), findsOneWidget);
 
       final pinText = tester.widget<Text>(find.text('Pin Note'));
       expect(pinText.style?.color, const Color(0xFFFFFFFF));

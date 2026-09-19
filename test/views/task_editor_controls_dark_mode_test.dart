@@ -231,6 +231,18 @@ void main() {
             (ac.decoration as ShapeDecoration).color == const Color(0xFF3A3A3C),
       );
       expect(dailyChip, isNotNull);
+
+      // Unselected chip 'Monthly' has #8E8E93 text and #3A3A3C surface (verifies isDark is passed to Monthly)
+      final monthlyText = tester.widget<Text>(find.text('Monthly'));
+      expect(monthlyText.style?.color, const Color(0xFF8E8E93));
+
+      final monthlyChips = freshAnimated.where(
+        (ac) =>
+            ac.decoration is ShapeDecoration &&
+            (ac.decoration as ShapeDecoration).color == const Color(0xFF3A3A3C),
+      );
+      // Both Daily, Weekly, and Monthly chips now resolve to #3A3A3C
+      expect(monthlyChips.length, greaterThanOrEqualTo(3));
     });
   });
 

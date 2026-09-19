@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_notes/providers/tasks_provider.dart';
+import 'package:quick_notes/themes/quick_notes_theme.dart';
 import 'package:quick_notes/views/screens/create_task_screen.dart';
 import 'package:quick_notes/views/widgets/create_task_bottom_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -293,6 +294,121 @@ void main() {
             (c.decoration as ShapeDecoration).color == const Color(0xFF242426),
       );
       expect(inputFills.length, greaterThanOrEqualTo(4));
+    });
+  });
+
+  group('Physical Device Bug Fix — Input Decoration Neutralization Under QuickNotesTheme.darkTheme', () {
+    testWidgets('TaskEditorScreen Title and Description neutralize global InputDecorationTheme on focus',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<TasksProvider>(
+              create: (_) => TasksProvider(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: QuickNotesTheme.darkTheme,
+            home: const TaskEditorScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final textFields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+      expect(textFields.length, greaterThanOrEqualTo(2));
+
+      final titleField = textFields[0];
+      final descField = textFields[1];
+
+      // Verify neutralized properties on Title field
+      expect(titleField.decoration?.filled, false);
+      expect(titleField.decoration?.fillColor, Colors.transparent);
+      expect(titleField.decoration?.border, InputBorder.none);
+      expect(titleField.decoration?.enabledBorder, InputBorder.none);
+      expect(titleField.decoration?.focusedBorder, InputBorder.none);
+      expect(titleField.decoration?.errorBorder, InputBorder.none);
+      expect(titleField.decoration?.focusedErrorBorder, InputBorder.none);
+      expect(titleField.decoration?.disabledBorder, InputBorder.none);
+
+      // Verify neutralized properties on Description field
+      expect(descField.decoration?.filled, false);
+      expect(descField.decoration?.fillColor, Colors.transparent);
+      expect(descField.decoration?.border, InputBorder.none);
+      expect(descField.decoration?.enabledBorder, InputBorder.none);
+      expect(descField.decoration?.focusedBorder, InputBorder.none);
+      expect(descField.decoration?.errorBorder, InputBorder.none);
+      expect(descField.decoration?.focusedErrorBorder, InputBorder.none);
+      expect(descField.decoration?.disabledBorder, InputBorder.none);
+
+      // Focus title field and type
+      await tester.tap(find.byType(TextField).first);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'September 16th');
+      await tester.pumpAndSettle();
+
+      expect(find.text('September 16th'), findsOneWidget);
+
+      // Focus description field and type
+      await tester.tap(find.byType(TextField).at(1));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).at(1), 'Meeting notes and agenda');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Meeting notes and agenda'), findsOneWidget);
+    });
+
+    testWidgets('CreateTaskBottomSheet Title neutralizes global InputDecorationTheme on focus',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<TasksProvider>(
+              create: (_) => TasksProvider(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: QuickNotesTheme.darkTheme,
+            home: Scaffold(
+              body: CreateTaskBottomSheet(
+                initialDate: DateTime(2026, 9, 19),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final textFields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+      final titleField = textFields[0];
+
+      // Verify neutralized properties
+      expect(titleField.decoration?.filled, false);
+      expect(titleField.decoration?.fillColor, Colors.transparent);
+      expect(titleField.decoration?.border, InputBorder.none);
+      expect(titleField.decoration?.enabledBorder, InputBorder.none);
+      expect(titleField.decoration?.focusedBorder, InputBorder.none);
+      expect(titleField.decoration?.errorBorder, InputBorder.none);
+      expect(titleField.decoration?.focusedErrorBorder, InputBorder.none);
+      expect(titleField.decoration?.disabledBorder, InputBorder.none);
+
+      // Focus and type
+      await tester.tap(find.byType(TextField).first);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Buy groceries');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Buy groceries'), findsOneWidget);
     });
   });
 }

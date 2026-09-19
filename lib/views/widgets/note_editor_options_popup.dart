@@ -126,13 +126,9 @@ class NoteEditorOptionsPopup extends StatelessWidget {
     final dividerColor =
         isDark ? const Color(0x33FFFFFF) : const Color(0x33000000);
 
-    return Container(
+    return SizedBox(
       width: 192,
       height: 250,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2C2C2C) : Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
