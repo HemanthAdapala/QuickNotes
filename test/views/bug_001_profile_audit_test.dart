@@ -7,8 +7,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'package:provider/provider.dart';
 import 'package:quick_notes/models/current_user.dart';
 import 'package:quick_notes/models/session_type.dart';
+import 'package:quick_notes/providers/notes_provider.dart';
+import 'package:quick_notes/providers/settings_provider.dart';
+import 'package:quick_notes/providers/tasks_provider.dart';
 import 'package:quick_notes/repositories/user_repository.dart';
 import 'package:quick_notes/services/session_manager.dart';
 import 'package:quick_notes/views/screens/account/account_profile_screen.dart';
@@ -74,10 +78,17 @@ void main() {
   });
 
   Widget buildTestApp(Widget child, {Size size = const Size(390, 844)}) {
-    return MaterialApp(
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: Material(child: child),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => NotesProvider()),
+        ChangeNotifierProvider(create: (_) => TasksProvider()),
+      ],
+      child: MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(size: size),
+          child: Material(child: child),
+        ),
       ),
     );
   }
@@ -103,17 +114,33 @@ void main() {
       ));
     });
 
-    testWidgets('AppHeaderBar and Back button mount on frame 0 during loading in setup flow', (tester) async {
+    testWidgets('AppHeaderBar and Profile title mount on frame 0 during loading in setup flow, with Back button omitted', (tester) async {
       await tester.pumpWidget(
         buildTestApp(const AccountProfileScreen(isSetupFlow: true)),
       );
 
-      // Frame 0: While loading profile data, AppHeaderBar MUST be present immediately
+      // Frame 0: While loading profile data, AppHeaderBar and title/skip MUST be present immediately
       expect(find.byType(AppHeaderBar), findsOneWidget,
-          reason: 'AppHeaderBar must mount on frame 0 to avoid backdrop texture glitch');
-      expect(find.byType(TactileButton), findsWidgets);
-      expect(find.byType(SvgPicture), findsWidgets,
-          reason: 'Back button SVG angle_left must be present on frame 0');
+          reason: 'AppHeaderBar must mount on frame 0');
+      expect(find.text('Profile'), findsOneWidget,
+          reason: 'Profile title must mount immediately on frame 0');
+      expect(find.text('Skip'), findsOneWidget,
+          reason: 'Skip button must be present in setup flow');
+
+      // Back button must NOT be present in setup flow
+      final headerBackButton = find.descendant(
+        of: find.byType(AppHeaderBar),
+        matching: find.byType(TactileButton),
+      );
+      expect(headerBackButton, findsNothing,
+          reason: 'Back button must NOT be present in setup flow header');
+
+      final headerAngleLeftSvg = find.descendant(
+        of: find.byType(AppHeaderBar),
+        matching: find.byType(SvgPicture),
+      );
+      expect(headerAngleLeftSvg, findsNothing,
+          reason: 'No angle_left SVG icon must be rendered in setup flow header');
 
       // Now allow async data loading to finish on real event loop
       await tester.runAsync(() async {
@@ -121,16 +148,18 @@ void main() {
       });
       await tester.pump();
 
-      // After loading, AppHeaderBar is still present and stable
+      // After loading, header remains stable and Back button is still absent
       expect(find.byType(AppHeaderBar), findsOneWidget);
-      expect(find.byType(SvgPicture), findsWidgets);
+      expect(headerBackButton, findsNothing);
+      expect(find.text('Profile'), findsOneWidget);
+      expect(find.text('Skip'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing,
           reason: 'Loading indicator should dismiss once profile data is loaded');
       expect(find.text('Change Photo'), findsOneWidget,
           reason: 'Profile form content should be rendered');
     });
 
-    testWidgets('Back button tap triggers pop navigation in standard flow without throwing', (tester) async {
+    testWidgets('Back button is present and triggers pop navigation in standard flow (isSetupFlow: false)', (tester) async {
       bool didPop = false;
       await tester.pumpWidget(
         MaterialApp(
@@ -158,11 +187,15 @@ void main() {
       expect(find.byType(AccountProfileScreen), findsOneWidget);
       expect(find.byType(AppHeaderBar), findsOneWidget);
 
+      // In standard flow, Back button MUST be present
       final backButton = find.descendant(
         of: find.byType(AppHeaderBar),
         matching: find.byType(TactileButton),
       );
-      expect(backButton, findsOneWidget);
+      expect(backButton, findsOneWidget,
+          reason: 'Back button must be present in standard flow');
+      expect(find.text('Skip'), findsNothing,
+          reason: 'Skip button must NOT be present in standard flow');
 
       await tester.tap(backButton);
       await tester.pump();
@@ -170,6 +203,22 @@ void main() {
 
       expect(didPop, isTrue, reason: 'Back button should pop the navigator in standard flow');
       expect(find.byType(AccountProfileScreen), findsNothing);
+    });
+
+    testWidgets('Skip button is interactive in setup flow', (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(const AccountProfileScreen(isSetupFlow: true)),
+      );
+
+      await tester.runAsync(() async {
+        await Future.delayed(const Duration(milliseconds: 300));
+      });
+      await tester.pump();
+
+      expect(find.text('Skip'), findsOneWidget);
+      await tester.tap(find.text('Skip'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 11));
     });
   });
 

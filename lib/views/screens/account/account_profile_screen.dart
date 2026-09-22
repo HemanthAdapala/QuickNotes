@@ -292,26 +292,29 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                   alignment: Alignment.centerRight,
                   children: [
                     AppHeaderBar(
-                      leftHeroTag: 'hero_profile_back',
+                      leftHeroTag: widget.isSetupFlow ? '' : 'hero_profile_back',
                       rightHeroTag: 'hero_profile_empty',
                       leftWidth: 44.0,
                       rightWidth: 44.0,
                       rightChild: null,
-                      onLeftTap: () {
-                        if (widget.isSetupFlow ||
-                            !Navigator.canPop(context)) {
-                          _navigateToHome();
-                        } else {
-                          Navigator.pop(context);
-                        }
-                      },
-                      leftChild: SvgPicture.asset(
-                        'assets/icons/angle_left.svg',
-                        width: 22,
-                        height: 22,
-                        colorFilter: ColorFilter.mode(
-                            primaryTextColor, BlendMode.srcIn),
-                      ),
+                      onLeftTap: widget.isSetupFlow
+                          ? null
+                          : () {
+                              if (!Navigator.canPop(context)) {
+                                _navigateToHome();
+                              } else {
+                                Navigator.pop(context);
+                              }
+                            },
+                      leftChild: widget.isSetupFlow
+                          ? null
+                          : SvgPicture.asset(
+                              'assets/icons/angle_left.svg',
+                              width: 22,
+                              height: 22,
+                              colorFilter: ColorFilter.mode(
+                                  primaryTextColor, BlendMode.srcIn),
+                            ),
                       titleWidget: Text(
                         "Profile",
                         textAlign: TextAlign.center,

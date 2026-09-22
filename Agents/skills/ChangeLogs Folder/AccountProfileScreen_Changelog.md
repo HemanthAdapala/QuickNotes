@@ -136,3 +136,92 @@ None.
 ### Final Result
 `AccountProfileScreen` mounts `AppHeaderBar` on the first visible frame with the canonical glass Back button properly textured immediately, eliminating visual popping or interaction dependency.
 
+---
+
+## [v1.1.1] - 2026-09-22
+
+### Component Type
+Screen / View Layer (`AccountProfileScreen`)
+
+### Status
+Implemented & Verified Green (8/8 audit tests passing, 7/7 profile tests passing, 0 analyzer issues)
+
+### Author
+Anti Gravity
+
+### Type
+- UX / Navigation Clarification
+- UI
+- Bug Fix Follow-Up
+
+---
+
+### Summary
+BUG-001 follow-up — Removed the Back button from `AccountProfileScreen` during the mandatory post-login setup flow (`isSetupFlow == true`), while strictly preserving the canonical glass Back button and pop navigation when accessed in standard flow (`isSetupFlow == false`).
+
+---
+
+### Detailed Changes
+- **Conditional Back Button in AppHeaderBar**:
+  - In `lib/views/screens/account/account_profile_screen.dart`, conditioned the leading slot parameters of `AppHeaderBar`:
+    - `leftHeroTag: widget.isSetupFlow ? '' : 'hero_profile_back'`
+    - `onLeftTap: widget.isSetupFlow ? null : ...`
+    - `leftChild: widget.isSetupFlow ? null : SvgPicture.asset('assets/icons/angle_left.svg', ...)`
+  - When `leftChild == null`, `AppHeaderBar` does not build or mount the `leftButton` or any `Hero` widget, leaving the left slot empty.
+  - Symmetrical slot widths (`leftWidth: 44.0`, `rightWidth: 44.0`) ensure the "Profile" title remains centered without ad-hoc layout overrides.
+- **Hero Tag Safety**:
+  - Setting `leftHeroTag: ''` when `isSetupFlow == true` guarantees that no stale `Hero(tag: 'hero_profile_back')` widget is mounted in the widget tree, eliminating Hero collision or transition warnings.
+- **Skip & Title Preservation**:
+  - The right-aligned `Skip` button (`TactileButton`) and centered "Profile" title remain mounted on frame 0 and fully interactive during setup flow.
+- **Normal Profile Flow Retention**:
+  - When `isSetupFlow == false`, `leftChild`, `onLeftTap`, and `leftHeroTag: 'hero_profile_back'` remain intact, maintaining the canonical glass Back button.
+- **BUG-A Workaround Evaluation**:
+  - Back-button rendering complexity from BUG-001 is no longer applicable to setup flow because the button is not present.
+  - The underlying synchronous `AppHeaderBar` mounting on frame 0 within `SafeArea` is retained because it stabilizes the "Profile" title, `Skip` button, sheet geometry, and normal flow Back button.
+
+---
+
+### Why was this change made?
+During the mandatory linear onboarding flow (Google Login -> First Run Recovery -> Profile Setup), presenting a Back button is counter-intuitive and misleading because returning to the previous recovery/login step is not permitted. The intended UX for setup flow is `[no back button] Profile Skip`.
+
+---
+
+### Architecture Impact
+- Strictly localized to `AccountProfileScreen` (`lib/views/screens/account/account_profile_screen.dart`).
+- Zero changes to shared widgets (`AppHeaderBar`, `BottomBarGlassSurface`, `TactileButton`).
+- Existing Google Connected layout resilience (single line, flush right, zero truncation) remains intact and verified.
+
+---
+
+### Files Modified
+- `lib/views/screens/account/account_profile_screen.dart`
+- `test/views/bug_001_profile_audit_test.dart`
+- `test/views/account_profile_screen_test.dart`
+- `Agents/skills/ChangeLogs Folder/AccountProfileScreen_Changelog.md`
+
+---
+
+### Dependencies Added
+None.
+
+---
+
+### Breaking Changes
+None.
+
+---
+
+### Testing Status
+- Static analysis: `flutter analyze lib/views/screens/account/account_profile_screen.dart test/views/bug_001_profile_audit_test.dart test/views/account_profile_screen_test.dart`: 0 issues found (100% clean).
+- Automated tests: `flutter test test/views/bug_001_profile_audit_test.dart`: 8/8 tests PASS.
+- Regression tests:
+  - `flutter test test/views/account_profile_screen_test.dart`: 7/7 tests PASS.
+  - `flutter test test/views/app_header_bar_test.dart`: 12/12 tests PASS.
+  - `flutter test test/views/first_run_recovery_screen_test.dart`: 15/15 tests PASS.
+
+---
+
+### Final Result
+`AccountProfileScreen` displays `[no back button] Profile Skip` in setup flow without stale Hero tags, while preserving the canonical glass Back button and pop navigation in normal profile flows.
+
+

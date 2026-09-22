@@ -12,6 +12,7 @@ import 'package:quick_notes/services/session_manager.dart';
 import 'package:quick_notes/views/screens/account/account_profile_screen.dart';
 import 'package:quick_notes/views/screens/account/account_settings_screen.dart';
 import 'package:quick_notes/views/screens/profile_screen.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +52,9 @@ void main() {
       const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
       (MethodCall methodCall) async => null,
     );
+
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
   });
 
   setUp(() async {
