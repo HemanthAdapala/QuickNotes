@@ -582,5 +582,67 @@ Integrated Phase P9 Premium Test Mode entry point into the Developer section of 
 - `test/premium/debug_premium_test_mode_test.dart`: 14/14 PASS.
 - Static analysis: 0 issues found (100% clean).
 
+---
+
+## v3.7.0
+
+### Date
+2026-09-22
+
+### Author
+Anti Gravity
+
+### Type
+- Bug Fix
+- UI
+- Layout
+
+---
+
+### Summary
+Remediated BUG-001 (BUG B) — Resolved awkward line wrapping of key-value row items in `GroupedTile.keyValue` across `AccountProfileScreen`, `SettingsScreen`, and `AccountSettingsScreen`.
+
+---
+
+### Detailed Changes
+- **Flexible / Expanded Layout Refactor**:
+  - Replaced restrictive proportional flex layout (`Flexible(flex: 3)` on title and `Flexible(flex: 2)` on value) in `GroupedTile.keyValue` (`lib/views/widgets/grouped_list_container.dart`).
+  - Implemented `Flexible(fit: FlexFit.loose)` on `title` and `Expanded` on `value`.
+  - Added `maxLines: 1` and `overflow: TextOverflow.ellipsis` to the `value` `Text` widget with `TextAlign.right`.
+  - The `title` now naturally sizes to its intrinsic content width, giving the `value` ("Google Connected", etc.) all remaining horizontal space without wrapping into two lines.
+  - Symmetrical 16px horizontal content padding preserved.
+
+---
+
+### Why was this change made?
+In the previous implementation, the fixed 3:2 flex ratio artificially capped the value container to ~33% of the card width (~83px on a 360dp phone), forcing "Google Connected" (~125px) to wrap into two awkward lines ("Google \n Connected").
+
+---
+
+### Architecture Impact
+- Reusable component improvement in `GroupedListContainer` (`lib/views/widgets/grouped_list_container.dart`).
+- Fully backward compatible: Existing short and long titles across Settings, Backup & Restore, and Account screens render without layout shifts or RenderFlex overflows.
+
+---
+
+### Files Modified
+- `lib/views/widgets/grouped_list_container.dart`
+- `Agents/skills/ChangeLogs Folder/SettingsScreen_Changelog.md`
+
+---
+
+### Testing Status
+- `flutter test test/views/bug_001_profile_audit_test.dart`: Verified at 320dp, 360dp, 390dp, and 412dp widths with zero overflow and single-line value rendering (PASS).
+- `flutter test test/views/settings_visual_polish_s4_test.dart`: 6/6 tests PASS.
+- `flutter test test/views/settings_performance_s2_test.dart`: 5/5 tests PASS.
+- `flutter test test/views/settings_and_appearance_theme_test.dart`: 3/3 tests PASS.
+- Static analysis: `flutter analyze lib/views/widgets/grouped_list_container.dart`: 0 issues found (100% clean).
+
+---
+
+### Final Result
+"Google Connected" displays cleanly on a single line at all standard mobile widths without RenderFlex overflow.
+
+
 
 

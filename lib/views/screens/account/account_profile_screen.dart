@@ -284,90 +284,91 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
         backgroundColor: backgroundColor,
         body: SafeArea(
           bottom: false,
-          child: _isLoading
-              ? Center(
-                  child: CircularProgressIndicator(color: primaryTextColor))
-              : Column(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
+                child: Stack(
+                  alignment: Alignment.centerRight,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
-                      child: Stack(
-                        alignment: Alignment.centerRight,
-                        children: [
-                          AppHeaderBar(
-                            leftHeroTag: 'hero_profile_back',
-                            rightHeroTag: 'hero_profile_empty',
-                            leftWidth: 44.0,
-                            rightWidth: 44.0,
-                            rightChild: null,
-                            onLeftTap: () {
-                              if (widget.isSetupFlow ||
-                                  !Navigator.canPop(context)) {
-                                _navigateToHome();
-                              } else {
-                                Navigator.pop(context);
-                              }
-                            },
-                            leftChild: SvgPicture.asset(
-                              'assets/icons/angle_left.svg',
-                              width: 22,
-                              height: 22,
-                              colorFilter: ColorFilter.mode(
-                                  primaryTextColor, BlendMode.srcIn),
-                            ),
-                            titleWidget: Text(
-                              "Profile",
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                color: primaryTextColor,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.43,
-                              ),
-                            ),
-                          ),
-                          if (widget.isSetupFlow)
-                            TactileButton(
-                              useAppleSpring: true,
-                              onTap: _handleSkip,
-                              child: Container(
-                                alignment: Alignment.centerRight,
-                                width: 50,
-                                height: 44, // Match AppHeaderBar height
-                                child: Text(
-                                  'Skip',
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFF8E8E93),
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: -0.3,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
+                    AppHeaderBar(
+                      leftHeroTag: 'hero_profile_back',
+                      rightHeroTag: 'hero_profile_empty',
+                      leftWidth: 44.0,
+                      rightWidth: 44.0,
+                      rightChild: null,
+                      onLeftTap: () {
+                        if (widget.isSetupFlow ||
+                            !Navigator.canPop(context)) {
+                          _navigateToHome();
+                        } else {
+                          Navigator.pop(context);
+                        }
+                      },
+                      leftChild: SvgPicture.asset(
+                        'assets/icons/angle_left.svg',
+                        width: 22,
+                        height: 22,
+                        colorFilter: ColorFilter.mode(
+                            primaryTextColor, BlendMode.srcIn),
+                      ),
+                      titleWidget: Text(
+                        "Profile",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          color: primaryTextColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.43,
+                        ),
                       ),
                     ),
-
-                    const SizedBox(height: 8.0),
-
-                    // Content Area (White Rounded Sheet)
-                    Expanded(
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: sheetColor,
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(32)),
-                          border: isDark
-                              ? Border.all(
-                                  color: const Color(0xFF2C2C2E),
-                                  width: 1.0,
-                                )
-                              : null,
+                    if (widget.isSetupFlow)
+                      TactileButton(
+                        useAppleSpring: true,
+                        onTap: _handleSkip,
+                        child: Container(
+                          alignment: Alignment.centerRight,
+                          width: 50,
+                          height: 44, // Match AppHeaderBar height
+                          child: Text(
+                            'Skip',
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF8E8E93),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
                         ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Align(
+                      ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 8.0),
+
+              // Content Area (White Rounded Sheet)
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: sheetColor,
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(32)),
+                    border: isDark
+                        ? Border.all(
+                            color: const Color(0xFF2C2C2E),
+                            width: 1.0,
+                          )
+                        : null,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: _isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                              color: primaryTextColor))
+                      : Align(
                           alignment: Alignment.topCenter,
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 402.0),

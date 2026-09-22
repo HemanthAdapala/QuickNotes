@@ -424,7 +424,7 @@ abstract class GroupedTile {
               const SizedBox(width: 12),
             ],
             Flexible(
-              flex: 3,
+              fit: FlexFit.loose,
               child: Text(
                 title,
                 softWrap: true,
@@ -438,12 +438,12 @@ abstract class GroupedTile {
               ),
             ),
             const SizedBox(width: 12),
-            Flexible(
-              flex: 2,
+            Expanded(
               child: Text(
                 value,
                 textAlign: TextAlign.right,
-                softWrap: true,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: valueTextColor,
                   fontSize: fontSize,
