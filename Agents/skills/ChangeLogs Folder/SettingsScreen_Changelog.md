@@ -605,17 +605,16 @@ Remediated BUG-001 (BUG B) — Resolved awkward line wrapping of key-value row i
 ---
 
 ### Detailed Changes
-- **Flexible / Expanded Layout Refactor**:
-  - Replaced restrictive proportional flex layout (`Flexible(flex: 3)` on title and `Flexible(flex: 2)` on value) in `GroupedTile.keyValue` (`lib/views/widgets/grouped_list_container.dart`).
-  - Implemented `Flexible(fit: FlexFit.loose)` on `title` and `Expanded` on `value`.
-  - Added `maxLines: 1` and `overflow: TextOverflow.ellipsis` to the `value` `Text` widget with `TextAlign.right`.
-  - The `title` now naturally sizes to its intrinsic content width, giving the `value` ("Google Connected", etc.) all remaining horizontal space without wrapping into two lines.
+- **Key-Value Alignment Refactor (Expanded Title & Trailing Value)**:
+  - Replaced internal flex-split layout with `Expanded(child: Text(title))` and natural intrinsic `Text(value, textAlign: TextAlign.right, maxLines: 1)`.
+  - The `title` occupies the flexible leading region and pushes `value` flush against the right margin (16dp card padding), matching Apple Settings and Quick Notes UI design standards.
+  - The `value` ("Google Connected") measures its full intrinsic width, preventing truncation/ellipsizing (`Google Connect...`) and awkward middle-gap floating.
   - Symmetrical 16px horizontal content padding preserved.
 
 ---
 
 ### Why was this change made?
-In the previous implementation, the fixed 3:2 flex ratio artificially capped the value container to ~33% of the card width (~83px on a 360dp phone), forcing "Google Connected" (~125px) to wrap into two awkward lines ("Google \n Connected").
+In the previous implementation, flex contention between `title` and `value` restricted the value container width to ~50% of the card, causing "Google Connected" to truncate with an ellipsis ("Google Connect...") while floating awkwardly in the middle of the card with unused whitespace on the right. By using `Expanded` for `title` and intrinsic trailing alignment for `value`, "Google Connected" is pinned flush to the right padding without truncation.
 
 ---
 

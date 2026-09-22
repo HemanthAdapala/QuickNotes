@@ -191,6 +191,7 @@ void main() {
                 child: SizedBox(
                   width: width,
                   child: GroupedListContainer(
+                    width: width,
                     children: [
                       GroupedTile.keyValue(
                         title: 'Account',
@@ -220,6 +221,12 @@ void main() {
           final valueSize = tester.getSize(valueFinder);
           expect(valueSize.height, lessThanOrEqualTo(24.0),
               reason: 'Value "Google Connected" must fit on a single line');
+
+          // Verify value is aligned flush against the right margin (16dp padding)
+          final valueRight = tester.getTopRight(valueFinder).dx;
+          final containerRight = tester.getTopRight(find.byType(GroupedListContainer)).dx;
+          expect(containerRight - valueRight, closeTo(16.0, 0.5),
+              reason: 'Value "Google Connected" must be right-aligned flush against the right padding');
         } finally {
           FlutterError.onError = originalOnError;
         }

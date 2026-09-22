@@ -423,11 +423,11 @@ abstract class GroupedTile {
               ),
               const SizedBox(width: 12),
             ],
-            Flexible(
-              fit: FlexFit.loose,
+            Expanded(
               child: Text(
                 title,
-                softWrap: true,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: primaryTextColor,
                   fontSize: fontSize,
@@ -438,19 +438,16 @@ abstract class GroupedTile {
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                value,
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: valueTextColor,
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.w400,
-                  height: 1.25,
-                  letterSpacing: -0.3,
-                ),
+            Text(
+              value,
+              textAlign: TextAlign.right,
+              maxLines: 1,
+              style: GoogleFonts.inter(
+                color: valueTextColor,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w400,
+                height: 1.25,
+                letterSpacing: -0.3,
               ),
             ),
           ],
