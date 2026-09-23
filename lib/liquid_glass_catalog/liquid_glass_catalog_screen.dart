@@ -2,11 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'catalog_background.dart';
 import 'component_detail_screen.dart';
+import 'optical_effects/blur_experiment.dart';
+import 'optical_effects/chromatic_aberration_experiment.dart';
+import 'optical_effects/distortion_experiment.dart';
+import 'optical_effects/magnification_experiment.dart';
+import 'optical_effects/refraction_experiment.dart';
+import 'optical_effects/specular_experiment.dart';
 
-/// Phase 1A: Minimal Liquid Glass Component Catalog Index
+/// Phase 1A & 1B: Minimal Liquid Glass Component & Optical Effects Catalog Index
 ///
-/// Functions as a simple technical component index over the single supplied background.
-/// Tapping any component opens its dedicated inspection experiment.
+/// Functions as a simple technical index over the single supplied background.
+/// Tapping any component or optical effect opens its dedicated inspection experiment.
 class LiquidGlassCatalogScreen extends StatelessWidget {
   const LiquidGlassCatalogScreen({super.key});
 
@@ -103,6 +109,41 @@ class LiquidGlassCatalogScreen extends StatelessWidget {
                         'Glass Scaffold',
                         CatalogComponentType.glassScaffold,
                       ),
+
+                      const SizedBox(height: 24),
+
+                      // ─── Optical Effects ──────────────────────────────────
+                      _buildCategoryHeader('Optical Effects'),
+                      _buildEffectItem(
+                        context,
+                        'Blur',
+                        () => const BlurExperimentScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        'Refraction',
+                        () => const RefractionExperimentScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        'Distortion',
+                        () => const DistortionExperimentScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        'Magnification',
+                        () => const MagnificationExperimentScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        'Specular Highlight',
+                        () => const SpecularExperimentScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        'Chromatic Aberration',
+                        () => const ChromaticAberrationExperimentScreen(),
+                      ),
                     ],
                   ),
                 ),
@@ -187,6 +228,55 @@ class LiquidGlassCatalogScreen extends StatelessWidget {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => ComponentDetailScreen(componentType: type),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                const Icon(
+                  CupertinoIcons.chevron_forward,
+                  color: Color(0x88FFFFFF),
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEffectItem(
+    BuildContext context,
+    String label,
+    Widget Function() screenBuilder,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: const Color(0x33000000),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0x22FFFFFF), width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => screenBuilder(),
               ),
             );
           },
