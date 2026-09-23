@@ -735,6 +735,93 @@ Implemented **Phase D3-F3 — Color Picker Dark Mode** of the Quick Notes Dark M
 - `test/views/folders_dark_mode_palette_test.dart`
 - `Agents/skills/ChangeLogs Folder/FolderManagement_Changelog.md`
 
+---
 
+## [1.6.0] - Folder Open/Close Transition Surgical Implementation (Phase D5-FN-3)
 
+### Date
+2026-09-19
 
+### Author
+Anti Gravity (Senior Flutter Architect)
+
+### Type
+- Motion / Transition Architecture
+- Bug Fix (Phase D5-FN-3)
+
+---
+
+### Summary
+Surgically resolved the buggy folder open/close transition in Quick Notes identified by Phase D5-FN-2 forensic audit:
+1. Removed the artificial 150ms `Future.delayed` tap latency in `_handleFolderTap`. Navigation now begins immediately on the first frame upon folder interaction.
+2. Replaced the defective faux-morph `FolderMorphPageRoute` in `FolderManagementScreen` with Quick Notes' authoritative canonical page route helper: `buildPageRoute(FolderNotesScreen(folder: folder))` (`QuickNotesPageRoute`).
+3. Preserved `_tappedFolderId` tap-debounce guard to prevent double-tap reentrancy while resetting it cleanly upon route return via `.then(...)`.
+4. Eliminated all faux-morph visual defects: moving rectangular aperture child clipping (DEF-02), Dark Mode navy #1A1C2E overlay flash (DEF-03), opaque reverse snap (DEF-04), folder card geometry mismatch (DEF-05), and legacy 450ms/400ms timing (DEF-06).
+5. Retained 100% of folder data, card design, physical white paper invariants, haptics, Dark Mode/Light Mode palettes, and reduced-motion support.
+
+---
+
+### Key Implementations
+
+#### 1. Removal of Artificial 150ms Tap Delay (Root Cause A)
+- Removed `await Future.delayed(const Duration(milliseconds: 150));` from `_handleFolderTap`.
+- Folder selection haptic in `TactileButton` fires instantly on touch; navigation pushes synchronously to the navigator without perceptible lag.
+
+#### 2. Canonical Route Migration (Root Cause B)
+- Replaced `Navigator.of(context).push(FolderMorphPageRoute(...))` with:
+  ```dart
+  Navigator.of(context).push(
+    buildPageRoute(
+      FolderNotesScreen(folder: folder),
+    ),
+  ).then((_) {
+    if (mounted) {
+      setState(() {
+        _tappedFolderId = null;
+      });
+    }
+  });
+  ```
+- Consumes project canonical motion tokens:
+  - Forward: `QuickNotesMotion.kMotionPage` (340ms) with `kMotionAppleEase`.
+  - Reverse: `QuickNotesMotion.kMotionPageReverse` (260ms) with canonical reverse curve.
+  - Reduced Motion: Immediate presentation with `Duration.zero` when `MediaQuery.maybeDisableAnimationsOf(context)` is active.
+
+#### 3. Preservation of Invariants (Locked Firewalls)
+- Folder cards (`FolderGridCard`) visual design, geometry, and white paper stationery preserved 100%.
+- Dark Mode surfaces (`#1E1E1E`, `#2C2C2C`) preserved.
+- Global theme token `cardColor: #1A1C2E` in `quick_notes_theme.dart` untouched; navy flash naturally eliminated because the old aperture is gone.
+- Unused `FolderMorphPageRoute` retained in `living_writing_experience.dart` for backwards compatibility with isolated motion tests.
+
+---
+
+### Verification
+- **Automated Tests**:
+  - `test/views/folder_transition_canonical_d5_fn3_test.dart` (5/5 passed):
+    - TEST A: Navigation begins immediately on folder tap without 150ms delay.
+    - TEST B: Canonical `buildPageRoute` / `QuickNotesPageRoute` (340ms/260ms, AppleEase).
+    - TEST C: Zero #1A1C2E overlay frames in Dark Mode.
+    - TEST D: Reverse transition pops smoothly and restores `FolderManagementScreen`.
+    - TEST E: Immediate presentation with `Duration.zero` under reduced motion.
+  - `test/views/screen_transition_visual_p4_3_test.dart` (5/5 passed).
+  - `test/views/folders_motion_haptics_p4_3_test.dart` (26/26 passed).
+  - `test/views/folder_notes_dark_mode_palette_test.dart` (25/25 passed).
+  - Editor Regression Suites: `note_editor_sde_dark_mode_test.dart`, `note_editor_shell_dark_mode_test.dart`, `task_editor_shell_dark_mode_test.dart`, `task_editor_fields_dark_mode_test.dart`, `task_editor_controls_dark_mode_test.dart` (32/32 passed).
+  - Total automated tests verified: 93/93 passed (100%).
+- **Static Analysis**:
+  - `flutter analyze` on modified files: 0 errors, 0 new warnings.
+- **Prohibited Color Check**:
+  - 0 occurrences of `#444444` in `lib/`.
+- **Physical Device Validation (Samsung Galaxy S23 Ultra `SM-S918B` / `R5CW10GW8TE`)**:
+  - Physically validated via live Hot Reload on device.
+  - Forward: Folders -> tap September folder -> opens immediately without dead pause, aperture clipping, or navy flash.
+  - Reverse: Folder Notes -> Back chevron -> smooth reverse slide without snaps or pop artifacts; Folders screen restored cleanly.
+  - Dark Mode: Verified seamless transition into `#1E1E1E` / `#2C2C2C` FolderNotesScreen with invariant white note card.
+
+---
+
+### File Manifest
+- `lib/views/screens/folder_management_screen.dart`
+- `test/views/screen_transition_visual_p4_3_test.dart`
+- `test/views/folder_transition_canonical_d5_fn3_test.dart`
+- `Agents/skills/ChangeLogs Folder/FolderManagement_Changelog.md`
