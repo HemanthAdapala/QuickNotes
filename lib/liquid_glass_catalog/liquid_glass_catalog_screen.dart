@@ -14,11 +14,20 @@ import 'interaction/interactive_indicator_experiment.dart';
 import 'interaction/optical_interaction_experiment.dart';
 import 'interaction/press_response_experiment.dart';
 import 'interaction/touch_glow_experiment.dart';
+import 'performance/baseline_benchmark.dart';
+import 'performance/blur_cost_benchmark.dart';
+import 'performance/chromatic_aberration_cost_benchmark.dart';
+import 'performance/indicator_cost_benchmark.dart';
+import 'performance/interaction_cost_benchmark.dart';
+import 'performance/quality_modes_benchmark.dart';
+import 'performance/refraction_cost_benchmark.dart';
+import 'performance/specular_fresnel_cost_benchmark.dart';
+import 'performance/surface_count_benchmark.dart';
 
-/// Phase 1A, 1B & 1C: Minimal Liquid Glass Component, Optical Effects & Interaction Catalog Index
+/// Phase 1A, 1B, 1C & 1D: Minimal Liquid Glass Component, Optical Effects, Interaction & Performance Index
 ///
 /// Functions as a simple technical index over the single supplied background.
-/// Tapping any component, optical effect, or interaction experiment opens its dedicated inspection screen.
+/// Tapping any component, optical effect, interaction experiment, or performance benchmark opens its dedicated inspection screen.
 class LiquidGlassCatalogScreen extends StatelessWidget {
   const LiquidGlassCatalogScreen({super.key});
 
@@ -184,6 +193,56 @@ class LiquidGlassCatalogScreen extends StatelessWidget {
                         context,
                         'Optical Interaction',
                         () => const OpticalInteractionExperimentScreen(),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ─── Performance ──────────────────────────────────────
+                      _buildCategoryHeader('Performance'),
+                      _buildEffectItem(
+                        context,
+                        '01 — Baseline',
+                        () => const BaselineBenchmarkScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        '02 — Surface Count',
+                        () => const SurfaceCountBenchmarkScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        '03 — Blur Cost',
+                        () => const BlurCostBenchmarkScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        '04 — Refraction Cost',
+                        () => const RefractionCostBenchmarkScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        '05 — Chromatic Aberration Cost',
+                        () => const ChromaticAberrationCostBenchmarkScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        '06 — Specular / Fresnel Cost',
+                        () => const SpecularFresnelCostBenchmarkScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        '07 — Interaction Cost',
+                        () => const InteractionCostBenchmarkScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        '08 — Interactive Indicator Cost',
+                        () => const IndicatorCostBenchmarkScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        '09 — Quality Modes',
+                        () => const QualityModesBenchmarkScreen(),
                       ),
                     ],
                   ),

@@ -337,4 +337,120 @@ Implemented Phase 1C: Liquid Glass Interaction Laboratory inside the isolated `l
 - **Zero Artificial Glass Implementations**: No manual `BackdropFilter` or custom shader simulations were used; all interactions are generated directly by `liquid_glass_widgets 1.7.2`.
 - **Analyzer Status**: Zero issues across `lib/liquid_glass_catalog`, `lib/main.dart`, and `lib/views/screens/settings_screen.dart`.
 
+---
+
+## v1.4.0
+
+### Date
+2026-09-23
+
+### Author
+Anti Gravity
+
+### Type
+- Feature
+- Performance
+- Benchmarking
+- Architecture
+- Documentation
+
+---
+
+### Summary
+
+Implemented Phase 1D: Liquid Glass Performance Laboratory inside the isolated `lib/liquid_glass_catalog/performance/` module. Researched the actual rendering and compositing costs of `liquid_glass_widgets 1.7.2` (including shader compilation, frame timings, surface scaling, optical parameter overhead, and interaction dynamics) across 9 controlled benchmark scenarios. Implemented a minimal telemetry harness using Flutter's official `SchedulerBinding.instance.addTimingsCallback` with a telemetry UI hide toggle to allow pure workload measurement, structured a 4-tier baseline matrix (A/B/C/D), applied evidence-based performance classifications, integrated standardized reproducibility metadata, and verified that Quick Notes production UI remains 100% untouched.
+
+---
+
+### Detailed Changes
+
+- **Evidence-Based Performance Classification**:
+  - Replaced arbitrary millisecond boundaries with evidence-based criteria under tested configurations:
+    1. `LOW OBSERVED COST`: No reproducible frame-budget pressure under the tested configuration.
+    2. `MODERATE OBSERVED COST`: Reproducible increase in frame/raster timing, without sustained frame-budget violations under the tested configuration.
+    3. `HIGH OBSERVED COST`: Reproducible frame-budget violations or sustained jank under the tested configuration.
+    4. `DEVICE / BACKEND DEPENDENT`: Cost varies fundamentally depending on renderer backend or GPU hardware tier.
+    5. `NOT MEASURABLE IN CURRENT TEST`: Metric cannot be isolated with current Flutter tooling/host platform without engine-level instrumentation.
+    6. `INCONCLUSIVE`: Timing variance or system noise prevents a definitive empirical conclusion.
+
+- **Minimal Telemetry Harness (`lib/liquid_glass_catalog/performance/performance_benchmark_harness.dart`)**:
+  - Collects real frame timings using `SchedulerBinding.instance.addTimingsCallback` (UI build duration, GPU raster duration, total frame span, 16.6ms budget counter over rolling 60 frames).
+  - Includes a `Hide Telemetry Overlay` toggle so developers can observe pure glass workloads without telemetry UI repainting interfering with frame timings.
+  - Standardized Reproducibility Metadata block displaying target platform, package version (`v1.7.2`), quality mode, shader warm-up status, and sampling window.
+
+- **01 — Baseline Benchmark (`lib/liquid_glass_catalog/performance/baseline_benchmark.dart`)**:
+  - Implements a 4-tier comparison matrix:
+    - Baseline A: No glass + idle
+    - Baseline B: Glass + idle
+    - Baseline C: No glass + continuous animation
+    - Baseline D: Glass + continuous animation
+  - Distinguishes static shader composition from framework animation rebuild overhead and combined glass + animation interaction.
+
+- **02 — Surface Count Benchmark (`lib/liquid_glass_catalog/performance/surface_count_benchmark.dart`)**:
+  - Scales simultaneous identical glass surfaces across 1, 2, 4, 8, and 16 instances.
+  - Evaluates whether raster timings scale linearly or superlinearly, observing compounding texture sampling and shader passes.
+
+- **03 — Blur Cost Benchmark (`lib/liquid_glass_catalog/performance/blur_cost_benchmark.dart`)**:
+  - Compares discrete blur presets (`0`, `5`, `12`, `25` px) and dynamic wave animation (`0–25 px`).
+  - Distinguishes clear optical glass (`blur: 0.0`) from "no glass", and static blur from dynamic uniform modulation.
+
+- **04 — Refraction Cost Benchmark (`lib/liquid_glass_catalog/performance/refraction_cost_benchmark.dart`)**:
+  - Compares low (`1.05`, `5px`), medium (`1.25`, `25px`), and high (`1.50`, `50px`) refraction.
+  - Confirms Snell's law vector calculations execute in constant shader ALU instruction time without branch divergence.
+
+- **05 — Chromatic Aberration Cost Benchmark (`lib/liquid_glass_catalog/performance/chromatic_aberration_cost_benchmark.dart`)**:
+  - Compares `0.0`, `0.05`, `0.15`, and `0.30` dispersion offsets.
+  - Investigates whether multi-tap UV channel splitting introduces measurable texture cache thrashing.
+
+- **06 — Specular & Fresnel Cost Benchmark (`lib/liquid_glass_catalog/performance/specular_fresnel_cost_benchmark.dart`)**:
+  - Tests specular sharpness (`soft`, `medium`, `sharp`), light intensity (`0.0`, `1.0`, `2.0`), and Fresnel strength (`0.0`, `0.5`, `1.0`).
+  - Confirms Blinn-Phong mathematical evaluation inside GLSL is performance-neutral.
+
+- **07 — Interaction Cost Benchmark (`lib/liquid_glass_catalog/performance/interaction_cost_benchmark.dart`)**:
+  - Compares idle state, press scale, pointer touch glow tracking, and drag stretch spring physics.
+  - Isolates framework layout/paint passes from glass shader execution.
+
+- **08 — Interactive Indicator Cost Benchmark (`lib/liquid_glass_catalog/performance/indicator_cost_benchmark.dart`)**:
+  - Evaluates static indicator, linear transit, shader concave pinch, and jelly geometry skew.
+  - Investigates the package-enforced `blur: 0.0` design rule during transit to eliminate GPU compositor readback stalls.
+
+- **09 — Quality Modes Benchmark (`lib/liquid_glass_catalog/performance/quality_modes_benchmark.dart`)**:
+  - Compares `GlassQuality.minimal` (BackdropFilter fallback), `GlassQuality.standard` (single-pass lightweight shader), and `GlassQuality.premium` (multi-pass Impeller pipeline).
+  - Documents platform-specific limitations (Windows/Linux/Web statically capped at standard quality).
+
+- **Catalog Index Integration (`lib/liquid_glass_catalog/liquid_glass_catalog_screen.dart`)**:
+  - Added the seventh category `Performance` with all 9 benchmark scenario routes.
+
+- **Automated Tests (`test/views/liquid_glass_catalog_screen_test.dart`)**:
+  - Expanded test suite to verify discovery of the `Performance` category and all 9 scenario rows, and verified navigation and telemetry mounting into Baseline, Surface Count, and Quality Modes. Passed 100%.
+
+---
+
+### Files Created
+- `lib/liquid_glass_catalog/performance/performance_benchmark_harness.dart`
+- `lib/liquid_glass_catalog/performance/baseline_benchmark.dart`
+- `lib/liquid_glass_catalog/performance/surface_count_benchmark.dart`
+- `lib/liquid_glass_catalog/performance/blur_cost_benchmark.dart`
+- `lib/liquid_glass_catalog/performance/refraction_cost_benchmark.dart`
+- `lib/liquid_glass_catalog/performance/chromatic_aberration_cost_benchmark.dart`
+- `lib/liquid_glass_catalog/performance/specular_fresnel_cost_benchmark.dart`
+- `lib/liquid_glass_catalog/performance/interaction_cost_benchmark.dart`
+- `lib/liquid_glass_catalog/performance/indicator_cost_benchmark.dart`
+- `lib/liquid_glass_catalog/performance/quality_modes_benchmark.dart`
+
+### Files Modified
+- `lib/liquid_glass_catalog/liquid_glass_catalog_screen.dart`
+- `test/views/liquid_glass_catalog_screen_test.dart`
+- `Agents/skills/ChangeLogs Folder/LiquidGlassCatalog_Changelog.md`
+
+---
+
+### Architecture & Production Safety
+
+- **Production UI 100% Untouched**: Quick Notes screens (`HomeScreen`, `FolderNotes`, `SearchScreen`, `Calendar`, `NoteEditor`) remain completely untouched.
+- **Single Test Surface**: All performance benchmarks use the single fixed background `assets/catalog/liquid_glass_catalog_bg.jpg`.
+- **Measurement Only**: Zero performance hacks, artificial workarounds, or fake glass substitutions.
+- **Analyzer Status**: Zero issues across `lib/liquid_glass_catalog`, `lib/main.dart`, `lib/views/screens/settings_screen.dart`, and `test/views/liquid_glass_catalog_screen_test.dart`.
+
+
 

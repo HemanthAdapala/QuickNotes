@@ -167,5 +167,67 @@ void main() {
 
     // Final check that we returned to catalog index
     expect(find.text('LIQUID GLASS'), findsOneWidget);
+
+    // Scroll to reveal Performance category
+    await tester.scrollUntilVisible(
+      find.text('Performance'),
+      100.0,
+      scrollable: find.byType(Scrollable),
+    );
+    expect(find.text('Performance'), findsOneWidget);
+
+    // Verify all 9 performance scenario entries exist
+    expect(find.text('01 — Baseline'), findsOneWidget);
+    expect(find.text('02 — Surface Count'), findsOneWidget);
+    expect(find.text('03 — Blur Cost'), findsOneWidget);
+    expect(find.text('04 — Refraction Cost'), findsOneWidget);
+    expect(find.text('05 — Chromatic Aberration Cost'), findsOneWidget);
+    expect(find.text('06 — Specular / Fresnel Cost'), findsOneWidget);
+    expect(find.text('07 — Interaction Cost'), findsOneWidget);
+    expect(find.text('08 — Interactive Indicator Cost'), findsOneWidget);
+    expect(find.text('09 — Quality Modes'), findsOneWidget);
+
+    // Tap 01 — Baseline to open dedicated benchmark screen
+    await tester.tap(find.text('01 — Baseline'));
+    await tester.pumpAndSettle();
+    expect(find.text('PERFORMANCE QUESTION'), findsOneWidget);
+    expect(find.text('REPRODUCIBILITY METADATA'), findsOneWidget);
+    expect(find.text('LIVE TELEMETRY (ROLLING 60 FRAMES)'), findsOneWidget);
+    expect(find.text('Hide Telemetry'), findsOneWidget);
+    // Tap back button
+    await tester.tap(find.byTooltip('Return to Catalog Index'));
+    await tester.pumpAndSettle();
+
+    // Tap 02 — Surface Count to open dedicated benchmark screen
+    await tester.scrollUntilVisible(
+      find.text('02 — Surface Count'),
+      100.0,
+      scrollable: find.byType(Scrollable),
+    );
+    await tester.tap(find.text('02 — Surface Count'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 Surface'), findsOneWidget);
+    expect(find.text('4 Surfaces'), findsOneWidget);
+    expect(find.text('16 Surfaces'), findsOneWidget);
+    await tester.tap(find.byTooltip('Return to Catalog Index'));
+    await tester.pumpAndSettle();
+
+    // Tap 09 — Quality Modes to open dedicated benchmark screen
+    await tester.scrollUntilVisible(
+      find.text('09 — Quality Modes'),
+      100.0,
+      scrollable: find.byType(Scrollable),
+    );
+    await tester.tap(find.text('09 — Quality Modes'));
+    await tester.pumpAndSettle();
+    expect(find.text('Minimal (BackdropFilter)'), findsOneWidget);
+    expect(find.text('Standard (Lightweight)'), findsOneWidget);
+    expect(find.text('Premium (Multi-Pass)'), findsOneWidget);
+    await tester.tap(find.byTooltip('Return to Catalog Index'));
+    await tester.pumpAndSettle();
+
+    // Final check that we returned to catalog index
+    expect(find.text('LIQUID GLASS'), findsOneWidget);
   });
 }
+
