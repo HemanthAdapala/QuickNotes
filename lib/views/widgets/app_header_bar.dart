@@ -139,9 +139,6 @@ class _AppHeaderBarState extends State<AppHeaderBar> {
             ? QuickNotesMotion.kMotionPage
             : QuickNotesMotion.kMotionPageReverse);
 
-    final double effectiveRightWidth =
-        widget.isExpanded ? widget.expandedWidth : widget.rightWidth;
-
     // Gated interactivity: expanded child only accepts pointer events once fully settled
     final bool isContentInteractive =
         widget.isExpanded && (disableAnimations || _isInteractivityReady);
@@ -193,20 +190,21 @@ class _AppHeaderBarState extends State<AppHeaderBar> {
             ),
 
           // Center Title Slot — titleWidget takes precedence.
+          // Isolated from popup expansion geometry (frozen at top: 0, height: 44.0, right: widget.rightWidth).
           if (widget.titleWidget != null)
             Positioned(
               left: widget.leftWidth,
-              right: effectiveRightWidth,
+              right: widget.rightWidth,
               top: 0,
-              bottom: 0,
+              height: 44.0,
               child: Center(child: widget.titleWidget!),
             )
           else if (widget.title != null)
             Positioned(
               left: widget.leftWidth,
-              right: effectiveRightWidth,
+              right: widget.rightWidth,
               top: 0,
-              bottom: 0,
+              height: 44.0,
               child: Center(
                 child: Material(
                   type: MaterialType.transparency,

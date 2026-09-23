@@ -34,6 +34,8 @@ class SearchNoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     final formattedDate = DateFormat('EEE, d MMMM').format(note.updatedAt);
     final formattedTime = DateFormat('hh:mm a').format(note.updatedAt);
 
@@ -43,23 +45,23 @@ class SearchNoteCard extends StatelessWidget {
     final baseTitleStyle = GoogleFonts.inter(
       fontSize: 15,
       fontWeight: FontWeight.w600,
-      color: _kInk,
+      color: isDark ? Colors.white : _kInk,
       letterSpacing: -0.43,
     );
     final highlightTitleStyle = baseTitleStyle.copyWith(
-      color: const Color(0xFFD49200),
+      color: isDark ? const Color(0xFFFFCC00) : const Color(0xFFD49200),
       fontWeight: FontWeight.w700,
     );
 
     final baseBodyStyle = GoogleFonts.inter(
       fontSize: 11,
       fontWeight: FontWeight.w400,
-      color: _kInk,
+      color: isDark ? const Color(0xFF8E8E93) : _kInk,
       height: 1.40,
       letterSpacing: -0.43,
     );
     final highlightBodyStyle = baseBodyStyle.copyWith(
-      color: const Color(0xFFD49200),
+      color: isDark ? const Color(0xFFFFCC00) : const Color(0xFFD49200),
       fontWeight: FontWeight.w600,
     );
 
@@ -89,14 +91,14 @@ class SearchNoteCard extends StatelessWidget {
               ),
             ),
 
-            // 2. White Front Card Sheet Layer (Shifted down 8px)
+            // 2. Front Card Sheet Layer (Shifted down 8px)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                   borderRadius: BorderRadius.circular(20.0),
                 ),
                 child: Column(
@@ -112,17 +114,17 @@ class SearchNoteCard extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
-                            color: _kInk,
+                            color: isDark ? const Color(0xFF8E8E93) : _kInk,
                             letterSpacing: -0.43,
                           ),
                         ),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.access_time_rounded,
                               size: 13,
-                              color: _kInk,
+                              color: isDark ? const Color(0xFF8E8E93) : _kInk,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -130,7 +132,7 @@ class SearchNoteCard extends StatelessWidget {
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
-                                color: _kInk,
+                                color: isDark ? const Color(0xFF8E8E93) : _kInk,
                                 letterSpacing: -0.43,
                               ),
                             ),

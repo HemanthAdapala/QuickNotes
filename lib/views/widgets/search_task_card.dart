@@ -40,6 +40,8 @@ class SearchTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     final displayDate = task.reminderTime ?? task.dueDate;
     final formattedDate =
         DateFormat('EEE, d MMMM').format(displayDate.toLocal());
@@ -50,11 +52,11 @@ class SearchTaskCard extends StatelessWidget {
     final baseTitleStyle = GoogleFonts.inter(
       fontSize: 15,
       fontWeight: FontWeight.w500,
-      color: _kInk,
+      color: isDark ? Colors.white : _kInk,
       letterSpacing: -0.43,
     );
     final highlightTitleStyle = baseTitleStyle.copyWith(
-      color: const Color(0xFFD49200),
+      color: isDark ? const Color(0xFFFFCC00) : const Color(0xFFD49200),
       fontWeight: FontWeight.w700,
     );
 
@@ -89,14 +91,14 @@ class SearchTaskCard extends StatelessWidget {
               ),
             ),
 
-            // 2. White Front Card Sheet Layer (Shifted down 8px)
+            // 2. Front Card Sheet Layer (Shifted down 8px)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                   borderRadius: BorderRadius.circular(20.0),
                 ),
                 child: Column(
@@ -112,17 +114,17 @@ class SearchTaskCard extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
-                            color: _kInk,
+                            color: isDark ? const Color(0xFF8E8E93) : _kInk,
                             letterSpacing: -0.43,
                           ),
                         ),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.access_time_rounded,
                               size: 13,
-                              color: _kInk,
+                              color: isDark ? const Color(0xFF8E8E93) : _kInk,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -130,7 +132,7 @@ class SearchTaskCard extends StatelessWidget {
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
-                                color: _kInk,
+                                color: isDark ? const Color(0xFF8E8E93) : _kInk,
                                 letterSpacing: -0.43,
                               ),
                             ),
@@ -171,7 +173,9 @@ class SearchTaskCard extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: _kBgSecondary,
+                                    color: isDark
+                                        ? const Color(0xFF38383A)
+                                        : _kBgSecondary,
                                     borderRadius: BorderRadius.circular(40),
                                   ),
                                   child: Text(
@@ -193,7 +197,9 @@ class SearchTaskCard extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: _kBgSecondary,
+                                    color: isDark
+                                        ? const Color(0xFF38383A)
+                                        : _kBgSecondary,
                                     borderRadius: BorderRadius.circular(40),
                                   ),
                                   child: Text(

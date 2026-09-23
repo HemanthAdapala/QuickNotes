@@ -24,6 +24,7 @@ class FolderGridCard extends StatelessWidget {
   final VoidCallback onTap;
   final GestureLongPressStartCallback? onLongPressStart;
   final VoidCallback? onCustomizeTap;
+  final Color? titleColor;
 
   const FolderGridCard({
     super.key,
@@ -34,6 +35,7 @@ class FolderGridCard extends StatelessWidget {
     required this.onTap,
     this.onLongPressStart,
     this.onCustomizeTap,
+    this.titleColor,
   });
 
   Color _darken(Color color, [double amount = .08]) {
@@ -61,7 +63,8 @@ class FolderGridCard extends StatelessWidget {
     final baseTitleStyle = GoogleFonts.inter(
       fontSize: 16.0,
       fontWeight: FontWeight.w600,
-      color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E),
+      color: titleColor ??
+          (isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E)),
     );
     final highlightTitleStyle = baseTitleStyle.copyWith(
       color: const Color(0xFFD49200),

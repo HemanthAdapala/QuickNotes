@@ -139,6 +139,7 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
                         controller: _textCtrl,
                         focusNode: _focusNode,
                         autofocus: true,
+                        cursorColor: isDark ? const Color(0xFFFFCC00) : const Color(0xFF1C1C1E),
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           color: isDark
@@ -148,6 +149,13 @@ class _InEditorLocalSearchBarState extends State<InEditorLocalSearchBar> {
                         ),
                         decoration: InputDecoration(
                           border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          focusedErrorBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          filled: false,
+                          fillColor: Colors.transparent,
                           isDense: true,
                           contentPadding: EdgeInsets.zero,
                           hintText: 'Find in note...',
