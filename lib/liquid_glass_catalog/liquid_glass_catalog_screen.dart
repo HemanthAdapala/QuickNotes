@@ -8,11 +8,17 @@ import 'optical_effects/distortion_experiment.dart';
 import 'optical_effects/magnification_experiment.dart';
 import 'optical_effects/refraction_experiment.dart';
 import 'optical_effects/specular_experiment.dart';
+import 'interaction/component_physics_experiment.dart';
+import 'interaction/drag_stretch_experiment.dart';
+import 'interaction/interactive_indicator_experiment.dart';
+import 'interaction/optical_interaction_experiment.dart';
+import 'interaction/press_response_experiment.dart';
+import 'interaction/touch_glow_experiment.dart';
 
-/// Phase 1A & 1B: Minimal Liquid Glass Component & Optical Effects Catalog Index
+/// Phase 1A, 1B & 1C: Minimal Liquid Glass Component, Optical Effects & Interaction Catalog Index
 ///
 /// Functions as a simple technical index over the single supplied background.
-/// Tapping any component or optical effect opens its dedicated inspection experiment.
+/// Tapping any component, optical effect, or interaction experiment opens its dedicated inspection screen.
 class LiquidGlassCatalogScreen extends StatelessWidget {
   const LiquidGlassCatalogScreen({super.key});
 
@@ -143,6 +149,41 @@ class LiquidGlassCatalogScreen extends StatelessWidget {
                         context,
                         'Chromatic Aberration',
                         () => const ChromaticAberrationExperimentScreen(),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ─── Interaction ──────────────────────────────────────
+                      _buildCategoryHeader('Interaction'),
+                      _buildEffectItem(
+                        context,
+                        'Press Response',
+                        () => const PressResponseExperimentScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        'Touch Glow',
+                        () => const TouchGlowExperimentScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        'Drag Stretch',
+                        () => const DragStretchExperimentScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        'Interactive Indicator',
+                        () => const InteractiveIndicatorExperimentScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        'Component Physics',
+                        () => const ComponentPhysicsExperimentScreen(),
+                      ),
+                      _buildEffectItem(
+                        context,
+                        'Optical Interaction',
+                        () => const OpticalInteractionExperimentScreen(),
                       ),
                     ],
                   ),
