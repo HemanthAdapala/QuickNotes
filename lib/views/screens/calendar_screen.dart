@@ -431,14 +431,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         // ── 3. White Bottom Sheet Panel (ONLY wrapping Tasks Preview!) ────
                         Expanded(
                           child: Container(
-                            decoration: const ShapeDecoration(
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
+                            decoration: ShapeDecoration(
+                              color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                              shape: const RoundedRectangleBorder(
                                 borderRadius: BorderRadius.vertical(
                                   top: Radius.circular(24),
                                 ),
                               ),
-                              shadows: [
+                              shadows: const [
                                 BoxShadow(
                                   color: Color(0x1F000000),
                                   blurRadius: 20,

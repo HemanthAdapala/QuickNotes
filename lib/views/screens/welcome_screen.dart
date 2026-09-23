@@ -148,6 +148,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
     final screenHeight = mediaQuery.size.height;
@@ -159,13 +160,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final calHeight = calWidth * 1.15;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness:
+            isDark ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFFFFFDF9), // Warm Paper Cream Surface
+        backgroundColor:
+            isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFDF9), // Warm Paper Cream Surface
         body: SafeArea(
           top: false,
           bottom: false,
@@ -390,7 +394,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                   'Quick\nNotes',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFF333333),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF333333),
                                     fontSize: 48,
                                     fontWeight: FontWeight.w700,
                                     height: 1.12,
@@ -406,7 +412,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                   'Capture thoughts. Organize effortlessly.',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
-                                    color: const Color(0x99333333),
+                                    color: isDark
+                                        ? const Color(0xFF8E8E93)
+                                        : const Color(0x99333333),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                     letterSpacing: -0.2,
@@ -442,7 +450,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
                                 border: Border.all(
-                                  color: const Color(0xFFE2E2DF),
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFFE2E2DF),
                                   width: 1.0,
                                 ),
                                 boxShadow: const [
@@ -467,7 +477,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                       'Start',
                                       textAlign: TextAlign.center,
                                       style: GoogleFonts.inter(
-                                        color: const Color(0xFF333333),
+                                        color: isDark
+                                            ? const Color(0xFF1C1C1E)
+                                            : const Color(0xFF333333),
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: -0.3,
@@ -476,10 +488,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                     const SizedBox(width: 6),
                                     Transform.translate(
                                       offset: Offset(_arrowPulse.value, 0),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.arrow_forward_rounded,
                                         size: 18,
-                                        color: Color(0xFF333333),
+                                        color: isDark
+                                            ? const Color(0xFF1C1C1E)
+                                            : const Color(0xFF333333),
                                       ),
                                     ),
                                   ],

@@ -57,7 +57,8 @@ class _AnimatedListEntranceState extends State<AnimatedListEntrance>
       if (disableAnimations) {
         _controller.value = 1.0;
       } else {
-        final delay = Duration(milliseconds: widget.index * 40);
+        final effectiveIndex = widget.index.clamp(0, 8);
+        final delay = Duration(milliseconds: effectiveIndex * 40);
         _timer = Timer(delay, () {
           if (mounted) {
             _controller.forward();

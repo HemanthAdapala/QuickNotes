@@ -6,7 +6,6 @@ import '../../controllers/first_run_recovery_controller.dart';
 import '../../controllers/login_controller.dart';
 import '../../core/animations/page_transitions.dart';
 import '../../services/recovery/first_run_recovery_state.dart';
-import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/tactile_button.dart';
 import 'first_run_recovery_screen.dart';
 import 'home_screen.dart';
@@ -224,14 +223,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final mediaQuery = MediaQuery.of(context);
     final screenHeight = mediaQuery.size.height;
 
-    return ColoredBox(
-      color: const Color(0xFFFFFDF9),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness:
+            isDark ? Brightness.dark : Brightness.light,
+      ),
+      child: ColoredBox(
+        color: isDark
+            ? const Color(0xFF1E1E1E)
+            : const Color(0xFFFFFDF9),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Stack(
           children: [
             // ── Ambient Color Glows (for Liquid Glass refraction) ──
             Positioned(
@@ -315,7 +325,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: 32,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF1E1E1E),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF1E1E1E),
                                     height: 1.2,
                                     letterSpacing: -0.5,
                                   ),
@@ -325,7 +337,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   'Sign in to sync your notes across devices, or continue offline on this device.',
                                   style: GoogleFonts.inter(
                                     fontSize: 15,
-                                    color: const Color(0xFF757575),
+                                    color: isDark
+                                        ? const Color(0xFF8E8E93)
+                                        : const Color(0xFF757575),
                                     height: 1.4,
                                   ),
                                 ),
@@ -359,7 +373,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                             width: 48,
                                             height: 48,
                                             decoration: BoxDecoration(
-                                              color: Colors.white,
+                                              color: isDark
+                                                  ? const Color(0xFF38383A)
+                                                  : Colors.white,
                                               shape: BoxShape.circle,
                                               boxShadow: const [
                                                 BoxShadow(
@@ -374,7 +390,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 ),
                                               ],
                                               border: Border.all(
-                                                color: const Color(0xFFE2E2DF),
+                                                color: isDark
+                                                    ? const Color(0xFF38383A)
+                                                    : const Color(0xFFE2E2DF),
                                                 width: 1.0,
                                               ),
                                             ),
@@ -383,9 +401,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 'assets/icons/angle_left.svg',
                                                 width: 20,
                                                 height: 20,
-                                                colorFilter:
-                                                    const ColorFilter.mode(
-                                                  Color(0xFF333333),
+                                                colorFilter: ColorFilter.mode(
+                                                  isDark
+                                                      ? Colors.white
+                                                      : const Color(0xFF333333),
                                                   BlendMode.srcIn,
                                                 ),
                                               ),
@@ -401,9 +420,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                               ? null
                                               : _handleGoogleSignIn,
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                const Color(0xFF1E1E1E),
-                                            foregroundColor: Colors.white,
+                                            backgroundColor: isDark
+                                                ? Colors.white
+                                                : const Color(0xFF1E1E1E),
+                                            foregroundColor: isDark
+                                                ? const Color(0xFF1C1C1E)
+                                                : Colors.white,
                                             elevation: 0,
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 16),
@@ -413,7 +435,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                           ),
                                           child: isGoogleLoading
-                                              ? const SizedBox(
+                                              ? SizedBox(
                                                   height: 20,
                                                   width: 20,
                                                   child:
@@ -422,7 +444,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     valueColor:
                                                         AlwaysStoppedAnimation<
                                                                 Color>(
-                                                            Colors.white),
+                                                      isDark
+                                                          ? const Color(0xFF1C1C1E)
+                                                          : Colors.white,
+                                                    ),
                                                   ),
                                                 )
                                               : Row(
@@ -438,6 +463,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     Text(
                                                       'Continue with Google',
                                                       style: GoogleFonts.inter(
+                                                        color: isDark
+                                                            ? const Color(0xFF1C1C1E)
+                                                            : Colors.white,
                                                         fontSize: 16,
                                                         fontWeight:
                                                             FontWeight.w600,
@@ -459,11 +487,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                             width: 170,
                                             height: 50,
                                             decoration: BoxDecoration(
-                                              color: Colors.white,
+                                              color: isDark
+                                                  ? const Color(0xFF38383A)
+                                                  : Colors.white,
                                               borderRadius:
                                                   BorderRadius.circular(25),
                                               border: Border.all(
-                                                color: const Color(0xFFE2E2DF),
+                                                color: isDark
+                                                    ? const Color(0xFF38383A)
+                                                    : const Color(0xFFE2E2DF),
                                                 width: 1.0,
                                               ),
                                               boxShadow: const [
@@ -481,7 +513,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                             child: Center(
                                               child: isOfflineLoading
-                                                  ? const SizedBox(
+                                                  ? SizedBox(
                                                       height: 20,
                                                       width: 20,
                                                       child:
@@ -489,16 +521,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                                         strokeWidth: 2,
                                                         valueColor:
                                                             AlwaysStoppedAnimation<
-                                                                Color>(
-                                                          Color(0xFF333333),
+                                                                    Color>(
+                                                          isDark
+                                                              ? Colors.white
+                                                              : const Color(0xFF333333),
                                                         ),
                                                       ),
                                                     )
                                                   : Text(
                                                       'Continue Offline',
                                                       style: GoogleFonts.inter(
-                                                        color: const Color(
-                                                            0xFF333333),
+                                                        color: isDark
+                                                            ? Colors.white
+                                                            : const Color(
+                                                                0xFF333333),
                                                         fontSize: 15,
                                                         fontWeight:
                                                             FontWeight.w600,
@@ -518,7 +554,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
-                                    color: const Color(0xFF9E9E9E),
+                                    color: isDark
+                                        ? const Color(0xFF8E8E93)
+                                        : const Color(0xFF9E9E9E),
                                     height: 1.4,
                                   ),
                                 ),
@@ -536,7 +574,8 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

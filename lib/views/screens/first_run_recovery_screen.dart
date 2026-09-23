@@ -58,6 +58,8 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
@@ -75,7 +77,8 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
             // When restoring, back navigation is safely blocked.
           },
           child: Scaffold(
-            backgroundColor: const Color(0xFFF2F2F7),
+            backgroundColor:
+                isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF2F2F7),
             body: SafeArea(
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -94,7 +97,7 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1C1C1E),
+                        color: isDark ? Colors.white : const Color(0xFF1C1C1E),
                         letterSpacing: -0.6,
                       ),
                     ),
@@ -104,7 +107,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         height: 1.45,
-                        color: const Color(0xFF6E6E73),
+                        color: isDark
+                            ? const Color(0xFF8E8E93)
+                            : const Color(0xFF6E6E73),
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -112,26 +117,27 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
 
                     // ── 2. Recommended Backup Card ──────────────────────────
                     if (backup != null) ...[
-                      _buildBackupSummaryCard(backup),
+                      _buildBackupSummaryCard(backup, isDark: isDark),
                       const SizedBox(height: 16),
                     ],
 
                     // ── 3. State-Specific Notice (Conflict vs Clean) ────────
                     if (isConflict)
-                      _buildConflictNotice(localSummary)
+                      _buildConflictNotice(localSummary, isDark: isDark)
                     else
-                      _buildCleanNotice(),
+                      _buildCleanNotice(isDark: isDark),
                     const SizedBox(height: 20),
 
                     // ── 4. Restore Failure Banner (if any) ──────────────────
                     if (hasFailed) ...[
-                      _buildFailureBanner(_controller.errorMessage),
+                      _buildFailureBanner(_controller.errorMessage,
+                          isDark: isDark),
                       const SizedBox(height: 20),
                     ],
 
                     // ── 5. Success Banner (if any) ──────────────────────────
                     if (isCompleted) ...[
-                      _buildSuccessBanner(),
+                      _buildSuccessBanner(isDark: isDark),
                       const SizedBox(height: 20),
                     ],
 
@@ -141,6 +147,7 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                       isCompleted: isCompleted,
                       hasFailed: hasFailed,
                       isConflict: isConflict,
+                      isDark: isDark,
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -174,17 +181,21 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
     );
   }
 
-  Widget _buildBackupSummaryCard(RemoteBackupMetadata backup) {
+  Widget _buildBackupSummaryCard(RemoteBackupMetadata backup,
+      {required bool isDark}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
+        border: Border.all(
+          color: isDark ? const Color(0xFF38383A) : const Color(0xFFE5E5EA),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Color(0xFF333333).withValues(alpha: 0.03),
+            color: const Color(0xFF333333).withValues(alpha: 0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -218,7 +229,7 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1C1C1E),
+                        color: isDark ? Colors.white : const Color(0xFF1C1C1E),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -235,7 +246,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF2F2F7),
+                  color: isDark
+                      ? const Color(0xFF38383A)
+                      : const Color(0xFFF2F2F7),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -243,14 +256,19 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF6E6E73),
+                    color: isDark
+                        ? const Color(0xFF8E8E93)
+                        : const Color(0xFF6E6E73),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 18),
-          const Divider(height: 1, color: Color(0xFFE5E5EA)),
+          Divider(
+            height: 1,
+            color: isDark ? const Color(0xFF38383A) : const Color(0xFFE5E5EA),
+          ),
           const SizedBox(height: 16),
           Wrap(
             spacing: 12,
@@ -259,19 +277,23 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
               _buildMetricChip(
                 icon: Icons.description_outlined,
                 label: '${backup.noteCount} Notes',
+                isDark: isDark,
               ),
               _buildMetricChip(
                 icon: Icons.folder_outlined,
                 label: '${backup.folderCount} Folders',
+                isDark: isDark,
               ),
               _buildMetricChip(
                 icon: Icons.check_box_outlined,
                 label: '${backup.taskCount} Tasks',
+                isDark: isDark,
               ),
               if (backup.attachmentCount > 0)
                 _buildMetricChip(
                   icon: Icons.attach_file_rounded,
                   label: '${backup.attachmentCount} Attachments',
+                  isDark: isDark,
                 ),
             ],
           ),
@@ -291,24 +313,32 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
     );
   }
 
-  Widget _buildMetricChip({required IconData icon, required String label}) {
+  Widget _buildMetricChip({
+    required IconData icon,
+    required String label,
+    required bool isDark,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F7),
+        color: isDark ? const Color(0xFF38383A) : const Color(0xFFF2F2F7),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: const Color(0xFF6E6E73)),
+          Icon(
+            icon,
+            size: 14,
+            color: isDark ? const Color(0xFF8E8E93) : const Color(0xFF6E6E73),
+          ),
           const SizedBox(width: 6),
           Text(
             label,
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF3A3A3C),
+              color: isDark ? Colors.white : const Color(0xFF3A3A3C),
             ),
           ),
         ],
@@ -316,20 +346,25 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
     );
   }
 
-  Widget _buildConflictNotice(dynamic localSummary) {
+  Widget _buildConflictNotice(dynamic localSummary, {required bool isDark}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: isDark ? const Color(0x26FF9500) : const Color(0xFFFFFBEB),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF38383A) : const Color(0xFFFDE68A),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded,
-              color: Color(0xFFD97706), size: 20),
+          Icon(
+            Icons.info_outline_rounded,
+            color: isDark ? const Color(0xFFFF9500) : const Color(0xFFD97706),
+            size: 20,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -340,7 +375,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF92400E),
+                    color: isDark
+                        ? const Color(0xFFFFCC00)
+                        : const Color(0xFF92400E),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -349,7 +386,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     height: 1.35,
-                    color: const Color(0xFFB45309),
+                    color: isDark
+                        ? const Color(0xFF8E8E93)
+                        : const Color(0xFFB45309),
                   ),
                 ),
               ],
@@ -360,20 +399,25 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
     );
   }
 
-  Widget _buildCleanNotice() {
+  Widget _buildCleanNotice({required bool isDark}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: isDark ? const Color(0x2634C759) : const Color(0xFFF0FDF4),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFBBF7D0)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF38383A) : const Color(0xFFBBF7D0),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle_outline_rounded,
-              color: Color(0xFF16A34A), size: 20),
+          Icon(
+            Icons.check_circle_outline_rounded,
+            color: isDark ? const Color(0xFF34C759) : const Color(0xFF16A34A),
+            size: 20,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -384,7 +428,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF15803D),
+                    color: isDark
+                        ? const Color(0xFF34C759)
+                        : const Color(0xFF15803D),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -393,7 +439,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     height: 1.35,
-                    color: const Color(0xFF166534),
+                    color: isDark
+                        ? const Color(0xFF8E8E93)
+                        : const Color(0xFF166534),
                   ),
                 ),
               ],
@@ -404,20 +452,25 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
     );
   }
 
-  Widget _buildFailureBanner(String? errorMessage) {
+  Widget _buildFailureBanner(String? errorMessage, {required bool isDark}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14.0),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
+        color: isDark ? const Color(0x33FF453A) : const Color(0xFFFEF2F2),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFECACA)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF38383A) : const Color(0xFFFECACA),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline_rounded,
-              color: Color(0xFFDC2626), size: 20),
+          Icon(
+            Icons.error_outline_rounded,
+            color: isDark ? const Color(0xFFFF453A) : const Color(0xFFDC2626),
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -429,7 +482,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFFB91C1C),
+                    color: isDark
+                        ? const Color(0xFFFF453A)
+                        : const Color(0xFFB91C1C),
                     height: 1.35,
                   ),
                 ),
@@ -444,7 +499,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFFDC2626),
+                      color: isDark
+                          ? const Color(0xFFFF453A)
+                          : const Color(0xFFDC2626),
                       decoration: TextDecoration.underline,
                     ),
                   ),
@@ -457,19 +514,24 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
     );
   }
 
-  Widget _buildSuccessBanner() {
+  Widget _buildSuccessBanner({required bool isDark}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: isDark ? const Color(0x2634C759) : const Color(0xFFF0FDF4),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF86EFAC)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF38383A) : const Color(0xFF86EFAC),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_rounded,
-              color: Color(0xFF16A34A), size: 22),
+          Icon(
+            Icons.check_circle_rounded,
+            color: isDark ? const Color(0xFF34C759) : const Color(0xFF16A34A),
+            size: 22,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -480,7 +542,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF15803D),
+                    color: isDark
+                        ? const Color(0xFF34C759)
+                        : const Color(0xFF15803D),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -488,7 +552,9 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                   "Your Quick Notes data is ready.",
                   style: GoogleFonts.inter(
                     fontSize: 13,
-                    color: const Color(0xFF166534),
+                    color: isDark
+                        ? const Color(0xFF8E8E93)
+                        : const Color(0xFF166534),
                   ),
                 ),
               ],
@@ -504,6 +570,7 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
     required bool isCompleted,
     required bool hasFailed,
     required bool isConflict,
+    required bool isDark,
   }) {
     if (isCompleted) {
       return const SizedBox.shrink();
@@ -525,11 +592,11 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
             decoration: BoxDecoration(
               color: isRestoring
                   ? const Color(0xFF3A3A3C)
-                  : const Color(0xFF1C1C1E),
+                  : (isDark ? Colors.white : const Color(0xFF1C1C1E)),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: Color(0xFF333333).withValues(alpha: 0.1),
+                  color: const Color(0xFF333333).withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -565,7 +632,7 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
                       ),
                     ),
             ),
@@ -585,9 +652,13 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
               width: double.infinity,
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF38383A) : Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE5E5EA)),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF38383A)
+                      : const Color(0xFFE5E5EA),
+                ),
               ),
               child: Center(
                 child: Text(
@@ -595,7 +666,7 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1C1C1E),
+                    color: isDark ? Colors.white : const Color(0xFF1C1C1E),
                   ),
                 ),
               ),
@@ -620,7 +691,8 @@ class _FirstRunRecoveryScreenState extends State<FirstRunRecoveryScreen> {
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF6E6E73),
+                color:
+                    isDark ? const Color(0xFF8E8E93) : const Color(0xFF6E6E73),
               ),
             ),
           ),

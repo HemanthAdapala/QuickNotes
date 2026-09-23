@@ -170,7 +170,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
       context: context,
       child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: isDark ? const Color(0xFF2C2C2C) : null,
+        backgroundColor: isDark ? const Color(0xFF38383A) : null,
         title: Text(
           "Rename Folder",
           style: GoogleFonts.inter(
@@ -181,8 +181,17 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
         content: TextField(
           controller: _folderNameController,
           autofocus: true,
+          cursorColor: isDark ? const Color(0xFFFFCC00) : null,
           style: TextStyle(color: isDark ? Colors.white : null),
           decoration: InputDecoration(
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            focusedErrorBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
+            filled: false,
+            fillColor: Colors.transparent,
             hintText: "Folder Name",
             hintStyle: TextStyle(
               color: isDark ? const Color(0xFF757575) : null,

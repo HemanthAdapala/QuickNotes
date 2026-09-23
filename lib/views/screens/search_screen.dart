@@ -78,6 +78,97 @@ Color _categoryDotColor(String category) {
   return HSLColor.fromAHSL(1.0, hue, 0.55, 0.50).toColor();
 }
 
+String _scopeLabel(_Scope s) {
+  switch (s) {
+    case _Scope.all:
+      return 'All';
+    case _Scope.notes:
+      return 'Notes';
+    case _Scope.tasks:
+      return 'Tasks';
+    case _Scope.folders:
+      return 'Folders';
+    case _Scope.categories:
+      return 'Categories';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Search Screen State Model
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SearchState {
+  final String query;
+  final _UiState uiState;
+  final bool isLoading;
+  final int resultGeneration;
+  final List<Note> noteResults;
+  final List<TaskItem> taskResults;
+  final List<Folder> folderResults;
+  final List<String> categoryResults;
+  final Map<String, int> folderNoteCounts;
+  final Map<String, int> categoryNoteCounts;
+  final List<String> recentSearches;
+
+  const _SearchState({
+    required this.query,
+    required this.uiState,
+    required this.isLoading,
+    required this.resultGeneration,
+    required this.noteResults,
+    required this.taskResults,
+    required this.folderResults,
+    required this.categoryResults,
+    required this.folderNoteCounts,
+    required this.categoryNoteCounts,
+    required this.recentSearches,
+  });
+
+  factory _SearchState.initial({List<String> recentSearches = const []}) {
+    return _SearchState(
+      query: '',
+      uiState: _UiState.empty,
+      isLoading: false,
+      resultGeneration: 0,
+      noteResults: const [],
+      taskResults: const [],
+      folderResults: const [],
+      categoryResults: const [],
+      folderNoteCounts: const {},
+      categoryNoteCounts: const {},
+      recentSearches: recentSearches,
+    );
+  }
+
+  _SearchState copyWith({
+    String? query,
+    _UiState? uiState,
+    bool? isLoading,
+    int? resultGeneration,
+    List<Note>? noteResults,
+    List<TaskItem>? taskResults,
+    List<Folder>? folderResults,
+    List<String>? categoryResults,
+    Map<String, int>? folderNoteCounts,
+    Map<String, int>? categoryNoteCounts,
+    List<String>? recentSearches,
+  }) {
+    return _SearchState(
+      query: query ?? this.query,
+      uiState: uiState ?? this.uiState,
+      isLoading: isLoading ?? this.isLoading,
+      resultGeneration: resultGeneration ?? this.resultGeneration,
+      noteResults: noteResults ?? this.noteResults,
+      taskResults: taskResults ?? this.taskResults,
+      folderResults: folderResults ?? this.folderResults,
+      categoryResults: categoryResults ?? this.categoryResults,
+      folderNoteCounts: folderNoteCounts ?? this.folderNoteCounts,
+      categoryNoteCounts: categoryNoteCounts ?? this.categoryNoteCounts,
+      recentSearches: recentSearches ?? this.recentSearches,
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SearchScreen
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,39 +198,37 @@ class _SearchScreenState extends State<SearchScreen>
 
   Timer? _debounce;
 
-  // State
-  _Scope _scope = _Scope.all;
-  final _DateFilter _dateFilter = _DateFilter.allTime;
-  _UiState _uiState = _UiState.empty;
-  bool _isLoading = false;
+  // State Notifiers (G-04 Rebuild Isolation)
+  late final ValueNotifier<_Scope> _scopeNotifier;
+  late final ValueNotifier<_SearchState> _searchNotifier;
 
+  final _DateFilter _dateFilter = _DateFilter.allTime;
   String? _filterFolderId;
   String? _filterCategory;
-  String _query = '';
 
-  // Results
+  // Unfiltered Result Snapshot (for client-side scope filtering)
   List<Note> _allNoteResults = [];
   List<TaskItem> _allTaskResults = [];
   List<Folder> _allFolderResults = [];
   List<String> _allCategoryResults = [];
-
-  List<Note> _noteResults = [];
-  List<TaskItem> _taskResults = [];
-  List<Folder> _folderResults = [];
-  List<String> _categoryResults = [];
-
-  List<String> _recentSearches = [];
+  Map<String, int> _allFolderNoteCounts = {};
+  Map<String, int> _allCategoryNoteCounts = {};
   int _resultGeneration = 0;
 
   late AnimationController _entryCtrl;
   late Animation<double> _entryFade;
   bool _entryInitialized = false;
 
+  late final Widget _headerBar;
+
   @override
   void initState() {
     super.initState();
 
-    _scope = _scopeFromString(widget.initialScope);
+    final initialScope = _scopeFromString(widget.initialScope);
+    _scopeNotifier = ValueNotifier<_Scope>(initialScope);
+    _searchNotifier = ValueNotifier<_SearchState>(_SearchState.initial());
+
     _filterFolderId = widget.presetFolder;
     _filterCategory = widget.presetCategory;
 
@@ -152,6 +241,14 @@ class _SearchScreenState extends State<SearchScreen>
         parent: _entryCtrl,
         curve: QuickNotesMotion.kMotionAppleEase,
       ),
+    );
+
+    _headerBar = _SearchHeaderBar(
+      controller: _queryCtrl,
+      focusNode: _focusNode,
+      onBack: _popSearch,
+      onCloseOrClear: _closeOrClearSearch,
+      onSubmitted: _onSubmitted,
     );
 
     _loadRecentSearches();
@@ -186,6 +283,8 @@ class _SearchScreenState extends State<SearchScreen>
     _focusNode.dispose();
     _scrollCtrl.dispose();
     _entryCtrl.dispose();
+    _scopeNotifier.dispose();
+    _searchNotifier.dispose();
     super.dispose();
   }
 
@@ -193,54 +292,85 @@ class _SearchScreenState extends State<SearchScreen>
 
   Future<void> _loadRecentSearches() async {
     final searches = await RecentSearchesService.instance.load();
-    if (mounted) setState(() => _recentSearches = searches);
+    if (mounted) {
+      _searchNotifier.value = _searchNotifier.value.copyWith(
+        recentSearches: searches,
+      );
+    }
   }
 
   Future<void> _saveSearch(String term) async {
     final updated = await RecentSearchesService.instance.addSearch(term);
-    if (mounted) setState(() => _recentSearches = updated);
+    if (mounted) {
+      _searchNotifier.value = _searchNotifier.value.copyWith(
+        recentSearches: updated,
+      );
+    }
   }
 
   Future<void> _removeSearch(String term) async {
     QuickNotesHaptics.selection();
     final updated = await RecentSearchesService.instance.removeSearch(term);
-    if (mounted) setState(() => _recentSearches = updated);
+    if (mounted) {
+      _searchNotifier.value = _searchNotifier.value.copyWith(
+        recentSearches: updated,
+      );
+    }
   }
 
   Future<void> _clearAllSearches() async {
-    if (_recentSearches.isEmpty) return;
+    if (_searchNotifier.value.recentSearches.isEmpty) return;
     await RecentSearchesService.instance.clearAll();
     if (mounted) {
-      setState(() => _recentSearches = []);
+      _searchNotifier.value = _searchNotifier.value.copyWith(
+        recentSearches: [],
+      );
       QuickNotesHaptics.destructiveAction();
+    }
+  }
+
+  Future<void> _commitQueryIfEligible() async {
+    final trimmed = _queryCtrl.text.trim();
+    if (trimmed.length >= 2) {
+      await _saveSearch(trimmed);
     }
   }
 
   // ── Query & Search Logic ──────────────────────────────────────────────────
 
   void _onQueryChanged() {
-    final text = _queryCtrl.text;
-    setState(() {
-      _query = text;
-      if (text.isEmpty) {
-        _uiState = _UiState.empty;
-        _isLoading = false;
-        _debounce?.cancel();
-        _clearResults();
-        return;
-      }
-      if (text.length >= 2) {
-        _uiState = _UiState.typing;
-        _isLoading = true;
-      }
-    });
+    final rawText = _queryCtrl.text;
+    final trimmed = rawText.trim();
 
     _debounce?.cancel();
-    if (text.length >= 2) {
-      _debounce = Timer(const Duration(milliseconds: 300), () {
-        _runSearch(text);
-      });
+
+    // G-09: Fewer than 2 characters immediately leaves result state
+    if (trimmed.length < 2) {
+      _clearResults();
+      _searchNotifier.value = _searchNotifier.value.copyWith(
+        query: rawText,
+        uiState: _UiState.empty,
+        isLoading: false,
+        noteResults: const [],
+        taskResults: const [],
+        folderResults: const [],
+        categoryResults: const [],
+        folderNoteCounts: const {},
+        categoryNoteCounts: const {},
+      );
+      return;
     }
+
+    // G-04 & G-09: Transition to typing state
+    _searchNotifier.value = _searchNotifier.value.copyWith(
+      query: rawText,
+      uiState: _UiState.typing,
+      isLoading: true,
+    );
+
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      _runSearch(trimmed);
+    });
   }
 
   void _clearResults() {
@@ -248,20 +378,39 @@ class _SearchScreenState extends State<SearchScreen>
     _allTaskResults = [];
     _allFolderResults = [];
     _allCategoryResults = [];
-    _noteResults = [];
-    _taskResults = [];
-    _folderResults = [];
-    _categoryResults = [];
+    _allFolderNoteCounts = {};
+    _allCategoryNoteCounts = {};
   }
 
+  // G-06: Capture active notes snapshot once and calculate counts O(N)
+  // G-10: Normalized query handling
   void _runSearch(String query) {
     if (!mounted) return;
     final notesProvider = Provider.of<NotesProvider>(context, listen: false);
     final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-    final q = query.toLowerCase();
 
-    // Active Notes
-    final notes = notesProvider.allActiveNotes
+    final q = query.trim().toLowerCase();
+    if (q.length < 2) {
+      _clearResults();
+      _searchNotifier.value = _searchNotifier.value.copyWith(
+        query: _queryCtrl.text,
+        uiState: _UiState.empty,
+        isLoading: false,
+        noteResults: const [],
+        taskResults: const [],
+        folderResults: const [],
+        categoryResults: const [],
+        folderNoteCounts: const {},
+        categoryNoteCounts: const {},
+      );
+      return;
+    }
+
+    // Single active notes snapshot
+    final allNotes = notesProvider.allActiveNotes;
+
+    // Filter active notes
+    final notes = allNotes
         .where((n) =>
             n.title.toLowerCase().contains(q) ||
             n.previewText.toLowerCase().contains(q))
@@ -279,36 +428,39 @@ class _SearchScreenState extends State<SearchScreen>
         .where((f) => f.name.toLowerCase().contains(q))
         .toList();
 
-    // Categories
+    // Precalculate folder and category counts in a single O(N) pass
+    final folderNoteCounts = <String, int>{};
+    final categoryNoteCounts = <String, int>{};
     final allCats = <String>{...NotesProvider.categories};
-    for (final n in notesProvider.allActiveNotes) {
+
+    for (final n in allNotes) {
+      if (n.folderId != null && n.folderId!.isNotEmpty) {
+        folderNoteCounts[n.folderId!] =
+            (folderNoteCounts[n.folderId!] ?? 0) + 1;
+      }
+      categoryNoteCounts[n.category] =
+          (categoryNoteCounts[n.category] ?? 0) + 1;
       allCats.add(n.category);
     }
+
     final categories =
         allCats.where((c) => c.toLowerCase().contains(q)).toList();
 
     if (!mounted) return;
 
-    setState(() {
-      _allNoteResults = notes;
-      _allTaskResults = tasks;
-      _allFolderResults = folders;
-      _allCategoryResults = categories;
-      _isLoading = false;
-      _resultGeneration++;
-      _applyFilters();
-      _uiState = (_noteResults.isEmpty &&
-              _taskResults.isEmpty &&
-              _folderResults.isEmpty &&
-              _categoryResults.isEmpty)
-          ? _UiState.noResults
-          : _UiState.results;
+    _allNoteResults = notes;
+    _allTaskResults = tasks;
+    _allFolderResults = folders;
+    _allCategoryResults = categories;
+    _allFolderNoteCounts = folderNoteCounts;
+    _allCategoryNoteCounts = categoryNoteCounts;
+    _resultGeneration++;
 
-      if (_uiState == _UiState.results) _saveSearch(query.trim());
-    });
+    _publishFilteredResults();
+    // G-08: Debounce DOES NOT persist searches
   }
 
-  void _applyFilters() {
+  void _publishFilteredResults() {
     var notes = List<Note>.from(_allNoteResults);
     var tasks = List<TaskItem>.from(_allTaskResults);
     var folders = List<Folder>.from(_allFolderResults);
@@ -331,7 +483,8 @@ class _SearchScreenState extends State<SearchScreen>
     notes = _applyDateFilter(notes, now);
     tasks = _applyTaskDateFilter(tasks, now);
 
-    switch (_scope) {
+    final currentScope = _scopeNotifier.value;
+    switch (currentScope) {
       case _Scope.all:
         break;
       case _Scope.notes:
@@ -356,10 +509,23 @@ class _SearchScreenState extends State<SearchScreen>
         break;
     }
 
-    _noteResults = notes;
-    _taskResults = tasks;
-    _folderResults = folders;
-    _categoryResults = cats;
+    final hasResults = notes.isNotEmpty ||
+        tasks.isNotEmpty ||
+        folders.isNotEmpty ||
+        cats.isNotEmpty;
+
+    _searchNotifier.value = _searchNotifier.value.copyWith(
+      query: _queryCtrl.text,
+      uiState: hasResults ? _UiState.results : _UiState.noResults,
+      isLoading: false,
+      resultGeneration: _resultGeneration,
+      noteResults: notes,
+      taskResults: tasks,
+      folderResults: folders,
+      categoryResults: cats,
+      folderNoteCounts: _allFolderNoteCounts,
+      categoryNoteCounts: _allCategoryNoteCounts,
+    );
   }
 
   List<Note> _applyDateFilter(List<Note> list, DateTime now) {
@@ -401,22 +567,15 @@ class _SearchScreenState extends State<SearchScreen>
 
   void _onScopeChanged(_Scope scope) {
     QuickNotesHaptics.selection();
-    setState(() {
-      _scope = scope;
-      if (_uiState == _UiState.results || _uiState == _UiState.noResults) {
-        _applyFilters();
-        _uiState = (_noteResults.isEmpty &&
-                _taskResults.isEmpty &&
-                _folderResults.isEmpty &&
-                _categoryResults.isEmpty)
-            ? _UiState.noResults
-            : _UiState.results;
-      }
-    });
+    _scopeNotifier.value = scope;
+    final currentState = _searchNotifier.value.uiState;
+    if (currentState == _UiState.results || currentState == _UiState.noResults) {
+      _publishFilteredResults();
+    }
   }
 
   void _closeOrClearSearch() {
-    if (_query.isNotEmpty) {
+    if (_queryCtrl.text.isNotEmpty) {
       _queryCtrl.clear();
       _focusNode.requestFocus();
     } else {
@@ -430,54 +589,100 @@ class _SearchScreenState extends State<SearchScreen>
     Navigator.of(context).pop();
   }
 
-  // ── Navigation ────────────────────────────────────────────────────────────
-
-  void _openNote(Note note) {
-    Navigator.push(
-        context,
-        buildPageRoute(
-          NoteEditorScreen(note: note),
-        ));
-  }
-
-  void _openTask(TaskItem task) async {
-    await Navigator.push(
-        context,
-        buildPageRoute(
-          TaskEditorScreen(
-            initialDate: task.dueDate.toLocal(),
-            taskToEdit: task,
-          ),
-        ));
-    if (mounted && _query.isNotEmpty) {
-      _runSearch(_query);
+  // G-08: IME Search explicitly submitted
+  void _onSubmitted(String v) {
+    final trimmed = v.trim();
+    if (trimmed.length >= 2) {
+      _saveSearch(trimmed);
+      _focusNode.unfocus();
+      _debounce?.cancel();
+      _runSearch(trimmed);
     }
   }
 
-  void _openFolder(Folder folder) {
-    Navigator.push(
-        context,
-        buildPageRoute(
-          FolderNotesScreen(folder: folder),
-        ));
+  // ── Navigation (G-05 Async Route Awaiting & Refresh) ──────────────────────
+
+  Future<void> _openNote(Note note) async {
+    await _commitQueryIfEligible();
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      buildPageRoute(
+        NoteEditorScreen(note: note),
+      ),
+    );
+    if (mounted && _queryCtrl.text.trim().isNotEmpty) {
+      _runSearch(_queryCtrl.text);
+    }
   }
 
-  void _openCategory(String category) {
-    QuickNotesHaptics.navigationSelection();
-    Navigator.push(
-        context,
-        buildPageRoute(
-          CategoryDetailsScreen(category: category),
-        ));
+  Future<void> _openTask(TaskItem task) async {
+    await _commitQueryIfEligible();
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      buildPageRoute(
+        TaskEditorScreen(
+          initialDate: task.dueDate.toLocal(),
+          taskToEdit: task,
+        ),
+      ),
+    );
+    if (mounted && _queryCtrl.text.trim().isNotEmpty) {
+      _runSearch(_queryCtrl.text);
+    }
   }
 
-  void _createNoteWithTitle(String title) {
+  Future<void> _openFolder(Folder folder) async {
+    await _commitQueryIfEligible();
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      buildPageRoute(
+        FolderNotesScreen(folder: folder),
+      ),
+    );
+    if (mounted && _queryCtrl.text.trim().isNotEmpty) {
+      _runSearch(_queryCtrl.text);
+    }
+  }
+
+  Future<void> _openCategory(String category) async {
+    await _commitQueryIfEligible();
     QuickNotesHaptics.navigationSelection();
-    Navigator.push(
-        context,
-        buildPageRoute(
-          const NoteEditorScreen(defaultCategory: 'Uncategorized'),
-        ));
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      buildPageRoute(
+        CategoryDetailsScreen(category: category),
+      ),
+    );
+    if (mounted && _queryCtrl.text.trim().isNotEmpty) {
+      _runSearch(_queryCtrl.text);
+    }
+  }
+
+  // G-02: Title propagation to NoteEditorScreen
+  // G-08: Save search before navigation
+  Future<void> _createNoteWithTitle(String title) async {
+    final trimmed = title.trim();
+    if (trimmed.length >= 2) {
+      await _saveSearch(trimmed);
+    }
+    QuickNotesHaptics.navigationSelection();
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      buildPageRoute(
+        NoteEditorScreen(
+          defaultCategory: 'Uncategorized',
+          initialTitle: trimmed,
+        ),
+      ),
+    );
+    if (mounted && _queryCtrl.text.trim().isNotEmpty) {
+      _runSearch(_queryCtrl.text);
+    }
   }
 
   void _tapRecentSearch(String term) {
@@ -501,34 +706,20 @@ class _SearchScreenState extends State<SearchScreen>
     }
   }
 
-  String _scopeLabel(_Scope s) {
-    switch (s) {
-      case _Scope.all:
-        return 'All';
-      case _Scope.notes:
-        return 'Notes';
-      case _Scope.tasks:
-        return 'Tasks';
-      case _Scope.folders:
-        return 'Folders';
-      case _Scope.categories:
-        return 'Categories';
-    }
-  }
-
   // ── BUILD ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final disableAnimations =
         MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: _kGroupedBg,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : _kGroupedBg,
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeaderBar(),
+            _headerBar,
             const SizedBox(height: 12),
             Expanded(
               child: TweenAnimationBuilder<double>(
@@ -549,9 +740,27 @@ class _SearchScreenState extends State<SearchScreen>
                 },
                 child: Column(
                   children: [
-                    _buildScopePillBar(disableAnimations: disableAnimations),
+                    _SearchScopeSelector(
+                      scopeNotifier: _scopeNotifier,
+                      onScopeChanged: _onScopeChanged,
+                      disableAnimations: disableAnimations,
+                    ),
                     const SizedBox(height: 12),
-                    Expanded(child: _buildBodySheetCard()),
+                    Expanded(
+                      child: _SearchBodySheet(
+                        searchNotifier: _searchNotifier,
+                        entryFade: _entryFade,
+                        scrollCtrl: _scrollCtrl,
+                        onTapRecent: _tapRecentSearch,
+                        onDeleteRecent: _removeSearch,
+                        onClearAllRecent: _clearAllSearches,
+                        onOpenNote: _openNote,
+                        onOpenTask: _openTask,
+                        onOpenFolder: _openFolder,
+                        onOpenCategory: _openCategory,
+                        onCreateNoteWithTitle: _createNoteWithTitle,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -561,155 +770,259 @@ class _SearchScreenState extends State<SearchScreen>
       ),
     );
   }
+}
 
-  // ── 1. AppHeader Bar (Liquid Glass) ──────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. AppHeader Bar (Liquid Glass) — Isolated Rebuild Surface (G-04)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  Widget _buildHeaderBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
-      child: SizedBox(
-        height: 44.0,
-        child: Row(
-          children: [
-            // Left glass pill button (angle_left)
-            BottomBarGlassSurface(
-              width: 44.0,
-              height: 44.0,
-              borderRadius: BorderRadius.circular(22.0),
-              useFrost: true,
-              child: TactileButton(
-                onTap: _popSearch,
-                child: Center(
-                  child: SvgPicture.asset(
-                    'assets/icons/angle_left.svg',
-                    width: 22,
-                    height: 22,
-                    colorFilter: const ColorFilter.mode(_kInk, BlendMode.srcIn),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
+class _SearchHeaderBar extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final VoidCallback onBack;
+  final VoidCallback onCloseOrClear;
+  final ValueChanged<String> onSubmitted;
 
-            // Center expanded glass search field
-            Expanded(
-              child: BottomBarGlassSurface(
-                width: double.infinity,
+  const _SearchHeaderBar({
+    required this.controller,
+    required this.focusNode,
+    required this.onBack,
+    required this.onCloseOrClear,
+    required this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 0.0),
+        child: SizedBox(
+          height: 44.0,
+          child: Row(
+            children: [
+              // Left glass pill button (angle_left)
+              BottomBarGlassSurface(
+                width: 44.0,
                 height: 44.0,
                 borderRadius: BorderRadius.circular(22.0),
                 useFrost: true,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TactileButton(
+                  onTap: onBack,
                   child: Center(
-                    child: TextField(
-                      controller: _queryCtrl,
-                      focusNode: _focusNode,
-                      autofocus: true,
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: (v) {
-                        if (v.trim().isNotEmpty) _saveSearch(v.trim());
-                      },
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        color: _kInk,
-                        fontWeight: FontWeight.w400,
+                    child: SvgPicture.asset(
+                      'assets/icons/angle_left.svg',
+                      width: 22,
+                      height: 22,
+                      colorFilter: ColorFilter.mode(
+                        isDark ? Colors.white : _kInk,
+                        BlendMode.srcIn,
                       ),
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                        hintText: 'Search notes, tasks, folders...',
-                        hintStyle: GoogleFonts.inter(
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Center expanded glass search field
+              Expanded(
+                child: BottomBarGlassSurface(
+                  width: double.infinity,
+                  height: 44.0,
+                  borderRadius: BorderRadius.circular(22.0),
+                  useFrost: true,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Center(
+                      child: TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        autofocus: true,
+                        cursorColor: isDark
+                            ? const Color(0xFFFFCC00)
+                            : const Color(0xFF1C1C1E),
+                        keyboardAppearance:
+                            isDark ? Brightness.dark : Brightness.light,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: onSubmitted,
+                        style: GoogleFonts.inter(
                           fontSize: 15,
-                          color: _kPlaceholder,
+                          color: isDark ? Colors.white : _kInk,
                           fontWeight: FontWeight.w400,
+                        ),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          focusedErrorBorder: InputBorder.none,
+                          filled: false,
+                          fillColor: Colors.transparent,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                          hintText: 'Search notes, tasks, folders...',
+                          hintStyle: GoogleFonts.inter(
+                            fontSize: 15,
+                            color: isDark
+                                ? const Color(0xFF8E8E93)
+                                : _kPlaceholder,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
 
-            // Right glass pill close button
-            BottomBarGlassSurface(
-              width: 44.0,
-              height: 44.0,
-              borderRadius: BorderRadius.circular(22.0),
-              useFrost: true,
-              child: TactileButton(
-                onTap: _closeOrClearSearch,
-                child: const Center(
-                  child: Icon(
-                    Icons.close_rounded,
-                    color: _kInk,
-                    size: 22,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── 2. Scope Pill Bar ────────────────────────────────────────────────────
-
-  Widget _buildScopePillBar({bool disableAnimations = false}) {
-    const scopes = _Scope.values;
-    return SizedBox(
-      height: 40.0,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          children: scopes.map((s) {
-            final isActive = _scope == s;
-            return Padding(
-              padding: const EdgeInsets.only(right: 10.0),
-              child: GestureDetector(
-                onTap: () => _onScopeChanged(s),
-                child: AnimatedContainer(
-                  duration: disableAnimations
-                      ? Duration.zero
-                      : QuickNotesMotion.kMotionSelection,
-                  curve: QuickNotesMotion.kMotionAppleEase,
-                  height: 40.0,
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  decoration: BoxDecoration(
-                    color: isActive ? _kAmberYellow : _kPillInactive,
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _scopeLabel(s),
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
-                      color: isActive ? Colors.white : _kLabelSecondary,
-                      letterSpacing: -0.43,
+              // Right glass pill close button
+              BottomBarGlassSurface(
+                width: 44.0,
+                height: 44.0,
+                borderRadius: BorderRadius.circular(22.0),
+                useFrost: true,
+                child: TactileButton(
+                  onTap: onCloseOrClear,
+                  child: Center(
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: isDark ? Colors.white : _kInk,
+                      size: 22,
                     ),
                   ),
                 ),
               ),
-            );
-          }).toList(),
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  // ── 3. Main White Body Card Sheet ────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. Scope Pill Bar — Isolated Rebuild Surface (G-04)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  Widget _buildBodySheetCard() {
+class _SearchScopeSelector extends StatelessWidget {
+  final ValueNotifier<_Scope> scopeNotifier;
+  final ValueChanged<_Scope> onScopeChanged;
+  final bool disableAnimations;
+
+  const _SearchScopeSelector({
+    required this.scopeNotifier,
+    required this.onScopeChanged,
+    required this.disableAnimations,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return RepaintBoundary(
+      child: ValueListenableBuilder<_Scope>(
+        valueListenable: scopeNotifier,
+        builder: (context, currentScope, _) {
+          const scopes = _Scope.values;
+          return SizedBox(
+            height: 40.0,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: scopes.map((s) {
+                  final isActive = currentScope == s;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 10.0),
+                    child: GestureDetector(
+                      onTap: () => onScopeChanged(s),
+                      child: AnimatedContainer(
+                        duration: disableAnimations
+                            ? Duration.zero
+                            : QuickNotesMotion.kMotionSelection,
+                        curve: QuickNotesMotion.kMotionAppleEase,
+                        height: 40.0,
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? _kAmberYellow
+                              : (isDark
+                                  ? const Color(0xFF38383A)
+                                  : _kPillInactive),
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          _scopeLabel(s),
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight:
+                                isActive ? FontWeight.w500 : FontWeight.w400,
+                            color: isActive
+                                ? Colors.white
+                                : (isDark
+                                    ? const Color(0xFF8E8E93)
+                                    : _kLabelSecondary),
+                            letterSpacing: -0.43,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. Main Body Card Sheet (G-03, G-04, G-07, G-13)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SearchBodySheet extends StatelessWidget {
+  final ValueNotifier<_SearchState> searchNotifier;
+  final Animation<double> entryFade;
+  final ScrollController scrollCtrl;
+  final ValueChanged<String> onTapRecent;
+  final ValueChanged<String> onDeleteRecent;
+  final VoidCallback onClearAllRecent;
+  final ValueChanged<Note> onOpenNote;
+  final ValueChanged<TaskItem> onOpenTask;
+  final ValueChanged<Folder> onOpenFolder;
+  final ValueChanged<String> onOpenCategory;
+  final ValueChanged<String> onCreateNoteWithTitle;
+
+  const _SearchBodySheet({
+    required this.searchNotifier,
+    required this.entryFade,
+    required this.scrollCtrl,
+    required this.onTapRecent,
+    required this.onDeleteRecent,
+    required this.onClearAllRecent,
+    required this.onOpenNote,
+    required this.onOpenTask,
+    required this.onOpenFolder,
+    required this.onOpenCategory,
+    required this.onCreateNoteWithTitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: _kSheetBg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2C2C2C) : _kSheetBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20.0)),
+        boxShadow: const [
           BoxShadow(
             color: Color(0x1F000000),
             blurRadius: 16,
@@ -720,89 +1033,84 @@ class _SearchScreenState extends State<SearchScreen>
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20.0)),
-        child: Column(
-          children: [
-            // Recent Searches Header Row
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Recent Searches',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: _kLabelSecondary,
-                      letterSpacing: -0.43,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _clearAllSearches,
-                    child: Text(
-                      'Clear all',
-                      textAlign: TextAlign.right,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: _kLabelSecondary,
-                        letterSpacing: -0.43,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(color: _kDivider, height: 1),
-
-            // Dynamic Body State Content
-            Expanded(child: _buildBodyStateContent()),
-          ],
+        child: ValueListenableBuilder<_SearchState>(
+          valueListenable: searchNotifier,
+          builder: (context, state, _) {
+            switch (state.uiState) {
+              case _UiState.empty:
+                return FadeTransition(
+                  opacity: entryFade,
+                  child: _buildEmptyState(state, isDark: isDark),
+                );
+              case _UiState.typing:
+                return _buildTypingState(state, isDark: isDark);
+              case _UiState.results:
+                return _buildResultsState(context, state, isDark: isDark);
+              case _UiState.noResults:
+                return _buildNoResultsState(state, isDark: isDark);
+            }
+          },
         ),
       ),
     );
   }
 
-  Widget _buildBodyStateContent() {
-    switch (_uiState) {
-      case _UiState.empty:
-        return FadeTransition(
-          opacity: _entryFade,
-          child: _buildEmptyState(),
-        );
-      case _UiState.typing:
-        return _buildTypingState();
-      case _UiState.results:
-        return _buildResultsState();
-      case _UiState.noResults:
-        return _buildNoResultsState();
-    }
-  }
-
-  // ── State 1: Empty (Recent Searches & Browse Categories) ───────────────
-
-  Widget _buildEmptyState() {
+  // ── State 1: Empty (Recent Searches) ──────────────────────────────────────
+  // G-03: Header and divider only appear here in empty state
+  Widget _buildEmptyState(_SearchState state, {required bool isDark}) {
     return ListView(
-      controller: _scrollCtrl,
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+      controller: scrollCtrl,
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
       children: [
-        if (_recentSearches.isNotEmpty)
-          ..._recentSearches.map((term) => _RecentSearchRow(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 18, 0, 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Recent Searches',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: isDark ? const Color(0xFF8E8E93) : _kLabelSecondary,
+                  letterSpacing: -0.43,
+                ),
+              ),
+              GestureDetector(
+                onTap: onClearAllRecent,
+                child: Text(
+                  'Clear all',
+                  textAlign: TextAlign.right,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: isDark ? const Color(0xFF8E8E93) : _kLabelSecondary,
+                    letterSpacing: -0.43,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Divider(
+            color: isDark ? const Color(0xFF38383A) : _kDivider, height: 1),
+        const SizedBox(height: 12),
+        if (state.recentSearches.isNotEmpty)
+          ...state.recentSearches.map((term) => _RecentSearchRow(
                 term: term,
-                onTap: () => _tapRecentSearch(term),
-                onDelete: () => _removeSearch(term),
+                onTap: () => onTapRecent(term),
+                onDelete: () => onDeleteRecent(term),
               )),
       ],
     );
   }
 
   // ── State 2: Typing (Shimmer Skeleton) ────────────────────────────────────
-
-  Widget _buildTypingState() {
+  Widget _buildTypingState(_SearchState state, {required bool isDark}) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
       children: [
-        if (_isLoading) ...[
+        if (state.isLoading) ...[
           Center(
             child: Column(
               children: [
@@ -817,7 +1125,10 @@ class _SearchScreenState extends State<SearchScreen>
                 const SizedBox(height: 12),
                 Text(
                   'Searching...',
-                  style: GoogleFonts.inter(fontSize: 14, color: _kPlaceholder),
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: isDark ? const Color(0xFF757575) : _kPlaceholder,
+                  ),
                 ),
               ],
             ),
@@ -834,92 +1145,52 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  // ── State 3: Results ──────────────────────────────────────────────────────
+  // ── State 3: Results (G-07 True Lazy Sliver Architecture) ──────────────────
+  Widget _buildResultsState(BuildContext context, _SearchState state,
+      {required bool isDark}) {
+    final gen = state.resultGeneration;
+    final query = state.query;
+    final noteResults = state.noteResults;
+    final taskResults = state.taskResults;
+    final folderResults = state.folderResults;
+    final categoryResults = state.categoryResults;
 
-  Widget _buildResultsState() {
-    final List<Widget> items = [];
-    int idx = 0;
-    final gen = _resultGeneration;
+    final List<Widget> slivers = [];
+    int nextIndex = 0;
 
-    void addSection(String label, int count, List<Widget> rows) {
-      items.add(AnimatedListEntrance(
-        key: ValueKey('header_${label}_$gen'),
-        index: idx++,
-        child: _SectionHeader(label: label, count: count),
-      ));
-      items.addAll(rows);
-    }
+    // 1. NOTES Sliver
+    if (noteResults.isNotEmpty) {
+      final headerIdx = nextIndex++;
+      final noteBaseIdx = nextIndex;
+      nextIndex += noteResults.length;
 
-    if (_noteResults.isNotEmpty) {
-      addSection(
-        'NOTES',
-        _noteResults.length,
-        _noteResults
-            .map((n) => AnimatedListEntrance(
-                  key: ValueKey('note_${n.id}_$gen'),
-                  index: idx++,
-                  child: SearchNoteCard(
-                    note: n,
-                    query: _query,
-                    onTap: () => _openNote(n),
-                  ),
-                ))
-            .toList(),
-      );
-    }
-
-    if (_taskResults.isNotEmpty) {
-      addSection(
-        'TASKS',
-        _taskResults.length,
-        _taskResults
-            .map((t) => AnimatedListEntrance(
-                  key: ValueKey('task_${t.id}_$gen'),
-                  index: idx++,
-                  child: SearchTaskCard(
-                    task: t,
-                    query: _query,
-                    onTap: () => _openTask(t),
-                  ),
-                ))
-            .toList(),
-      );
-    }
-
-    if (_folderResults.isNotEmpty) {
-      final provider = Provider.of<NotesProvider>(context, listen: false);
-      items.add(AnimatedListEntrance(
-        key: ValueKey('header_FOLDERS_$gen'),
-        index: idx++,
-        child: _SectionHeader(label: 'FOLDERS', count: _folderResults.length),
-      ));
-      items.add(
-        Padding(
-          padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8.0,
-              mainAxisSpacing: 16.0,
-              childAspectRatio: 150.0 / 192.0,
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: AnimatedListEntrance(
+              key: ValueKey('header_NOTES_$gen'),
+              index: headerIdx,
+              child: _SectionHeader(label: 'NOTES', count: noteResults.length),
             ),
-            itemCount: _folderResults.length,
-            itemBuilder: (context, folderIndex) {
-              final f = _folderResults[folderIndex];
-              final noteCount = provider.allActiveNotes
-                  .where((n) => n.folderId == f.id)
-                  .length;
+          ),
+        ),
+      );
+
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverList.builder(
+            itemCount: noteResults.length,
+            itemBuilder: (context, i) {
+              final n = noteResults[i];
               return AnimatedListEntrance(
-                key: ValueKey('folder_${f.id}_$gen'),
-                index: idx++,
-                child: FolderGridCard(
-                  folder: f,
-                  index: folderIndex,
-                  noteCount: noteCount,
-                  query: _query,
-                  onTap: () => _openFolder(f),
+                key: ValueKey('note_${n.id}_$gen'),
+                index: noteBaseIdx + i,
+                child: SearchNoteCard(
+                  note: n,
+                  query: query,
+                  onTap: () => onOpenNote(n),
                 ),
               );
             },
@@ -928,175 +1199,323 @@ class _SearchScreenState extends State<SearchScreen>
       );
     }
 
-    if (_categoryResults.isNotEmpty) {
-      final provider = Provider.of<NotesProvider>(context, listen: false);
-      addSection(
-        'CATEGORIES',
-        _categoryResults.length,
-        _categoryResults.map((c) {
-          final noteCount =
-              provider.allActiveNotes.where((n) => n.category == c).length;
-          return AnimatedListEntrance(
-            key: ValueKey('cat_${c}_$gen'),
-            index: idx++,
-            child: _CategoryResultRow(
-              category: c,
-              noteCount: noteCount,
-              query: _query,
-              dotColor: _categoryDotColor(c),
-              onTap: () => _openCategory(c),
+    // 2. TASKS Sliver
+    if (taskResults.isNotEmpty) {
+      final headerIdx = nextIndex++;
+      final taskBaseIdx = nextIndex;
+      nextIndex += taskResults.length;
+
+      slivers.add(
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(20, noteResults.isEmpty ? 8 : 0, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: AnimatedListEntrance(
+              key: ValueKey('header_TASKS_$gen'),
+              index: headerIdx,
+              child: _SectionHeader(label: 'TASKS', count: taskResults.length),
             ),
-          );
-        }).toList(),
+          ),
+        ),
+      );
+
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverList.builder(
+            itemCount: taskResults.length,
+            itemBuilder: (context, i) {
+              final t = taskResults[i];
+              return AnimatedListEntrance(
+                key: ValueKey('task_${t.id}_$gen'),
+                index: taskBaseIdx + i,
+                child: SearchTaskCard(
+                  task: t,
+                  query: query,
+                  onTap: () => onOpenTask(t),
+                ),
+              );
+            },
+          ),
+        ),
       );
     }
 
-    return ListView(
-      controller: _scrollCtrl,
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-      children: items,
+    // 3. FOLDERS Sliver (G-01 Dark-mode Folder Title + G-06 O(1) Note Counts)
+    if (folderResults.isNotEmpty) {
+      final headerIdx = nextIndex++;
+      final folderBaseIdx = nextIndex;
+      nextIndex += folderResults.length;
+
+      slivers.add(
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+              20, (noteResults.isEmpty && taskResults.isEmpty) ? 8 : 0, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: AnimatedListEntrance(
+              key: ValueKey('header_FOLDERS_$gen'),
+              index: headerIdx,
+              child: _SectionHeader(
+                  label: 'FOLDERS', count: folderResults.length),
+            ),
+          ),
+        ),
+      );
+
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          sliver: SliverGrid.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8.0,
+              mainAxisSpacing: 16.0,
+              childAspectRatio: 150.0 / 192.0,
+            ),
+            itemCount: folderResults.length,
+            itemBuilder: (context, folderIndex) {
+              final f = folderResults[folderIndex];
+              final noteCount = state.folderNoteCounts[f.id] ?? 0;
+              return AnimatedListEntrance(
+                key: ValueKey('folder_${f.id}_$gen'),
+                index: folderBaseIdx + folderIndex,
+                child: FolderGridCard(
+                  folder: f,
+                  index: folderIndex,
+                  noteCount: noteCount,
+                  query: query,
+                  onTap: () => onOpenFolder(f),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    // 4. CATEGORIES Sliver (G-06 O(1) Note Counts)
+    if (categoryResults.isNotEmpty) {
+      final headerIdx = nextIndex++;
+      final catBaseIdx = nextIndex;
+      nextIndex += categoryResults.length;
+
+      slivers.add(
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+              20,
+              (noteResults.isEmpty &&
+                      taskResults.isEmpty &&
+                      folderResults.isEmpty)
+                  ? 8
+                  : 0,
+              20,
+              0),
+          sliver: SliverToBoxAdapter(
+            child: AnimatedListEntrance(
+              key: ValueKey('header_CATEGORIES_$gen'),
+              index: headerIdx,
+              child: _SectionHeader(
+                  label: 'CATEGORIES', count: categoryResults.length),
+            ),
+          ),
+        ),
+      );
+
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverList.builder(
+            itemCount: categoryResults.length,
+            itemBuilder: (context, i) {
+              final c = categoryResults[i];
+              final noteCount = state.categoryNoteCounts[c] ?? 0;
+              return AnimatedListEntrance(
+                key: ValueKey('cat_${c}_$gen'),
+                index: catBaseIdx + i,
+                child: _CategoryResultRow(
+                  category: c,
+                  noteCount: noteCount,
+                  query: query,
+                  dotColor: _categoryDotColor(c),
+                  onTap: () => onOpenCategory(c),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    // Bottom padding spacer
+    slivers.add(
+      const SliverToBoxAdapter(
+        child: SizedBox(height: 32.0),
+      ),
+    );
+
+    return CustomScrollView(
+      controller: scrollCtrl,
+      slivers: slivers,
     );
   }
 
-  // ── State 4: No Results ───────────────────────────────────────────────────
-
-  Widget _buildNoResultsState() {
-    return FadeTransition(
-      opacity: _entryFade,
-      child: ListView(
-        controller: _scrollCtrl,
-        padding: const EdgeInsets.fromLTRB(24, 36, 24, 32),
-        children: [
-          Center(
-            child: Column(
+  // ── State 4: No Results (G-13 Redundant FadeTransition Removed) ───────────
+  Widget _buildNoResultsState(_SearchState state, {required bool isDark}) {
+    return ListView(
+      controller: scrollCtrl,
+      padding: const EdgeInsets.fromLTRB(24, 36, 24, 32),
+      children: [
+        Center(
+          child: Column(
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF38383A) : _kGroupedBg,
+                  shape: BoxShape.circle,
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(Icons.search_rounded,
+                        size: 36,
+                        color: isDark
+                            ? const Color(0xFF8E8E93)
+                            : _kLabelSecondary),
+                    Positioned(
+                      right: 12,
+                      bottom: 12,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color:
+                              isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.close_rounded,
+                            size: 13,
+                            color: isDark
+                                ? const Color(0xFF8E8E93)
+                                : _kLabelSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No results for "${state.query.trim()}"',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : _kInk),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Try searching across all scopes or categories',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: isDark ? const Color(0xFF757575) : _kPlaceholder),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+        Divider(color: isDark ? const Color(0xFF38383A) : _kDivider),
+        const SizedBox(height: 16),
+        Text(
+          'CREATE NEW',
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: isDark ? const Color(0xFF8E8E93) : _kLabelSecondary,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: () => onCreateNoteWithTitle(state.query.trim()),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF38383A)
+                  : const Color(0xFFF0EDD8),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: isDark ? const Color(0xFF48484A) : _kDivider),
+            ),
+            child: Row(
               children: [
                 Container(
-                  width: 72,
-                  height: 72,
-                  decoration: const BoxDecoration(
-                    color: _kGroupedBg,
-                    shape: BoxShape.circle,
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _kAmberYellow.withValues(alpha: 0.20),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Stack(
-                    alignment: Alignment.center,
+                  child: Icon(Icons.add_rounded,
+                      color: isDark
+                          ? const Color(0xFFFFCC00)
+                          : const Color(0xFFD49200),
+                      size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.search_rounded,
-                          size: 36, color: _kLabelSecondary),
-                      Positioned(
-                        right: 12,
-                        bottom: 12,
-                        child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close_rounded,
-                              size: 13, color: _kLabelSecondary),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '"',
+                              style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.white : _kInk),
+                            ),
+                            TextSpan(
+                              text: state.query.trim(),
+                              style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? const Color(0xFFFFCC00)
+                                      : const Color(0xFFD49200)),
+                            ),
+                            TextSpan(
+                              text: '"',
+                              style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.white : _kInk),
+                            ),
+                          ],
                         ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Start a new note with this title',
+                        style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: isDark
+                                ? const Color(0xFF8E8E93)
+                                : _kPlaceholder),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'No results for "$_query"',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                      fontSize: 18, fontWeight: FontWeight.w700, color: _kInk),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Try searching across all scopes or categories',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(fontSize: 14, color: _kPlaceholder),
-                ),
+                Icon(Icons.chevron_right_rounded,
+                    color: isDark ? const Color(0xFF757575) : _kPlaceholder),
               ],
             ),
           ),
-          const SizedBox(height: 32),
-          const Divider(color: _kDivider),
-          const SizedBox(height: 16),
-          Text(
-            'CREATE NEW',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: _kLabelSecondary,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => _createNoteWithTitle(_query.trim()),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0EDD8),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _kDivider),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: _kAmberYellow.withValues(alpha: 0.20),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.add_rounded,
-                        color: Color(0xFFD49200), size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: '"',
-                                style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: _kInk),
-                              ),
-                              TextSpan(
-                                text: _query.trim(),
-                                style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFFD49200)),
-                              ),
-                              TextSpan(
-                                text: '"',
-                                style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: _kInk),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Start a new note with this title',
-                          style: GoogleFonts.inter(
-                              fontSize: 12, color: _kPlaceholder),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right_rounded, color: _kPlaceholder),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1141,6 +1560,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
       child: Row(
@@ -1150,7 +1570,7 @@ class _SectionHeader extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: _kLabelSecondary,
+              color: isDark ? const Color(0xFF8E8E93) : _kLabelSecondary,
               letterSpacing: 0.8,
             ),
           ),
@@ -1158,7 +1578,7 @@ class _SectionHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
             decoration: BoxDecoration(
-              color: _kPillInactive,
+              color: isDark ? const Color(0xFF38383A) : _kPillInactive,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -1166,7 +1586,7 @@ class _SectionHeader extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: _kLabelSecondary,
+                color: isDark ? const Color(0xFF8E8E93) : _kLabelSecondary,
               ),
             ),
           ),
@@ -1188,28 +1608,33 @@ class _RecentSearchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 9),
         child: Row(
           children: [
-            const Icon(Icons.history_rounded,
-                size: 18, color: _kLabelSecondary),
+            Icon(Icons.history_rounded,
+                size: 18,
+                color: isDark ? const Color(0xFF8E8E93) : _kLabelSecondary),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 term,
                 style: GoogleFonts.inter(
-                    fontSize: 15, color: _kInk, fontWeight: FontWeight.w400),
+                    fontSize: 15,
+                    color: isDark ? Colors.white : _kInk,
+                    fontWeight: FontWeight.w400),
               ),
             ),
             GestureDetector(
               onTap: onDelete,
-              child: const Padding(
-                padding: EdgeInsets.only(left: 8),
-                child:
-                    Icon(Icons.close_rounded, size: 16, color: _kPlaceholder),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(Icons.close_rounded,
+                    size: 16,
+                    color: isDark ? const Color(0xFF757575) : _kPlaceholder),
               ),
             ),
           ],
@@ -1235,10 +1660,14 @@ class _CategoryResultRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final base = GoogleFonts.inter(
-        fontSize: 15, fontWeight: FontWeight.w500, color: _kInk);
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+        color: isDark ? Colors.white : _kInk);
     final hl = base.copyWith(
-        color: const Color(0xFFD49200), fontWeight: FontWeight.w700);
+        color: isDark ? const Color(0xFFFFCC00) : const Color(0xFFD49200),
+        fontWeight: FontWeight.w700);
 
     return GestureDetector(
       onTap: onTap,
@@ -1246,9 +1675,10 @@ class _CategoryResultRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFDF7),
+          color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFFFFDF7),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _kDivider),
+          border: Border.all(
+              color: isDark ? const Color(0xFF38383A) : _kDivider),
         ),
         child: Row(
           children: [
@@ -1280,7 +1710,9 @@ class _CategoryResultRow extends StatelessWidget {
             ),
             Text(
               '$noteCount notes',
-              style: GoogleFonts.inter(fontSize: 12, color: _kPlaceholder),
+              style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: isDark ? const Color(0xFF8E8E93) : _kPlaceholder),
             ),
           ],
         ),
@@ -1339,13 +1771,15 @@ class _ShimmerRowState extends State<_ShimmerRow>
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final shimmerColor = isDark ? const Color(0xFF38383A) : _kPillInactive;
     final disableAnimations =
         MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     if (disableAnimations) {
       return Container(
         height: 72,
         decoration: BoxDecoration(
-          color: _kPillInactive.withValues(alpha: 0.4),
+          color: shimmerColor.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(20),
         ),
       );
@@ -1360,7 +1794,7 @@ class _ShimmerRowState extends State<_ShimmerRow>
           child: Container(
             height: 72,
             decoration: BoxDecoration(
-              color: _kPillInactive,
+              color: shimmerColor,
               borderRadius: BorderRadius.circular(20),
             ),
           ),

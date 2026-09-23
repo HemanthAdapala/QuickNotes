@@ -7,7 +7,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../providers/notes_provider.dart';
 import '../../models/folder.dart';
 import '../widgets/tactile_button.dart';
-import '../widgets/living_writing_experience.dart';
 import 'folder_notes_screen.dart';
 import '../../core/motion/motion_constants.dart';
 import '../../core/motion/quick_notes_haptics.dart';
@@ -59,43 +58,26 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
     return _folderKeys.putIfAbsent(id, () => GlobalKey());
   }
 
-  void _handleFolderTap(Folder folder) async {
+  void _handleFolderTap(Folder folder) {
     if (_tappedFolderId != null) return;
 
     setState(() {
       _tappedFolderId = folder.id;
     });
 
-    // Wait for the tap press-lift animation (150ms duration)
-    await Future.delayed(const Duration(milliseconds: 150));
-
-    if (!mounted) return;
-
-    // Retrieve bounds
-    final key = _getKeyForFolder(folder.id);
-    final RenderBox? box = key.currentContext?.findRenderObject() as RenderBox?;
-    Rect cardBounds = Rect.zero;
-    if (box != null) {
-      final position = box.localToGlobal(Offset.zero);
-      cardBounds = Rect.fromLTWH(
-          position.dx, position.dy, box.size.width, box.size.height);
-    } else {
-      final size = MediaQuery.of(context).size;
-      cardBounds = Rect.fromLTWH(
-          size.width / 4, size.height / 4, size.width / 2, size.height / 2);
-    }
-
-    setState(() {
-      _tappedFolderId = null;
-    });
-
-    // Navigate using custom FolderMorphPageRoute
-    Navigator.of(context).push(
-      FolderMorphPageRoute(
-        cardBounds: cardBounds,
-        builder: (context) => FolderNotesScreen(folder: folder),
+    Navigator.of(context)
+        .push(
+      buildPageRoute(
+        FolderNotesScreen(folder: folder),
       ),
-    );
+    )
+        .then((_) {
+      if (mounted) {
+        setState(() {
+          _tappedFolderId = null;
+        });
+      }
+    });
   }
 
   void showCreateFolderDialog() {
@@ -306,17 +288,15 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
           final theme = Theme.of(dialogContext);
           final isDark = theme.brightness == Brightness.dark;
           return AlertDialog(
-            backgroundColor:
-                isDark ? const Color(0xFF2C2C2C) : Colors.white,
+            backgroundColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
               "Delete Folder?",
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
-                color: isDark
-                    ? const Color(0xFFFFFFFF)
-                    : const Color(0xFF1C1C1E),
+                color:
+                    isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E),
               ),
             ),
             content: Text(
@@ -425,17 +405,13 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
           child: Row(
             children: [
               Icon(Icons.delete_outline_rounded,
-                  color: isDark
-                      ? const Color(0xFFFF453A)
-                      : Colors.red,
+                  color: isDark ? const Color(0xFFFF453A) : Colors.red,
                   size: 20),
               const SizedBox(width: 10),
               Text(
                 "Delete",
                 style: GoogleFonts.inter(
-                    color: isDark
-                        ? const Color(0xFFFF453A)
-                        : Colors.red),
+                    color: isDark ? const Color(0xFFFF453A) : Colors.red),
               ),
             ],
           ),
@@ -523,14 +499,21 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: TextField(
                           autofocus: true,
+                          cursorColor: isDark ? const Color(0xFFFFCC00) : const Color(0xFF1C1C1E),
                           style: GoogleFonts.inter(
                             fontSize: 15,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1C1C1E),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF1C1C1E),
                           ),
                           decoration: InputDecoration(
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            filled: false,
+                            fillColor: Colors.transparent,
                             hintText: "Search folders...",
                             hintStyle: GoogleFonts.inter(
                               color: isDark
@@ -598,9 +581,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                             width: 22,
                             height: 22,
                             colorFilter: ColorFilter.mode(
-                                isDark
-                                    ? Colors.white
-                                    : const Color(0xFF1C1C1E),
+                                isDark ? Colors.white : const Color(0xFF1C1C1E),
                                 BlendMode.srcIn),
                           ),
                         ),
@@ -794,8 +775,7 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF1E1E1E) : AppColors.background,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : AppColors.background,
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
@@ -1504,9 +1484,8 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
             const SizedBox(height: 16.0),
             Container(
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1E1E1E)
-                    : const Color(0xFFEFEFF4),
+                color:
+                    isDark ? const Color(0xFF1E1E1E) : const Color(0xFFEFEFF4),
                 borderRadius: BorderRadius.circular(9.0),
               ),
               padding: const EdgeInsets.all(2.0),
@@ -1532,9 +1511,8 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
               style: GoogleFonts.inter(
                 fontSize: 11.0,
                 fontWeight: FontWeight.w700,
-                color: isDark
-                    ? const Color(0xFF757575)
-                    : const Color(0xFF8E8E93),
+                color:
+                    isDark ? const Color(0xFF757575) : const Color(0xFF8E8E93),
                 letterSpacing: 0.5,
               ),
             ),
@@ -1650,9 +1628,7 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
             const SizedBox(height: 20.0),
             Divider(
               height: 1,
-              color: isDark
-                  ? const Color(0xFF3A3A3C)
-                  : const Color(0xFFE5E5EA),
+              color: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA),
             ),
             const SizedBox(height: 16.0),
             Row(
@@ -1813,9 +1789,7 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
               fontSize: 13.0,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               color: isSelected
-                  ? (isDark
-                      ? const Color(0xFFFFFFFF)
-                      : const Color(0xFF1C1C1E))
+                  ? (isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E))
                   : (isDark
                       ? const Color(0xFF757575)
                       : const Color(0xFF1C1C1E)),
@@ -1947,9 +1921,7 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
             style: GoogleFonts.inter(
               fontSize: 14.0,
               fontWeight: FontWeight.bold,
-              color: isDark
-                  ? const Color(0xFFFFFFFF)
-                  : const Color(0xFF1C1C1E),
+              color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E),
             ),
           ),
         ),
@@ -1957,9 +1929,8 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
           child: SliderTheme(
             data: SliderThemeData(
               activeTrackColor: activeColor,
-              inactiveTrackColor: isDark
-                  ? const Color(0xFF3A3A3C)
-                  : const Color(0xFFE5E5EA),
+              inactiveTrackColor:
+                  isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA),
               thumbColor: Colors.white,
               overlayColor: Colors.transparent,
               thumbShape: const RoundSliderThumbShape(
@@ -1982,9 +1953,7 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             borderRadius: BorderRadius.circular(6.0),
             border: Border.all(
-              color: isDark
-                  ? const Color(0xFF3A3A3C)
-                  : const Color(0xFFEFEFF4),
+              color: isDark ? const Color(0xFF3A3A3C) : const Color(0xFFEFEFF4),
               width: 1.0,
             ),
           ),
@@ -1993,9 +1962,7 @@ class _IosColorPickerDialogState extends State<IosColorPickerDialog> {
             style: GoogleFonts.inter(
               fontSize: 13.0,
               fontWeight: FontWeight.w600,
-              color: isDark
-                  ? const Color(0xFFFFFFFF)
-                  : const Color(0xFF1C1C1E),
+              color: isDark ? const Color(0xFFFFFFFF) : const Color(0xFF1C1C1E),
             ),
           ),
         ),
@@ -2091,4 +2058,3 @@ class _PopupMenuDividerState extends State<_PopupMenuDivider> {
         color: widget.color,
       );
 }
-

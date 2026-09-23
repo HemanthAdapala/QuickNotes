@@ -99,16 +99,20 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness:
+            isDark ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor:
+            isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
         body: Stack(
           children: [
             Positioned(
@@ -125,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen>
                       'Quick\nNotes',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF333333),
+                        color: isDark ? Colors.white : const Color(0xFF333333),
                         fontSize: 48,
                         fontWeight: FontWeight.w700,
                         height: 1.12,

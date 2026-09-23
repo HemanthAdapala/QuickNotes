@@ -53,6 +53,7 @@ class NoteEditorScreen extends StatefulWidget {
   final String defaultCategory;
   final String defaultNoteType;
   final String? defaultFolderId;
+  final String? initialTitle;
   static bool useSingleDocumentEditor = true;
 
   const NoteEditorScreen({
@@ -61,6 +62,7 @@ class NoteEditorScreen extends StatefulWidget {
     this.defaultCategory = 'Uncategorized',
     this.defaultNoteType = 'text',
     this.defaultFolderId,
+    this.initialTitle,
   });
 
   @override
@@ -1631,6 +1633,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
         _blocks = parseMarkdownToBlocks(widget.note!.content);
       }
     } else {
+      if (widget.initialTitle != null && widget.initialTitle!.isNotEmpty) {
+        _titleController.text = widget.initialTitle!;
+      }
       _category = widget.defaultCategory;
       _noteType = widget.defaultNoteType;
       _folderId = widget.defaultFolderId;
@@ -6201,14 +6206,34 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   }
 
   void _showAddTagDialog() {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Add Note Tag"),
+        backgroundColor: isDark ? const Color(0xFF2C2C2C) : null,
+        title: Text(
+          "Add Note Tag",
+          style: TextStyle(color: isDark ? Colors.white : null),
+        ),
         content: TextField(
           controller: _tagController,
-          decoration:
-              const InputDecoration(hintText: "Enter tag (e.g. urgent)"),
+          autofocus: true,
+          cursorColor: isDark ? const Color(0xFFFFCC00) : null,
+          style: TextStyle(color: isDark ? Colors.white : null),
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            focusedErrorBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
+            filled: false,
+            fillColor: Colors.transparent,
+            hintText: "Enter tag (e.g. urgent)",
+            hintStyle: TextStyle(
+              color: isDark ? const Color(0xFF757575) : null,
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -6395,6 +6420,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
 
   void _showSetupPinDialog() {
     final theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
     final pinController = TextEditingController();
     final confirmController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -6404,9 +6430,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: theme.colorScheme.surface,
+          backgroundColor: isDark ? const Color(0xFF2C2C2C) : theme.colorScheme.surface,
           title: Text("Setup Secure PIN",
-              style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : null,
+              )),
           content: Form(
             key: formKey,
             child: Column(
@@ -6418,10 +6447,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                   keyboardType: TextInputType.number,
                   obscureText: true,
                   maxLength: 4,
-                  decoration: const InputDecoration(
-                      labelText: "Enter 4-digit PIN",
-                      border: OutlineInputBorder(),
-                      counterText: ""),
+                  cursorColor: isDark ? const Color(0xFFFFCC00) : null,
+                  style: TextStyle(color: isDark ? Colors.white : null),
+                  decoration: InputDecoration(
+                    labelText: "Enter 4-digit PIN",
+                    labelStyle: TextStyle(
+                      color: isDark ? const Color(0xFF8E8E93) : null,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    filled: false,
+                    fillColor: Colors.transparent,
+                    counterText: "",
+                  ),
                   validator: (value) {
                     if (value == null ||
                         value.length != 4 ||
@@ -6437,10 +6479,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                   keyboardType: TextInputType.number,
                   obscureText: true,
                   maxLength: 4,
-                  decoration: const InputDecoration(
-                      labelText: "Confirm PIN",
-                      border: OutlineInputBorder(),
-                      counterText: ""),
+                  cursorColor: isDark ? const Color(0xFFFFCC00) : null,
+                  style: TextStyle(color: isDark ? Colors.white : null),
+                  decoration: InputDecoration(
+                    labelText: "Confirm PIN",
+                    labelStyle: TextStyle(
+                      color: isDark ? const Color(0xFF8E8E93) : null,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    filled: false,
+                    fillColor: Colors.transparent,
+                    counterText: "",
+                  ),
                   validator: (value) {
                     if (value != pinController.text) {
                       return "PINs do not match";
