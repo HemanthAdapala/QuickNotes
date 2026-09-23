@@ -10,6 +10,7 @@ import '../widgets/grouped_list_container.dart';
 import '../../core/animations/page_transitions.dart';
 import 'profile_screen.dart';
 import 'glassmorphism_sandbox_screen.dart';
+import '../../liquid_glass_catalog/liquid_glass_catalog_screen.dart';
 import 'account/account_settings_screen.dart';
 import 'backup_restore_screen.dart';
 import 'test_welcome_screen.dart';
@@ -764,6 +765,20 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                         context,
                                         buildPageRoute(
                                             const GlassmorphismSandboxScreen()),
+                                      );
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
+                                    iconPath: 'assets/icons/highlighter.svg',
+                                    title: 'Liquid Glass Catalog (Phase 1A)',
+                                    fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        buildPageRoute(
+                                            const LiquidGlassCatalogScreen()),
                                       );
                                     },
                                   ),
