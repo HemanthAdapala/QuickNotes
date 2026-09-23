@@ -96,8 +96,8 @@ void main() {
 
   // ─── Group A: Surfaces ────────────────────────────────────────────────────
   group('Phase D5-FN-1 — Group A: Surfaces', () {
-    testWidgets(
-        'Dark Mode: Scaffold background resolves to #1E1E1E', (tester) async {
+    testWidgets('Dark Mode: Scaffold background resolves to #1E1E1E',
+        (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(isDark: true));
       await tester.pumpAndSettle();
 
@@ -119,17 +119,18 @@ void main() {
       expect(
         scaffold.backgroundColor,
         AppColors.background,
-        reason: 'FolderNotes upper canvas must remain AppColors.background in Light Mode',
+        reason:
+            'FolderNotes upper canvas must remain AppColors.background in Light Mode',
       );
     });
 
-    testWidgets(
-        'Dark Mode: PrimaryScreenSurface receives explicit #2C2C2C', (tester) async {
+    testWidgets('Dark Mode: PrimaryScreenSurface receives explicit #2C2C2C',
+        (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(isDark: true));
       await tester.pumpAndSettle();
 
-      final surface = tester.widget<PrimaryScreenSurface>(
-          find.byType(PrimaryScreenSurface));
+      final surface = tester
+          .widget<PrimaryScreenSurface>(find.byType(PrimaryScreenSurface));
       expect(
         surface.color,
         const Color(0xFF2C2C2C),
@@ -137,17 +138,18 @@ void main() {
       );
     });
 
-    testWidgets(
-        'Light Mode: PrimaryScreenSurface receives Colors.white', (tester) async {
+    testWidgets('Light Mode: PrimaryScreenSurface receives Colors.white',
+        (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(isDark: false));
       await tester.pumpAndSettle();
 
-      final surface = tester.widget<PrimaryScreenSurface>(
-          find.byType(PrimaryScreenSurface));
+      final surface = tester
+          .widget<PrimaryScreenSurface>(find.byType(PrimaryScreenSurface));
       expect(
         surface.color,
         Colors.white,
-        reason: 'FolderNotes content sheet must receive Colors.white in Light Mode',
+        reason:
+            'FolderNotes content sheet must receive Colors.white in Light Mode',
       );
     });
   });
@@ -174,8 +176,8 @@ void main() {
       checklistProgress: '',
     );
 
-    testWidgets(
-        'Dark Mode: folder name text resolves to Colors.white', (tester) async {
+    testWidgets('Dark Mode: folder name text resolves to Colors.white',
+        (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(
         isDark: true,
         provider: TestNotesProvider(summaries: [testSummary]),
@@ -192,8 +194,7 @@ void main() {
       );
     });
 
-    testWidgets(
-        'Light Mode: folder name text remains #333333', (tester) async {
+    testWidgets('Light Mode: folder name text remains #333333', (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(
         isDark: false,
         provider: TestNotesProvider(summaries: [testSummary]),
@@ -210,8 +211,8 @@ void main() {
       );
     });
 
-    testWidgets(
-        'Dark Mode: note count text uses white 50% alpha hierarchy', (tester) async {
+    testWidgets('Dark Mode: note count text uses white 50% alpha hierarchy',
+        (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(
         isDark: true,
         provider: TestNotesProvider(summaries: [testSummary]),
@@ -230,8 +231,8 @@ void main() {
           reason: 'Note count must be white with reduced opacity in Dark Mode');
     });
 
-    testWidgets(
-        'Light Mode: note count text remains 0x993C3C43', (tester) async {
+    testWidgets('Light Mode: note count text remains 0x993C3C43',
+        (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(
         isDark: false,
         provider: TestNotesProvider(summaries: [testSummary]),
@@ -249,8 +250,8 @@ void main() {
 
   // ─── Group C: Empty state ─────────────────────────────────────────────────
   group('Phase D5-FN-1 — Group C: Empty State', () {
-    testWidgets(
-        'Dark Mode: empty state heading uses white 50% alpha', (tester) async {
+    testWidgets('Dark Mode: empty state heading uses white 50% alpha',
+        (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(isDark: true));
       await tester.pumpAndSettle();
 
@@ -266,8 +267,8 @@ void main() {
           reason: 'Empty state heading must be white@alpha in Dark Mode');
     });
 
-    testWidgets(
-        'Light Mode: empty state heading uses #1C1C1E 50% alpha', (tester) async {
+    testWidgets('Light Mode: empty state heading uses #1C1C1E 50% alpha',
+        (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(isDark: false));
       await tester.pumpAndSettle();
 
@@ -303,8 +304,7 @@ void main() {
           reason: 'Create Note yellow pill (#FFCC00) must remain in Dark Mode');
     });
 
-    testWidgets(
-        'Empty state: Create Note text remains #1C1C1E in Dark Mode',
+    testWidgets('Empty state: Create Note text remains #1C1C1E in Dark Mode',
         (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(isDark: true));
       await tester.pumpAndSettle();
@@ -313,7 +313,8 @@ void main() {
       expect(
         createNoteText.style?.color,
         const Color(0xFF1C1C1E),
-        reason: 'Create Note text must remain dark-on-yellow (#1C1C1E) in Dark Mode',
+        reason:
+            'Create Note text must remain dark-on-yellow (#1C1C1E) in Dark Mode',
       );
     });
   });
@@ -333,7 +334,8 @@ void main() {
       );
     }
 
-    testWidgets('Dark Mode: menu text resolves to Colors.white', (tester) async {
+    testWidgets('Dark Mode: menu text resolves to Colors.white',
+        (tester) async {
       await tester.pumpWidget(buildPopupHarness(isDark: true));
       await tester.pumpAndSettle();
 
@@ -409,7 +411,8 @@ void main() {
       expect(
         checkIcon.color,
         const Color(0xFF333333),
-        reason: 'FolderOptionsPopup sort checkmark must remain #333333 in Light Mode',
+        reason:
+            'FolderOptionsPopup sort checkmark must remain #333333 in Light Mode',
       );
     });
 
@@ -422,7 +425,8 @@ void main() {
       final dividerContainer = containers.where(
         (c) =>
             c.decoration is ShapeDecoration &&
-            ((c.decoration as ShapeDecoration).shape is RoundedRectangleBorder) &&
+            ((c.decoration as ShapeDecoration).shape
+                is RoundedRectangleBorder) &&
             (((c.decoration as ShapeDecoration).shape as RoundedRectangleBorder)
                     .side
                     .color ==
@@ -472,7 +476,8 @@ void main() {
     testWidgets(
         'Dark Mode: FolderNoteCard white body REMAINS Colors.white (REGRESSION)',
         (tester) async {
-      await tester.pumpWidget(buildCardHarness(isDark: true, note: testSummary));
+      await tester
+          .pumpWidget(buildCardHarness(isDark: true, note: testSummary));
       await tester.pumpAndSettle();
 
       // Find the white body container — uses ShapeDecoration(color: Colors.white)
@@ -494,21 +499,24 @@ void main() {
     testWidgets(
         'Dark Mode: FolderNoteCard note title remains #333333 (dark ink on paper)',
         (tester) async {
-      await tester.pumpWidget(buildCardHarness(isDark: true, note: testSummary));
+      await tester
+          .pumpWidget(buildCardHarness(isDark: true, note: testSummary));
       await tester.pumpAndSettle();
 
       final titleText = tester.widget<Text>(find.text('My Note Title'));
       expect(
         titleText.style?.color,
         const Color(0xFF333333),
-        reason: 'Note title (#333333) is dark ink on white paper — must NOT change in Dark Mode',
+        reason:
+            'Note title (#333333) is dark ink on white paper — must NOT change in Dark Mode',
       );
     });
 
     testWidgets(
         'Light Mode: FolderNoteCard white body is Colors.white (regression)',
         (tester) async {
-      await tester.pumpWidget(buildCardHarness(isDark: false, note: testSummary));
+      await tester
+          .pumpWidget(buildCardHarness(isDark: false, note: testSummary));
       await tester.pumpAndSettle();
 
       final containers = tester.widgetList<Container>(find.byType(Container));
@@ -521,13 +529,15 @@ void main() {
         }
       }
       expect(foundWhiteBody, isTrue,
-          reason: 'FolderNoteCard white body must be Colors.white in Light Mode');
+          reason:
+              'FolderNoteCard white body must be Colors.white in Light Mode');
     });
 
     testWidgets(
         'Dark Mode: FolderNoteCard Yellow accent (#FFCC00) remains unchanged',
         (tester) async {
-      await tester.pumpWidget(buildCardHarness(isDark: true, note: testSummary));
+      await tester
+          .pumpWidget(buildCardHarness(isDark: true, note: testSummary));
       await tester.pumpAndSettle();
 
       // Yellow = colorValue 3 => Color(0xFFFFCC00)
@@ -550,7 +560,8 @@ void main() {
     testWidgets(
         'Light Mode: FolderNoteCard Yellow accent (#FFCC00) unchanged (regression)',
         (tester) async {
-      await tester.pumpWidget(buildCardHarness(isDark: false, note: testSummary));
+      await tester
+          .pumpWidget(buildCardHarness(isDark: false, note: testSummary));
       await tester.pumpAndSettle();
 
       final containers = tester.widgetList<Container>(find.byType(Container));
@@ -564,14 +575,15 @@ void main() {
         }
       }
       expect(foundAccent, isTrue,
-          reason: 'FolderNoteCard Yellow accent must remain unchanged in Light Mode');
+          reason:
+              'FolderNoteCard Yellow accent must remain unchanged in Light Mode');
     });
   });
 
   // ─── Group F: Light Mode Full Regression ─────────────────────────────────
   group('Phase D5-FN-1 — Group F: Light Mode Full Regression', () {
-    testWidgets(
-        'Light Mode: Scaffold background is AppColors.background', (tester) async {
+    testWidgets('Light Mode: Scaffold background is AppColors.background',
+        (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(isDark: false));
       await tester.pumpAndSettle();
 
@@ -579,18 +591,18 @@ void main() {
       expect(scaffold.backgroundColor, AppColors.background);
     });
 
-    testWidgets(
-        'Light Mode: PrimaryScreenSurface receives Colors.white', (tester) async {
+    testWidgets('Light Mode: PrimaryScreenSurface receives Colors.white',
+        (tester) async {
       await tester.pumpWidget(buildFolderNotesHarness(isDark: false));
       await tester.pumpAndSettle();
 
-      final surface = tester.widget<PrimaryScreenSurface>(
-          find.byType(PrimaryScreenSurface));
+      final surface = tester
+          .widget<PrimaryScreenSurface>(find.byType(PrimaryScreenSurface));
       expect(surface.color, Colors.white);
     });
 
-    testWidgets(
-        'Light Mode: FolderOptionsPopup text is #333333 (regression)', (tester) async {
+    testWidgets('Light Mode: FolderOptionsPopup text is #333333 (regression)',
+        (tester) async {
       await tester.pumpWidget(MaterialApp(
         theme: ThemeData.light(),
         home: const Scaffold(
@@ -605,6 +617,99 @@ void main() {
 
       final text = tester.widget<Text>(find.text('Rename Folder'));
       expect(text.style?.color, const Color(0xFF333333));
+    });
+  });
+
+  // ─── Group G: Rename Folder Dialog Surface & Input Contract (DM-F1.1) ────
+  group('Phase DM-F1.1 — Group G: Rename Folder Dialog Surface Separation', () {
+    testWidgets(
+        'Dark Mode: Rename Folder dialog surface resolves to #38383A with DM-F1 input contract intact',
+        (tester) async {
+      await tester.pumpWidget(buildFolderNotesHarness(isDark: true));
+      await tester.pumpAndSettle();
+
+      // Open FolderOptionsPopup
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+
+      // Open Rename Folder Dialog
+      await tester.tap(find.text('Rename Folder'));
+      await tester.pumpAndSettle();
+
+      // Verify AlertDialog surface separation (#38383A)
+      final dialog = tester.widget<AlertDialog>(find.byType(AlertDialog));
+      expect(
+        dialog.backgroundColor,
+        const Color(0xFF38383A),
+        reason:
+            'Rename Folder dialog surface must be #38383A in Dark Mode for visual elevation',
+      );
+
+      // Verify Dialog Title
+      final title = tester.widget<Text>(find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Rename Folder'),
+      ));
+      expect(title.style?.color, Colors.white);
+
+      // Verify DM-F1 input decoration regression protection
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      final decoration = textField.decoration;
+      expect(decoration, isNotNull);
+      expect(decoration!.border, equals(InputBorder.none));
+      expect(decoration.enabledBorder, equals(InputBorder.none));
+      expect(decoration.focusedBorder, equals(InputBorder.none));
+      expect(decoration.errorBorder, equals(InputBorder.none));
+      expect(decoration.focusedErrorBorder, equals(InputBorder.none));
+      expect(decoration.disabledBorder, equals(InputBorder.none));
+      expect(decoration.filled, isFalse);
+      expect(decoration.fillColor, equals(Colors.transparent));
+      expect(textField.cursorColor, equals(const Color(0xFFFFCC00)));
+      expect(textField.style?.color, equals(Colors.white));
+    });
+
+    testWidgets(
+        'Light Mode: Rename Folder dialog preserves existing surface (null) and DM-F1 input contract',
+        (tester) async {
+      await tester.pumpWidget(buildFolderNotesHarness(isDark: false));
+      await tester.pumpAndSettle();
+
+      // Open FolderOptionsPopup
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+
+      // Open Rename Folder Dialog
+      await tester.tap(find.text('Rename Folder'));
+      await tester.pumpAndSettle();
+
+      // Verify AlertDialog preserves existing Light Mode surface (null)
+      final dialog = tester.widget<AlertDialog>(find.byType(AlertDialog));
+      expect(
+        dialog.backgroundColor,
+        isNull,
+        reason:
+            'Rename Folder dialog must preserve its existing Light Mode surface (null)',
+      );
+
+      // Verify Title
+      final title = tester.widget<Text>(find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Rename Folder'),
+      ));
+      expect(title.style?.color, isNull);
+
+      // Verify DM-F1 input decoration regression protection
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      final decoration = textField.decoration;
+      expect(decoration, isNotNull);
+      expect(decoration!.border, equals(InputBorder.none));
+      expect(decoration.enabledBorder, equals(InputBorder.none));
+      expect(decoration.focusedBorder, equals(InputBorder.none));
+      expect(decoration.errorBorder, equals(InputBorder.none));
+      expect(decoration.focusedErrorBorder, equals(InputBorder.none));
+      expect(decoration.disabledBorder, equals(InputBorder.none));
+      expect(decoration.filled, isFalse);
+      expect(decoration.fillColor, equals(Colors.transparent));
     });
   });
 }

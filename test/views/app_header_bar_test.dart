@@ -33,7 +33,8 @@ void main() {
         textDirection: TextDirection.ltr,
         child: Material(
           type: MaterialType.transparency,
-          child: Center(
+          child: Align(
+            alignment: Alignment.topLeft,
             child: SizedBox(
               width: viewportWidth,
               child: AppHeaderBar(
@@ -270,6 +271,203 @@ void main() {
 
       expect(titlePositioned.left, 44.0);
       expect(titlePositioned.right, 88.0);
+    });
+  });
+
+  group('Group H — Title Geometry Stability Across Expansion (Regression Defense)', () {
+    testWidgets('title text geometry is strictly preserved when isExpanded toggles', (tester) async {
+      // 1. Closed state (State A)
+      await tester.pumpWidget(buildHeaderTestHarness(
+        viewportWidth: 412.0,
+        leftChild: const Icon(Icons.arrow_back),
+        leftWidth: 44.0,
+        rightChild: const Icon(Icons.more_horiz),
+        rightWidth: 44.0,
+        expandedWidth: 192.0,
+        expandedHeight: 100.0,
+        expandedChild: const Text('Popup Menu'),
+        title: 'Settings',
+        isExpanded: false,
+      ));
+
+      expect(tester.getSize(find.byType(AppHeaderBar)).height, 44.0);
+
+      final titleFinder = find.text('Settings');
+      expect(titleFinder, findsOneWidget);
+
+      final closedPositioned = tester.widget<Positioned>(
+        find.ancestor(
+          of: titleFinder,
+          matching: find.byType(Positioned),
+        ).first,
+      );
+
+      expect(closedPositioned.left, 44.0);
+      expect(closedPositioned.right, 44.0);
+      expect(closedPositioned.top, 0.0);
+      expect(closedPositioned.height, 44.0);
+      expect(closedPositioned.bottom, isNull);
+
+      final closedCenter = tester.getCenter(titleFinder);
+      final closedRect = tester.getRect(titleFinder);
+
+      // Verify centered horizontally between left (44) and right (44) on 412 viewport: (412 - 44 + 44) / 2 = 206.0
+      expect(closedCenter.dx, 206.0);
+      // Vertical center within 44.0 bar is 22.0
+      expect(closedCenter.dy, 22.0);
+
+      // 2. Expanded state (State B)
+      await tester.pumpWidget(buildHeaderTestHarness(
+        viewportWidth: 412.0,
+        leftChild: const Icon(Icons.arrow_back),
+        leftWidth: 44.0,
+        rightChild: const Icon(Icons.more_horiz),
+        rightWidth: 44.0,
+        expandedWidth: 192.0,
+        expandedHeight: 100.0,
+        expandedChild: const Text('Popup Menu'),
+        title: 'Settings',
+        isExpanded: true,
+      ));
+      await tester.pumpAndSettle();
+
+      // Root header expands to 100.0
+      expect(tester.getSize(find.byType(AppHeaderBar)).height, 100.0);
+
+      final expandedPositioned = tester.widget<Positioned>(
+        find.ancestor(
+          of: titleFinder,
+          matching: find.byType(Positioned),
+        ).first,
+      );
+
+      // REGRESSION DEFENSE: right constraint must remain 44.0 (NOT 192.0)
+      expect(expandedPositioned.right, 44.0);
+      // REGRESSION DEFENSE: height must remain 44.0 (NOT bottom: 0 spanning 100.0)
+      expect(expandedPositioned.height, 44.0);
+      expect(expandedPositioned.bottom, isNull);
+      expect(expandedPositioned.top, 0.0);
+      expect(expandedPositioned.left, 44.0);
+
+      final expandedCenter = tester.getCenter(titleFinder);
+      final expandedRect = tester.getRect(titleFinder);
+
+      // REGRESSION DEFENSE: Title must NOT shift horizontally or vertically
+      expect(expandedCenter.dx, equals(closedCenter.dx));
+      expect(expandedCenter.dy, equals(closedCenter.dy));
+      expect(expandedRect, equals(closedRect));
+
+      // 3. Dismissed state (State C)
+      await tester.pumpWidget(buildHeaderTestHarness(
+        viewportWidth: 412.0,
+        leftChild: const Icon(Icons.arrow_back),
+        leftWidth: 44.0,
+        rightChild: const Icon(Icons.more_horiz),
+        rightWidth: 44.0,
+        expandedWidth: 192.0,
+        expandedHeight: 100.0,
+        expandedChild: const Text('Popup Menu'),
+        title: 'Settings',
+        isExpanded: false,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(tester.getSize(find.byType(AppHeaderBar)).height, 44.0);
+
+      final dismissedCenter = tester.getCenter(titleFinder);
+      final dismissedRect = tester.getRect(titleFinder);
+
+      expect(dismissedCenter.dx, equals(closedCenter.dx));
+      expect(dismissedCenter.dy, equals(closedCenter.dy));
+      expect(dismissedRect, equals(closedRect));
+    });
+
+    testWidgets('custom titleWidget geometry is strictly preserved when isExpanded toggles', (tester) async {
+      // 1. Closed state
+      await tester.pumpWidget(buildHeaderTestHarness(
+        viewportWidth: 412.0,
+        leftChild: const Icon(Icons.arrow_back),
+        leftWidth: 44.0,
+        rightChild: const Icon(Icons.more_horiz),
+        rightWidth: 44.0,
+        expandedWidth: 192.0,
+        expandedHeight: 100.0,
+        expandedChild: const Text('Popup Menu'),
+        titleWidget: const Text('Custom Settings Widget'),
+        isExpanded: false,
+      ));
+
+      final widgetFinder = find.text('Custom Settings Widget');
+      expect(widgetFinder, findsOneWidget);
+
+      final closedPositioned = tester.widget<Positioned>(
+        find.ancestor(
+          of: widgetFinder,
+          matching: find.byType(Positioned),
+        ).first,
+      );
+
+      expect(closedPositioned.right, 44.0);
+      expect(closedPositioned.height, 44.0);
+      expect(closedPositioned.bottom, isNull);
+
+      final closedCenter = tester.getCenter(widgetFinder);
+      final closedRect = tester.getRect(widgetFinder);
+
+      // 2. Expanded state
+      await tester.pumpWidget(buildHeaderTestHarness(
+        viewportWidth: 412.0,
+        leftChild: const Icon(Icons.arrow_back),
+        leftWidth: 44.0,
+        rightChild: const Icon(Icons.more_horiz),
+        rightWidth: 44.0,
+        expandedWidth: 192.0,
+        expandedHeight: 100.0,
+        expandedChild: const Text('Popup Menu'),
+        titleWidget: const Text('Custom Settings Widget'),
+        isExpanded: true,
+      ));
+      await tester.pumpAndSettle();
+
+      final expandedPositioned = tester.widget<Positioned>(
+        find.ancestor(
+          of: widgetFinder,
+          matching: find.byType(Positioned),
+        ).first,
+      );
+
+      expect(expandedPositioned.right, 44.0);
+      expect(expandedPositioned.height, 44.0);
+      expect(expandedPositioned.bottom, isNull);
+
+      final expandedCenter = tester.getCenter(widgetFinder);
+      final expandedRect = tester.getRect(widgetFinder);
+
+      expect(expandedCenter.dx, equals(closedCenter.dx));
+      expect(expandedCenter.dy, equals(closedCenter.dy));
+      expect(expandedRect, equals(closedRect));
+
+      // 3. Dismissed state
+      await tester.pumpWidget(buildHeaderTestHarness(
+        viewportWidth: 412.0,
+        leftChild: const Icon(Icons.arrow_back),
+        leftWidth: 44.0,
+        rightChild: const Icon(Icons.more_horiz),
+        rightWidth: 44.0,
+        expandedWidth: 192.0,
+        expandedHeight: 100.0,
+        expandedChild: const Text('Popup Menu'),
+        titleWidget: const Text('Custom Settings Widget'),
+        isExpanded: false,
+      ));
+      await tester.pumpAndSettle();
+
+      final dismissedCenter = tester.getCenter(widgetFinder);
+      final dismissedRect = tester.getRect(widgetFinder);
+
+      expect(dismissedCenter.dx, equals(closedCenter.dx));
+      expect(dismissedCenter.dy, equals(closedCenter.dy));
+      expect(dismissedRect, equals(closedRect));
     });
   });
 }

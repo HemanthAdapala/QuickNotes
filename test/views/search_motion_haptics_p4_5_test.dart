@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,7 +18,11 @@ import 'package:quick_notes/premium/premium.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
 import 'package:quick_notes/providers/settings_provider.dart';
 import 'package:quick_notes/providers/tasks_provider.dart';
+import 'package:quick_notes/services/recent_searches_service.dart';
+import 'package:quick_notes/themes/quick_notes_theme.dart';
+import 'package:quick_notes/views/screens/note_editor_screen.dart';
 import 'package:quick_notes/views/screens/search_screen.dart';
+import 'package:quick_notes/views/widgets/folder_card.dart';
 import 'package:quick_notes/views/widgets/search_note_card.dart';
 import 'package:quick_notes/views/widgets/search_task_card.dart';
 import 'package:quick_notes/views/widgets/tactile_button.dart';
@@ -51,6 +56,12 @@ class _TestNotesProvider extends NotesProvider {
     _testNotes.add(note);
     notifyListeners();
   }
+
+  void setTestNotes(List<Note> notes) {
+    _testNotes.clear();
+    _testNotes.addAll(notes);
+    notifyListeners();
+  }
 }
 
 class _TestTasksProvider extends TasksProvider {
@@ -71,6 +82,7 @@ Widget _buildSearchHarness({
   NotesProvider? notesProvider,
   TasksProvider? tasksProvider,
   bool disableAnimations = false,
+  ThemeData? theme,
 }) {
   final ntsPrv = notesProvider ?? _TestNotesProvider();
   final tskPrv = tasksProvider ?? _TestTasksProvider();
@@ -88,6 +100,7 @@ Widget _buildSearchHarness({
       ChangeNotifierProvider<TasksProvider>.value(value: tskPrv),
     ],
     child: MaterialApp(
+      theme: theme,
       navigatorObservers: navObserver != null ? [navObserver] : const [],
       builder: (context, widget) {
         return MediaQuery(
@@ -597,4 +610,701 @@ void main() {
       expect(qRoute.normalReverseTransitionDuration, equals(QuickNotesMotion.kMotionPageReverse));
     });
   });
+
+  group('Phase G3 — Group J: Locked G2.1 Global Search Contracts', () {
+    testWidgets('TEST J1 (G-01): FolderGridCard supports titleColor override while retaining default behavior', (tester) async {
+      final testFolder = Folder(
+        id: 'f_test_1',
+        name: 'Design Sprint',
+        colorHex: '0xFFFFCC00',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      );
+
+      // 1. With titleColor override (used in Global Search dark mode)
+      await tester.pumpWidget(MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: FolderGridCard(
+            folder: testFolder,
+            index: 0,
+            noteCount: 3,
+            query: '',
+            titleColor: const Color(0xFF1C1C1E),
+            onTap: () {},
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      final richTextFinder = find.descendant(
+        of: find.byType(FolderGridCard),
+        matching: find.byType(RichText),
+      );
+      final richText = tester.widget<RichText>(richTextFinder.first);
+      final span = richText.text as TextSpan;
+      final childSpan = span.children?.first as TextSpan?;
+      expect(childSpan?.style?.color, equals(const Color(0xFF1C1C1E)),
+          reason: 'FolderGridCard with titleColor must use specified color');
+
+      // 2. Default behavior (without titleColor) in dark mode retains white text
+      await tester.pumpWidget(MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: FolderGridCard(
+            folder: testFolder,
+            index: 0,
+            noteCount: 3,
+            query: '',
+            onTap: () {},
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      final defaultRichText = tester.widget<RichText>(find.descendant(
+        of: find.byType(FolderGridCard),
+        matching: find.byType(RichText),
+      ).first);
+      final defaultSpan = defaultRichText.text as TextSpan;
+      final defaultChildSpan = defaultSpan.children?.first as TextSpan?;
+      expect(defaultChildSpan?.style?.color, equals(const Color(0xFFFFFFFF)),
+          reason: 'Default FolderGridCard in dark mode must retain Colors.white for shared consumers');
+    });
+
+    testWidgets('TEST J2 (G-02): Create New Note CTA propagates initialTitle to NoteEditorScreen', (tester) async {
+      final navObserver = _RouteObserver();
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        navObserver: navObserver,
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '  Sprint Review  ');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      final ctaFinder = find.text('Start a new note with this title');
+      expect(ctaFinder, findsOneWidget);
+
+      await tester.tap(ctaFinder);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NoteEditorScreen), findsOneWidget);
+      final titleFieldFinder = find.widgetWithText(TextField, 'Sprint Review');
+      expect(titleFieldFinder, findsOneWidget,
+          reason: 'NoteEditorScreen must be initialized with trimmed search query');
+    });
+
+    testWidgets('TEST J3 (G-03): Recent Searches header appears strictly in empty state', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'quick_notes_recent_searches': ['meeting', 'grocery'],
+      });
+
+      final notesProvider = _TestNotesProvider();
+      notesProvider.addTestNote(Note(
+        id: 'n_recent_leak',
+        title: 'Meeting Notes',
+        content: 'Content',
+        category: 'Work',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        colorValue: 0xFFFFFF,
+        tags: const [],
+        attachments: const [],
+      ));
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        notesProvider: notesProvider,
+      ));
+      await tester.pumpAndSettle();
+
+      // State 1: Empty state -> header present
+      expect(find.text('Recent Searches'), findsOneWidget);
+      expect(find.text('Clear all'), findsOneWidget);
+
+      // State 2: Typing state -> header must NOT appear
+      await tester.enterText(find.byType(TextField), 'Me');
+      await tester.pump();
+      expect(find.text('Recent Searches'), findsNothing,
+          reason: 'Recent Searches header must not appear while typing');
+      expect(find.text('Clear all'), findsNothing);
+
+      // State 3: Results state -> header must NOT appear
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+      expect(find.byType(SearchNoteCard), findsOneWidget);
+      expect(find.text('Recent Searches'), findsNothing,
+          reason: 'Recent Searches header must not appear above results');
+
+      // State 4: No results state -> header must NOT appear
+      await tester.enterText(find.byType(TextField), 'NonExistentZz');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+      expect(find.text('Recent Searches'), findsNothing,
+          reason: 'Recent Searches header must not appear in no-results state');
+    });
+
+    testWidgets('TEST J4 (G-05): Returning from NoteEditorScreen refreshes search results', (tester) async {
+      final notesProvider = _TestNotesProvider();
+      final note = Note(
+        id: 'n_refresh_test',
+        title: 'Initial Alpha Title',
+        content: 'Other Content',
+        category: 'Work',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        colorValue: 0xFFFFFF,
+        tags: const [],
+        attachments: const [],
+      );
+      notesProvider.addTestNote(note);
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        notesProvider: notesProvider,
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Alpha');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SearchNoteCard), findsOneWidget);
+
+      // Tap note card to push NoteEditorScreen
+      await tester.tap(find.byType(SearchNoteCard));
+      await tester.pumpAndSettle();
+      expect(find.byType(NoteEditorScreen), findsOneWidget);
+
+      // Simulate external update / edit while inside editor
+      notesProvider.setTestNotes([
+        note.copyWith(title: 'Updated Beta Title', content: 'Other Content'),
+      ]);
+
+      // Pop back to SearchScreen
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator).last);
+      navigator.pop();
+      await tester.pumpAndSettle();
+
+      // Search query was 'Alpha'; since note was renamed to 'Updated Beta Title', 'Alpha' should now produce no results
+      expect(find.byType(SearchNoteCard), findsNothing,
+          reason: 'Search results must refresh after returning from note route');
+    });
+
+    testWidgets('TEST J5 (G-08): Search persistence follows committed semantics (no debounce persistence)', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'quick_notes_recent_searches': <String>[],
+      });
+
+      final notesProvider = _TestNotesProvider();
+      notesProvider.addTestNote(Note(
+        id: 'n_commit_test',
+        title: 'Project Roadmap',
+        content: 'Roadmap content',
+        category: 'Work',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        colorValue: 0xFFFFFF,
+        tags: const [],
+        attachments: const [],
+      ));
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        notesProvider: notesProvider,
+      ));
+      await tester.pumpAndSettle();
+
+      // Type and wait for debounce
+      await tester.enterText(find.byType(TextField), 'Roadmap');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      // 1. Debounce MUST NOT persist
+      var recent = await RecentSearchesService.instance.load();
+      expect(recent, isEmpty,
+          reason: 'Debounce completion must not persist search query');
+
+      // 2. IME submit DOES persist
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+
+      recent = await RecentSearchesService.instance.load();
+      expect(recent, contains('Roadmap'),
+          reason: 'IME submit action must persist trimmed search query');
+    });
+
+    testWidgets('TEST J6 (G-09): Sub-2-character query clears stale results immediately', (tester) async {
+      final notesProvider = _TestNotesProvider();
+      notesProvider.addTestNote(Note(
+        id: 'n_sub2_test',
+        title: 'Meeting Notes',
+        content: 'Content',
+        category: 'Work',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        colorValue: 0xFFFFFF,
+        tags: const [],
+        attachments: const [],
+      ));
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        notesProvider: notesProvider,
+      ));
+      await tester.pumpAndSettle();
+
+      // Search for query >= 2 characters
+      await tester.enterText(find.byType(TextField), 'Meeting');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+      expect(find.byType(SearchNoteCard), findsOneWidget);
+
+      // Backspace to 1 character
+      await tester.enterText(find.byType(TextField), 'M');
+      await tester.pump();
+
+      // Results must immediately disappear, switching back to empty state
+      expect(find.byType(SearchNoteCard), findsNothing,
+          reason: 'Query with < 2 characters must immediately clear stale results');
+      expect(find.byType(CustomScrollView), findsNothing);
+    });
+
+    testWidgets('TEST J7 (G-10): Whitespace-padded query normalizes to trimmed search semantics', (tester) async {
+      final notesProvider = _TestNotesProvider();
+      notesProvider.addTestNote(Note(
+        id: 'n_whitespace_test',
+        title: 'Architecture Review',
+        content: 'Design details',
+        category: 'Work',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        colorValue: 0xFFFFFF,
+        tags: const [],
+        attachments: const [],
+      ));
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        notesProvider: notesProvider,
+      ));
+      await tester.pumpAndSettle();
+
+      // Query with leading/trailing spaces
+      await tester.enterText(find.byType(TextField), '   Architecture Review   ');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SearchNoteCard), findsOneWidget,
+          reason: 'Whitespace-padded search must match normalized content');
+    });
+
+    testWidgets('TEST J8 (G-07): Results state uses lazy CustomScrollView and sliver builders', (tester) async {
+      final notesProvider = _TestNotesProvider();
+      notesProvider.addTestNote(Note(
+        id: 'n_sliver_test',
+        title: 'Sliver Architecture',
+        content: 'Lazy viewport loading',
+        category: 'Work',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        colorValue: 0xFFFFFF,
+        tags: const [],
+        attachments: const [],
+      ));
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        notesProvider: notesProvider,
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Sliver');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      // Result container is a CustomScrollView with SliverList
+      expect(find.byType(CustomScrollView), findsOneWidget,
+          reason: 'Primary result architecture must be CustomScrollView');
+      expect(find.descendant(of: find.byType(CustomScrollView), matching: find.byType(SliverList)), findsOneWidget,
+          reason: 'Notes section must be backed by SliverList.builder');
+    });
+  });
+
+  group('Phase D3 — Group K: Global Search Dark Mode Verification', () {
+    testWidgets('TEST K1 (D2): Dark canvas and sheet colors', (tester) async {
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        theme: ThemeData.dark(),
+      ));
+      await tester.pumpAndSettle();
+
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      expect(scaffold.backgroundColor, const Color(0xFF1E1E1E),
+          reason: 'Scaffold canvas must be 0xFF1E1E1E in dark mode');
+
+      final containers = tester.widgetList<Container>(find.byType(Container));
+      final hasDarkSheet = containers.any((c) =>
+          c.decoration is BoxDecoration &&
+          (c.decoration as BoxDecoration).color == const Color(0xFF2C2C2C));
+      expect(hasDarkSheet, isTrue,
+          reason: 'Body sheet must use 0xFF2C2C2C in dark mode');
+    });
+
+    testWidgets('TEST K2 (D2): Dark header text, icons, hint, and keyboard', (tester) async {
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        theme: ThemeData.dark(),
+      ));
+      await tester.pumpAndSettle();
+
+      final backSvg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(backSvg.colorFilter,
+          const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          reason: 'Back icon SVG filter must be white in dark mode');
+
+      final closeIcon =
+          tester.widget<Icon>(find.byIcon(Icons.close_rounded));
+      expect(closeIcon.color, Colors.white,
+          reason: 'Close icon must be white in dark mode');
+
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.style?.color, Colors.white,
+          reason: 'Search text must be white in dark mode');
+      expect(textField.decoration?.hintStyle?.color, const Color(0xFF8E8E93),
+          reason: 'Search hint must be 0xFF8E8E93 in dark mode');
+      expect(textField.keyboardAppearance, Brightness.dark,
+          reason: 'Keyboard appearance must be dark in dark mode');
+    });
+
+    testWidgets('TEST K3 (D2): Dark result cards use Color(0xFF2C2C2C) and white text', (tester) async {
+      final notesProvider = _TestNotesProvider();
+      notesProvider.addTestNote(Note(
+        id: 'n_dark_1',
+        title: 'Dark Architecture',
+        content: 'Dark mode note content',
+        category: 'Work',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        colorValue: 0xFFFFFF,
+        tags: const [],
+        attachments: const [],
+      ));
+      final tasksProvider = _TestTasksProvider();
+      tasksProvider.addTestTask(TaskItem(
+        id: 't_dark_1',
+        title: 'Dark Task Item',
+        dueDate: DateTime(2026, 1, 1),
+        priority: 'None',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ));
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        notesProvider: notesProvider,
+        tasksProvider: tasksProvider,
+        theme: ThemeData.dark(),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Dark');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SearchNoteCard), findsOneWidget);
+      expect(find.byType(SearchTaskCard), findsOneWidget);
+
+      final noteContainers = tester.widgetList<Container>(
+        find.descendant(
+            of: find.byType(SearchNoteCard), matching: find.byType(Container)),
+      );
+      expect(
+        noteContainers.any((c) =>
+            c.decoration is BoxDecoration &&
+            (c.decoration as BoxDecoration).color == const Color(0xFF2C2C2C)),
+        isTrue,
+        reason: 'SearchNoteCard front card must be 0xFF2C2C2C in dark mode',
+      );
+
+      final taskContainers = tester.widgetList<Container>(
+        find.descendant(
+            of: find.byType(SearchTaskCard), matching: find.byType(Container)),
+      );
+      expect(
+        taskContainers.any((c) =>
+            c.decoration is BoxDecoration &&
+            (c.decoration as BoxDecoration).color == const Color(0xFF2C2C2C)),
+        isTrue,
+        reason: 'SearchTaskCard front card must be 0xFF2C2C2C in dark mode',
+      );
+
+      final noteRichTexts = tester.widgetList<RichText>(
+        find.descendant(
+            of: find.byType(SearchNoteCard), matching: find.byType(RichText)),
+      );
+      final noteTitleRichText = noteRichTexts.firstWhere(
+        (r) => r.text.toPlainText().contains('Dark Architecture'),
+      );
+      bool hasDarkTitleColor = false;
+      noteTitleRichText.text.visitChildren((span) {
+        if (span is TextSpan && span.style?.color == Colors.white) {
+          hasDarkTitleColor = true;
+          return false;
+        }
+        return true;
+      });
+      expect(
+        hasDarkTitleColor,
+        isTrue,
+        reason:
+            'SearchNoteCard title text span must use Colors.white in dark mode',
+      );
+    });
+
+    testWidgets('TEST K4 (D2): Light Mode preservation', (tester) async {
+      final notesProvider = _TestNotesProvider();
+      notesProvider.addTestNote(Note(
+        id: 'n_light_1',
+        title: 'Light Architecture',
+        content: 'Light mode content',
+        category: 'Work',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        colorValue: 0xFFFFFF,
+        tags: const [],
+        attachments: const [],
+      ));
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        notesProvider: notesProvider,
+        theme: ThemeData.light(),
+      ));
+      await tester.pumpAndSettle();
+
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      expect(scaffold.backgroundColor, const Color(0xFFF2F2F7),
+          reason: 'Canvas must remain 0xFFF2F2F7 in light mode');
+
+      final backSvg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(backSvg.colorFilter,
+          const ColorFilter.mode(Color(0xFF1C1C1E), BlendMode.srcIn),
+          reason: 'Back icon SVG filter must remain 0xFF1C1C1E in light mode');
+
+      final closeIcon =
+          tester.widget<Icon>(find.byIcon(Icons.close_rounded));
+      expect(closeIcon.color, const Color(0xFF1C1C1E),
+          reason: 'Close icon must remain 0xFF1C1C1E in light mode');
+
+      final containers = tester.widgetList<Container>(find.byType(Container));
+      expect(
+        containers.any((c) =>
+            c.decoration is BoxDecoration &&
+            (c.decoration as BoxDecoration).color == Colors.white),
+        isTrue,
+        reason: 'Sheet must remain white in light mode',
+      );
+
+      await tester.enterText(find.byType(TextField), 'Light');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      final noteContainers = tester.widgetList<Container>(
+        find.descendant(
+            of: find.byType(SearchNoteCard), matching: find.byType(Container)),
+      );
+      expect(
+        noteContainers.any((c) =>
+            c.decoration is BoxDecoration &&
+            (c.decoration as BoxDecoration).color == Colors.white),
+        isTrue,
+        reason: 'SearchNoteCard front card must remain white in light mode',
+      );
+
+      final noteRichTexts = tester.widgetList<RichText>(
+        find.descendant(
+            of: find.byType(SearchNoteCard), matching: find.byType(RichText)),
+      );
+      final noteTitleRichText = noteRichTexts.firstWhere(
+        (r) => r.text.toPlainText().contains('Light Architecture'),
+      );
+      bool hasLightTitleColor = false;
+      noteTitleRichText.text.visitChildren((span) {
+        if (span is TextSpan && span.style?.color == const Color(0xFF333333)) {
+          hasLightTitleColor = true;
+          return false;
+        }
+        return true;
+      });
+      expect(
+        hasLightTitleColor,
+        isTrue,
+        reason:
+            'SearchNoteCard title text span must use existing 0xFF333333 in light mode',
+      );
+    });
+
+    testWidgets('TEST K5 (D2): Scope selector Dark Mode styling', (tester) async {
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        theme: ThemeData.dark(),
+      ));
+      await tester.pumpAndSettle();
+
+      final pillContainers = tester.widgetList<AnimatedContainer>(
+        find.byType(AnimatedContainer),
+      );
+      expect(
+        pillContainers.any((c) =>
+            c.decoration is BoxDecoration &&
+            (c.decoration as BoxDecoration).color == const Color(0xFF38383A)),
+        isTrue,
+        reason:
+            'Unselected scope pill background must be 0xFF38383A in dark mode',
+      );
+
+      final notesScopeText = tester.widget<Text>(find.text('Notes'));
+      expect(notesScopeText.style?.color, const Color(0xFF8E8E93),
+          reason: 'Unselected scope text must be 0xFF8E8E93 in dark mode');
+    });
+
+    testWidgets('TEST K6 (D2): Empty and recent search Dark Mode styling', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'quick_notes_recent_searches': ['Dark Search Term'],
+      });
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        theme: ThemeData.dark(),
+      ));
+      await tester.pumpAndSettle();
+
+      final titleText = tester.widget<Text>(find.text('Recent Searches'));
+      expect(titleText.style?.color, const Color(0xFF8E8E93));
+
+      final clearAllText = tester.widget<Text>(find.text('Clear all'));
+      expect(clearAllText.style?.color, const Color(0xFF8E8E93));
+
+      final queryText = tester.widget<Text>(find.text('Dark Search Term'));
+      expect(queryText.style?.color, Colors.white);
+
+      final divider = tester.widget<Divider>(find.byType(Divider));
+      expect(divider.color, const Color(0xFF38383A));
+    });
+
+    testWidgets('TEST K7 (D2): Category results Dark Mode styling', (tester) async {
+      final notesProvider = _TestNotesProvider();
+      notesProvider.addTestNote(Note(
+        id: 'n_cat_1',
+        title: 'Baking Bread',
+        content: 'Flour water yeast',
+        category: 'Cooking',
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+        colorValue: 0xFFFFFF,
+        tags: const [],
+        attachments: const [],
+      ));
+
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        notesProvider: notesProvider,
+        theme: ThemeData.dark(),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Cook');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      final containers = tester.widgetList<Container>(find.byType(Container));
+      final catCard = containers.firstWhere(
+        (c) =>
+            c.decoration is BoxDecoration &&
+            (c.decoration as BoxDecoration).color == const Color(0xFF2C2C2C) &&
+            (c.decoration as BoxDecoration).border != null,
+        orElse: () =>
+            throw TestFailure('Could not find Category card with dark decoration'),
+      );
+      final border = (catCard.decoration as BoxDecoration).border! as Border;
+      expect(border.top.color, const Color(0xFF38383A));
+    });
+
+    testWidgets('TEST K8 (D2): No-results state and CTA Dark Mode styling', (tester) async {
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        theme: ThemeData.dark(),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'NonExistentXYZ');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      expect(find.text('No results for "NonExistentXYZ"'), findsOneWidget);
+      final noResultsTitle =
+          tester.widget<Text>(find.text('No results for "NonExistentXYZ"'));
+      expect(noResultsTitle.style?.color, Colors.white);
+
+      final containers = tester.widgetList<Container>(find.byType(Container));
+      final ctaContainer = containers.firstWhere(
+        (c) =>
+            c.decoration is BoxDecoration &&
+            (c.decoration as BoxDecoration).color == const Color(0xFF38383A) &&
+            (c.decoration as BoxDecoration).border != null,
+        orElse: () =>
+            throw TestFailure('Could not find dark mode CTA container'),
+      );
+      final border =
+          (ctaContainer.decoration as BoxDecoration).border! as Border;
+      expect(border.top.color, const Color(0xFF48484A));
+    });
+
+    testWidgets('TEST K9 (D6): Search field has no inherited border in Dark Mode', (tester) async {
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        theme: QuickNotesTheme.darkTheme,
+      ));
+      await tester.pumpAndSettle();
+
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      final decoration = textField.decoration;
+      expect(decoration, isNotNull);
+      expect(decoration!.border, InputBorder.none,
+          reason: 'border must be InputBorder.none');
+      expect(decoration.enabledBorder, InputBorder.none,
+          reason: 'enabledBorder must be InputBorder.none');
+      expect(decoration.focusedBorder, InputBorder.none,
+          reason: 'focusedBorder must be InputBorder.none');
+      expect(decoration.disabledBorder, InputBorder.none,
+          reason: 'disabledBorder must be InputBorder.none');
+      expect(decoration.errorBorder, InputBorder.none,
+          reason: 'errorBorder must be InputBorder.none');
+      expect(decoration.focusedErrorBorder, InputBorder.none,
+          reason: 'focusedErrorBorder must be InputBorder.none');
+    });
+
+    testWidgets('TEST K10 (D6): Search field has no opaque fill and retains brand amber cursor in Dark Mode', (tester) async {
+      await tester.pumpWidget(_buildSearchHarness(
+        child: const SearchScreen(),
+        theme: QuickNotesTheme.darkTheme,
+      ));
+      await tester.pumpAndSettle();
+
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      final decoration = textField.decoration;
+      expect(decoration, isNotNull);
+      expect(decoration!.filled, isFalse,
+          reason: 'filled must be false');
+      expect(decoration.fillColor, Colors.transparent,
+          reason: 'fillColor must be Colors.transparent');
+      expect(textField.cursorColor, const Color(0xFFFFCC00),
+          reason: 'cursorColor must be 0xFFFFCC00');
+    });
+  });
 }
+

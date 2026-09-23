@@ -235,10 +235,12 @@ void main() {
       final qNote = noteRoute as QuickNotesPageRoute<void>;
 
       // Both folder and note routes must have identical timing and curves
-      expect(qFolder.normalTransitionDuration, equals(qNote.normalTransitionDuration));
+      expect(qFolder.normalTransitionDuration,
+          equals(qNote.normalTransitionDuration));
       expect(qFolder.normalReverseTransitionDuration,
           equals(qNote.normalReverseTransitionDuration));
-      expect(qFolder.normalTransitionDuration, equals(QuickNotesMotion.kMotionPage));
+      expect(qFolder.normalTransitionDuration,
+          equals(QuickNotesMotion.kMotionPage));
       expect(qFolder.normalReverseTransitionDuration,
           equals(QuickNotesMotion.kMotionPageReverse));
     });
@@ -298,9 +300,9 @@ void main() {
       expect(find.byType(FolderNotesScreen), findsOneWidget);
     });
 
-    // ── TEST 4: Folder Management morph preservation ─────────────────────────
+    // ── TEST 4: Folder Management canonical page route migration ─────────────
     testWidgets(
-        'TEST 4: FolderManagementScreen preserves legitimate FolderMorphPageRoute with measured bounds',
+        'TEST 4: FolderManagementScreen uses canonical buildPageRoute immediately on tap without 150ms delay',
         (tester) async {
       final notesProvider = _TestNotesProvider();
       final testFolder = _createTestFolder(
@@ -323,35 +325,45 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final folderCardFinder = find.text('Photography');
+      final folderCardFinder = find.byType(FolderGridCard);
       expect(folderCardFinder, findsOneWidget);
 
       // Tap the folder in FolderManagementScreen
       await tester.tap(folderCardFinder);
-      // Wait for the tap press-lift animation delay (150ms in _handleFolderTap)
-      await tester.pump(const Duration(milliseconds: 200));
+      // Navigation begins immediately without artificial 150ms delay
+      await tester.pump();
 
       expect(
         navObserver.pushedRoutes.length,
         greaterThanOrEqualTo(2),
+        reason: 'Route must be pushed immediately on the first pump',
       );
 
       final pushedRoute = navObserver.pushedRoutes.last;
 
-      // Legitimate FolderManagementScreen tap must retain FolderMorphPageRoute
+      // Canonical page transition
       expect(
         pushedRoute,
-        isA<FolderMorphPageRoute<dynamic>>(),
+        isA<QuickNotesPageRoute<dynamic>>(),
+        reason: 'FolderManagementScreen must use canonical QuickNotesPageRoute',
+      );
+      expect(
+        pushedRoute,
+        isNot(isA<FolderMorphPageRoute<dynamic>>()),
         reason:
-            'FolderManagementScreen must preserve FolderMorphPageRoute for folder card morphs',
+            'FolderManagementScreen must NOT use FolderMorphPageRoute (resolves D5-FN-2)',
       );
 
-      final morphRoute = pushedRoute as FolderMorphPageRoute<dynamic>;
-      // Assert that cardBounds are NOT zero (valid measured screen bounds)
+      final qRoute = pushedRoute as QuickNotesPageRoute<dynamic>;
       expect(
-        morphRoute.cardBounds,
-        isNot(equals(Rect.zero)),
-        reason: 'FolderManagementScreen morph must use valid non-zero card bounds',
+        qRoute.normalTransitionDuration,
+        equals(QuickNotesMotion.kMotionPage),
+        reason: 'Standard forward duration must be 340ms',
+      );
+      expect(
+        qRoute.normalReverseTransitionDuration,
+        equals(QuickNotesMotion.kMotionPageReverse),
+        reason: 'Standard reverse duration must be 260ms',
       );
 
       await tester.pumpAndSettle();
@@ -372,7 +384,8 @@ void main() {
       expect(route, isA<QuickNotesPageRoute<void>>());
 
       final qRoute = route as QuickNotesPageRoute<void>;
-      expect(qRoute.normalTransitionDuration, equals(QuickNotesMotion.kMotionPage));
+      expect(qRoute.normalTransitionDuration,
+          equals(QuickNotesMotion.kMotionPage));
       expect(qRoute.normalReverseTransitionDuration,
           equals(QuickNotesMotion.kMotionPageReverse));
 

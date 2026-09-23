@@ -2226,7 +2226,66 @@ void main() {
       expect(done, isTrue);
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PHASE DM-F2 — CALENDAR SCREEN TASKS BOTTOM SHEET BACKING PANEL REGRESSION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  group('Phase DM-F2 — Calendar Screen Tasks Bottom Sheet Backing Panel', () {
+    testWidgets(
+        'Dark Mode: Calendar Tasks bottom sheet outer backing panel resolves to #2C2C2C',
+        (tester) async {
+      await pumpCalendar(tester, isDark: true);
+
+      final sheetContainerFinder = find.ancestor(
+        of: find.byType(TaskWidgetsContainer),
+        matching: find.byType(Container),
+      ).first;
+
+      final container = tester.widget<Container>(sheetContainerFinder);
+      final decoration = container.decoration as ShapeDecoration;
+
+      expect(
+        decoration.color,
+        equals(const Color(0xFF2C2C2C)),
+        reason:
+            'Outer backing panel of Tasks bottom sheet must resolve to #2C2C2C in Dark Mode',
+      );
+      final border = decoration.shape as RoundedRectangleBorder;
+      expect(
+        border.borderRadius,
+        equals(const BorderRadius.vertical(top: Radius.circular(24))),
+      );
+    });
+
+    testWidgets(
+        'Light Mode: Calendar Tasks bottom sheet outer backing panel retains Colors.white',
+        (tester) async {
+      await pumpCalendar(tester, isDark: false);
+
+      final sheetContainerFinder = find.ancestor(
+        of: find.byType(TaskWidgetsContainer),
+        matching: find.byType(Container),
+      ).first;
+
+      final container = tester.widget<Container>(sheetContainerFinder);
+      final decoration = container.decoration as ShapeDecoration;
+
+      expect(
+        decoration.color,
+        equals(Colors.white),
+        reason:
+            'Outer backing panel of Tasks bottom sheet must retain Colors.white in Light Mode',
+      );
+      final border = decoration.shape as RoundedRectangleBorder;
+      expect(
+        border.borderRadius,
+        equals(const BorderRadius.vertical(top: Radius.circular(24))),
+      );
+    });
+  });
 }
+
 
 
 
