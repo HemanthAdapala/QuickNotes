@@ -1,43 +1,110 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'catalog_background.dart';
-import 'sections/containers_section.dart';
-import 'sections/interactive_section.dart';
-import 'sections/surfaces_section.dart';
+import 'component_detail_screen.dart';
 
-/// Phase 1A: Isolated Liquid Glass Catalog Screen
+/// Phase 1A: Minimal Liquid Glass Component Catalog Index
 ///
-/// This screen is a dedicated technical component catalog for inspecting
-/// the basic glass building blocks of `liquid_glass_widgets 1.7.2`.
-///
-/// It is completely isolated from the Quick Notes production UI.
-class LiquidGlassCatalogScreen extends StatefulWidget {
+/// Functions as a simple technical component index over the single supplied background.
+/// Tapping any component opens its dedicated inspection experiment.
+class LiquidGlassCatalogScreen extends StatelessWidget {
   const LiquidGlassCatalogScreen({super.key});
-
-  @override
-  State<LiquidGlassCatalogScreen> createState() =>
-      _LiquidGlassCatalogScreenState();
-}
-
-class _LiquidGlassCatalogScreenState extends State<LiquidGlassCatalogScreen> {
-  CatalogBackgroundMode _backgroundMode = CatalogBackgroundMode.vibrantGradient;
-  int _activeCategoryIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0C10),
+      backgroundColor: Colors.transparent,
       body: CatalogBackground(
-        mode: _backgroundMode,
         child: SafeArea(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(context),
-              _buildCategoryBar(),
+              _buildTopBar(context),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(top: 8, bottom: 40),
-                  child: _buildActiveCategoryContent(),
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ─── Buttons ──────────────────────────────────────────
+                      _buildCategoryHeader('Buttons'),
+                      _buildComponentItem(
+                        context,
+                        'Glass Button',
+                        CatalogComponentType.glassButton,
+                      ),
+                      _buildComponentItem(
+                        context,
+                        'Glass Icon Button',
+                        CatalogComponentType.glassIconButton,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ─── Containers ───────────────────────────────────────
+                      _buildCategoryHeader('Containers'),
+                      _buildComponentItem(
+                        context,
+                        'Glass Container',
+                        CatalogComponentType.glassContainer,
+                      ),
+                      _buildComponentItem(
+                        context,
+                        'Glass Card',
+                        CatalogComponentType.glassCard,
+                      ),
+                      _buildComponentItem(
+                        context,
+                        'Glass Grouped Section',
+                        CatalogComponentType.glassGroupedSection,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ─── Controls ─────────────────────────────────────────
+                      _buildCategoryHeader('Controls'),
+                      _buildComponentItem(
+                        context,
+                        'Glass Chip',
+                        CatalogComponentType.glassChip,
+                      ),
+                      _buildComponentItem(
+                        context,
+                        'Glass Switch',
+                        CatalogComponentType.glassSwitch,
+                      ),
+                      _buildComponentItem(
+                        context,
+                        'Glass Slider',
+                        CatalogComponentType.glassSlider,
+                      ),
+                      _buildComponentItem(
+                        context,
+                        'Glass Segmented Control',
+                        CatalogComponentType.glassSegmentedControl,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ─── Surfaces ─────────────────────────────────────────
+                      _buildCategoryHeader('Surfaces'),
+                      _buildComponentItem(
+                        context,
+                        'Glass App Bar',
+                        CatalogComponentType.glassAppBar,
+                      ),
+                      _buildComponentItem(
+                        context,
+                        'Glass Tab Bar',
+                        CatalogComponentType.glassTabBar,
+                      ),
+                      _buildComponentItem(
+                        context,
+                        'Glass Scaffold',
+                        CatalogComponentType.glassScaffold,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -47,75 +114,36 @@ class _LiquidGlassCatalogScreenState extends State<LiquidGlassCatalogScreen> {
     );
   }
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Laboratory Header
-  // ───────────────────────────────────────────────────────────────────────────
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F1117).withValues(alpha: 0.9),
-        border: const Border(
-          bottom: BorderSide(color: Color(0xFF222634), width: 1),
-        ),
-      ),
-      child: Column(
+  Widget _buildTopBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
+      child: Row(
         children: [
-          Row(
+          IconButton(
+            icon: const Icon(CupertinoIcons.back, color: Colors.white, size: 24),
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Return to Settings',
+          ),
+          const SizedBox(width: 4),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(CupertinoIcons.back, color: Colors.white),
-                tooltip: 'Return to QuickNotes',
-              ),
-              const SizedBox(width: 4),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Liquid Glass Catalog',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    Text(
-                      'Phase 1A — Basic Glass • package v1.7.2',
-                      style: TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 11,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  ],
+              Text(
+                'LIQUID GLASS',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
                 ),
               ),
-              PopupMenuButton<CatalogBackgroundMode>(
-                icon: const Icon(
-                  CupertinoIcons.circle_grid_hex,
-                  color: Color(0xFF60A5FA),
-                  size: 22,
+              Text(
+                'Catalog 1.7.2',
+                style: TextStyle(
+                  color: Color(0xAAFFFFFF),
+                  fontSize: 11,
+                  fontFamily: 'monospace',
                 ),
-                tooltip: 'Change Test Background',
-                color: const Color(0xFF1E2230),
-                onSelected: (mode) => setState(() => _backgroundMode = mode),
-                itemBuilder: (context) => const [
-                  PopupMenuItem(
-                    value: CatalogBackgroundMode.vibrantGradient,
-                    child: Text('Vibrant Gradient', style: TextStyle(color: Colors.white, fontSize: 13)),
-                  ),
-                  PopupMenuItem(
-                    value: CatalogBackgroundMode.geometricShapes,
-                    child: Text('Geometric Shapes', style: TextStyle(color: Colors.white, fontSize: 13)),
-                  ),
-                  PopupMenuItem(
-                    value: CatalogBackgroundMode.monochromeGrid,
-                    child: Text('Monochrome Grid', style: TextStyle(color: Colors.white, fontSize: 13)),
-                  ),
-                ],
               ),
             ],
           ),
@@ -124,70 +152,67 @@ class _LiquidGlassCatalogScreenState extends State<LiquidGlassCatalogScreen> {
     );
   }
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Category Switcher
-  // ───────────────────────────────────────────────────────────────────────────
-  Widget _buildCategoryBar() {
-    final categories = ['Containers', 'Interactive', 'Surfaces'];
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F1117).withValues(alpha: 0.8),
-        border: const Border(
-          bottom: BorderSide(color: Color(0xFF1E2230), width: 1),
+  Widget _buildCategoryHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 10),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.2,
         ),
-      ),
-      child: Row(
-        children: List.generate(categories.length, (index) {
-          final isSelected = _activeCategoryIndex == index;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _activeCategoryIndex = index),
-              child: Container(
-                margin: EdgeInsets.only(
-                  right: index < categories.length - 1 ? 8 : 0,
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFF2563EB)
-                      : const Color(0xFF1A1E29),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFF3B82F6)
-                        : const Color(0xFF262B3A),
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    categories[index],
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : const Color(0xFF94A3B8),
-                      fontSize: 12,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
       ),
     );
   }
 
-  Widget _buildActiveCategoryContent() {
-    switch (_activeCategoryIndex) {
-      case 0:
-        return const ContainersSection();
-      case 1:
-        return const InteractiveSection();
-      case 2:
-      default:
-        return const SurfacesSection();
-    }
+  Widget _buildComponentItem(
+    BuildContext context,
+    String label,
+    CatalogComponentType type,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: const Color(0x33000000),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0x22FFFFFF), width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ComponentDetailScreen(componentType: type),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                const Icon(
+                  CupertinoIcons.chevron_forward,
+                  color: Color(0x88FFFFFF),
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

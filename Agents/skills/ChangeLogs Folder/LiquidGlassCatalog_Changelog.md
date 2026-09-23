@@ -79,3 +79,68 @@ To provide a concrete, interactive catalog of the actual basic components provid
 
 - `lib/main.dart` — Added `LiquidGlassWidgets.initialize()`, `LiquidGlassWidgets.wrap()`, and catalog route
 - `lib/views/screens/settings_screen.dart` — Added Section 4 testing row pointing to `LiquidGlassCatalogScreen`
+
+---
+
+## v1.1.0
+
+### Date
+2026-09-23
+
+### Author
+Anti Gravity
+
+### Type
+- Refactor
+- UI
+- Improvement
+
+---
+
+### Summary
+
+Simplified the Liquid Glass Catalog from an elaborate card/dashboard presentation into a minimal technical component index. The catalog now uses a single, fixed reference wallpaper background across both the main index and all individual component experiment screens. Unnecessary decoration, metadata badges, global control panels, and multi-background selectors were removed to keep the focus entirely on inspecting the actual `liquid_glass_widgets 1.7.2` components.
+
+---
+
+### Detailed Changes
+
+- **Single Test Background (`lib/liquid_glass_catalog/catalog_background.dart`)**:
+  - Replaced procedural canvas shapes/gradients with the single user-provided background asset (`assets/catalog/liquid_glass_catalog_bg.jpg`).
+  - Added asset path to `pubspec.yaml` under `assets/catalog/`.
+  - Guaranteed identical background reference across all component experiments.
+
+- **Minimal Technical Component Index (`lib/liquid_glass_catalog/liquid_glass_catalog_screen.dart`)**:
+  - Replaced tabs, global control sliders, and information cards with a clean vertical category index (`Buttons`, `Containers`, `Controls`, `Surfaces`).
+  - Each item is a clean, minimal tappable row that navigates directly to that component's dedicated experiment.
+  - Eliminated decorative glass framing, metadata tags, and complex UI chrome.
+
+- **Dedicated Component Experiment View (`lib/liquid_glass_catalog/component_detail_screen.dart`)**:
+  - Shows each component in isolation directly against the single shared background.
+  - Displays primary variants (e.g., Default vs Custom Content for `GlassButton`, Circle vs Rounded Square for `GlassIconButton`, continuous vs discrete for `GlassSlider`).
+  - Provides minimal, unobtrusive controls strictly where needed for that specific component (e.g., toggle state for `GlassSwitch`, segment switching for `GlassSegmentedControl`).
+
+- **Removed Superseded Files**:
+  - Removed `lib/liquid_glass_catalog/catalog_card_wrapper.dart`
+  - Removed `lib/liquid_glass_catalog/sections/` directory (`containers_section.dart`, `interactive_section.dart`, `surfaces_section.dart`)
+
+- **Updated Widget Tests (`test/views/liquid_glass_catalog_screen_test.dart`)**:
+  - Updated test suite to validate minimal index categories, component items, and navigation into the dedicated detail screen and back. Passed 100%.
+
+---
+
+### Files Created
+- `assets/catalog/liquid_glass_catalog_bg.jpg` — User-supplied single test background asset
+- `lib/liquid_glass_catalog/component_detail_screen.dart` — Dedicated component experiment screen
+
+### Files Removed
+- `lib/liquid_glass_catalog/catalog_card_wrapper.dart`
+- `lib/liquid_glass_catalog/sections/containers_section.dart`
+- `lib/liquid_glass_catalog/sections/interactive_section.dart`
+- `lib/liquid_glass_catalog/sections/surfaces_section.dart`
+
+### Files Modified
+- `pubspec.yaml` — Added `assets/catalog/`
+- `lib/liquid_glass_catalog/catalog_background.dart` — Updated to use single image background
+- `lib/liquid_glass_catalog/liquid_glass_catalog_screen.dart` — Simplified to minimal component index
+- `test/views/liquid_glass_catalog_screen_test.dart` — Updated test suite for simplified index
