@@ -39,12 +39,12 @@ class _IndicatorCostBenchmarkScreenState extends State<IndicatorCostBenchmarkScr
       reproducibilityQuality: 'GlassQuality.standard',
       classification: PerformanceClassification.lowObservedCost,
       classificationSummary:
-          'Under the tested configuration, indicator transit with pinch and jelly physics runs smoothly at 60 fps. The package enforces blur: 0.0 during transit, successfully bypassing heavy compositor readback operations.',
+          'Under the tested configuration, indicator transit with pinch and jelly physics showed no reproducible frame-budget violations. The indicator rendering path enforces blur: 0.0 during transit.',
       notes: const [
-        'The indicator rendering path enforces blur: 0.0; investigate the performance implications of this design.',
-        'Enforcing blur: 0.0 avoids multi-pass Gaussian blur filter allocations during rapid 60/120 fps transit.',
+        'The indicator rendering path enforces blur: 0.0 during transit (verified package implementation fact).',
         'indicatorPinchStrength updates the concave lens distortion uniform in interactive_indicator.frag.',
-        'Geometry skew via DraggableIndicatorPhysics.buildJellyTransform executes as pure vertex transform with negligible cost.',
+        'Geometry skew via DraggableIndicatorPhysics.buildJellyTransform executes as a 2D transform during velocity drag.',
+        'Observed indicator movement remained within the tested frame budget under the measured configuration.',
       ],
       configControls: Wrap(
         spacing: 8,

@@ -29,12 +29,12 @@ class _ChromaticAberrationCostBenchmarkScreenState
       reproducibilityQuality: 'GlassQuality.standard',
       classification: PerformanceClassification.lowObservedCost,
       classificationSummary:
-          'Under the tested configuration, chromatic aberration produces negligible raster difference compared to 0.0. The fragment shader evaluates color offsets per pixel with minimal ALU overhead.',
+          'Under the tested configuration, chromatic aberration produced no measurable Flutter raster-duration difference compared to 0.0 within the observed measurement variance.',
       notes: const [
         'chromaticAberration: 0.0 samples texture coordinates uniformly for R, G, and B.',
-        'Non-zero values shift the R and B sample coordinates by a small uv offset vector.',
-        'Because the texture cache lines remain coherent, cache misses are minimal on modern GPUs.',
-        'On mobile devices with tighter memory bandwidth, multi-pass premium dispersion may have a higher impact than single-pass standard.',
+        'In the shader source, non-zero values apply a UV coordinate offset before texture lookup.',
+        'No frame-budget pressure was observed across tested offset values (0.0 to 0.30) on the measured configuration.',
+        'Dispersion remains visual with no measurable raster penalty under the tested workload.',
       ],
       configControls: Wrap(
         spacing: 8,

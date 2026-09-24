@@ -42,13 +42,13 @@ class _BaselineBenchmarkScreenState extends State<BaselineBenchmarkScreen> {
       reproducibilityQuality: 'GlassQuality.standard',
       classification: PerformanceClassification.lowObservedCost,
       classificationSummary:
-          'Under the tested configuration, static glass rendering (Baseline B) shows no reproducible frame-budget violations compared to no glass (Baseline A). Introducing continuous animation (C & D) increases UI build and raster workload, but stays within 60 fps budget.',
+          'Under the tested configuration, static glass rendering (Baseline B) showed no reproducible frame-budget violations compared to no glass (Baseline A). Introducing continuous animation (C & D) increased observed UI build and raster durations, but remained within the tested frame budget.',
       notes: const [
         'Baseline A (No glass + idle): Control group establishing background repaint baseline.',
         'Baseline B (Glass + idle): Measures static glass shader composition overhead when no widget rebuilds occur.',
         'Baseline C (No glass + animation): Isolates framework rebuild & translation overhead without glass shaders.',
-        'Baseline D (Glass + animation): Evaluates combined cost of continuous widget rebuilds and glass shader passes.',
-        'The package fragment shader pipeline executes only when scene invalidation occurs; static glass does not continuously re-execute every frame if the tree is idle.',
+        'Baseline D (Glass + animation): Evaluates combined observed timing of continuous widget rebuilds and glass shader passes.',
+        'The framework render pipeline does not schedule continuous repaints when the layer tree is idle.',
       ],
       configControls: Wrap(
         spacing: 8,

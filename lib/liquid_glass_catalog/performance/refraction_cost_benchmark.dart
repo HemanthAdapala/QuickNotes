@@ -38,12 +38,12 @@ class _RefractionCostBenchmarkScreenState extends State<RefractionCostBenchmarkS
       reproducibilityQuality: 'GlassQuality.standard',
       classification: PerformanceClassification.lowObservedCost,
       classificationSummary:
-          'Under the tested configuration, modulating refractiveIndex and thickness produces no measurable raster timing difference. The mathematical instructions in the fragment shader execute in constant time regardless of displacement magnitude.',
+          'Under the tested configuration, modulating refractiveIndex and thickness produced no measurable Flutter raster-duration difference within the observed measurement variance.',
       notes: const [
         'The GLSL refraction pass evaluates Snell\'s law vector deflection per fragment.',
-        'Whether displacement is 2px or 30px, shader ALU instruction count remains constant.',
-        'No branch divergence was observed across low, medium, or high refraction values.',
-        'Visual distortion strength changes significantly without impacting the frame budget.',
+        'In the shader source, Snell\'s law vector deflection follows a fixed sequence of arithmetic operations.',
+        'No branch divergence was observed across low, medium, or high refraction settings.',
+        'Visual distortion strength changes significantly without impacting the tested frame budget.',
       ],
       configControls: Wrap(
         spacing: 8,
@@ -101,7 +101,7 @@ class _RefractionCostBenchmarkScreenState extends State<RefractionCostBenchmarkS
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Constant ALU instruction count in GLSL',
+                  'Fixed fragment shader arithmetic sequence',
                   style: TextStyle(color: Color(0x88FFFFFF), fontSize: 10),
                 ),
               ],

@@ -27,16 +27,16 @@ class _BlurCostBenchmarkScreenState extends State<BlurCostBenchmarkScreen> {
       title: '03 — Blur Cost',
       subtitle: 'Static & Dynamic Blur Radius Benchmarking',
       question:
-          'Does increasing blur radius measurably increase GPU raster cost, and does static blur differ from animated blur?',
+          'Does increasing blur radius measurably increase observed Flutter raster duration, and does static blur differ from animated blur?',
       reproducibilityQuality: 'GlassQuality.standard',
       classification: PerformanceClassification.lowObservedCost,
       classificationSummary:
-          'Under the tested configuration, changing blur from 0 to 25 px shows minimal raster delta in static mode. In dynamic animated blur mode, raster timings increase slightly due to per-frame shader uniform updates, but remain comfortably under the 60 fps budget.',
+          'Under the tested configuration, no significant raster-duration difference was observed between the tested blur values in the tested static configuration. In dynamic animated blur mode, observed raster duration increased slightly during per-frame uniform updates, without sustained budget violations.',
       notes: const [
         'blur: 0.0 represents clear optical glass with edge refraction and specular sheen active; it is NOT "no glass".',
         'In GlassQuality.standard, blur uses a lightweight fragment shader convolution kernel.',
-        'Static blur updates do not require GPU re-filtering on idle frames.',
-        'Continuous dynamic blur updates force per-frame texture sampling changes without dropping frames on tested hardware.',
+        'Static blur updates do not trigger continuous scene invalidation on idle frames.',
+        'Continuous dynamic blur updates force per-frame texture sampling changes without dropping frames on the tested configuration.',
       ],
       configControls: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

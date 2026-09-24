@@ -26,16 +26,16 @@ class _SpecularFresnelCostBenchmarkScreenState
       title: '06 — Specular & Fresnel Cost',
       subtitle: 'Lighting Arithmetic & Highlight Benchmarking',
       question:
-          'Which lighting parameters are performance-neutral arithmetic and which produce observable raster timing changes?',
+          'Which lighting parameters show measurable raster-duration differences under the tested configuration?',
       reproducibilityQuality: 'GlassQuality.standard',
       classification: PerformanceClassification.lowObservedCost,
       classificationSummary:
-          'Under the tested configuration, specular sharpness, light intensity, and Fresnel strength are performance-neutral. They execute as simple arithmetic math inside the fragment shader with zero observable timing delta.',
+          'Under the tested configuration, specular sharpness, light intensity, and Fresnel strength showed no measurable raster-duration differences within the observed measurement variance.',
       notes: const [
-        'specularSharpness controls the Blinn-Phong exponent (n=8 for soft, n=16 for medium, n=32 for sharp). In GLSL, this evaluates as a constant-cost pow() call.',
+        'specularSharpness controls the Blinn-Phong exponent (n=8 for soft, n=16 for medium, n=32 for sharp). In the shader, this evaluates as a pow() call.',
         'lightIntensity is a scalar multiply on the highlight contribution.',
         'fresnelStrength scales the rim grazing angle reflectance.',
-        'None of these parameters alter texture read counts, render pass counts, or pipeline branches.',
+        'None of these parameters alter texture read counts, render pass counts, or pipeline branches in the shader source.',
       ],
       configControls: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +132,7 @@ class _SpecularFresnelCostBenchmarkScreenState
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Pure GLSL ALU math — 100% performance neutral',
+                  'Evaluates via fragment shader arithmetic with no observed raster delta',
                   style: TextStyle(color: Color(0x88FFFFFF), fontSize: 10),
                 ),
               ],

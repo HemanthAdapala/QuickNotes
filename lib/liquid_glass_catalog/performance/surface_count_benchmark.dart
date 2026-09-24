@@ -27,13 +27,13 @@ class _SurfaceCountBenchmarkScreenState extends State<SurfaceCountBenchmarkScree
       reproducibilityQuality: 'GlassQuality.standard',
       classification: PerformanceClassification.moderateObservedCost,
       classificationSummary:
-          'Under the tested configuration, raster duration scales roughly proportionally with the number of active glass surfaces. At 1–4 surfaces, raster timings remain well below 5ms. At 16 simultaneous surfaces, raster timings increase measurably but remain within the 16.6ms 60 fps budget.',
+          'Observed raster duration increased approximately linearly across the tested 1–16 surface workload. Under the tested configuration, 1–4 surfaces showed low raster duration, while 16 simultaneous surfaces approached the tested frame budget without sustained violations.',
       notes: const [
         'Each surface renders an independent GlassContainer with standardized blur: 12 and thickness: 25.',
-        'At 1–4 surfaces, raster cost is lightweight on modern hardware.',
+        'At 1–4 surfaces, observed raster duration remained low on the tested configuration.',
         'At 8–16 surfaces, multiple backdrop texture reads and shader passes compound in the compositor.',
-        'The package documentation specifically recommends GlassQuality.minimal for screens with 10+ simultaneous glass widgets to avoid shader pipeline accumulation.',
-        'Testing in continuous animation mode reveals more noticeable raster scaling than static idle state.',
+        '16 simultaneous surfaces approached the tested frame budget on the measured configuration.',
+        'The package documentation notes that screens with 10+ simultaneous glass widgets increase cumulative shader load.',
       ],
       configControls: Wrap(
         spacing: 8,

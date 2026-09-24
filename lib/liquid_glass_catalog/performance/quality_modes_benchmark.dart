@@ -28,13 +28,13 @@ class _QualityModesBenchmarkScreenState extends State<QualityModesBenchmarkScree
       reproducibilityQuality: 'GlassQuality.${_quality.name}',
       classification: PerformanceClassification.deviceBackendDependent,
       classificationSummary:
-          'Under the tested configuration, Standard quality provides consistent frame times via single-pass shaders. Minimal removes custom fragment shaders entirely using BackdropFilter fallback. Premium activates multi-pass Impeller rendering on supported platforms (Metal/Vulkan).',
+          'Under the tested configuration, Minimal and Standard quality modes showed comparable observed raster durations without sustained frame-budget violations. Premium rendering activates multi-pass Impeller shaders on supported mobile/desktop backends.',
       notes: const [
-        'GlassQuality.minimal: Zero custom fragment shaders. Uses BackdropFilter + Rec. 709 saturation + rim stroke. Recommended for dense lists or low-power modes.',
-        'GlassQuality.standard: Single-pass lightweight fragment shader (lightweight_glass.frag). Default for 95% of widgets.',
-        'GlassQuality.premium: Multi-pass Impeller shader pipeline with texture capture, chromatic dispersion, and high-fidelity specular highlights.',
+        'GlassQuality.minimal rendering path: BackdropFilter fallback + Rec. 709 saturation + rim stroke (zero custom fragment shaders). Package documentation notes this tier for list views or low-power modes.',
+        'GlassQuality.standard rendering path: Single-pass lightweight fragment shader (lightweight_glass.frag). Package documentation identifies this as the default tier for general widgets.',
+        'GlassQuality.premium rendering path: Multi-pass Impeller shader pipeline with texture capture, chromatic dispersion, and specular sheen.',
         'Platform constraint: Windows, Linux, and Web are statically capped at Standard quality by GlassAdaptiveScope.',
-        'On mobile devices with discrete GPU tiles, Premium introduces higher texture bandwidth requirements compared to Standard.',
+        'Observed performance: Under the tested desktop configuration, Minimal and Standard showed comparable raster duration with no sustained frame-budget violations.',
       ],
       configControls: Wrap(
         spacing: 8,

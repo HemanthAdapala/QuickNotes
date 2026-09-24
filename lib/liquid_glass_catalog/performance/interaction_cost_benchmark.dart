@@ -39,13 +39,13 @@ class _InteractionCostBenchmarkScreenState
       reproducibilityQuality: 'GlassQuality.standard',
       classification: PerformanceClassification.lowObservedCost,
       classificationSummary:
-          'Under the tested configuration, press scale and touch glow tracking incur minimal overhead. Drag stretch with spring physics causes transient UI layout and paint passes on each gesture frame, but maintains smooth 60 fps without frame drops.',
+          'Observed interaction overhead coincided with per-frame framework updates and raster activity; no shader-compilation spike was observed during the tested interaction.',
       notes: const [
-        'Idle state: Zero widget rebuilds, zero shader pass re-executions.',
+        'Idle state: Framework does not schedule continuous repaints when content is static.',
         'Press scale: LiquidStretch spring scale modifies the widget transform matrix without re-blurring.',
         'Touch glow: Pointer coordinates update dynamic uniforms in the radial glow pass.',
-        'Drag stretch: Evaluates AnchorStretchSettings spring physics on drag deltas.',
-        'Framework gesture processing and spring ticker interpolation account for the slight build duration increase during active interaction.',
+        'Drag stretch: Spring physics calculation coincides with per-frame framework layout and paint passes.',
+        'Observed interaction frame times remained within the tested frame budget under the measured configuration.',
       ],
       configControls: Wrap(
         spacing: 8,
