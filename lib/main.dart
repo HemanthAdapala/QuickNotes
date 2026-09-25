@@ -15,14 +15,9 @@ import 'services/widget_data_adapter.dart';
 import 'services/deep_link_coordinator.dart';
 import 'themes/quick_notes_theme.dart';
 import 'views/screens/splash_screen.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
-import 'liquid_glass_catalog/liquid_glass_catalog_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize and pre-warm Liquid Glass shader pipeline
-  await LiquidGlassWidgets.initialize();
 
   // Enable runtime fetching so missing fonts like PlusJakartaSans and Outfit can load
   GoogleFonts.config.allowRuntimeFetching = true;
@@ -60,22 +55,19 @@ void main() async {
   final taskEngine = TaskEngine(scheduler: scheduler);
 
   runApp(
-    LiquidGlassWidgets.wrap(
-      brightnessResolver: Theme.maybeBrightnessOf,
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: settingsProvider),
-          ChangeNotifierProvider.value(value: entitlementManager),
-          Provider<PurchaseProvider>.value(value: purchaseProvider),
-          ProxyProvider<PremiumEntitlementManager, FeatureAccess>(
-            update: (_, manager, __) => DefaultFeatureAccess(manager),
-          ),
-          ChangeNotifierProvider(create: (_) => NotesProvider()),
-          ChangeNotifierProvider(
-              create: (_) => TasksProvider(engine: taskEngine)),
-        ],
-        child: const QuickNotesApp(),
-      ),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: settingsProvider),
+        ChangeNotifierProvider.value(value: entitlementManager),
+        Provider<PurchaseProvider>.value(value: purchaseProvider),
+        ProxyProvider<PremiumEntitlementManager, FeatureAccess>(
+          update: (_, manager, __) => DefaultFeatureAccess(manager),
+        ),
+        ChangeNotifierProvider(create: (_) => NotesProvider()),
+        ChangeNotifierProvider(
+            create: (_) => TasksProvider(engine: taskEngine)),
+      ],
+      child: const QuickNotesApp(),
     ),
   );
 }
@@ -102,9 +94,6 @@ class QuickNotesApp extends StatelessWidget {
       themeMode: settingsProvider.themeMode,
 
       home: const SplashScreen(),
-      routes: {
-        '/liquid_glass_catalog': (context) => const LiquidGlassCatalogScreen(),
-      },
       builder: (context, child) {
         if (!kIsWeb) return child!;
         return LayoutBuilder(

@@ -402,3 +402,89 @@ None. Public API signatures preserved.
 - P2.6 regression suite: All 36 tests passing.
 - Total passing tests: 118 passing, 0 failing.
 - `flutter analyze` reports zero errors and zero new warnings.
+
+---
+
+## [1.5.0] - 2026-09-25 (Experimental Catalog Route Decommissioning)
+
+### Date
+2026-09-25
+
+### Author
+Anti Gravity
+
+### Type
+- Architecture
+- Cleanup
+
+---
+
+### Summary
+Decommissioned experimental catalog named route from `MaterialApp` in `lib/main.dart` following the complete removal of third-party laboratory infrastructure, returning application routing exclusively to production flows.
+
+---
+
+### Detailed Changes
+- **Root Routing Table Cleanup**:
+  - Removed named route entry `'/liquid_glass_catalog': (context) => const LiquidGlassCatalogScreen()` from `MaterialApp.routes`.
+  - Removed unused catalog screen import from `lib/main.dart`.
+  - Restored clean single-responsibility root widget hierarchy.
+
+---
+
+### Why was this change made?
+Following the permanent decommissioning of the third-party experimental laboratory, the dangling named route was purged to prevent runtime lookup of deleted destinations and eliminate compiler dependencies on removed modules.
+
+---
+
+### Architecture Impact
+- Navigation architecture strictly encapsulates production destinations.
+- Zero dead routes in root routing table.
+
+---
+
+### Files Created
+None.
+
+---
+
+### Files Modified
+- `lib/main.dart`
+- `Agents/skills/ChangeLogs Folder/Navigation_Changelog.md`
+
+---
+
+### Dependencies Added
+None.
+
+---
+
+### Breaking Changes
+None.
+
+---
+
+### Migration Notes
+None.
+
+---
+
+### Future Improvements
+None.
+
+---
+
+### Known Issues
+None.
+
+---
+
+### Testing Status
+- Full compilation: `flutter build apk --debug` succeeded with 0 errors.
+- Bundle packaging: `flutter build bundle` succeeded with 0 errors.
+- Navigation tests passing.
+
+---
+
+### Final Result
+Root application navigation table in `lib/main.dart` is clean, strictly typed, and free of orphaned experimental routes.

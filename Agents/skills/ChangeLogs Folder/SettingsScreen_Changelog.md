@@ -642,6 +642,89 @@ In the previous implementation, flex contention between `title` and `value` rest
 ### Final Result
 "Google Connected" displays cleanly on a single line at all standard mobile widths without RenderFlex overflow.
 
+---
 
+## v3.8.0
 
+### Date
+2026-09-25
 
+### Author
+Anti Gravity
+
+### Type
+- Refactor
+- Architecture
+- Cleanup
+
+---
+
+### Summary
+Cleaned Developer Tools section in `SettingsScreen` by permanently removing the third-party experimental catalog navigation tile and its associated orphaned import, ensuring the settings hierarchy strictly references canonical production and developer tooling.
+
+---
+
+### Detailed Changes
+- **Developer Section Navigation Tile Removal**:
+  - Removed `GroupedTile.navigation` for `'Liquid Glass Catalog (Phase 1A)'` (`iconPath: 'assets/icons/highlighter.svg'`) under Section 4 Developer tools (`if (kDebugMode)`).
+  - Preserved canonical developer tools: `Passcode Lock (Dev)`, `Storage and Data (Dev)`, `Glassmorphism Sandbox (Dev)`, `Seed Long Note`, `Clear All Notes`, and `Alarm Notification Test`.
+- **Import Cleanup**:
+  - Removed unused import `../../liquid_glass_catalog/liquid_glass_catalog_screen.dart` from `lib/views/screens/settings_screen.dart`.
+
+---
+
+### Why was this change made?
+Following repository hygiene and complete forensic removal of experimental laboratory infrastructure, the navigation tile pointing to the decommissioned catalog was removed to prevent dead references, compilation failures, and broken routes.
+
+---
+
+### Architecture Impact
+- Developer menu hierarchy restored to canonical internal testing utilities.
+- Zero impact on user-facing preferences, account management, backup/sync, or theme controls.
+
+---
+
+### Files Created
+None.
+
+---
+
+### Files Modified
+- `lib/views/screens/settings_screen.dart`
+- `Agents/skills/ChangeLogs Folder/SettingsScreen_Changelog.md`
+
+---
+
+### Dependencies Added
+None.
+
+---
+
+### Breaking Changes
+None.
+
+---
+
+### Migration Notes
+None.
+
+---
+
+### Future Improvements
+None.
+
+---
+
+### Known Issues
+None.
+
+---
+
+### Testing Status
+- Static analysis: `flutter analyze lib/views/screens/settings_screen.dart`: 0 issues found (100% clean).
+- Automated test verification: Full application build and settings tests pass.
+
+---
+
+### Final Result
+`SettingsScreen` is completely free of experimental catalog dependencies and points solely to authoritative Quick Notes screens and developer utilities.
