@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/motion/motion_constants.dart';
+import '../../core/motion/quick_notes_visual_preset.dart';
 import 'app_bottom_navigation_bar.dart'; // Import BottomBarGlassSurface
+import 'liquid_glass_morph_container.dart';
+import 'quick_notes_glass_action_morph.dart';
+import 'quick_notes_visual_transition.dart';
 import 'tactile_button.dart';
 
 class AppHeaderBar extends StatefulWidget {
@@ -29,6 +33,18 @@ class AppHeaderBar extends StatefulWidget {
   final Curve expandCurve;
   final Curve shrinkCurve;
 
+  /// Optional visual motion preset. When provided, [QuickNotesVisualTransition.liquidGlass]
+  /// is used as the sole authoritative visual transition engine instead of legacy containers.
+  final QuickNotesVisualPreset? visualPreset;
+
+  /// When true, [leftChild] is treated as a self-contained interactive control
+  /// (such as [QuickNotesLiquidGlassBackButton]) and mounted directly within its
+  /// [Hero] wrapper without being wrapped in the legacy [BottomBarGlassSurface]
+  /// and [TactileButton].
+  ///
+  /// Defaults to false to strictly preserve legacy behavior for existing callers.
+  final bool useSelfContainedLeftControl;
+
   const AppHeaderBar({
     super.key,
     this.leftChild,
@@ -50,6 +66,8 @@ class AppHeaderBar extends StatefulWidget {
     this.shrinkDuration = QuickNotesMotion.kMotionPageReverse,
     this.expandCurve = QuickNotesMotion.kMotionAppleEase,
     this.shrinkCurve = QuickNotesMotion.kMotionAppleEase,
+    this.visualPreset,
+    this.useSelfContainedLeftControl = false,
   });
 
   @override
@@ -108,7 +126,8 @@ class _AppHeaderBarState extends State<AppHeaderBar> {
         _menuFocusScopeNode.unfocus();
       } else {
         final bool disableAnimations = MediaQuery.of(context).disableAnimations;
-        _isInteractivityReady = disableAnimations;
+        _isInteractivityReady = disableAnimations ||
+            widget.expandedChild is QuickNotesGlassActionMorph;
       }
     }
   }
@@ -124,20 +143,6 @@ class _AppHeaderBarState extends State<AppHeaderBar> {
   @override
   Widget build(BuildContext context) {
     final bool disableAnimations = MediaQuery.of(context).disableAnimations;
-    final Duration effectiveExpandDuration =
-        disableAnimations ? Duration.zero : widget.expandDuration;
-    final Duration effectiveShrinkDuration =
-        disableAnimations ? Duration.zero : widget.shrinkDuration;
-    final Duration effectiveFadeDuration = disableAnimations
-        ? Duration.zero
-        : (widget.isExpanded
-            ? QuickNotesMotion.kMotionMicro
-            : QuickNotesMotion.kMotionRelease);
-    final Duration effectivePopupDuration = disableAnimations
-        ? Duration.zero
-        : (widget.isExpanded
-            ? QuickNotesMotion.kMotionPage
-            : QuickNotesMotion.kMotionPageReverse);
 
     // Gated interactivity: expanded child only accepts pointer events once fully settled
     final bool isContentInteractive =
@@ -157,19 +162,23 @@ class _AppHeaderBarState extends State<AppHeaderBar> {
 
     Widget? leftButton;
     if (widget.leftChild != null) {
-      leftButton = BottomBarGlassSurface(
-        width: widget.leftWidth,
-        height: 44.0,
-        borderRadius: BorderRadius.circular(22.0),
-        child: TactileButton(
-          onTap: widget.onLeftTap ?? () {},
-          child: Center(child: widget.leftChild),
-        ),
-      );
+      if (widget.useSelfContainedLeftControl) {
+        leftButton = widget.leftChild;
+      } else {
+        leftButton = BottomBarGlassSurface(
+          width: widget.leftWidth,
+          height: 44.0,
+          borderRadius: BorderRadius.circular(22.0),
+          child: TactileButton(
+            onTap: widget.onLeftTap ?? () {},
+            child: Center(child: widget.leftChild),
+          ),
+        );
+      }
       if (widget.leftHeroTag.isNotEmpty) {
         leftButton = Hero(
           tag: widget.leftHeroTag,
-          child: leftButton,
+          child: leftButton!,
         );
       }
     }
@@ -223,86 +232,74 @@ class _AppHeaderBarState extends State<AppHeaderBar> {
               ),
             ),
 
-          // Right Button/Pill (Glass Surface with configurable in-place expansion/shrinking)
+          // Right Button/Pill (QuickNotesVisualTransition when visualPreset provided, else LiquidGlassMorphContainer)
           if (widget.rightChild != null)
             Positioned(
               right: 0,
               top: 0,
-              child: AnimatedContainer(
-                duration: widget.isExpanded
-                    ? effectiveExpandDuration
-                    : effectiveShrinkDuration,
-                curve: widget.isExpanded
-                    ? widget.expandCurve
-                    : widget.shrinkCurve,
-                width: widget.isExpanded
-                    ? widget.expandedWidth
-                    : widget.rightWidth,
-                height: widget.isExpanded ? widget.expandedHeight : 44.0,
-                onEnd: _handleAnimationEnd,
-                child: Hero(
-                  tag: widget.rightHeroTag,
-                  child: BottomBarGlassSurface(
-                    width: widget.isExpanded
-                        ? widget.expandedWidth
-                        : widget.rightWidth,
-                    height: widget.isExpanded ? widget.expandedHeight : 44.0,
-                    borderRadius: BorderRadius.circular(
-                        widget.isExpanded ? 20.0 : 22.0),
-                    useFrost: true,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(
-                          widget.isExpanded ? 20.0 : 22.0),
-                      child: Stack(
-                        children: [
-                          // Collapsed state: 3-dots icon
-                          AnimatedOpacity(
-                            duration: effectiveFadeDuration,
-                            curve: QuickNotesMotion.kMotionAppleEase,
-                            opacity: widget.isExpanded ? 0.0 : 1.0,
-                            child: IgnorePointer(
-                              ignoring: widget.isExpanded,
-                              child: widget.rightChild!,
-                            ),
+              child: widget.expandedChild != null
+                  ? (widget.expandedChild is QuickNotesGlassActionMorph
+                      ? FocusScope(
+                          node: _menuFocusScopeNode,
+                          autofocus: isContentInteractive,
+                          canRequestFocus: isContentInteractive,
+                          child: widget.expandedChild!,
+                        )
+                      : (widget.visualPreset != null
+                          ? QuickNotesVisualTransition.liquidGlass(
+                          key: const ValueKey('app_header_bar_visual_transition'),
+                          state: widget.isExpanded,
+                          preset: widget.visualPreset!,
+                          collapsedSize: Size(widget.rightWidth, 44.0),
+                          expandedSize:
+                              Size(widget.expandedWidth, widget.expandedHeight),
+                          collapsedBorderRadius: BorderRadius.circular(22.0),
+                          expandedBorderRadius: BorderRadius.circular(20.0),
+                          anchor: Alignment.topRight,
+                          useFrost: true,
+                          heroTag: widget.rightHeroTag.isNotEmpty
+                              ? widget.rightHeroTag
+                              : null,
+                          onTransitionEnd: _handleAnimationEnd,
+                          collapsedChild: widget.rightChild!,
+                          expandedChild: FocusScope(
+                            node: _menuFocusScopeNode,
+                            autofocus: isContentInteractive,
+                            canRequestFocus: isContentInteractive,
+                            child: widget.expandedChild!,
                           ),
-
-                          // Expanded state: MoreOptionsPopup menu items (staggered fade & subtle slide)
-                          // DEF-07 fix: IgnorePointer gates hit-testing during expansion animation
-                          if (widget.expandedChild != null)
-                            AnimatedOpacity(
-                              duration: effectivePopupDuration,
-                              curve: QuickNotesMotion.kMotionAppleEase,
-                              opacity: widget.isExpanded ? 1.0 : 0.0,
-                              child: IgnorePointer(
-                                ignoring: !isContentInteractive,
-                                child: AnimatedSlide(
-                                  duration: effectivePopupDuration,
-                                  curve: QuickNotesMotion.kMotionAppleEase,
-                                  offset: widget.isExpanded
-                                      ? Offset.zero
-                                      : const Offset(0, 0.08),
-                                  child: OverflowBox(
-                                    minWidth: widget.expandedWidth,
-                                    maxWidth: widget.expandedWidth,
-                                    minHeight: widget.expandedHeight,
-                                    maxHeight: widget.expandedHeight,
-                                    alignment: Alignment.topRight,
-                                    child: FocusScope(
-                                      node: _menuFocusScopeNode,
-                                      autofocus: isContentInteractive,
-                                      canRequestFocus: isContentInteractive,
-                                      child: widget.expandedChild!,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
+                        )
+                      : LiquidGlassMorphContainer(
+                          isExpanded: widget.isExpanded,
+                          collapsedSize: Size(widget.rightWidth, 44.0),
+                          expandedSize:
+                              Size(widget.expandedWidth, widget.expandedHeight),
+                          collapsedBorderRadius: BorderRadius.circular(22.0),
+                          expandedBorderRadius: BorderRadius.circular(20.0),
+                          anchor: Alignment.topRight,
+                          useFrost: true,
+                          heroTag: widget.rightHeroTag.isNotEmpty
+                              ? widget.rightHeroTag
+                              : null,
+                          onTransitionEnd: _handleAnimationEnd,
+                          collapsedChild: widget.rightChild!,
+                          expandedChild: FocusScope(
+                            node: _menuFocusScopeNode,
+                            autofocus: isContentInteractive,
+                            canRequestFocus: isContentInteractive,
+                            child: widget.expandedChild!,
+                          ),
+                        )))
+                  : Hero(
+                      tag: widget.rightHeroTag,
+                      child: BottomBarGlassSurface(
+                        width: widget.rightWidth,
+                        height: 44.0,
+                        borderRadius: BorderRadius.circular(22.0),
+                        useFrost: true,
+                        child: widget.rightChild!,
                       ),
                     ),
-                  ),
-                ),
-              ),
             ),
         ],
       ),

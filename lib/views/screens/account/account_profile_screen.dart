@@ -15,6 +15,7 @@ import '../../widgets/tactile_button.dart';
 import '../../widgets/grouped_list_container.dart';
 import '../home_screen.dart';
 import '../../widgets/app_header_bar.dart';
+import '../../widgets/quick_notes_liquid_glass_back_button.dart';
 
 /// AccountProfileScreen — Canonical profile management screen for Quick Notes.
 ///
@@ -297,6 +298,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                       leftWidth: 44.0,
                       rightWidth: 44.0,
                       rightChild: null,
+                      useSelfContainedLeftControl: !widget.isSetupFlow,
                       onLeftTap: widget.isSetupFlow
                           ? null
                           : () {
@@ -308,12 +310,14 @@ class _AccountProfileScreenState extends State<AccountProfileScreen> {
                             },
                       leftChild: widget.isSetupFlow
                           ? null
-                          : SvgPicture.asset(
-                              'assets/icons/angle_left.svg',
-                              width: 22,
-                              height: 22,
-                              colorFilter: ColorFilter.mode(
-                                  primaryTextColor, BlendMode.srcIn),
+                          : QuickNotesLiquidGlassBackButton(
+                              onPressed: () {
+                                if (!Navigator.canPop(context)) {
+                                  _navigateToHome();
+                                } else {
+                                  Navigator.pop(context);
+                                }
+                              },
                             ),
                       titleWidget: Text(
                         "Profile",

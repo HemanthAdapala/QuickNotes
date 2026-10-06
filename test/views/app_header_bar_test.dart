@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:quick_notes/views/widgets/app_bottom_navigation_bar.dart';
 import 'package:quick_notes/views/widgets/app_header_bar.dart';
+import 'package:quick_notes/views/widgets/liquid_glass_morph_container.dart';
+import 'package:quick_notes/views/widgets/quick_notes_liquid_glass_back_button.dart';
 import 'package:quick_notes/views/widgets/tactile_button.dart';
 
 void main() {
@@ -23,6 +26,7 @@ void main() {
     Widget? expandedChild,
     bool disableAnimations = false,
     double viewportWidth = 402.0,
+    bool useSelfContainedLeftControl = false,
   }) {
     return MediaQuery(
       data: MediaQueryData(
@@ -52,6 +56,7 @@ void main() {
                 expandedWidth: expandedWidth,
                 expandedHeight: expandedHeight,
                 expandedChild: expandedChild,
+                useSelfContainedLeftControl: useSelfContainedLeftControl,
               ),
             ),
           ),
@@ -87,18 +92,15 @@ void main() {
       expect(leftPositioned.width, 44.0);
       expect(leftPositioned.height, 44.0);
 
-      // The right button is within AnimatedContainer(width: 44, height: 44)
-      final rightContainer = tester.widget<AnimatedContainer>(
+      // The right button measures 44x44
+      final rightGlassSize = tester.getSize(
         find.ancestor(
           of: find.byIcon(Icons.more_horiz),
-          matching: find.byType(AnimatedContainer),
+          matching: find.byType(BottomBarGlassSurface),
         ).first,
       );
-      final constraints = rightContainer.constraints;
-      expect(constraints?.minWidth, 44.0);
-      expect(constraints?.maxWidth, 44.0);
-      expect(constraints?.minHeight, 44.0);
-      expect(constraints?.maxHeight, 44.0);
+      expect(rightGlassSize.width, 44.0);
+      expect(rightGlassSize.height, 44.0);
     });
   });
 
@@ -184,16 +186,75 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.getSize(find.byType(AppHeaderBar)).height, 120.0);
-      final rightContainer = tester.widget<AnimatedContainer>(
+      final morphContainer = tester.widget<LiquidGlassMorphContainer>(
         find.ancestor(
           of: find.text('Menu Items'),
-          matching: find.byType(AnimatedContainer),
+          matching: find.byType(LiquidGlassMorphContainer),
         ).first,
       );
-      expect(rightContainer.constraints?.minWidth, 192.0);
-      expect(rightContainer.constraints?.maxWidth, 192.0);
-      expect(rightContainer.constraints?.minHeight, 120.0);
-      expect(rightContainer.constraints?.maxHeight, 120.0);
+      expect(morphContainer.expandedSize.width, 192.0);
+      expect(morphContainer.expandedSize.height, 120.0);
+      final expandedGlassSize = tester.getSize(
+        find.ancestor(
+          of: find.text('Menu Items'),
+          matching: find.byType(BottomBarGlassSurface),
+        ).first,
+      );
+      expect(expandedGlassSize.width, 192.0);
+      expect(expandedGlassSize.height, 120.0);
+    });
+
+    testWidgets('header renders NoteEditorScreen full pill 192x44 and expands to 192x250', (tester) async {
+      const fiveElementRow = Row(
+        children: [
+          Expanded(child: Icon(Icons.undo)),
+          Expanded(child: Icon(Icons.redo)),
+          SizedBox(width: 1.0, height: 18.0),
+          Expanded(child: Icon(Icons.folder_open)),
+          Expanded(child: Icon(Icons.more_horiz)),
+        ],
+      );
+
+      // Collapsed state: 192x44
+      await tester.pumpWidget(buildHeaderTestHarness(
+        isExpanded: false,
+        rightWidth: 192.0,
+        rightChild: fiveElementRow,
+        expandedChild: const Text('Note Options'),
+        expandedWidth: 192.0,
+        expandedHeight: 250.0,
+      ));
+      await tester.pumpAndSettle();
+
+      final Size collapsedGlassSize = tester.getSize(
+        find.ancestor(
+          of: find.byIcon(Icons.more_horiz),
+          matching: find.byType(BottomBarGlassSurface),
+        ).first,
+      );
+      expect(collapsedGlassSize.width, 192.0);
+      expect(collapsedGlassSize.height, 44.0);
+
+      // Transition to expanded state: 192x250
+      await tester.pumpWidget(buildHeaderTestHarness(
+        isExpanded: true,
+        rightWidth: 192.0,
+        rightChild: fiveElementRow,
+        expandedChild: const Text('Note Options'),
+        expandedWidth: 192.0,
+        expandedHeight: 250.0,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(tester.getSize(find.byType(AppHeaderBar)).height, 250.0);
+      final Size expandedGlassSize = tester.getSize(
+        find.ancestor(
+          of: find.text('Note Options'),
+          matching: find.byType(BottomBarGlassSurface),
+        ).first,
+      );
+      expect(expandedGlassSize.width, 192.0);
+      expect(expandedGlassSize.height, 250.0);
     });
   });
 
@@ -468,6 +529,121 @@ void main() {
       expect(dismissedCenter.dx, equals(closedCenter.dx));
       expect(dismissedCenter.dy, equals(closedCenter.dy));
       expect(dismissedRect, equals(closedRect));
+    });
+  });
+
+  group('Group G — LB-R7 Escape Hatch & Self-Contained Left Control', () {
+    testWidgets('1. Legacy default (useSelfContainedLeftControl: false) wraps leftChild in BottomBarGlassSurface and TactileButton', (tester) async {
+      int tapCount = 0;
+      await tester.pumpWidget(buildHeaderTestHarness(
+        leftChild: const Icon(Icons.arrow_back),
+        onLeftTap: () => tapCount++,
+        useSelfContainedLeftControl: false,
+      ));
+
+      // Must be wrapped in TactileButton
+      expect(find.byType(TactileButton), findsOneWidget);
+
+      // Must be wrapped in BottomBarGlassSurface
+      final glassAncestors = find.ancestor(
+        of: find.byIcon(Icons.arrow_back),
+        matching: find.byType(BottomBarGlassSurface),
+      );
+      expect(glassAncestors, findsOneWidget);
+
+      // Tapping invokes onLeftTap
+      await tester.tap(find.byType(TactileButton));
+      await tester.pumpAndSettle();
+      expect(tapCount, 1);
+    });
+
+    testWidgets('2. Self-contained mode (useSelfContainedLeftControl: true) bypasses outer BottomBarGlassSurface and TactileButton', (tester) async {
+      await tester.pumpWidget(buildHeaderTestHarness(
+        leftChild: const SizedBox(
+          key: ValueKey('custom_left_control'),
+          width: 44.0,
+          height: 44.0,
+        ),
+        useSelfContainedLeftControl: true,
+      ));
+
+      // No TactileButton in the leading position
+      expect(find.byType(TactileButton), findsNothing);
+
+      // No outer BottomBarGlassSurface wrapping the custom control
+      final glassAncestors = find.ancestor(
+        of: find.byKey(const ValueKey('custom_left_control')),
+        matching: find.byType(BottomBarGlassSurface),
+      );
+      expect(glassAncestors, findsNothing);
+
+      // Control is mounted directly inside the Hero and Positioned container
+      expect(find.byKey(const ValueKey('custom_left_control')), findsOneWidget);
+    });
+
+    testWidgets('3. Hero wrapper is preserved in both legacy and self-contained modes', (tester) async {
+      // Legacy mode
+      await tester.pumpWidget(buildHeaderTestHarness(
+        leftChild: const Icon(Icons.arrow_back),
+        leftHeroTag: 'hero_test_leading_tag',
+        useSelfContainedLeftControl: false,
+      ));
+      expect(find.byType(Hero), findsOneWidget);
+      final legacyHero = tester.widget<Hero>(find.byType(Hero));
+      expect(legacyHero.tag, 'hero_test_leading_tag');
+
+      // Self-contained mode
+      await tester.pumpWidget(buildHeaderTestHarness(
+        leftChild: const SizedBox(key: ValueKey('self_contained_child')),
+        leftHeroTag: 'hero_test_leading_tag',
+        useSelfContainedLeftControl: true,
+      ));
+      expect(find.byType(Hero), findsOneWidget);
+      final selfContainedHero = tester.widget<Hero>(find.byType(Hero));
+      expect(selfContainedHero.tag, 'hero_test_leading_tag');
+    });
+
+    testWidgets('4. Dimensions are preserved at exactly 44.0 x 44.0 in self-contained mode', (tester) async {
+      await tester.pumpWidget(buildHeaderTestHarness(
+        leftChild: const SizedBox(key: ValueKey('sized_left_child')),
+        leftWidth: 44.0,
+        useSelfContainedLeftControl: true,
+      ));
+
+      final positioned = tester.widget<Positioned>(
+        find.ancestor(
+          of: find.byKey(const ValueKey('sized_left_child')),
+          matching: find.byType(Positioned),
+        ).first,
+      );
+      expect(positioned.left, 0.0);
+      expect(positioned.top, 0.0);
+      expect(positioned.width, 44.0);
+      expect(positioned.height, 44.0);
+    });
+
+    testWidgets('5. QuickNotesLiquidGlassBackButton integration renders as sole glass surface and fires tap', (tester) async {
+      int backTapped = 0;
+      await tester.pumpWidget(buildHeaderTestHarness(
+        leftChild: QuickNotesLiquidGlassBackButton(
+          onPressed: () => backTapped++,
+          isDark: true,
+          enableFlex: false, // static test
+        ),
+        leftWidth: 44.0,
+        useSelfContainedLeftControl: true,
+      ));
+
+      // Exactly ONE BottomBarGlassSurface (the one inside QuickNotesLiquidGlassBackButton)
+      expect(find.byType(BottomBarGlassSurface), findsOneWidget);
+
+      // ZERO TactileButtons
+      expect(find.byType(TactileButton), findsNothing);
+
+      // Tap executes callback
+      await tester.tap(find.byType(QuickNotesLiquidGlassBackButton));
+      await tester.pumpAndSettle();
+      expect(backTapped, 1);
     });
   });
 }

@@ -12,6 +12,7 @@ import '../../providers/notes_provider.dart';
 import '../../themes/app_theme.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import 'note_editor_screen.dart';
 import 'create_task_screen.dart';
 import '../../core/animations/page_transitions.dart';
@@ -311,15 +312,14 @@ class _NoteCalendarScreenState extends State<NoteCalendarScreen> {
                 leftHeroTag: 'hero_note_calendar_back',
                 rightHeroTag: 'hero_note_calendar_search',
                 leftWidth: 44.0,
+                useSelfContainedLeftControl: true,
                 onLeftTap: () {
                   widget.onNavigateToTab?.call(0);
                 },
-                leftChild: SvgPicture.asset(
-                  'assets/icons/angle_left.svg',
-                  width: 22,
-                  height: 22,
-                  colorFilter: const ColorFilter.mode(
-                      Color(0xFF1C1C1E), BlendMode.srcIn),
+                leftChild: QuickNotesLiquidGlassBackButton(
+                  onPressed: () {
+                    widget.onNavigateToTab?.call(0);
+                  },
                 ),
                 title: "Note Calendar",
                 rightWidth: 44.0,

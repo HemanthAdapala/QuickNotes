@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 
 import '../../controllers/backup_restore_controller.dart';
 import '../../models/session_type.dart';
@@ -124,15 +125,14 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                     leftWidth: 44.0,
                     rightWidth: 44.0,
                     rightChild: null,
+                    useSelfContainedLeftControl: true,
                     onLeftTap: () {
                       Navigator.pop(context);
                     },
-                    leftChild: SvgPicture.asset(
-                      'assets/icons/angle_left.svg',
-                      width: 22,
-                      height: 22,
-                      colorFilter:
-                          ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                    leftChild: QuickNotesLiquidGlassBackButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
                     ),
                     titleWidget: Text(
                       "Backup & Sync",

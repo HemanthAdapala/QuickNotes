@@ -153,7 +153,7 @@ class DeepLinkCoordinator {
   DeepLinkCoordinator._internal();
 
   static const MethodChannel _clearChannel =
-      MethodChannel('com.quicknotes.app/deep_link_clear');
+      MethodChannel('com.quicknotes.byhmnth/deep_link_clear');
 
   DeepLinkAction? _pendingAction;
   String? _consumedInitialUri;

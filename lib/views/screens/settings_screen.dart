@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../widgets/grouped_list_container.dart';
 import '../../core/animations/page_transitions.dart';
 import 'profile_screen.dart';
@@ -22,7 +23,12 @@ import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/notes_provider.dart';
 import 'experimental/sde_drag_test_screen.dart';
-import '../widgets/more_options_popup.dart';
+import 'experimental/liquid_glass_easy_button_lab_screen.dart';
+import 'experimental/liquid_glass_tab_bar_lab_screen.dart';
+import 'experimental/liquid_glass_morph_physical_device_lab_screen.dart';
+import 'experimental/liquid_glass_morph_fidelity_lab_screen.dart';
+import '../widgets/quick_notes_glass_action_morph.dart';
+import 'settings/settings_more_options_action.dart';
 import '../widgets/header_expanded_interaction.dart';
 import '../widgets/delete_confirmation_dialog.dart';
 import '../../models/note.dart';
@@ -33,6 +39,7 @@ import 'widgets_screen.dart';
 import '../../premium/premium.dart';
 import '../../providers/settings_provider.dart';
 import 'developer/premium_test_mode_screen.dart';
+import '../widgets/fidelity_lab_diagnostic_button.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool? isDarkMode;
@@ -94,6 +101,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _avatarFileExists = fileExists;
       });
     }
+  }
+
+  void _handleMoreOptionsAction(SettingsMoreOptionsAction action) {
+    setState(() => _isMoreOptionsOpen = false);
+    switch (action) {
+      case SettingsMoreOptionsAction.deleteData:
+        _executeDeleteData();
+        break;
+      case SettingsMoreOptionsAction.refresh:
+        _executeRefresh();
+        break;
+    }
+  }
+
+  Future<void> _executeDeleteData() async {
+    final notesProvider =
+        Provider.of<NotesProvider>(context, listen: false);
+    final tasksProvider =
+        Provider.of<TasksProvider>(context, listen: false);
+    final messenger = ScaffoldMessenger.of(context);
+    final confirm = await showDeleteNoteDialog(
+      context,
+      title: 'Delete Data',
+      message:
+          'Are you sure you want to delete\nall notes and tasks? This action\ncannot be undone',
+    );
+    if (confirm == true && mounted) {
+      for (final note in List<Note>.from(notesProvider.notes)) {
+        await notesProvider.deleteNote(note.id);
+      }
+      for (final task in List<TaskItem>.from(tasksProvider.tasks)) {
+        await tasksProvider.deleteTask(task.id);
+      }
+      for (final folder in List<Folder>.from(notesProvider.folders)) {
+        await notesProvider.deleteFolder(folder.id);
+      }
+      messenger.showSnackBar(
+        const SnackBar(content: Text('All data deleted successfully.')),
+      );
+    }
+  }
+
+  Future<void> _executeRefresh() async {
+    final notesProvider =
+        Provider.of<NotesProvider>(context, listen: false);
+    final tasksProvider =
+        Provider.of<TasksProvider>(context, listen: false);
+    final messenger = ScaffoldMessenger.of(context);
+    await notesProvider.loadFolders();
+    await notesProvider.loadNotes();
+    await tasksProvider.loadTasks();
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Data refreshed.')),
+    );
   }
 
   Widget _buildAvatarWidget() {
@@ -768,6 +829,62 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                     },
                                   ),
                                   GroupedTile.navigation(
+                                    iconPath: 'assets/icons/highlighter.svg',
+                                    title: 'Liquid Glass Easy Button Lab',
+                                    fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        buildPageRoute(
+                                            const LiquidGlassEasyButtonLabScreen()),
+                                      );
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
+                                    iconPath: 'assets/icons/highlighter.svg',
+                                    title: 'Liquid Glass TabBar Lab',
+                                    fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        buildPageRoute(
+                                            const LiquidGlassTabBarLabScreen()),
+                                      );
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
+                                    iconPath: 'assets/icons/highlighter.svg',
+                                    title: 'Morphing — Physical Device Lab',
+                                    fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        buildPageRoute(
+                                            const LiquidGlassMorphPhysicalDeviceLabScreen()),
+                                      );
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
+                                    iconPath: 'assets/icons/highlighter.svg',
+                                    title: 'Morph Fidelity — Circle → Square',
+                                    fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        buildPageRoute(
+                                            const LiquidGlassMorphFidelityLabScreen()),
+                                      );
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
                                     iconPath: 'assets/icons/terms-info.svg',
                                     title: 'Seed Long Note (10,000+ Chars)',
                                     fontSize: 15.0,
@@ -863,6 +980,7 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                 child: AppHeaderBar(
                   leftHeroTag: 'hero_settings_back',
                   leftWidth: 44.0,
+                  useSelfContainedLeftControl: true,
                   onLeftTap: () {
                     if (_isMoreOptionsOpen) {
                       setState(() => _isMoreOptionsOpen = false);
@@ -870,14 +988,16 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                       widget.onMenuTap?.call();
                     }
                   },
-                  onCollapse: () => setState(() => _isMoreOptionsOpen = false),
-                  leftChild: SvgPicture.asset(
-                    'assets/icons/angle_left.svg',
-                    width: 22,
-                    height: 22,
-                    colorFilter:
-                        ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                  leftChild: QuickNotesLiquidGlassBackButton(
+                    onPressed: () {
+                      if (_isMoreOptionsOpen) {
+                        setState(() => _isMoreOptionsOpen = false);
+                      } else {
+                        widget.onMenuTap?.call();
+                      }
+                    },
                   ),
+                  onCollapse: () => setState(() => _isMoreOptionsOpen = false),
                   titleWidget: Text(
                     "Settings",
                     textAlign: TextAlign.center,
@@ -894,56 +1014,20 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                   isExpanded: _isMoreOptionsOpen,
                   expandedWidth: 192.0,
                   expandedHeight: 100.0,
-                  expandedChild: MoreOptionsPopup(
-                    deleteColor: popupDeleteColor,
-                    refreshColor: popupRefreshColor,
+                  expandedChild:
+                      QuickNotesGlassActionMorph<SettingsMoreOptionsAction>(
+                    isExpanded: _isMoreOptionsOpen,
+                    onTriggerTap: () {
+                      setState(() {
+                        _isMoreOptionsOpen = !_isMoreOptionsOpen;
+                      });
+                    },
+                    actions: SettingsMoreOptionsActions.buildActions(
+                      deleteColor: popupDeleteColor,
+                      refreshColor: popupRefreshColor,
+                    ),
                     dividerColor: popupDividerColor,
-                    onDeleteData: () async {
-                      setState(() => _isMoreOptionsOpen = false);
-                      final notesProvider =
-                          Provider.of<NotesProvider>(context, listen: false);
-                      final tasksProvider =
-                          Provider.of<TasksProvider>(context, listen: false);
-                      final messenger = ScaffoldMessenger.of(context);
-                      final confirm = await showDeleteNoteDialog(
-                        context,
-                        title: 'Delete Data',
-                        message:
-                            'Are you sure you want to delete\nall notes and tasks? This action\ncannot be undone',
-                      );
-                      if (confirm == true && mounted) {
-                        for (final note
-                            in List<Note>.from(notesProvider.notes)) {
-                          await notesProvider.deleteNote(note.id);
-                        }
-                        for (final task
-                            in List<TaskItem>.from(tasksProvider.tasks)) {
-                          await tasksProvider.deleteTask(task.id);
-                        }
-                        for (final folder
-                            in List<Folder>.from(notesProvider.folders)) {
-                          await notesProvider.deleteFolder(folder.id);
-                        }
-                        messenger.showSnackBar(
-                          const SnackBar(
-                              content: Text('All data deleted successfully.')),
-                        );
-                      }
-                    },
-                    onRefresh: () async {
-                      setState(() => _isMoreOptionsOpen = false);
-                      final notesProvider =
-                          Provider.of<NotesProvider>(context, listen: false);
-                      final tasksProvider =
-                          Provider.of<TasksProvider>(context, listen: false);
-                      final messenger = ScaffoldMessenger.of(context);
-                      await notesProvider.loadFolders();
-                      await notesProvider.loadNotes();
-                      await tasksProvider.loadTasks();
-                      messenger.showSnackBar(
-                        const SnackBar(content: Text('Data refreshed.')),
-                      );
-                    },
+                    onActionSelected: _handleMoreOptionsAction,
                   ),
                   rightChild: TactileButton(
                     onTap: () {
@@ -987,6 +1071,19 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                     ),
                   ),
                 ),
+              ),
+            ),
+          ),
+
+          // ── TEMPORARY PHYSICAL DIAGNOSTIC: Lab Morph Button (Phase 8C-D Fidelity Reference) ──
+          const Positioned(
+            top: 0,
+            right: 24.0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsets.only(top: 68.0),
+                child: FidelityLabDiagnosticMorphButton(),
               ),
             ),
           ),

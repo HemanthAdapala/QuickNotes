@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../premium/premium.dart';
 import '../../../providers/settings_provider.dart';
 import '../../widgets/app_header_bar.dart';
+import '../../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../../widgets/grouped_list_container.dart';
 import '../../widgets/primary_screen_surface.dart';
 import '../../widgets/tactile_button.dart';
@@ -223,7 +224,11 @@ class PremiumTestModeScreen extends StatelessWidget {
                 child: AppHeaderBar(
                   leftHeroTag: 'hero_premium_test_back',
                   leftWidth: 44.0,
+                  useSelfContainedLeftControl: true,
                   onLeftTap: () => Navigator.pop(context),
+                  leftChild: QuickNotesLiquidGlassBackButton(
+                    onPressed: () => Navigator.pop(context),
+                  ),
                   titleWidget: Text(
                     'Premium Test Mode',
                     textAlign: TextAlign.center,

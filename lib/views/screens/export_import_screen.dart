@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../../themes/quick_notes_theme.dart';
 import '../../providers/notes_provider.dart';
 import '../../models/note.dart';
@@ -127,15 +128,14 @@ class ExportImportScreen extends StatelessWidget {
               child: AppHeaderBar(
                 leftHeroTag: 'hero_export_import_back',
                 leftWidth: 44.0,
+                useSelfContainedLeftControl: true,
                 onLeftTap: () {
                   Navigator.of(context).maybePop();
                 },
-                leftChild: SvgPicture.asset(
-                  'assets/icons/angle_left.svg',
-                  width: 22,
-                  height: 22,
-                  colorFilter:
-                      const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                leftChild: QuickNotesLiquidGlassBackButton(
+                  onPressed: () {
+                    Navigator.of(context).maybePop();
+                  },
                 ),
                 title: "Backup & Sharing",
                 titleColor: Colors.white,

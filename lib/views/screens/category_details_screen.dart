@@ -35,6 +35,7 @@ import 'search_screen.dart';
 import '../../core/animations/bottom_sheet_transition.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../widgets/living_writing_experience.dart';
 import '../widgets/pin_lock_sheet.dart';
 import 'note_editor_screen.dart';
@@ -769,17 +770,14 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                         leftHeroTag: 'hero_category_details_back',
                         rightHeroTag: 'hero_category_details_search',
                         leftWidth: 44.0,
+                        useSelfContainedLeftControl: true,
                         onLeftTap: () {
                           Navigator.of(context).maybePop();
                         },
-                        leftChild: SvgPicture.asset(
-                          'assets/icons/angle_left.svg',
-                          width: 22,
-                          height: 22,
-                          colorFilter: ColorFilter.mode(
-                            isDark ? Colors.white : AppColors.ink,
-                            BlendMode.srcIn,
-                          ),
+                        leftChild: QuickNotesLiquidGlassBackButton(
+                          onPressed: () {
+                            Navigator.of(context).maybePop();
+                          },
                         ),
                         rightWidth: 44.0,
                         rightChild: TactileButton(

@@ -16,6 +16,7 @@ import 'create_task_screen.dart';
 import '../widgets/create_task_bottom_sheet.dart';
 import '../widgets/month_container.dart';
 import '../widgets/tactile_button.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../widgets/task_widgets_container.dart';
 import '../widgets/delete_task_confirmation_dialog.dart';
 import '../../core/animations/page_transitions.dart';
@@ -336,32 +337,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   child: Row(
                     children: [
                       // ─ Back / home-tab button ─────────────────────────────────
-                      BottomBarGlassSurface(
-                        width: 44.0,
-                        height: 44.0,
-                        borderRadius: BorderRadius.circular(22.0),
-                        child: TactileButton(
-                          onTap: () {
-                            if (widget.onBack != null) {
-                              widget.onBack!();
-                            } else {
-                              Navigator.of(context).pop();
-                            }
-                          },
-                          child: Center(
-                            child: SvgPicture.asset(
-                              'assets/icons/angle_left.svg',
-                              width: 22,
-                              height: 22,
-                              colorFilter: ColorFilter.mode(
-                                isDark
-                                    ? const Color(0xFFFFFFFF)
-                                    : const Color(0xFF1C1C1E),
-                                BlendMode.srcIn,
-                              ),
-                            ),
-                          ),
-                        ),
+                      QuickNotesLiquidGlassBackButton(
+                        onPressed: () {
+                          if (widget.onBack != null) {
+                            widget.onBack!();
+                          } else {
+                            Navigator.of(context).pop();
+                          }
+                        },
                       ),
 
                       // ─ MonthContainer pill ──────────────────────────────────

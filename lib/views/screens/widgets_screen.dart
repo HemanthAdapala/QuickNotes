@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../core/animations/page_transitions.dart';
 import '../../premium/premium.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../widgets/primary_screen_surface.dart';
 
 /// Authoritative capability boundary for requesting access to Home Screen Widgets.
@@ -66,17 +67,14 @@ class WidgetsScreen extends StatelessWidget {
                 child: AppHeaderBar(
                   leftHeroTag: 'hero_widgets_back',
                   leftWidth: 44.0,
+                  useSelfContainedLeftControl: true,
                   onLeftTap: () {
                     Navigator.of(context).pop();
                   },
-                  leftChild: SvgPicture.asset(
-                    'assets/icons/angle_left.svg',
-                    width: 22,
-                    height: 22,
-                    colorFilter: ColorFilter.mode(
-                      primaryTextColor,
-                      BlendMode.srcIn,
-                    ),
+                  leftChild: QuickNotesLiquidGlassBackButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
                   ),
                   title: 'Home Screen Widgets',
                   titleColor: primaryTextColor,

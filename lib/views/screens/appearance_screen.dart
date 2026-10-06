@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../../themes/quick_notes_theme.dart';
 import '../../providers/settings_provider.dart';
 import '../../premium/premium.dart';
@@ -62,15 +63,14 @@ class AppearanceScreen extends StatelessWidget {
               child: AppHeaderBar(
                 leftHeroTag: 'hero_appearance_back',
                 leftWidth: 44.0,
+                useSelfContainedLeftControl: true,
                 onLeftTap: () {
                   Navigator.of(context).maybePop();
                 },
-                leftChild: SvgPicture.asset(
-                  'assets/icons/angle_left.svg',
-                  width: 22,
-                  height: 22,
-                  colorFilter:
-                      ColorFilter.mode(textPrimaryColor, BlendMode.srcIn),
+                leftChild: QuickNotesLiquidGlassBackButton(
+                  onPressed: () {
+                    Navigator.of(context).maybePop();
+                  },
                 ),
                 title: "Appearance",
                 titleColor: textPrimaryColor,

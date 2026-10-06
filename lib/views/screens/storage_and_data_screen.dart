@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/storage_service.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../widgets/grouped_list_container.dart';
 import '../widgets/blurred_bottom_sheet.dart';
 
@@ -203,15 +204,14 @@ class _StorageAndDataScreenState extends State<StorageAndDataScreen> {
                 leftWidth: 44.0,
                 rightWidth: 44.0,
                 rightChild: null,
+                useSelfContainedLeftControl: true,
                 onLeftTap: () {
                   Navigator.pop(context);
                 },
-                leftChild: SvgPicture.asset(
-                  'assets/icons/angle_left.svg',
-                  width: 22,
-                  height: 22,
-                  colorFilter:
-                      ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                leftChild: QuickNotesLiquidGlassBackButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
                 ),
                 titleWidget: Text(
                   "Storage & Data",

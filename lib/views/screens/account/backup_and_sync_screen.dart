@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/grouped_list_container.dart';
 import '../../widgets/app_header_bar.dart';
+import '../../widgets/quick_notes_liquid_glass_back_button.dart';
 
 class BackupAndSyncScreen extends StatefulWidget {
   const BackupAndSyncScreen({super.key});
@@ -58,14 +59,14 @@ class _BackupAndSyncScreenState extends State<BackupAndSyncScreen> {
                 leftWidth: 44.0,
                 rightWidth: 44.0,
                 rightChild: null,
+                useSelfContainedLeftControl: true,
                 onLeftTap: () {
                   Navigator.pop(context);
                 },
-                leftChild: SvgPicture.asset(
-                  'assets/icons/angle_left.svg',
-                  width: 22,
-                  height: 22,
-                  colorFilter: const ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                leftChild: QuickNotesLiquidGlassBackButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
                 ),
                 titleWidget: Text(
                   "Backup & Sync",

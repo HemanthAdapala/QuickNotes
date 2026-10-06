@@ -33,6 +33,7 @@ import '../../providers/tasks_provider.dart';
 import '../../services/recent_searches_service.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/tactile_button.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../widgets/search_note_card.dart';
 import '../widgets/search_task_card.dart';
 import '../widgets/folder_card.dart';
@@ -803,25 +804,8 @@ class _SearchHeaderBar extends StatelessWidget {
           child: Row(
             children: [
               // Left glass pill button (angle_left)
-              BottomBarGlassSurface(
-                width: 44.0,
-                height: 44.0,
-                borderRadius: BorderRadius.circular(22.0),
-                useFrost: true,
-                child: TactileButton(
-                  onTap: onBack,
-                  child: Center(
-                    child: SvgPicture.asset(
-                      'assets/icons/angle_left.svg',
-                      width: 22,
-                      height: 22,
-                      colorFilter: ColorFilter.mode(
-                        isDark ? Colors.white : _kInk,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                  ),
-                ),
+              QuickNotesLiquidGlassBackButton(
+                onPressed: onBack,
               ),
               const SizedBox(width: 12),
 

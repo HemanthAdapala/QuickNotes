@@ -13,6 +13,7 @@ import '../../models/repeat_rule.dart';
 import '../../providers/tasks_provider.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// TaskEditorScreen
@@ -1127,14 +1128,10 @@ class _TaskEditorScreenState extends State<TaskEditorScreen> {
               child: AppHeaderBar(
                 leftWidth: 44.0,
                 leftHeroTag: 'hero_task_editor_back',
+                useSelfContainedLeftControl: true,
                 onLeftTap: () => Navigator.pop(context),
-                leftChild: SvgPicture.asset(
-                  'assets/icons/angle_left.svg',
-                  width: 22,
-                  height: 22,
-                  colorFilter: ColorFilter.mode(
-                      isDark ? Colors.white : const Color(0xFF1C1C1E),
-                      BlendMode.srcIn),
+                leftChild: QuickNotesLiquidGlassBackButton(
+                  onPressed: () => Navigator.pop(context),
                 ),
                 rightWidth: 44.0,
                 rightHeroTag: 'hero_task_editor_more',

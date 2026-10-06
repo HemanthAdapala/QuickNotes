@@ -9,6 +9,7 @@ import '../login_screen.dart';
 import 'account_profile_screen.dart';
 import 'delete_account_screen.dart';
 import '../../widgets/app_header_bar.dart';
+import '../../widgets/quick_notes_liquid_glass_back_button.dart';
 
 const String _googleLogoSvg = '''
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
@@ -215,15 +216,14 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                 leftWidth: 44.0,
                 rightWidth: 44.0,
                 rightChild: null,
+                useSelfContainedLeftControl: true,
                 onLeftTap: () {
                   Navigator.pop(context);
                 },
-                leftChild: SvgPicture.asset(
-                  'assets/icons/angle_left.svg',
-                  width: 22,
-                  height: 22,
-                  colorFilter:
-                      ColorFilter.mode(primaryTextColor, BlendMode.srcIn),
+                leftChild: QuickNotesLiquidGlassBackButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
                 ),
                 titleWidget: Text(
                   "Account",

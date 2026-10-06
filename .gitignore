@@ -26,6 +26,9 @@
 # Android-specific
 /android/key.properties
 /android/app/key.properties
+/android/keystore/
+*.jks
+*.keystore
 /android/app/local.properties
 /android/app/flutter-plugins.gradle
 /android/local.properties

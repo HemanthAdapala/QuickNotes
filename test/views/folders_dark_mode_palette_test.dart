@@ -11,7 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quick_notes/models/folder.dart';
 import 'package:quick_notes/views/widgets/folder_card.dart';
 import 'package:quick_notes/views/widgets/app_bottom_navigation_bar.dart';
-import 'package:quick_notes/views/widgets/tactile_button.dart';
+import 'package:quick_notes/views/widgets/quick_notes_liquid_glass_button.dart';
 import 'package:quick_notes/views/widgets/delete_confirmation_dialog.dart';
 import 'package:quick_notes/premium/feature_access.dart';
 import 'package:quick_notes/premium/premium_feature.dart';
@@ -1302,18 +1302,18 @@ void main() {
       expect(glassSurface.borderRadius, BorderRadius.circular(25.0));
       expect(glassSurface.useFrost, isTrue);
 
-      // 6. TactileButton compression scale is 0.9 and Apple Spring is true
-      final tactileButton = tester.widget<TactileButton>(
+      // 6. QuickNotesLiquidGlassButton verification
+      final liquidGlassButton = tester.widget<QuickNotesLiquidGlassButton>(
         find
             .ancestor(
               of: find.text("Create Folder"),
-              matching: find.byType(TactileButton),
+              matching: find.byType(QuickNotesLiquidGlassButton),
             )
             .first,
       );
-      expect(tactileButton.compressionScale, 0.9);
-      expect(tactileButton.useAppleSpring, isTrue);
-      expect(tactileButton.playSelectionHaptic, isTrue);
+      expect(liquidGlassButton.width, 200.0);
+      expect(liquidGlassButton.height, 50.0);
+      expect(liquidGlassButton.enabled, isTrue);
 
       // 7. Outer horizontal padding is 40.0
       final outerPadding = tester.widget<Padding>(

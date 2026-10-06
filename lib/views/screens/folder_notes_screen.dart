@@ -23,6 +23,7 @@ import 'search_screen.dart';
 import '../../core/animations/bottom_sheet_transition.dart';
 import '../../core/animations/dialog_transition.dart';
 import '../widgets/tactile_button.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../widgets/app_header_bar.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/primary_screen_surface.dart';
@@ -941,6 +942,7 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                           onCollapse: () =>
                               setState(() => _isFolderOptionsOpen = false),
                           leftWidth: 44.0,
+                          useSelfContainedLeftControl: true,
                           onLeftTap: () {
                             if (_isFolderOptionsOpen) {
                               setState(() => _isFolderOptionsOpen = false);
@@ -953,15 +955,19 @@ class _FolderNotesScreenState extends State<FolderNotesScreen> {
                               Navigator.of(context).maybePop();
                             }
                           },
-                          // Step 7: Back chevron — white in dark
-                          leftChild: SvgPicture.asset(
-                            'assets/icons/angle_left.svg',
-                            width: 22,
-                            height: 22,
-                            colorFilter: ColorFilter.mode(
-                              isDark ? Colors.white : const Color(0xFF1C1C1E),
-                              BlendMode.srcIn,
-                            ),
+                          leftChild: QuickNotesLiquidGlassBackButton(
+                            onPressed: () {
+                              if (_isFolderOptionsOpen) {
+                                setState(() => _isFolderOptionsOpen = false);
+                              } else if (_isSelectionMode) {
+                                setState(() {
+                                  _selectedNoteIds.clear();
+                                  _isSelectionMode = false;
+                                });
+                              } else {
+                                Navigator.of(context).maybePop();
+                              }
+                            },
                           ),
                           rightWidth: _isFolderOptionsOpen ? 192.0 : 88.0,
                           isExpanded: _isFolderOptionsOpen,

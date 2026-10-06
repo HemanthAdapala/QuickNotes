@@ -41,6 +41,8 @@ import 'package:flutter/services.dart';
 import '../../core/animations/page_transitions.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
 import '../widgets/app_header_bar.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
+import '../widgets/quick_notes_glass_action_morph.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -4960,36 +4962,168 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                           isExpanded: _isNoteOptionsOpen,
                           expandedWidth: 192.0,
                           expandedHeight: 250.0,
-                          expandedChild: NoteEditorOptionsPopup(
-                            isPinned: _isPinned,
-                            isFavorite: _isFavorite,
-                            onTogglePin: () {
-                              setState(() {
-                                _isNoteOptionsOpen = false;
-                                _isPinned = !_isPinned;
-                                _hasChanges = true;
-                              });
-                            },
-                            onToggleFavorite: () {
-                              setState(() {
-                                _isNoteOptionsOpen = false;
-                                _isFavorite = !_isFavorite;
-                                _hasChanges = true;
-                              });
-                            },
-                            onFindInNote: () {
-                              setState(() {
-                                _isNoteOptionsOpen = false;
-                                _isLocalSearchOpen = true;
-                              });
-                            },
-                            onExportAndShare: () {
-                              setState(() => _isNoteOptionsOpen = false);
-                              _showExportDialog();
-                            },
-                            onDeleteNote: _onDeleteNoteSelected,
+                          expandedChild: QuickNotesGlassActionMorph<void>(
+                            isExpanded: _isNoteOptionsOpen,
+                            width: 192.0,
+                            height: 250.0,
+                            collapsedWidth: 192.0,
+                            collapsedHeight: 44.0,
+                            collapsedRadius: 22.0,
+                            expandedRadius: 20.0,
+                            anchor: Alignment.topRight,
+                            triggerChild: Row(
+                              children: [
+                                // Undo Button
+                                Expanded(
+                                  child: ValueListenableBuilder<TextEditingValue>(
+                                    valueListenable: _contentController,
+                                    builder: (context, val, _) {
+                                      final canUndo = _contentController.canUndo;
+                                      return TactileButton(
+                                        enabled: canUndo,
+                                        onTap: () {
+                                          _contentController.undo();
+                                          _restoreContentFocus();
+                                          setState(() {
+                                            _hasChanges = true;
+                                          });
+                                        },
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.undo_rounded,
+                                            size: 22,
+                                            color: canUndo
+                                                ? (isDark
+                                                    ? const Color(0xFFFFFFFF)
+                                                    : const Color(0xFF1C1C1E))
+                                                : (isDark
+                                                    ? const Color(0xFFFFFFFF)
+                                                        .withValues(alpha: 0.3)
+                                                    : const Color(0xFF1C1C1E)
+                                                        .withValues(alpha: 0.3)),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                // Redo Button
+                                Expanded(
+                                  child: ValueListenableBuilder<TextEditingValue>(
+                                    valueListenable: _contentController,
+                                    builder: (context, val, _) {
+                                      final canRedo = _contentController.canRedo;
+                                      return TactileButton(
+                                        enabled: canRedo,
+                                        onTap: () {
+                                          _contentController.redo();
+                                          _restoreContentFocus();
+                                          setState(() {
+                                            _hasChanges = true;
+                                          });
+                                        },
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.redo_rounded,
+                                            size: 22,
+                                            color: canRedo
+                                                ? (isDark
+                                                    ? const Color(0xFFFFFFFF)
+                                                    : const Color(0xFF1C1C1E))
+                                                : (isDark
+                                                    ? const Color(0xFFFFFFFF)
+                                                        .withValues(alpha: 0.3)
+                                                    : const Color(0xFF1C1C1E)
+                                                        .withValues(alpha: 0.3)),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                // Separator line
+                                Container(
+                                  width: 1.0,
+                                  height: 18.0,
+                                  color: isDark
+                                      ? const Color(0xFFFFFFFF)
+                                          .withValues(alpha: 0.15)
+                                      : const Color(0xFF1C1C1E)
+                                          .withValues(alpha: 0.15),
+                                ),
+                                // Folder Select Button
+                                Expanded(
+                                  child: TactileButton(
+                                    onTap: () {
+                                      _showFolderSelectorDialog();
+                                    },
+                                    child: Center(
+                                      child: SvgPicture.asset(
+                                        'assets/icons/bottom_navigation/folder-open.svg',
+                                        width: 22,
+                                        height: 22,
+                                        colorFilter: ColorFilter.mode(
+                                            isDark
+                                                ? const Color(0xFFFFFFFF)
+                                                : const Color(0xFF1C1C1E),
+                                            BlendMode.srcIn),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // Options Button
+                                Expanded(
+                                  child: TactileButton(
+                                    onTap: () {
+                                      setState(() {
+                                        _isNoteOptionsOpen = !_isNoteOptionsOpen;
+                                      });
+                                    },
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.more_horiz_rounded,
+                                        size: 22,
+                                        color: isDark
+                                            ? const Color(0xFFFFFFFF)
+                                            : const Color(0xFF1C1C1E),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            expandedChild: NoteEditorOptionsPopup(
+                              isPinned: _isPinned,
+                              isFavorite: _isFavorite,
+                              onTogglePin: () {
+                                setState(() {
+                                  _isNoteOptionsOpen = false;
+                                  _isPinned = !_isPinned;
+                                  _hasChanges = true;
+                                });
+                              },
+                              onToggleFavorite: () {
+                                setState(() {
+                                  _isNoteOptionsOpen = false;
+                                  _isFavorite = !_isFavorite;
+                                  _hasChanges = true;
+                                });
+                              },
+                              onFindInNote: () {
+                                setState(() {
+                                  _isNoteOptionsOpen = false;
+                                  _isLocalSearchOpen = true;
+                                });
+                              },
+                              onExportAndShare: () {
+                                setState(() => _isNoteOptionsOpen = false);
+                                _showExportDialog();
+                              },
+                              onDeleteNote: _onDeleteNoteSelected,
+                            ),
                           ),
                           leftWidth: 44.0,
+                          useSelfContainedLeftControl: true,
                           onLeftTap: () {
                             if (_isNoteOptionsOpen) {
                               setState(() => _isNoteOptionsOpen = false);
@@ -4997,138 +5131,17 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                               Navigator.of(context).maybePop();
                             }
                           },
-                          leftChild: SvgPicture.asset(
-                            'assets/icons/angle_left.svg',
-                            width: 22,
-                            height: 22,
-                            colorFilter: ColorFilter.mode(
-                                isDark
-                                    ? const Color(0xFFFFFFFF)
-                                    : const Color(0xFF1C1C1E),
-                                BlendMode.srcIn),
+                          leftChild: QuickNotesLiquidGlassBackButton(
+                            onPressed: () {
+                              if (_isNoteOptionsOpen) {
+                                setState(() => _isNoteOptionsOpen = false);
+                              } else {
+                                Navigator.of(context).maybePop();
+                              }
+                            },
                           ),
                           rightWidth: 192.0,
-                          rightChild: Row(
-                            children: [
-                              // Undo Button
-                              Expanded(
-                                child: ValueListenableBuilder<TextEditingValue>(
-                                  valueListenable: _contentController,
-                                  builder: (context, val, _) {
-                                    final canUndo = _contentController.canUndo;
-                                    return TactileButton(
-                                      enabled: canUndo,
-                                      onTap: () {
-                                        _contentController.undo();
-                                        _restoreContentFocus();
-                                        setState(() {
-                                          _hasChanges = true;
-                                        });
-                                      },
-                                      child: Center(
-                                        child: Icon(
-                                          Icons.undo_rounded,
-                                          size: 22,
-                                          color: canUndo
-                                              ? (isDark
-                                                  ? const Color(0xFFFFFFFF)
-                                                  : const Color(0xFF1C1C1E))
-                                              : (isDark
-                                                  ? const Color(0xFFFFFFFF)
-                                                      .withValues(alpha: 0.3)
-                                                  : const Color(0xFF1C1C1E)
-                                                      .withValues(alpha: 0.3)),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              // Redo Button
-                              Expanded(
-                                child: ValueListenableBuilder<TextEditingValue>(
-                                  valueListenable: _contentController,
-                                  builder: (context, val, _) {
-                                    final canRedo = _contentController.canRedo;
-                                    return TactileButton(
-                                      enabled: canRedo,
-                                      onTap: () {
-                                        _contentController.redo();
-                                        _restoreContentFocus();
-                                        setState(() {
-                                          _hasChanges = true;
-                                        });
-                                      },
-                                      child: Center(
-                                        child: Icon(
-                                          Icons.redo_rounded,
-                                          size: 22,
-                                          color: canRedo
-                                              ? (isDark
-                                                  ? const Color(0xFFFFFFFF)
-                                                  : const Color(0xFF1C1C1E))
-                                              : (isDark
-                                                  ? const Color(0xFFFFFFFF)
-                                                      .withValues(alpha: 0.3)
-                                                  : const Color(0xFF1C1C1E)
-                                                      .withValues(alpha: 0.3)),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              // Separator line
-                              Container(
-                                width: 1.0,
-                                height: 18.0,
-                                color: isDark
-                                    ? const Color(0xFFFFFFFF)
-                                        .withValues(alpha: 0.15)
-                                    : const Color(0xFF1C1C1E)
-                                        .withValues(alpha: 0.15),
-                              ),
-                              // Folder Select Button
-                              Expanded(
-                                child: TactileButton(
-                                  onTap: () {
-                                    _showFolderSelectorDialog();
-                                  },
-                                  child: Center(
-                                    child: SvgPicture.asset(
-                                      'assets/icons/bottom_navigation/folder-open.svg',
-                                      width: 22,
-                                      height: 22,
-                                      colorFilter: ColorFilter.mode(
-                                          isDark
-                                              ? const Color(0xFFFFFFFF)
-                                              : const Color(0xFF1C1C1E),
-                                          BlendMode.srcIn),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Options Button
-                              Expanded(
-                                child: TactileButton(
-                                  onTap: () {
-                                    setState(() {
-                                      _isNoteOptionsOpen = !_isNoteOptionsOpen;
-                                    });
-                                  },
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.more_horiz_rounded,
-                                      size: 22,
-                                      color: isDark
-                                          ? const Color(0xFFFFFFFF)
-                                          : const Color(0xFF1C1C1E),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                          rightChild: const SizedBox(width: 192.0, height: 44.0),
                         ),
                 ),
               ),

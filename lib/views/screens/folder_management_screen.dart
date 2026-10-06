@@ -17,6 +17,8 @@ import '../widgets/blurred_bottom_sheet.dart';
 import '../widgets/folder_card.dart';
 export '../widgets/folder_card.dart' show FolderGridCard;
 import '../widgets/primary_screen_surface.dart';
+import '../widgets/quick_notes_liquid_glass_button.dart';
+import '../widgets/quick_notes_liquid_glass_back_button.dart';
 import '../../themes/app_theme.dart';
 import '../../core/animations/page_transitions.dart';
 import 'search_screen.dart';
@@ -464,29 +466,13 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
             ? Row(
                 key: const ValueKey('search_active_header'),
                 children: [
-                  BottomBarGlassSurface(
-                    width: 44.0,
-                    height: 44.0,
-                    borderRadius: BorderRadius.circular(22.0),
-                    useFrost: true,
-                    child: TactileButton(
-                      onTap: () {
-                        setState(() {
-                          _isSearchExpanded = false;
-                          _searchQuery = "";
-                        });
-                      },
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/icons/angle_left.svg',
-                          width: 22,
-                          height: 22,
-                          colorFilter: ColorFilter.mode(
-                              isDark ? Colors.white : const Color(0xFF1C1C1E),
-                              BlendMode.srcIn),
-                        ),
-                      ),
-                    ),
+                  QuickNotesLiquidGlassBackButton(
+                    onPressed: () {
+                      setState(() {
+                        _isSearchExpanded = false;
+                        _searchQuery = "";
+                      });
+                    },
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -566,26 +552,10 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
                     top: 0,
                     width: 44.0,
                     height: 44.0,
-                    child: BottomBarGlassSurface(
-                      width: 44.0,
-                      height: 44.0,
-                      borderRadius: BorderRadius.circular(22.0),
-                      useFrost: true,
-                      child: TactileButton(
-                        onTap: () {
-                          widget.onNavigateToTab?.call(0);
-                        },
-                        child: Center(
-                          child: SvgPicture.asset(
-                            'assets/icons/angle_left.svg',
-                            width: 22,
-                            height: 22,
-                            colorFilter: ColorFilter.mode(
-                                isDark ? Colors.white : const Color(0xFF1C1C1E),
-                                BlendMode.srcIn),
-                          ),
-                        ),
-                      ),
+                    child: QuickNotesLiquidGlassBackButton(
+                      onPressed: () {
+                        widget.onNavigateToTab?.call(0);
+                      },
                     ),
                   ),
                   Positioned(
@@ -726,29 +696,9 @@ class FolderManagementScreenState extends State<FolderManagementScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            BottomBarGlassSurface(
-              width: 200.0,
-              height: 50.0,
-              borderRadius: BorderRadius.circular(25.0),
-              useFrost: true,
-              child: TactileButton(
-                useAppleSpring: true,
-                compressionScale: 0.9,
-                onTap: showCreateFolderDialog,
-                child: Container(
-                  alignment: Alignment.center,
-                  child: Text(
-                    "Create Folder",
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: isDark
-                          ? const Color(0xFFFFFFFF)
-                          : const Color(0xFF1C1C1E),
-                    ),
-                  ),
-                ),
-              ),
+            QuickNotesLiquidGlassButton(
+              onTap: showCreateFolderDialog,
+              isDark: isDark,
             ),
           ],
         ),
