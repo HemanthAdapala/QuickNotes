@@ -1,4 +1,4 @@
-package com.quicknotes.app
+package com.quicknotes.byhmnth
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,7 +7,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterFragmentActivity() {
-    private val CLEAR_CHANNEL = "com.quicknotes.app/deep_link_clear"
+    private val CLEAR_CHANNEL = "com.quicknotes.byhmnth/deep_link_clear"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

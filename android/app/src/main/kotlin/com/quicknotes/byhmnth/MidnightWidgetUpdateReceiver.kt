@@ -1,4 +1,4 @@
-package com.quicknotes.app
+package com.quicknotes.byhmnth
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -20,7 +20,7 @@ import java.util.Calendar
 class MidnightWidgetUpdateReceiver : BroadcastReceiver() {
 
     companion object {
-        const val ACTION_MIDNIGHT_TICK = "com.quicknotes.app.ACTION_MIDNIGHT_WIDGET_TICK"
+        const val ACTION_MIDNIGHT_TICK = "com.quicknotes.byhmnth.ACTION_MIDNIGHT_WIDGET_TICK"
 
         /**
          * Schedules the next exact midnight tick via AlarmManager.

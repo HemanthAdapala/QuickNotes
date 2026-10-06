@@ -10,6 +10,6 @@
     android:targetCellHeight="1"
     android:updatePeriodMillis="86400000"
     android:initialLayout="@layout/single_task_long_widget_layout"
-    android:configure="com.quicknotes.app.TaskWidgetConfigureActivity"
+    android:configure="com.quicknotes.byhmnth.TaskWidgetConfigureActivity"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen" />

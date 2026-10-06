@@ -49,7 +49,7 @@
         </activity>
         
         <!-- Home Screen Widget Receiver (Aggregate Overview) -->
-        <receiver android:name="com.quicknotes.app.QuickCaptureWidget" android:exported="true">
+        <receiver android:name="com.quicknotes.byhmnth.QuickCaptureWidget" android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -58,7 +58,7 @@
 
         <!-- Configurable Single Note Home Screen Widget Receiver -->
         <receiver
-            android:name="com.quicknotes.app.SingleNoteWidget"
+            android:name="com.quicknotes.byhmnth.SingleNoteWidget"
             android:label="Single Note"
             android:exported="true">
             <intent-filter>
@@ -69,7 +69,7 @@
 
         <!-- Configurable Single Task Home Screen Widget Receiver (Short) -->
         <receiver
-            android:name="com.quicknotes.app.SingleTaskWidget"
+            android:name="com.quicknotes.byhmnth.SingleTaskWidget"
             android:label="Single Task"
             android:exported="true">
             <intent-filter>
@@ -80,7 +80,7 @@
 
         <!-- Configurable Single Task Home Screen Widget Receiver (Long) -->
         <receiver
-            android:name="com.quicknotes.app.SingleTaskLongWidget"
+            android:name="com.quicknotes.byhmnth.SingleTaskLongWidget"
             android:label="Single Task — Long"
             android:exported="true">
             <intent-filter>
@@ -91,7 +91,7 @@
 
         <!-- Multi-Task Home Screen Widget Receiver (Tasks Overview) -->
         <receiver
-            android:name="com.quicknotes.app.MultiTaskWidget"
+            android:name="com.quicknotes.byhmnth.MultiTaskWidget"
             android:label="Tasks"
             android:exported="true">
             <intent-filter>
@@ -102,20 +102,20 @@
 
         <!-- Midnight & Date-Change Receiver for Live Rollover & Widget Redraws -->
         <receiver
-            android:name="com.quicknotes.app.MidnightWidgetUpdateReceiver"
+            android:name="com.quicknotes.byhmnth.MidnightWidgetUpdateReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.DATE_CHANGED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="com.quicknotes.app.ACTION_MIDNIGHT_WIDGET_TICK" />
+                <action android:name="com.quicknotes.byhmnth.ACTION_MIDNIGHT_WIDGET_TICK" />
             </intent-filter>
         </receiver>
 
         <!-- Note Selection / Configuration Activity for SingleNoteWidget -->
         <activity
-            android:name="com.quicknotes.app.NoteWidgetConfigureActivity"
+            android:name="com.quicknotes.byhmnth.NoteWidgetConfigureActivity"
             android:exported="true"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
             <intent-filter>
@@ -125,7 +125,7 @@
 
         <!-- Task Selection / Configuration Activity for SingleTaskWidget & SingleTaskLongWidget -->
         <activity
-            android:name="com.quicknotes.app.TaskWidgetConfigureActivity"
+            android:name="com.quicknotes.byhmnth.TaskWidgetConfigureActivity"
             android:exported="true"
             android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar">
             <intent-filter>

@@ -1,4 +1,4 @@
-package com.quicknotes.app
+package com.quicknotes.byhmnth
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
