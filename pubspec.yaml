@@ -57,6 +57,7 @@ dependencies:
   sqflite_common_ffi: ^2.4.2+1
   in_app_purchase: ^3.2.0
   liquid_glass_easy: ^4.3.1
+  dotlottie_flutter: ^0.1.7
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +79,8 @@ flutter:
     - assets/stickers/
     - assets/animations/
     - assets/animations/SplashScreen/
+    - assets/animations/quick_notes_intro_text.lottie
+    - assets/animations/Quick_Notes___animated.lottie
     - DesignCode/LottieFiles/
     - DesignCode/Welcome Screens/
 

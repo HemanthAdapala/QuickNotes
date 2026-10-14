@@ -39,6 +39,7 @@ import 'widgets_screen.dart';
 import '../../premium/premium.dart';
 import '../../providers/settings_provider.dart';
 import 'developer/premium_test_mode_screen.dart';
+import 'developer/dotlottie_test_screen.dart';
 import '../widgets/fidelity_lab_diagnostic_button.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -782,6 +783,21 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
                                         context,
                                         buildPageRoute(
                                             const PremiumTestModeScreen()),
+                                      );
+                                    },
+                                  ),
+                                  GroupedTile.navigation(
+                                    iconPath:
+                                        'assets/icons/highlighter.svg',
+                                    title: 'dotLottie Animation Test',
+                                    fontSize: 15.0,
+                                    textColor: primaryTextColor,
+                                    chevronColor: chevronColor,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        buildPageRoute(
+                                            const DotLottieTestScreen()),
                                       );
                                     },
                                   ),
