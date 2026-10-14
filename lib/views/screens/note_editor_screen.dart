@@ -2735,8 +2735,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   }
 
   // --- Save Operations ---
-  Future<void> _saveNote() async {
-    if (_isSaving) return;
+  Future<bool> _saveNote() async {
+    if (_isSaving) return false;
     setState(() {
       _isSaving = true;
     });
@@ -2747,7 +2747,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
               .trim()
           : _blocks.map((b) => b.toMarkdown()).join('\n').trim();
 
-      if (title.isEmpty && content.isEmpty) return;
+      if (widget.note == null && title.isEmpty && content.isEmpty) return false;
 
       final provider = Provider.of<NotesProvider>(context, listen: false);
 
@@ -2805,6 +2805,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
       setState(() {
         _hasChanges = false;
       });
+      return true;
     } finally {
       setState(() {
         _isSaving = false;
@@ -2819,8 +2820,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     await _audioPlayer.stop();
 
     if (_hasChanges && !_isSaving) {
-      await _saveNote();
-      if (mounted) {
+      final didSave = await _saveNote();
+      if (mounted && didSave) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -4700,15 +4701,21 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                                             TextDecoration.none,
                                                       ),
                                                       border: InputBorder.none,
-                                                      enabledBorder: InputBorder.none,
-                                                      focusedBorder: InputBorder.none,
-                                                      disabledBorder: InputBorder.none,
-                                                      errorBorder: InputBorder.none,
-                                                      focusedErrorBorder: InputBorder.none,
+                                                      enabledBorder:
+                                                          InputBorder.none,
+                                                      focusedBorder:
+                                                          InputBorder.none,
+                                                      disabledBorder:
+                                                          InputBorder.none,
+                                                      errorBorder:
+                                                          InputBorder.none,
+                                                      focusedErrorBorder:
+                                                          InputBorder.none,
                                                       contentPadding:
                                                           EdgeInsets.zero,
                                                       filled: false,
-                                                      fillColor: Colors.transparent,
+                                                      fillColor:
+                                                          Colors.transparent,
                                                     ),
                                                     onChanged: (val) {
                                                       setState(() {
@@ -4801,15 +4808,21 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                                           TextDecoration.none,
                                                     ),
                                                     border: InputBorder.none,
-                                                    enabledBorder: InputBorder.none,
-                                                    focusedBorder: InputBorder.none,
-                                                    disabledBorder: InputBorder.none,
-                                                    errorBorder: InputBorder.none,
-                                                    focusedErrorBorder: InputBorder.none,
+                                                    enabledBorder:
+                                                        InputBorder.none,
+                                                    focusedBorder:
+                                                        InputBorder.none,
+                                                    disabledBorder:
+                                                        InputBorder.none,
+                                                    errorBorder:
+                                                        InputBorder.none,
+                                                    focusedErrorBorder:
+                                                        InputBorder.none,
                                                     contentPadding:
                                                         EdgeInsets.zero,
                                                     filled: false,
-                                                    fillColor: Colors.transparent,
+                                                    fillColor:
+                                                        Colors.transparent,
                                                   ),
                                                   onChanged: (val) {
                                                     setState(() {
@@ -4975,10 +4988,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                               children: [
                                 // Undo Button
                                 Expanded(
-                                  child: ValueListenableBuilder<TextEditingValue>(
+                                  child:
+                                      ValueListenableBuilder<TextEditingValue>(
                                     valueListenable: _contentController,
                                     builder: (context, val, _) {
-                                      final canUndo = _contentController.canUndo;
+                                      final canUndo =
+                                          _contentController.canUndo;
                                       return TactileButton(
                                         enabled: canUndo,
                                         onTap: () {
@@ -5000,7 +5015,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                                     ? const Color(0xFFFFFFFF)
                                                         .withValues(alpha: 0.3)
                                                     : const Color(0xFF1C1C1E)
-                                                        .withValues(alpha: 0.3)),
+                                                        .withValues(
+                                                            alpha: 0.3)),
                                           ),
                                         ),
                                       );
@@ -5009,10 +5025,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                 ),
                                 // Redo Button
                                 Expanded(
-                                  child: ValueListenableBuilder<TextEditingValue>(
+                                  child:
+                                      ValueListenableBuilder<TextEditingValue>(
                                     valueListenable: _contentController,
                                     builder: (context, val, _) {
-                                      final canRedo = _contentController.canRedo;
+                                      final canRedo =
+                                          _contentController.canRedo;
                                       return TactileButton(
                                         enabled: canRedo,
                                         onTap: () {
@@ -5034,7 +5052,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                                     ? const Color(0xFFFFFFFF)
                                                         .withValues(alpha: 0.3)
                                                     : const Color(0xFF1C1C1E)
-                                                        .withValues(alpha: 0.3)),
+                                                        .withValues(
+                                                            alpha: 0.3)),
                                           ),
                                         ),
                                       );
@@ -5076,7 +5095,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                   child: TactileButton(
                                     onTap: () {
                                       setState(() {
-                                        _isNoteOptionsOpen = !_isNoteOptionsOpen;
+                                        _isNoteOptionsOpen =
+                                            !_isNoteOptionsOpen;
                                       });
                                     },
                                     child: Center(
@@ -5141,7 +5161,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                             },
                           ),
                           rightWidth: 192.0,
-                          rightChild: const SizedBox(width: 192.0, height: 44.0),
+                          rightChild:
+                              const SizedBox(width: 192.0, height: 44.0),
                         ),
                 ),
               ),
@@ -6443,7 +6464,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF2C2C2C) : theme.colorScheme.surface,
+          backgroundColor:
+              isDark ? const Color(0xFF2C2C2C) : theme.colorScheme.surface,
           title: Text("Setup Secure PIN",
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.bold,
