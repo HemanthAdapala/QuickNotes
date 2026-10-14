@@ -60,11 +60,13 @@ void main() {
       final selectedHome = tester.widget<Semantics>(homeSemantics.first);
       expect(selectedHome.properties.selected, isTrue);
 
-      final unselectedFolders = tester.widget<Semantics>(foldersSemantics.first);
+      final unselectedFolders =
+          tester.widget<Semantics>(foldersSemantics.first);
       expect(unselectedFolders.properties.selected, isFalse);
     });
 
-    testWidgets('2. Tab selection triggers onDestinationSelected and updates state',
+    testWidgets(
+        '2. Tab selection triggers onDestinationSelected and updates state',
         (WidgetTester tester) async {
       int selected = 0;
 
@@ -105,7 +107,8 @@ void main() {
       final calendarSemantics = find.byWidgetPredicate(
         (w) => w is Semantics && w.properties.label == 'Calendar',
       );
-      final selectedCalendar = tester.widget<Semantics>(calendarSemantics.first);
+      final selectedCalendar =
+          tester.widget<Semantics>(calendarSemantics.first);
       expect(selectedCalendar.properties.selected, isTrue);
     });
 

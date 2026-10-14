@@ -435,9 +435,7 @@ class _QuickNotesLiquidGlassTabBarState
     if ((frac - _pressFrac).abs() > widget.dragThreshold) {
       _draggedRealMove = true;
     }
-    setState(() {
-      _dragTargetFrac = frac;
-    });
+    _dragTargetFrac = frac;
   }
 
   void _onLongPressEnd(LongPressEndDetails d) {
@@ -732,107 +730,112 @@ class _QuickNotesMainNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final unselectedColor = isDark ? Colors.white60 : const Color(0xFF333333);
 
-    return BottomBarGlassSurface(
-      width: width,
-      height: height,
-      borderRadius: BorderRadius.circular(25.0 * scale),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(25.0 * scale),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          clipBehavior: Clip.hardEdge,
-          children: [
-            // Layer 1: Outside Pill Aperture (Unselected Icons - Dark Ink)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: ClipPath(
-                  clipper: _OutsidePillClipper(
-                    pillRect: pillRect,
-                    pillRadius: pillRadius,
-                  ),
-                  child: Stack(
-                    children: [
-                      for (var i = 0; i < 4; i++)
-                        Positioned(
-                          left: (40.0 + i * (184.0 / 3.0) - 35.0) * scale,
-                          top: 0,
-                          width: 70.0 * scale,
-                          height: height,
-                          child: Center(
-                            child: SvgPicture.asset(
-                              AppBottomNavigationDestination
-                                  .defaults[i].iconAsset,
-                              width: 22.0 * scale,
-                              height: 22.0 * scale,
-                              colorFilter: ColorFilter.mode(
-                                  unselectedColor, BlendMode.srcIn),
-                            ),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Layer 0: Stationary Glass Capsule (isolated in its own RepaintBoundary to cache blur & inset shadows)
+        RepaintBoundary(
+          child: BottomBarGlassSurface(
+            width: width,
+            height: height,
+            borderRadius: BorderRadius.circular(25.0 * scale),
+            child: const SizedBox.expand(),
+          ),
+        ),
+
+        // Layer 1: Outside Pill Aperture (Unselected Icons - Dark Ink)
+        Positioned.fill(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(25.0 * scale),
+            clipBehavior: Clip.antiAlias,
+            child: IgnorePointer(
+              child: ClipPath(
+                clipper: _OutsidePillClipper(
+                  pillRect: pillRect,
+                  pillRadius: pillRadius,
+                ),
+                child: Stack(
+                  children: [
+                    for (var i = 0; i < 4; i++)
+                      Positioned(
+                        left: (40.0 + i * (184.0 / 3.0) - 35.0) * scale,
+                        top: 0,
+                        width: 70.0 * scale,
+                        height: height,
+                        child: Center(
+                          child: SvgPicture.asset(
+                            AppBottomNavigationDestination
+                                .defaults[i].iconAsset,
+                            width: 22.0 * scale,
+                            height: 22.0 * scale,
+                            colorFilter: ColorFilter.mode(
+                                unselectedColor, BlendMode.srcIn),
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
             ),
+          ),
+        ),
 
-            // Layer 2: Unified Gesture Overlay for Main Navigation Bar (4 destinations)
-            Positioned.fill(
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: RawGestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      gestures: {
-                        TapGestureRecognizer:
-                            GestureRecognizerFactoryWithHandlers<
-                                TapGestureRecognizer>(
-                          () => TapGestureRecognizer(),
-                          (instance) {
-                            instance.onTapUp = onTapUp;
-                          },
-                        ),
-                        LongPressGestureRecognizer:
-                            GestureRecognizerFactoryWithHandlers<
-                                LongPressGestureRecognizer>(
-                          () => LongPressGestureRecognizer(
-                            duration: Duration(milliseconds: longPressMs),
-                          ),
-                          (instance) {
-                            instance.onLongPressStart = onLongPressStart;
-                            instance.onLongPressMoveUpdate =
-                                onLongPressMoveUpdate;
-                            instance.onLongPressEnd = onLongPressEnd;
-                            instance.onLongPressCancel = onLongPressCancel;
-                          },
-                        ),
+        // Layer 2: Unified Gesture Overlay for Main Navigation Bar (4 destinations)
+        Positioned.fill(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: RawGestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  gestures: {
+                    TapGestureRecognizer:
+                        GestureRecognizerFactoryWithHandlers<
+                            TapGestureRecognizer>(
+                      () => TapGestureRecognizer(),
+                      (instance) {
+                        instance.onTapUp = onTapUp;
                       },
                     ),
-                  ),
-                  for (var i = 0; i < 4; i++)
-                    Positioned(
-                      left: (40.0 + i * (184.0 / 3.0) - 35.0) * scale,
-                      top: 0,
-                      width: 70.0 * scale,
-                      height: height,
-                      child: Semantics(
-                        button: true,
-                        enabled: true,
-                        label: AppBottomNavigationDestination.defaults[i].label,
-                        selected: selectedIndex == i,
-                        onTap: () => onSemanticsTap(i),
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.translucent,
-                          onTap: () => onSemanticsTap(i),
-                          child: const SizedBox.expand(),
-                        ),
+                    LongPressGestureRecognizer:
+                        GestureRecognizerFactoryWithHandlers<
+                            LongPressGestureRecognizer>(
+                      () => LongPressGestureRecognizer(
+                        duration: Duration(milliseconds: longPressMs),
                       ),
+                      (instance) {
+                        instance.onLongPressStart = onLongPressStart;
+                        instance.onLongPressMoveUpdate =
+                            onLongPressMoveUpdate;
+                        instance.onLongPressEnd = onLongPressEnd;
+                        instance.onLongPressCancel = onLongPressCancel;
+                      },
                     ),
-                ],
+                  },
+                ),
               ),
-            ),
-          ],
+              for (var i = 0; i < 4; i++)
+                Positioned(
+                  left: (40.0 + i * (184.0 / 3.0) - 35.0) * scale,
+                  top: 0,
+                  width: 70.0 * scale,
+                  height: height,
+                  child: Semantics(
+                    button: true,
+                    enabled: true,
+                    label: AppBottomNavigationDestination.defaults[i].label,
+                    selected: selectedIndex == i,
+                    onTap: () => onSemanticsTap(i),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: () => onSemanticsTap(i),
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
