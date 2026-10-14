@@ -227,39 +227,51 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     await _ensureEngineReady();
     try {
       final String realId = _getBaseId(id);
-      final task = _engine.tasks.firstWhere(
+      final taskIndex = _engine.tasks.indexWhere(
         (t) => t.id == realId || t.id == id || id.startsWith(t.id),
-        orElse: () => _engine.tasks.first,
       );
+      if (taskIndex == -1) {
+        return;
+      }
+      final task = _engine.tasks[taskIndex];
+
       if (!task.isRecurring &&
           task.recurrence == null &&
           task.repeatRule == RepeatRule.none) {
         await _engine.deleteTask(realId);
       } else {
-        DateTime nextDue = task.dueDate;
-        final type = task.recurrence?.type;
-        final interval = task.recurrence?.interval ?? 1;
+        final dateStr =
+            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-        if (type == RecurrenceType.daily ||
-            task.repeatRule == RepeatRule.daily) {
-          nextDue = nextDue.add(Duration(days: 1 * interval));
-        } else if (type == RecurrenceType.weekly ||
-            task.repeatRule == RepeatRule.weekly) {
-          nextDue = nextDue.add(Duration(days: 7 * interval));
-        } else if (type == RecurrenceType.monthly ||
-            task.repeatRule == RepeatRule.monthly) {
-          nextDue = DateTime(nextDue.year, nextDue.month + interval,
-              nextDue.day, nextDue.hour, nextDue.minute);
-        } else if (type == RecurrenceType.yearly ||
-            task.repeatRule == RepeatRule.yearly) {
-          nextDue = DateTime(nextDue.year + interval, nextDue.month,
-              nextDue.day, nextDue.hour, nextDue.minute);
+        final RecurrenceRule baseRecurrence;
+        if (task.recurrence != null) {
+          baseRecurrence = task.recurrence!;
         } else {
-          nextDue = nextDue.add(const Duration(days: 1));
+          final RecurrenceType type = switch (task.repeatRule) {
+            RepeatRule.daily => RecurrenceType.daily,
+            RepeatRule.weekly => RecurrenceType.weekly,
+            RepeatRule.monthly => RecurrenceType.monthly,
+            RepeatRule.yearly => RecurrenceType.yearly,
+            _ => RecurrenceType.daily,
+          };
+          baseRecurrence = RecurrenceRule(type: type, interval: 1);
         }
 
+        final currentExcluded = List<String>.from(baseRecurrence.excludedDates);
+        if (!currentExcluded.contains(dateStr)) {
+          currentExcluded.add(dateStr);
+        }
+
+        final updatedRecurrence =
+            baseRecurrence.copyWith(excludedDates: currentExcluded);
+
+        final updatedCompletedDates = List<String>.from(task.completedDates)
+          ..remove(dateStr);
+
         final updated = task.copyWith(
-          dueDate: nextDue,
+          isRecurring: true,
+          recurrence: updatedRecurrence,
+          completedDates: updatedCompletedDates,
           updatedAt: DateTime.now(),
         );
         await updateTask(updated);
@@ -341,6 +353,7 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
           final updated = task.copyWith(
             completed: false,
             status: TaskStatus.waiting,
+            clearCompletedAt: true,
             updatedAt: DateTime.now(),
           );
           await updateTask(updated);
@@ -457,6 +470,9 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
       if (matches) {
         final targetDateStr =
             '${target.year}-${target.month.toString().padLeft(2, '0')}-${target.day.toString().padLeft(2, '0')}';
+        if (t.recurrence?.excludedDates.contains(targetDateStr) ?? false) {
+          continue;
+        }
         final bool isCompletedOnThisDay =
             t.completedDates.contains(targetDateStr);
 
@@ -482,7 +498,7 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
   }
 
   List<TaskItem> getUncompletedTasksForFilter(String filter) {
-    final now = DateTime.now();
+    final now = _engine.clock.now;
     final today = DateTime(now.year, now.month, now.day);
     final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
 
@@ -614,6 +630,9 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         if (matches) {
           final dateStr =
               '${currentDay.year}-${currentDay.month.toString().padLeft(2, '0')}-${currentDay.day.toString().padLeft(2, '0')}';
+          if (t.recurrence?.excludedDates.contains(dateStr) ?? false) {
+            continue;
+          }
           final isCompletedOnDay = t.completedDates.contains(dateStr);
 
           if (!isCompletedOnDay) {

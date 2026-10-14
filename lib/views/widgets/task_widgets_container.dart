@@ -35,6 +35,9 @@ class TaskWidgetsContainer extends StatelessWidget {
   /// Called when a task card is swiped away (right-to-left).
   final void Function(String taskId)? onDismissTask;
 
+  /// Called when a task card's complete action is activated via swipe.
+  final void Function(String taskId)? onCompleteTask;
+
   /// Called when a task card itself is tapped for editing.
   final void Function(String taskId)? onTapTask;
 
@@ -47,6 +50,7 @@ class TaskWidgetsContainer extends StatelessWidget {
     required this.tasks,
     this.onToggleTask,
     this.onDismissTask,
+    this.onCompleteTask,
     this.onTapTask,
     this.onAddTask,
   });
@@ -93,6 +97,7 @@ class TaskWidgetsContainer extends StatelessWidget {
                         task: task,
                         onToggle: () => onToggleTask?.call(task.id),
                         onDismiss: () => onDismissTask?.call(task.id),
+                        onComplete: () => onCompleteTask?.call(task.id),
                         onTap: () => onTapTask?.call(task.id),
                       );
                     },
@@ -155,11 +160,12 @@ class TaskWidgetsContainer extends StatelessWidget {
   }
 }
 
-// ── Swipable task card with action-on-tap delete button ─────────────────────────
+// ── Swipable task card with action-on-tap delete and complete buttons ─────────
 class _SwipableCalendarTaskCard extends StatefulWidget {
   final CalendarTask task;
   final VoidCallback? onToggle;
   final VoidCallback? onDismiss;
+  final VoidCallback? onComplete;
   final VoidCallback? onTap;
 
   const _SwipableCalendarTaskCard({
@@ -167,6 +173,7 @@ class _SwipableCalendarTaskCard extends StatefulWidget {
     required this.task,
     this.onToggle,
     this.onDismiss,
+    this.onComplete,
     this.onTap,
   });
 
@@ -179,7 +186,8 @@ class _SwipableCalendarTaskCardState extends State<_SwipableCalendarTaskCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   double _dragX = 0.0;
-  final double _maxSwipe = -69.0; // 61px delete button + 8px gap
+  static const double _maxSwipeLeft = -69.0; // 61px delete button + 8px gap
+  static const double _maxSwipeRight = 69.0; // 61px complete button + 8px gap
 
   @override
   void initState() {
@@ -198,37 +206,33 @@ class _SwipableCalendarTaskCardState extends State<_SwipableCalendarTaskCard>
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
     setState(() {
-      _dragX = (_dragX + details.delta.dx).clamp(_maxSwipe, 0.0);
+      _dragX = (_dragX + details.delta.dx).clamp(_maxSwipeLeft, _maxSwipeRight);
     });
   }
 
   void _onHorizontalDragEnd(DragEndDetails details) {
-    if (details.primaryVelocity != null && details.primaryVelocity! < -200 ||
-        _dragX < _maxSwipe / 2) {
-      _open();
+    final v = details.primaryVelocity ?? 0.0;
+    if (_dragX < 0) {
+      if (v < -200 || _dragX < _maxSwipeLeft / 2) {
+        _animateTo(_maxSwipeLeft);
+      } else {
+        _animateTo(0.0);
+      }
+    } else if (_dragX > 0) {
+      if (v > 200 || _dragX > _maxSwipeRight / 2) {
+        _animateTo(_maxSwipeRight);
+      } else {
+        _animateTo(0.0);
+      }
     } else {
-      _close();
+      _animateTo(0.0);
     }
   }
 
-  void _open() {
+  void _animateTo(double target) {
     final start = _dragX;
     _controller.reset();
-    final anim = Tween<double>(begin: start, end: _maxSwipe).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
-    anim.addListener(() {
-      setState(() {
-        _dragX = anim.value;
-      });
-    });
-    _controller.forward();
-  }
-
-  void _close() {
-    final start = _dragX;
-    _controller.reset();
-    final anim = Tween<double>(begin: start, end: 0.0).animate(
+    final anim = Tween<double>(begin: start, end: target).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
     anim.addListener(() {
@@ -242,7 +246,9 @@ class _SwipableCalendarTaskCardState extends State<_SwipableCalendarTaskCard>
   @override
   Widget build(BuildContext context) {
     final bool showDeleteButton = _dragX < 0.0;
-    final double opacity = (_dragX.abs() / 69.0).clamp(0.0, 1.0);
+    final bool showCompleteButton = _dragX > 0.0;
+    final double deleteOpacity = (_dragX.abs() / 69.0).clamp(0.0, 1.0);
+    final double completeOpacity = (_dragX.abs() / 69.0).clamp(0.0, 1.0);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
@@ -255,7 +261,46 @@ class _SwipableCalendarTaskCardState extends State<_SwipableCalendarTaskCard>
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Revealed Red Delete Button on right (rendered ONLY when swiping/revealed!)
+            // Revealed Blue Complete Button on left (rendered ONLY when swiping right/revealed!)
+            if (showCompleteButton)
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: Opacity(
+                    opacity: completeOpacity,
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        widget.onComplete?.call();
+                        _animateTo(0.0);
+                      },
+                      child: Container(
+                        width: 61,
+                        height: 67,
+                        alignment: Alignment.center,
+                        decoration: ShapeDecoration(
+                          color: const Color(0x7F0088FF),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Align(
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Revealed Red Delete Button on right (rendered ONLY when swiping left/revealed!)
             if (showDeleteButton)
               Positioned(
                 right: 0,
@@ -263,11 +308,12 @@ class _SwipableCalendarTaskCardState extends State<_SwipableCalendarTaskCard>
                 bottom: 0,
                 child: Center(
                   child: Opacity(
-                    opacity: opacity,
+                    opacity: deleteOpacity,
                     child: GestureDetector(
                       onTap: () {
                         HapticFeedback.mediumImpact();
                         widget.onDismiss?.call();
+                        _animateTo(0.0);
                       },
                       child: Container(
                         width: 61,
@@ -313,10 +359,14 @@ class _SwipableCalendarTaskCardState extends State<_SwipableCalendarTaskCard>
             // Sliding Task Card
             Transform.translate(
               offset: Offset(_dragX, 0),
-              child: CalendarTaskCard(
-                task: widget.task,
-                onToggle: widget.onToggle,
-                onTap: widget.onTap,
+              child: GestureDetector(
+                onTap: _dragX != 0.0 ? () => _animateTo(0.0) : null,
+                behavior: _dragX != 0.0 ? HitTestBehavior.opaque : HitTestBehavior.deferToChild,
+                child: CalendarTaskCard(
+                  task: widget.task,
+                  onToggle: _dragX == 0.0 ? widget.onToggle : null,
+                  onTap: _dragX == 0.0 ? widget.onTap : null,
+                ),
               ),
             ),
           ],

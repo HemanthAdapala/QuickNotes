@@ -80,7 +80,8 @@ class SqliteTasksRepository implements TasksRepository {
     final all = await getTasks();
     final target = DateTime(date.year, date.month, date.day);
     return all.where((t) {
-      final d = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
+      final localDue = t.dueDate.toLocal();
+      final d = DateTime(localDue.year, localDue.month, localDue.day);
       return d.isAtSameMomentAs(target);
     }).toList();
   }

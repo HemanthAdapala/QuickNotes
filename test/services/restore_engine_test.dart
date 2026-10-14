@@ -8,6 +8,10 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:quick_notes/models/folder.dart';
 import 'package:quick_notes/models/note.dart';
+import 'package:quick_notes/models/task_item.dart';
+import 'package:quick_notes/models/recurrence_rule.dart';
+import 'package:quick_notes/models/repeat_rule.dart';
+import 'package:quick_notes/services/recurrence_calculator.dart';
 import 'package:quick_notes/models/session_type.dart';
 import 'package:quick_notes/repositories/folders_repository.dart';
 import 'package:quick_notes/repositories/notes_repository.dart';
@@ -98,6 +102,7 @@ void main() {
     notesRepo = SqliteNotesRepository(dbService: dbService);
     tasksRepo = SqliteTasksRepository(dbService: dbService);
     identityRepo = SqliteUserIdentityRepository(dbService: dbService);
+    expect(identityRepo, isNotNull);
 
     backupEngine = BackupEngine(
       foldersRepo: foldersRepo,
@@ -263,6 +268,58 @@ void main() {
 
       expect(restoreResult.success, isFalse);
       expect(restoreResult.error!.type, equals(RestoreErrorType.validationFailed));
+    });
+
+    test('5. Full .qnb round trip: Recurring task with excludedDates is backed up and restored with exclusions intact', () async {
+      final baseDate = DateTime.utc(2026, 9, 1, 9, 0);
+      final task = TaskItem(
+        id: 't_rec_excluded_qnb',
+        userId: testUserIdA,
+        title: 'QNB Recurring Task with Exclusions',
+        dueDate: baseDate,
+        priority: 'High',
+        isRecurring: true,
+        repeatRule: RepeatRule.daily,
+        recurrence: const RecurrenceRule(
+          type: RecurrenceType.daily,
+          interval: 1,
+          excludedDates: ['2026-09-02', '2026-09-05'],
+        ),
+        createdAt: baseDate,
+        updatedAt: baseDate,
+      );
+      await tasksRepo.insertTask(task);
+
+      final backupResult = await backupEngine.createBackup(
+        customBackupDir: tempBackupDir,
+        customDocumentsDir: tempDocsDir,
+      );
+      expect(backupResult.success, isTrue);
+      expect(backupResult.filePath, isNotNull);
+      expect(backupResult.filePath!.endsWith('.qnb'), isTrue);
+
+      final db = await dbService.database;
+      await db.delete('tasks', where: 'userId = ?', whereArgs: [testUserIdA]);
+      final emptyCheck = await tasksRepo.getTasks();
+      expect(emptyCheck.any((t) => t.id == 't_rec_excluded_qnb'), isFalse);
+
+      final restoreResult = await restoreEngine.restoreFromBackup(
+        backupFilePath: backupResult.filePath!,
+        customDocumentsDir: tempDocsDir,
+        forceOfflineOverride: true,
+      );
+      expect(restoreResult.success, isTrue);
+      expect(restoreResult.taskCount, equals(1));
+
+      final restoredTasks = await tasksRepo.getTasks();
+      final restoredTask = restoredTasks.firstWhere((t) => t.id == 't_rec_excluded_qnb');
+      expect(restoredTask.isRecurring, isTrue);
+      expect(restoredTask.recurrence, isNotNull);
+      expect(restoredTask.recurrence!.type, equals(RecurrenceType.daily));
+      expect(restoredTask.recurrence!.excludedDates, equals(['2026-09-02', '2026-09-05']));
+
+      final next = RecurrenceCalculator.nextOccurrence(baseDate, restoredTask.recurrence!);
+      expect(next, equals(DateTime.utc(2026, 9, 3, 9, 0)));
     });
   });
 }

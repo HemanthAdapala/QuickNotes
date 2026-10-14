@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../models/task_item.dart';
+import '../../models/task_status.dart';
 import '../../models/reminder_mode.dart';
 import '../../models/recurrence_rule.dart';
 import '../../models/repeat_rule.dart';
@@ -66,9 +67,60 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
   RecurrenceType? _selectedRecurrence; // null = Never
   bool _showPriorityPopup = false;
   late bool _reminderEnabled;
+  bool _isUndoing = false;
+  bool? _isCompletedOverride;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   late ReminderMode _selectedReminderMode;
+
+  @override
+  void didUpdateWidget(covariant CreateTaskBottomSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.taskToEdit?.id != widget.taskToEdit?.id) {
+      _isCompletedOverride = null;
+    }
+  }
+
+  TaskItem? get _currentTask {
+    if (widget.taskToEdit == null) return null;
+    try {
+      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+      final realId = widget.taskToEdit!.id;
+      final parts = realId.split('_');
+      final baseId = (parts.length >= 3 && parts[0] == 'task')
+          ? '${parts[0]}_${parts[1]}'
+          : ((parts.length >= 2 && parts[0] != 'task') ? parts[0] : realId);
+      return tasksProvider.tasks.firstWhere(
+        (t) => t.id == realId || t.id == baseId || realId.startsWith(t.id) || t.id.startsWith(realId),
+        orElse: () => widget.taskToEdit!,
+      );
+    } catch (_) {
+      return widget.taskToEdit;
+    }
+  }
+
+  Future<void> _onUndoTapped() async {
+    if (_isUndoing) return;
+    final task = _currentTask ?? widget.taskToEdit;
+    if (task == null) return;
+
+    _isUndoing = true;
+    HapticFeedback.mediumImpact();
+
+    try {
+      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+      await tasksProvider.uncompleteTaskOccurrence(task.id, _selectedDate);
+    } catch (e) {
+      debugPrint('Error uncompleting task in CreateTaskBottomSheet: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCompletedOverride = false;
+          _isUndoing = false;
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -223,7 +275,8 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
         : RepeatRule.none;
 
     if (isEditing) {
-      final updated = widget.taskToEdit!.copyWith(
+      final baseTask = _currentTask ?? widget.taskToEdit!;
+      final updated = baseTask.copyWith(
         title: _titleController.text.trim(),
         description: _descController.text.trim(),
         dueDate: fullDueDate,
@@ -318,6 +371,33 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
     final keyboardPad = MediaQuery.of(context).viewInsets.bottom;
     final bottomPad = MediaQuery.of(context).viewPadding.bottom;
 
+    try {
+      Provider.of<TasksProvider>(context);
+    } catch (_) {
+      // Provider not present in isolated test
+    }
+
+    final isEditing = widget.taskToEdit != null;
+    bool isCompleted = false;
+    if (isEditing) {
+      final task = _currentTask ?? widget.taskToEdit!;
+      final dateStr =
+          '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+      final isRecurring = task.isRecurring ||
+          task.recurrence != null ||
+          task.repeatRule != RepeatRule.none;
+
+      if (isRecurring) {
+        isCompleted = task.completedDates.contains(dateStr);
+      } else {
+        isCompleted = task.completed || task.status == TaskStatus.completed;
+      }
+
+      if (_isCompletedOverride != null) {
+        isCompleted = _isCompletedOverride!;
+      }
+    }
+
     return GestureDetector(
       onTap: () {
         if (_showPriorityPopup) setState(() => _showPriorityPopup = false);
@@ -368,10 +448,66 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    // Close pill button
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Container(
+                    if (!isEditing)
+                      // Close pill button for new task creation
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: ShapeDecoration(
+                            color: isDark
+                                ? const Color(0xFF3A3A3C)
+                                : const Color(0x19000000),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: SvgPicture.asset(
+                            'assets/icons/cross.svg',
+                            width: 16,
+                            height: 16,
+                            colorFilter: ColorFilter.mode(
+                              isDark ? Colors.white : const Color(0xFF1C1C1E),
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (isCompleted)
+                      // Completed task: Undo button
+                      Semantics(
+                        button: true,
+                        label: 'Undo task completion',
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _onUndoTapped,
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: ShapeDecoration(
+                              color: isDark
+                                  ? const Color(0xFF3A3A3C)
+                                  : const Color(0x19000000),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(22),
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.undo_rounded,
+                              size: 20,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1C1C1E),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      // Incomplete task: preserved empty circular appearance, no action
+                      Container(
                         width: 44,
                         height: 44,
                         decoration: ShapeDecoration(
@@ -382,18 +518,7 @@ class _CreateTaskBottomSheetState extends State<CreateTaskBottomSheet> {
                             borderRadius: BorderRadius.circular(22),
                           ),
                         ),
-                        alignment: Alignment.center,
-                        child: SvgPicture.asset(
-                          'assets/icons/cross.svg',
-                          width: 16,
-                          height: 16,
-                          colorFilter: ColorFilter.mode(
-                            isDark ? Colors.white : const Color(0xFF1C1C1E),
-                            BlendMode.srcIn,
-                          ),
-                        ),
                       ),
-                    ),
 
                     const Spacer(),
 

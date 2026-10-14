@@ -101,8 +101,8 @@ class TaskEngine {
       // Reschedule active future reminders on startup/reboot
       for (final task in _tasks) {
         if (!task.completed &&
-            (task.status == TaskStatus.waiting ||
-                task.status == TaskStatus.scheduled) &&
+            task.status != TaskStatus.archived &&
+            task.status != TaskStatus.cancelled &&
             task.reminderEnabled &&
             task.reminderTime != null &&
             task.reminderTime!.isAfter(now)) {
@@ -142,6 +142,14 @@ class TaskEngine {
       if (task.completed ||
           task.status == TaskStatus.archived ||
           task.status == TaskStatus.cancelled) {
+        continue;
+      }
+
+      // A task with an active reminder in the future cannot be considered missed yet
+      final isReminderActiveInFuture = task.reminderEnabled &&
+          task.reminderTime != null &&
+          task.reminderTime!.isAfter(now);
+      if (isReminderActiveInFuture) {
         continue;
       }
 
@@ -207,6 +215,10 @@ class TaskEngine {
           ? (task.recurringSeriesId ?? _uuid.v4())
           : task.recurringSeriesId;
       newTask = task.copyWith(
+        dueDate: task.dueDate.toUtc(),
+        startTime: task.startTime?.toUtc(),
+        endTime: task.endTime?.toUtc(),
+        reminderTime: task.reminderTime?.toUtc(),
         createdAt: now,
         updatedAt: now,
         recurringSeriesId: seriesId,
@@ -278,29 +290,60 @@ class TaskEngine {
     }
 
     final oldTask = _tasks[index];
+    final now = _clock.now;
 
-    // Validate state machine transition
-    if (!oldTask.status.canTransitionTo(updatedTask.status)) {
-      throw InvalidStateTransitionException(oldTask.status, updatedTask.status);
+    // Normalize date and time fields to UTC
+    final normalizedDueDate = updatedTask.dueDate.toUtc();
+    final normalizedStartTime = updatedTask.startTime?.toUtc();
+    final normalizedEndTime = updatedTask.endTime?.toUtc();
+    final normalizedReminderTime = updatedTask.reminderTime?.toUtc();
+
+    // If task was missed, but rescheduled into the future, restore to scheduled/waiting
+    var resolvedStatus = updatedTask.status;
+    if (oldTask.status == TaskStatus.missed &&
+        updatedTask.status == TaskStatus.missed &&
+        !updatedTask.completed) {
+      final isFutureReminder = updatedTask.reminderEnabled &&
+          normalizedReminderTime != null &&
+          normalizedReminderTime.isAfter(now);
+      final isFutureDue = normalizedDueDate.isAfter(now);
+      if (isFutureReminder || isFutureDue) {
+        resolvedStatus =
+            isFutureReminder ? TaskStatus.scheduled : TaskStatus.waiting;
+      }
     }
 
-    final now = _clock.now;
-    final finalUpdatedTask = updatedTask.copyWith(updatedAt: now);
+    // Validate state machine transition
+    if (!oldTask.status.canTransitionTo(resolvedStatus)) {
+      throw InvalidStateTransitionException(oldTask.status, resolvedStatus);
+    }
+
+    final finalUpdatedTask = updatedTask.copyWith(
+      dueDate: normalizedDueDate,
+      startTime: normalizedStartTime,
+      endTime: normalizedEndTime,
+      reminderTime: normalizedReminderTime,
+      status: resolvedStatus,
+      updatedAt: now,
+    );
 
     _tasks[index] = finalUpdatedTask;
     await _repository.updateTask(finalUpdatedTask);
 
-    // Reschedule reminder if reminderTime, dueDate, reminderEnabled, or reminderMode changed
+    // Reschedule or cancel reminder if completed, reopened, or if reminderTime, dueDate, reminderEnabled, or reminderMode changed
+    final wasCompleted = !oldTask.completed && finalUpdatedTask.completed;
+    final wasReopened = oldTask.completed && !finalUpdatedTask.completed;
     final timeChanged = oldTask.reminderTime != finalUpdatedTask.reminderTime ||
         oldTask.dueDate != finalUpdatedTask.dueDate ||
         oldTask.reminderEnabled != finalUpdatedTask.reminderEnabled ||
         oldTask.reminderMode != finalUpdatedTask.reminderMode;
 
-    if (timeChanged) {
+    if (wasCompleted || wasReopened || timeChanged) {
       await _scheduler.cancelReminder(oldTask.notificationId);
       if (finalUpdatedTask.reminderEnabled &&
           finalUpdatedTask.reminderTime != null &&
-          !finalUpdatedTask.completed) {
+          !finalUpdatedTask.completed &&
+          finalUpdatedTask.reminderTime!.isAfter(now)) {
         await _scheduler.scheduleReminder(finalUpdatedTask);
       }
     }
@@ -338,6 +381,7 @@ class TaskEngine {
     final updatedTask = oldTask.copyWith(
       status: newStatus,
       completedAt: newCompletedAt,
+      clearCompletedAt: newCompletedAt == null,
       updatedAt: now,
       recurringSeriesId: seriesId,
     );
@@ -415,6 +459,7 @@ class TaskEngine {
       createdAt: now,
       updatedAt: now,
       completedAt: null,
+      clearCompletedAt: true,
       dueDate: nextDueDate,
       reminderTime: nextReminderTime,
       reminderEnabled: nextReminderTime != null,

@@ -4,6 +4,7 @@ import 'package:quick_notes/models/note.dart';
 import 'package:quick_notes/models/task_item.dart';
 import 'package:quick_notes/models/task_status.dart';
 import 'package:quick_notes/models/repeat_rule.dart';
+import 'package:quick_notes/models/recurrence_rule.dart';
 import 'package:quick_notes/models/reminder_mode.dart';
 import 'package:quick_notes/models/user_profile.dart';
 import 'package:quick_notes/services/backup/backup_format.dart';
@@ -222,6 +223,69 @@ void main() {
       expect(BackupSerializer.normalizeAttachmentUri(dataUri), equals(dataUri));
       expect(BackupSerializer.normalizeAttachmentUri(assetPath), equals(assetPath));
       expect(BackupSerializer.normalizeAttachmentUri(localPath), equals('attachment://photo.jpg'));
+    });
+
+    test('9. TaskItem with RecurrenceRule and excludedDates serializes and deserializes cleanly in backup payload', () {
+      final task = TaskItem(
+        id: 't_rec_excluded',
+        title: 'Weekly Sync',
+        dueDate: now,
+        priority: 'High',
+        status: TaskStatus.waiting,
+        isRecurring: true,
+        repeatRule: RepeatRule.weekly,
+        recurrence: const RecurrenceRule(
+          type: RecurrenceType.weekly,
+          interval: 1,
+          excludedDates: ['2026-08-21', '2026-08-28'],
+        ),
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      final map = BackupSerializer.serializeTask(task);
+      expect(map['isRecurring'], isTrue);
+      expect(map['repeatRule'], equals('weekly'));
+      expect(map['recurrence'], isA<Map<String, dynamic>>());
+      final recMap = map['recurrence'] as Map<String, dynamic>;
+      expect(recMap['type'], equals('weekly'));
+      expect(recMap['interval'], equals(1));
+      expect(recMap['excludedDates'], equals(['2026-08-21', '2026-08-28']));
+
+      final deserialized = BackupSerializer.deserializeTask(map);
+      expect(deserialized.id, equals('t_rec_excluded'));
+      expect(deserialized.isRecurring, isTrue);
+      expect(deserialized.recurrence, isNotNull);
+      expect(deserialized.recurrence!.type, equals(RecurrenceType.weekly));
+      expect(deserialized.recurrence!.interval, equals(1));
+      expect(deserialized.recurrence!.excludedDates, equals(['2026-08-21', '2026-08-28']));
+    });
+
+    test('10. TaskItem deserialization from older backup payload without excludedDates defaults to empty list', () {
+      final olderPayload = <String, dynamic>{
+        'id': 't_legacy_backup',
+        'title': 'Legacy Recurring Task',
+        'dueDate': now.toUtc().toIso8601String(),
+        'createdAt': now.toUtc().toIso8601String(),
+        'priority': 'Medium',
+        'status': 'waiting',
+        'isRecurring': true,
+        'repeatRule': 'daily',
+        // Older recurrence payload that does NOT have 'excludedDates'
+        'recurrence': {
+          'version': 1,
+          'type': 'daily',
+          'interval': 1,
+        },
+      };
+
+      final deserialized = BackupSerializer.deserializeTask(olderPayload);
+      expect(deserialized.id, equals('t_legacy_backup'));
+      expect(deserialized.isRecurring, isTrue);
+      expect(deserialized.recurrence, isNotNull);
+      expect(deserialized.recurrence!.type, equals(RecurrenceType.daily));
+      expect(deserialized.recurrence!.excludedDates, isEmpty);
+      expect(deserialized.recurrence!.excludedDates, isA<List<String>>());
     });
   });
 }

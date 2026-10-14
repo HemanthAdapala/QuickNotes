@@ -38,6 +38,7 @@ class RecurrenceRule {
   final int interval;
   final DateTime? endDate;
   final int? maxOccurrences;
+  final List<String> excludedDates;
 
   const RecurrenceRule({
     this.version = 1,
@@ -45,6 +46,7 @@ class RecurrenceRule {
     this.interval = 1,
     this.endDate,
     this.maxOccurrences,
+    this.excludedDates = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -54,6 +56,7 @@ class RecurrenceRule {
       'interval': interval,
       'endDate': endDate?.toUtc().toIso8601String(),
       'maxOccurrences': maxOccurrences,
+      'excludedDates': excludedDates,
     };
   }
 
@@ -61,6 +64,11 @@ class RecurrenceRule {
     final typeVal =
         RecurrenceTypeExtension.fromDbString(map['type'] as String?);
     final rawEndDate = map['endDate'] as String?;
+    final rawExcluded = map['excludedDates'];
+    final List<String> excluded = rawExcluded is List
+        ? rawExcluded.map((e) => e.toString()).toList()
+        : const [];
+
     return RecurrenceRule(
       version: map['version'] as int? ?? 1,
       type: typeVal,
@@ -68,6 +76,7 @@ class RecurrenceRule {
       endDate:
           rawEndDate != null ? DateTime.tryParse(rawEndDate)?.toUtc() : null,
       maxOccurrences: map['maxOccurrences'] as int?,
+      excludedDates: excluded,
     );
   }
 
@@ -92,6 +101,7 @@ class RecurrenceRule {
     int? interval,
     DateTime? endDate,
     int? maxOccurrences,
+    List<String>? excludedDates,
   }) {
     return RecurrenceRule(
       version: version ?? this.version,
@@ -99,6 +109,7 @@ class RecurrenceRule {
       interval: interval ?? this.interval,
       endDate: endDate ?? this.endDate,
       maxOccurrences: maxOccurrences ?? this.maxOccurrences,
+      excludedDates: excludedDates ?? this.excludedDates,
     );
   }
 
@@ -111,7 +122,17 @@ class RecurrenceRule {
           type == other.type &&
           interval == other.interval &&
           endDate == other.endDate &&
-          maxOccurrences == other.maxOccurrences;
+          maxOccurrences == other.maxOccurrences &&
+          _areListsEqual(excludedDates, other.excludedDates);
+
+  static bool _areListsEqual(List<String> a, List<String> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 
   @override
   int get hashCode =>
@@ -119,5 +140,6 @@ class RecurrenceRule {
       type.hashCode ^
       interval.hashCode ^
       endDate.hashCode ^
-      maxOccurrences.hashCode;
+      maxOccurrences.hashCode ^
+      Object.hashAll(excludedDates);
 }

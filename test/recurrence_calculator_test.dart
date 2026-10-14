@@ -73,4 +73,65 @@ void main() {
       expect(next, isNull);
     });
   });
+
+  group('RecurrenceRule Model Serialization & Compatibility Tests', () {
+    test('RecurrenceRule with excludedDates serializes toMap and fromMap with dates intact', () {
+      final rule = RecurrenceRule(
+        type: RecurrenceType.daily,
+        interval: 2,
+        endDate: DateTime.utc(2026, 12, 31),
+        maxOccurrences: 10,
+        excludedDates: const ['2026-09-02', '2026-09-04'],
+      );
+
+      final map = rule.toMap();
+      expect(map['type'], equals('daily'));
+      expect(map['interval'], equals(2));
+      expect(map['excludedDates'], equals(['2026-09-02', '2026-09-04']));
+
+      final restored = RecurrenceRule.fromMap(map);
+      expect(restored, equals(rule));
+      expect(restored.excludedDates, equals(['2026-09-02', '2026-09-04']));
+    });
+
+    test('Older recurrence JSON without excludedDates deserializes successfully and defaults to empty list', () {
+      final olderMap = {
+        'version': 1,
+        'type': 'weekly',
+        'interval': 1,
+      };
+
+      final restored = RecurrenceRule.fromMap(olderMap);
+      expect(restored.type, equals(RecurrenceType.weekly));
+      expect(restored.interval, equals(1));
+      expect(restored.excludedDates, isEmpty);
+      expect(restored.excludedDates, isA<List<String>>());
+
+      final fromString = RecurrenceRule.tryDecode('{"type":"monthly","interval":1}');
+      expect(fromString, isNotNull);
+      expect(fromString!.type, equals(RecurrenceType.monthly));
+      expect(fromString.excludedDates, isEmpty);
+    });
+
+    test('RecurrenceRule equality and copyWith respect excludedDates', () {
+      const r1 = RecurrenceRule(
+        type: RecurrenceType.daily,
+        excludedDates: ['2026-09-01'],
+      );
+      const r2 = RecurrenceRule(
+        type: RecurrenceType.daily,
+        excludedDates: ['2026-09-01'],
+      );
+      const r3 = RecurrenceRule(
+        type: RecurrenceType.daily,
+        excludedDates: ['2026-09-02'],
+      );
+
+      expect(r1, equals(r2));
+      expect(r1, isNot(equals(r3)));
+
+      final updated = r1.copyWith(excludedDates: ['2026-09-01', '2026-09-02']);
+      expect(updated.excludedDates, equals(['2026-09-01', '2026-09-02']));
+    });
+  });
 }

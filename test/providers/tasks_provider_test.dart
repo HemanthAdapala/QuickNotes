@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quick_notes/models/recurrence_rule.dart';
+import 'package:quick_notes/models/repeat_rule.dart';
 import 'package:quick_notes/models/single_task_snapshot.dart';
 import 'package:quick_notes/models/task_item.dart';
 import 'package:quick_notes/models/task_status.dart';
@@ -320,6 +321,234 @@ void main() {
       expect(snapshot.formattedDate, 'Thu, 1 October 2026');
       expect(snapshot.completed, isFalse);
       expect(snapshot.statusLabel, 'Pending');
+    });
+  });
+
+  group('BUG-003: deleteTaskOccurrence Regression Tests', () {
+    late MockTasksRepository repo;
+    late TaskEngine engine;
+    late TasksProvider provider;
+    final fixedNow = DateTime(2026, 8, 31, 10, 0);
+
+    setUp(() async {
+      repo = MockTasksRepository();
+      final clock = TestClock(fixedNow);
+      final scheduler = LoggingReminderScheduler();
+      engine = TaskEngine(repository: repo, clock: clock, scheduler: scheduler);
+      await engine.initialize();
+      provider = TasksProvider(engine: engine);
+    });
+
+    test('1. Non-recurring task deletion: Deleting a normal task removes that task', () async {
+      final task = await engine.createTask(
+        title: 'Single Task',
+        dueDate: fixedNow,
+      );
+      expect(provider.tasks.length, 1);
+
+      await provider.deleteTaskOccurrence(task.id, fixedNow);
+
+      expect(provider.tasks.where((t) => t.id == task.id), isEmpty);
+      expect(provider.getTasksForDate(fixedNow), isEmpty);
+    });
+
+    test('2. Specific recurring occurrence: Deleting Day 5 excludes Day 5 without changing series anchor or removing Days 1-4 and Day 6+', () async {
+      final day1 = DateTime(2026, 9, 1, 10, 0);
+      final day2 = DateTime(2026, 9, 2, 10, 0);
+      final day3 = DateTime(2026, 9, 3, 10, 0);
+      final day4 = DateTime(2026, 9, 4, 10, 0);
+      final day5 = DateTime(2026, 9, 5, 10, 0);
+      final day6 = DateTime(2026, 9, 6, 10, 0);
+
+      final task = await engine.createTask(
+        title: 'Daily Medication',
+        dueDate: day1,
+        isRecurring: true,
+        recurrence: const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+      );
+
+      // Verify initial projections
+      expect(provider.getTasksForDate(day1), isNotEmpty);
+      expect(provider.getTasksForDate(day5), isNotEmpty);
+
+      // Action: Delete only Day 5
+      await provider.deleteTaskOccurrence(task.id, day5);
+
+      final updatedTask = provider.tasks.firstWhere((t) => t.id == task.id);
+
+      // Anchor must be preserved
+      expect(updatedTask.dueDate, day1.toUtc(), reason: 'Anchor dueDate must not be altered when deleting a future occurrence');
+
+      // Day 5 must be excluded
+      expect(provider.getTasksForDate(day5), isEmpty, reason: 'Day 5 occurrence must be excluded from getTasksForDate');
+
+      // Days 1-4 and Day 6 must remain intact
+      expect(provider.getTasksForDate(day1), isNotEmpty, reason: 'Day 1 occurrence must remain present');
+      expect(provider.getTasksForDate(day2), isNotEmpty, reason: 'Day 2 occurrence must remain present');
+      expect(provider.getTasksForDate(day3), isNotEmpty, reason: 'Day 3 occurrence must remain present');
+      expect(provider.getTasksForDate(day4), isNotEmpty, reason: 'Day 4 occurrence must remain present');
+      expect(provider.getTasksForDate(day6), isNotEmpty, reason: 'Day 6 occurrence must remain present');
+    });
+
+    test('3. Base occurrence deletion: Deleting the first occurrence excludes that date while later occurrences remain available', () async {
+      final day1 = DateTime(2026, 9, 1, 10, 0);
+      final day2 = DateTime(2026, 9, 2, 10, 0);
+      final day3 = DateTime(2026, 9, 3, 10, 0);
+
+      final task = await engine.createTask(
+        title: 'Morning Yoga',
+        dueDate: day1,
+        isRecurring: true,
+        recurrence: const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+      );
+
+      // Action: Delete Day 1 (base occurrence)
+      await provider.deleteTaskOccurrence(task.id, day1);
+
+      // Anchor must be preserved
+      expect(provider.tasks.first.dueDate, day1.toUtc(), reason: 'Base occurrence deletion must not mutate the series anchor dueDate');
+
+      // Day 1 must be excluded
+      expect(provider.getTasksForDate(day1), isEmpty, reason: 'Base occurrence on Day 1 must be excluded');
+
+      // Subsequent occurrences must remain available
+      expect(provider.getTasksForDate(day2), isNotEmpty, reason: 'Day 2 occurrence must remain available');
+      expect(provider.getTasksForDate(day3), isNotEmpty, reason: 'Day 3 occurrence must remain available');
+    });
+
+    test('4. Completion cleanup: Deleting a completed occurrence removes that date\'s completion record without affecting other completed dates', () async {
+      final day1 = DateTime(2026, 9, 1, 10, 0);
+      final day2 = DateTime(2026, 9, 2, 10, 0);
+
+      final task = await engine.createTask(
+        title: 'Drink Water',
+        dueDate: day1,
+        isRecurring: true,
+        recurrence: const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+      );
+
+      // Complete Day 1 and Day 2
+      await provider.completeTaskOccurrence(task.id, day1);
+      await provider.completeTaskOccurrence(task.id, day2);
+
+      var currentTask = provider.tasks.firstWhere((t) => t.id == task.id);
+      expect(currentTask.completedDates, containsAll(['2026-09-01', '2026-09-02']));
+
+      // Action: Delete occurrence on Day 2
+      await provider.deleteTaskOccurrence(task.id, day2);
+
+      currentTask = provider.tasks.firstWhere((t) => t.id == task.id);
+
+      // Day 2 must not be completed or present
+      expect(currentTask.completedDates, isNot(contains('2026-09-02')), reason: 'Deleted occurrence date must be removed from completedDates');
+      expect(currentTask.completedDates, contains('2026-09-01'), reason: 'Other completed dates must remain unaffected');
+      expect(provider.getTasksForDate(day2), isEmpty, reason: 'Deleted occurrence on Day 2 must not appear');
+      expect(provider.getTasksForDate(day1), isNotEmpty, reason: 'Day 1 occurrence must remain present');
+      expect(provider.getTasksForDate(day1).first.completed, isTrue, reason: 'Day 1 must still be completed');
+    });
+
+    test('5. Idempotency: Deleting the same occurrence twice does not create duplicate exclusions or additional unintended changes', () async {
+      final day1 = DateTime(2026, 9, 1, 10, 0);
+      final day3 = DateTime(2026, 9, 3, 10, 0);
+
+      final task = await engine.createTask(
+        title: 'Daily Journal',
+        dueDate: day1,
+        isRecurring: true,
+        recurrence: const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+      );
+
+      // First deletion of Day 3
+      await provider.deleteTaskOccurrence(task.id, day3);
+      final stateAfterFirstDelete = provider.tasks.firstWhere((t) => t.id == task.id);
+
+      // Second deletion of Day 3
+      await provider.deleteTaskOccurrence(task.id, day3);
+      final stateAfterSecondDelete = provider.tasks.firstWhere((t) => t.id == task.id);
+
+      expect(stateAfterSecondDelete.dueDate, stateAfterFirstDelete.dueDate, reason: 'Duplicate delete must not shift dueDate further');
+      expect(provider.getTasksForDate(day3), isEmpty);
+      expect(provider.getTasksForDate(day1), isNotEmpty);
+    });
+
+    test('6. Unknown ID safety: An unmatched ID must not mutate or delete any unrelated task', () async {
+      final day1 = DateTime(2026, 9, 1, 10, 0);
+
+      final validTask = await engine.createTask(
+        title: 'Important Unrelated Task',
+        dueDate: day1,
+        isRecurring: true,
+        recurrence: const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+      );
+
+      final initialDue = validTask.dueDate;
+      final initialTitle = validTask.title;
+
+      // Attempt deleting an occurrence for a non-existent task ID
+      // Current defect: orElse: () => _engine.tasks.first mutates validTask!
+      try {
+        await provider.deleteTaskOccurrence('completely_unknown_id_9999', DateTime(2026, 9, 5));
+      } catch (_) {
+        // Safe rejection/exception is acceptable
+      }
+
+      final checkTask = provider.tasks.firstWhere((t) => t.id == validTask.id);
+      expect(checkTask.dueDate, initialDue, reason: 'Unrelated task dueDate must not be corrupted by unmatched ID deletion');
+      expect(checkTask.title, initialTitle, reason: 'Unrelated task must remain unchanged');
+      expect(provider.getTasksForDate(day1), isNotEmpty, reason: 'Valid task Day 1 must still be projected');
+    });
+
+    test('7. Projection consistency: A deleted occurrence must not reappear through getTasksForDate() or getUncompletedTasksForFilter()', () async {
+      // Setup task starting yesterday so Today is occurrence #2
+      final yesterday = fixedNow.subtract(const Duration(days: 1));
+      final task = await engine.createTask(
+        title: 'Daily Routine',
+        dueDate: yesterday,
+        isRecurring: true,
+        recurrence: const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+      );
+
+      // Prior to deletion, today's occurrence shows in Today filter
+      final beforeDelete = provider.getUncompletedTasksForFilter('Today');
+      expect(beforeDelete.any((t) => t.id == task.id), isTrue, reason: 'Task should appear in Today filter before deletion');
+
+      // Delete Today's occurrence
+      await provider.deleteTaskOccurrence(task.id, fixedNow);
+
+      // Deleted occurrence must not appear in getTasksForDate
+      expect(provider.getTasksForDate(fixedNow), isEmpty, reason: 'Deleted occurrence must not appear in getTasksForDate');
+
+      // Deleted occurrence must not appear in getUncompletedTasksForFilter('Today')
+      final afterDelete = provider.getUncompletedTasksForFilter('Today');
+      expect(afterDelete.any((t) => t.id == task.id), isFalse, reason: 'Deleted occurrence must not appear in Today uncompleted filter');
+    });
+
+    test('8. Legacy repeatRule compatibility: Deleting occurrence on a legacy recurring task with repeatRule and null recurrence', () async {
+      final day1 = DateTime(2026, 9, 1, 10, 0);
+      final day2 = DateTime(2026, 9, 2, 10, 0);
+      final day3 = DateTime(2026, 9, 3, 10, 0);
+
+      // Create a task that uses legacy repeatRule without a RecurrenceRule
+      final legacyTask = TaskItem(
+        id: 'legacy-recurring-123',
+        title: 'Legacy Daily Habit',
+        dueDate: day1,
+        priority: 'Medium',
+        repeatRule: RepeatRule.daily,
+        recurrence: null,
+        isRecurring: true,
+      );
+      await engine.createTask(task: legacyTask);
+
+      expect(provider.getTasksForDate(day1), isNotEmpty);
+      expect(provider.getTasksForDate(day2), isNotEmpty);
+
+      // Delete Day 2 on legacy task
+      await provider.deleteTaskOccurrence(legacyTask.id, day2);
+
+      expect(provider.getTasksForDate(day2), isEmpty, reason: 'Day 2 on legacy recurring task must be excluded');
+      expect(provider.getTasksForDate(day1), isNotEmpty, reason: 'Day 1 on legacy recurring task must remain present');
+      expect(provider.getTasksForDate(day3), isNotEmpty, reason: 'Day 3 on legacy recurring task must remain present');
     });
   });
 }

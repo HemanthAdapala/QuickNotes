@@ -92,7 +92,6 @@ class SingleTaskSnapshot {
 
     final localNow = now.toLocal();
     final today = DateTime(localNow.year, localNow.month, localNow.day);
-    final taskStart = DateTime(baseDue.year, baseDue.month, baseDue.day);
 
     DateTime currentCandidate = baseDue;
     int occurrenceCount = 1;
@@ -103,6 +102,24 @@ class SingleTaskSnapshot {
       final candDate = DateTime(candLocal.year, candLocal.month, candLocal.day);
       final dateStr =
           '${candDate.year}-${candDate.month.toString().padLeft(2, '0')}-${candDate.day.toString().padLeft(2, '0')}';
+
+      if (rule.excludedDates.contains(dateStr)) {
+        final next = RecurrenceCalculator.nextOccurrence(
+          currentCandidate,
+          rule,
+          currentOccurrenceCount: occurrenceCount,
+        );
+        if (next == null) {
+          if (lastCompletedCandidate != null) {
+            return (lastCompletedCandidate, true);
+          }
+          return (currentCandidate, false);
+        }
+        currentCandidate = next;
+        occurrenceCount++;
+        continue;
+      }
+
       final isCompletedOnDay = task.completedDates.contains(dateStr);
 
       if (candDate.isAtSameMomentAs(today)) {

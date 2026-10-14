@@ -238,6 +238,29 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  // ── Task swipe-to-complete ────────────────────────────────────────────────
+  Future<void> _completeTask(String taskId) async {
+    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+    final selectedDate =
+        DateTime(_currentMonth.year, _currentMonth.month, _selectedDay);
+    await tasksProvider.completeTaskOccurrence(taskId, selectedDate);
+
+    if (mounted) {
+      setState(() {
+        _initMonthTasks();
+      });
+      final tasks = _monthTasks[_selectedDay];
+      final allComplete = tasks != null &&
+          tasks.isNotEmpty &&
+          tasks.every((t) => t.isCompleted);
+      if (allComplete) {
+        Future.delayed(const Duration(milliseconds: 250), () {
+          if (mounted) _triggerCelebration();
+        });
+      }
+    }
+  }
+
   // ── Celebration particle burst ─────────────────────────────────────────────
   void _triggerCelebration() {
     HapticFeedback.heavyImpact();
@@ -442,6 +465,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                 tasks: _selectedDayTasks,
                                 onToggleTask: _toggleTask,
                                 onDismissTask: _removeTask,
+                                onCompleteTask: _completeTask,
                                 onTapTask: _editTask,
                                 onAddTask: _showAddTaskSheet,
                               ),

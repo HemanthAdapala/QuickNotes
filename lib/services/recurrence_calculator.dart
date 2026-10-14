@@ -19,9 +19,27 @@ class RecurrenceCalculator {
 
     DateTime candidate = _calculateSingleStep(baseDate, rule);
 
+    bool isExcluded(DateTime d) {
+      if (rule.excludedDates.isEmpty) return false;
+      final local = d.toLocal();
+      final dateStr =
+          '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+      return rule.excludedDates.contains(dateStr);
+    }
+
     if (after != null) {
       int occurrencesCalculated = currentOccurrenceCount;
-      while (!candidate.isAfter(after)) {
+      while (!candidate.isAfter(after) || isExcluded(candidate)) {
+        occurrencesCalculated++;
+        if (rule.maxOccurrences != null &&
+            occurrencesCalculated >= rule.maxOccurrences!) {
+          return null;
+        }
+        candidate = _calculateSingleStep(candidate, rule);
+      }
+    } else {
+      int occurrencesCalculated = currentOccurrenceCount;
+      while (isExcluded(candidate)) {
         occurrencesCalculated++;
         if (rule.maxOccurrences != null &&
             occurrencesCalculated >= rule.maxOccurrences!) {

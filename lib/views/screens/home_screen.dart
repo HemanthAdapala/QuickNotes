@@ -857,8 +857,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                         context,
                                                         listen: false);
                                                 TaskItem? currentTask;
-                                                for (final t
-                                                    in _filteredTasks) {
+                                                final currentTasks = tasksProvider
+                                                    .getUncompletedTasksForFilter(
+                                                        _activeFilter);
+                                                for (final t in currentTasks) {
                                                   if (t.id == taskId ||
                                                       t.id.startsWith(taskId) ||
                                                       taskId.startsWith(t.id)) {
@@ -873,13 +875,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                     .firstOrNull;
                                                 if (currentTask != null) {
                                                   await tasksProvider
-                                                      .toggleTaskCompletionOnDate(
+                                                      .completeTaskOccurrence(
                                                           currentTask.id,
                                                           currentTask.dueDate);
                                                 } else {
                                                   await tasksProvider
-                                                      .toggleTaskCompletion(
-                                                          taskId);
+                                                      .completeTaskOccurrence(
+                                                          taskId,
+                                                          DateTime.now());
                                                 }
 
                                                 final bool allDone =
