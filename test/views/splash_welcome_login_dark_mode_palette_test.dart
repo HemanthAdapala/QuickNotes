@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lottie/lottie.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -100,13 +101,20 @@ void main() {
       );
       await tester.pump();
 
-      // 1. Canvas #1E1E1E
+      // 1. Canvas #343434 (aligned with Lottie animation background)
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-      expect(scaffold.backgroundColor, const Color(0xFF1E1E1E));
+      expect(scaffold.backgroundColor, const Color(0xFF343434));
 
-      // 2. Title Colors.white
-      final title = tester.widget<Text>(find.text('Quick\nNotes'));
-      expect(title.style?.color, Colors.white);
+      // 2. Lottie animation rendered
+      expect(find.byType(LottieBuilder), findsOneWidget);
+      final lottieBuilder = tester.widget<LottieBuilder>(
+        find.byType(LottieBuilder),
+      );
+      final lottieAsset = lottieBuilder.lottie as AssetLottie;
+      expect(
+        lottieAsset.assetName,
+        'assets/animations/SplashScreen/QuickNotesYellowTheme_Dark.json',
+      );
 
       // 3. System UI: statusBarIconBrightness Brightness.light, statusBarBrightness Brightness.dark
       final overlay = tester.widget<AnnotatedRegion<SystemUiOverlayStyle>>(
@@ -131,9 +139,16 @@ void main() {
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
       expect(scaffold.backgroundColor, const Color(0xFFFFFFFF));
 
-      // 2. Title #333333
-      final title = tester.widget<Text>(find.text('Quick\nNotes'));
-      expect(title.style?.color, const Color(0xFF333333));
+      // 2. Lottie animation rendered
+      expect(find.byType(LottieBuilder), findsOneWidget);
+      final lottieBuilder = tester.widget<LottieBuilder>(
+        find.byType(LottieBuilder),
+      );
+      final lottieAsset = lottieBuilder.lottie as AssetLottie;
+      expect(
+        lottieAsset.assetName,
+        'assets/animations/SplashScreen/QuickNotesYellowTheme_Light.json',
+      );
 
       // 3. System UI: statusBarIconBrightness Brightness.dark, statusBarBrightness Brightness.light
       final overlay = tester.widget<AnnotatedRegion<SystemUiOverlayStyle>>(

@@ -14,6 +14,7 @@ import 'package:quick_notes/models/current_user.dart';
 import 'package:quick_notes/models/session_state.dart';
 import 'package:quick_notes/models/session_type.dart';
 import 'package:quick_notes/providers/notes_provider.dart';
+import 'package:quick_notes/providers/settings_provider.dart';
 import 'package:quick_notes/providers/tasks_provider.dart';
 import 'package:quick_notes/repositories/user_repository.dart';
 import 'package:quick_notes/services/backup/remote_backup_metadata.dart';
@@ -318,6 +319,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => NotesProvider()),
         ChangeNotifierProvider(create: (_) => TasksProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],
       child: MaterialApp(
         home: SplashScreen(splashController: controller),

@@ -76,6 +76,7 @@ flutter:
     - assets/Settings Screen/
     - assets/stickers/
     - assets/animations/
+    - assets/animations/SplashScreen/
     - DesignCode/LottieFiles/
     - DesignCode/Welcome Screens/
 
