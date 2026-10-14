@@ -1030,6 +1030,76 @@ class NotesProvider with ChangeNotifier {
   }
 
   // --- Habit Checklists Reset Engine ---
+  /// Safely resets habit checklist completion state while preserving all items,
+  /// ordering, and structure. Supports both current SDE Markdown and legacy JSON formats.
+  /// Guarantees that valid content is never overwritten with empty data.
+  ({String content, bool allCompleted})? _resetChecklistContent(String content) {
+    final trimmed = content.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+
+    // 1. Check for legacy JSON format
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        final decoded = jsonDecode(content);
+        if (decoded is List) {
+          if (decoded.isEmpty) {
+            return null; // Do not overwrite if empty
+          }
+          final allCompleted = decoded.every((item) =>
+              item is Map && (item['checked'] == true || item['done'] == true));
+          final resetItems = decoded.map((item) {
+            if (item is Map) {
+              final copy = Map<String, dynamic>.from(item);
+              if (copy.containsKey('checked')) copy['checked'] = false;
+              if (copy.containsKey('done')) copy['done'] = false;
+              if (!copy.containsKey('checked') && !copy.containsKey('done')) {
+                copy['done'] = false;
+              }
+              return copy;
+            }
+            return item;
+          }).toList();
+          return (content: jsonEncode(resetItems), allCompleted: allCompleted);
+        }
+      } catch (_) {
+        // Not valid JSON, fall through to Markdown checklist parser
+      }
+    }
+
+    // 2. Parse as Markdown checklist
+    final lines = content.split('\n');
+    final checklistRegex = RegExp(r'^(\s*-\s*\[)([ xX])(\]\s*.*)$');
+    int totalChecklistItems = 0;
+    int completedChecklistItems = 0;
+    final updatedLines = <String>[];
+
+    for (final line in lines) {
+      final match = checklistRegex.firstMatch(line);
+      if (match != null) {
+        totalChecklistItems++;
+        final checkChar = match.group(2);
+        if (checkChar == 'x' || checkChar == 'X') {
+          completedChecklistItems++;
+        }
+        // Uncheck item while preserving indentation, bracket syntax, and text
+        updatedLines.add('${match.group(1)} ${match.group(3)}');
+      } else {
+        // Non-checklist line (header, blank line, text): preserve verbatim
+        updatedLines.add(line);
+      }
+    }
+
+    if (totalChecklistItems > 0) {
+      final allCompleted = completedChecklistItems == totalChecklistItems;
+      return (content: updatedLines.join('\n'), allCompleted: allCompleted);
+    }
+
+    // If no checklist items were recognized, do not overwrite content
+    return null;
+  }
+
   Future<void> _checkAndResetHabits() async {
     final rawNotes = await _notesRepository.queryHabits();
     for (int i = 0; i < rawNotes.length; i++) {
@@ -1063,50 +1133,42 @@ class NotesProvider with ChangeNotifier {
           // Decrypt content programmatically if locked to prevent data corruption
           String decryptedContent = note.content;
           if (note.isLocked) {
-            decryptedContent =
-                await VaultService.instance.decryptText(note.content);
+            try {
+              decryptedContent =
+                  await VaultService.instance.decryptText(note.content);
+            } catch (e) {
+              debugPrint("Error decrypting habit note content during reset: $e");
+              continue; // Do not attempt reset on content that failed decryption
+            }
           }
 
-          bool allCompleted = false;
-          List<dynamic> items = [];
-          try {
-            items = jsonDecode(decryptedContent) as List<dynamic>;
-            if (items.isNotEmpty) {
-              allCompleted = items.every(
-                  (item) => item['checked'] == true || item['done'] == true);
-            }
-          } catch (_) {}
+          final resetResult = _resetChecklistContent(decryptedContent);
+          if (resetResult == null) {
+            // Safety guard: if content cannot be parsed as a checklist,
+            // preserve existing content untouched to prevent catastrophic data loss.
+            continue;
+          }
 
           int newStreak = note.habitStreak;
-          if (allCompleted) {
+          if (resetResult.allCompleted) {
             newStreak += 1;
           } else {
             newStreak = 0; // Reset streak on miss
           }
 
-          // Uncheck items for the new period, resetting both potential keys for safety
-          final resetItems = items.map((item) {
-            final copy = Map<String, dynamic>.from(item);
-            if (copy.containsKey('checked')) {
-              copy['checked'] = false;
-            }
-            if (copy.containsKey('done')) {
-              copy['done'] = false;
-            }
-            if (!copy.containsKey('checked') && !copy.containsKey('done')) {
-              copy['done'] = false;
-            }
-            return copy;
-          }).toList();
-
-          String updatedContent = jsonEncode(resetItems);
+          String finalContent = resetResult.content;
           if (note.isLocked) {
-            updatedContent =
-                await VaultService.instance.encryptText(updatedContent);
+            try {
+              finalContent =
+                  await VaultService.instance.encryptText(finalContent);
+            } catch (e) {
+              debugPrint("Error encrypting habit note content during reset: $e");
+              continue; // Do not overwrite if re-encryption fails
+            }
           }
 
           final updatedNote = note.copyWith(
-            content: updatedContent,
+            content: finalContent,
             habitStreak: newStreak,
             habitLastCompleted: now,
             updatedAt: now,
