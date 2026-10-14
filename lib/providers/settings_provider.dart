@@ -11,18 +11,21 @@ class SettingsProvider extends ChangeNotifier {
   static const String keyLayoutDensity = 'layout_density';
   static const String keyFontScale = 'font_scale';
   static const String keyAccentPreference = 'accent_preference';
+  static const String keyLastActiveTab = 'last_active_tab';
 
   // ── Defaults ───────────────────────────────────────────────────────────────
   static const ThemeMode defaultThemeMode = ThemeMode.light;
   static const String defaultLayoutDensity = 'grid';
   static const double defaultFontScale = 1.0;
   static const String defaultAccentPreference = 'yellow';
+  static const String defaultLastActiveTab = 'notes';
 
   // ── State ──────────────────────────────────────────────────────────────────
   ThemeMode _themeMode = defaultThemeMode;
   String _layoutDensity = defaultLayoutDensity;
   double _fontSizeScale = defaultFontScale;
   String _selectedAccent = defaultAccentPreference;
+  String _lastActiveTab = defaultLastActiveTab;
   bool _isInitialized = false;
 
   SharedPreferences? _prefs;
@@ -40,6 +43,8 @@ class SettingsProvider extends ChangeNotifier {
   String get layoutDensity => _layoutDensity;
   double get fontSizeScale => _fontSizeScale;
   String get selectedAccent => _selectedAccent;
+  String get lastActiveTab => _lastActiveTab;
+  bool get isNotesTab => _lastActiveTab == 'notes';
   bool get isBentoGrid => _layoutDensity == 'grid';
   bool get isInitialized => _isInitialized;
 
@@ -102,6 +107,14 @@ class SettingsProvider extends ChangeNotifier {
     }
     _selectedAccent = accent ?? defaultAccentPreference;
 
+    // 5. Last Active Tab (notes | tasks)
+    final savedTab = _prefs?.getString(keyLastActiveTab);
+    if (savedTab == 'notes' || savedTab == 'tasks') {
+      _lastActiveTab = savedTab!;
+    } else {
+      _lastActiveTab = defaultLastActiveTab;
+    }
+
     _isInitialized = true;
     notifyListeners();
   }
@@ -161,6 +174,22 @@ class SettingsProvider extends ChangeNotifier {
     try {
       await _secureStorage.write(key: keyAccentPreference, value: accent);
     } catch (_) {}
+  }
+
+  /// Sets the last active tab ('notes' or 'tasks') and persists it.
+  Future<void> setLastActiveTab(String tab) async {
+    final normalized =
+        (tab.trim().toLowerCase() == 'tasks') ? 'tasks' : 'notes';
+    if (_lastActiveTab == normalized) return;
+    _lastActiveTab = normalized;
+    notifyListeners();
+
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs?.setString(keyLastActiveTab, normalized);
+    } catch (e) {
+      debugPrint('SettingsProvider: Failed to persist lastActiveTab: $e');
+    }
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

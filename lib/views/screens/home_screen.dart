@@ -16,6 +16,7 @@ import '../../themes/glassmorphism_presets.dart';
 
 import '../../providers/notes_provider.dart';
 import '../../providers/tasks_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../services/app_statistics_service.dart';
 import '../../services/notification_action_handler.dart';
 import '../../services/deep_link_coordinator.dart';
@@ -62,12 +63,12 @@ typedef _FilterPill = FilterPill;
 // ─────────────────────────────────────────────────────────────────────────────
 
 class HomeScreen extends StatefulWidget {
-  final bool initialShowTasks;
+  final bool? initialShowTasks;
   final String? focusedTaskId;
 
   const HomeScreen({
     super.key,
-    this.initialShowTasks = false,
+    this.initialShowTasks,
     this.focusedTaskId,
   });
 
@@ -113,9 +114,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    if (widget.initialShowTasks || widget.focusedTaskId != null) {
+
+    // 1. Resolve initial active tab (explicit override vs persisted preference)
+    SettingsProvider? settingsProvider;
+    try {
+      settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    } catch (_) {}
+
+    if (widget.focusedTaskId != null || widget.initialShowTasks == true) {
+      // Explicit startup override targeting Tasks (e.g. task deep link)
       _isNotesActive = false;
+    } else if (widget.initialShowTasks == false) {
+      // Explicit startup override targeting Notes
+      _isNotesActive = true;
+    } else if (settingsProvider != null) {
+      // Restore persisted selection
+      _isNotesActive = (settingsProvider.lastActiveTab != 'tasks');
+    } else {
+      // Default safely to Notes when preference is absent or unreadable
+      _isNotesActive = true;
     }
+
     if (widget.focusedTaskId != null) {
       _focusedTaskId = widget.focusedTaskId;
     }
@@ -203,6 +222,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
+
+    // Asynchronous fallback for test environments where SettingsProvider is not in context
+    if (widget.initialShowTasks == null && widget.focusedTaskId == null) {
+      final savedTab = prefs.getString(SettingsProvider.keyLastActiveTab);
+      if (savedTab == 'tasks' && _isNotesActive) {
+        setState(() {
+          _isNotesActive = false;
+        });
+      } else if (savedTab == 'notes' && !_isNotesActive) {
+        setState(() {
+          _isNotesActive = true;
+        });
+      }
+    }
+
     setState(() {
       final name = prefs.getString('profile_username') ??
           prefs.getString('profile_full_name');
@@ -796,6 +830,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               NotesAndTaskPill(
                                 isNotesActive: _isNotesActive,
                                 onChanged: (val) {
+                                  if (_isNotesActive == val) return;
                                   setState(() {
                                     _isNotesActive = val;
                                     if (_isNotesActive &&
@@ -803,6 +838,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                       _activeFilter = 'Today';
                                     }
                                   });
+                                  // Persist user-initiated tab changes
+                                  try {
+                                    final settings =
+                                        Provider.of<SettingsProvider>(context,
+                                            listen: false);
+                                    settings
+                                        .setLastActiveTab(val ? 'notes' : 'tasks');
+                                  } catch (_) {
+                                    SharedPreferences.getInstance().then((prefs) {
+                                      prefs.setString(
+                                          SettingsProvider.keyLastActiveTab,
+                                          val ? 'notes' : 'tasks');
+                                    }).catchError((_) {});
+                                  }
                                 },
                               ),
                             ],
