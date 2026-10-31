@@ -235,7 +235,9 @@ class Note {
       userId: map['userId'] as String?,
       title: map['title'] as String,
       content: (map['content'] ?? "") as String,
-      isPinned: (map['isPinned'] as int) == 1,
+      isPinned: map['isPinned'] is bool
+          ? map['isPinned'] as bool
+          : ((map['isPinned'] ?? 0) as int == 1),
       isFavorite: (map['isFavorite'] ?? 0) as int == 1,
       isArchived: (map['isArchived'] ?? 0) as int == 1,
       category: (map['category'] ?? 'Uncategorized') as String,
@@ -248,7 +250,7 @@ class Note {
           : null,
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: DateTime.parse(map['updatedAt'] as String),
-      colorValue: map['colorValue'] as int,
+      colorValue: (map['colorValue'] ?? 0) as int,
       isDeleted: (map['isDeleted'] ?? 0) as int == 1,
       deletedAt: map['deletedAt'] != null
           ? DateTime.tryParse(map['deletedAt'] as String)

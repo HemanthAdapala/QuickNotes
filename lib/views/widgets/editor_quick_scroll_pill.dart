@@ -64,7 +64,7 @@ class EditorQuickScrollPill extends StatelessWidget {
                       child: TactileButton(
                         useAppleSpring: true,
                         compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
+                        settleDuration: const Duration(milliseconds: 220),
                         onTap: canTop
                             ? () {
                                 HapticFeedback.selectionClick();
@@ -93,7 +93,7 @@ class EditorQuickScrollPill extends StatelessWidget {
                       child: TactileButton(
                         useAppleSpring: true,
                         compressionScale: 0.7,
-                        settleDuration: const Duration(milliseconds: 1000),
+                        settleDuration: const Duration(milliseconds: 220),
                         onTap: canBottom
                             ? () {
                                 HapticFeedback.selectionClick();
