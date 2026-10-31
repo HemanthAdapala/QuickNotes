@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../providers/notes_provider.dart';
 import '../../models/folder.dart';
+import '../../models/folder_customization_icon.dart';
 import '../widgets/tactile_button.dart';
 import 'folder_notes_screen.dart';
 import '../../core/motion/motion_constants.dart';
@@ -908,11 +909,13 @@ Future<void> openFolderCustomization(
 class FolderCustomizationSheet extends StatefulWidget {
   final Folder folder;
   final ValueChanged<Folder> onApply;
+  final FolderIconCategory? initialCategory;
 
   const FolderCustomizationSheet({
     super.key,
     required this.folder,
     required this.onApply,
+    this.initialCategory,
   });
 
   @override
@@ -923,12 +926,16 @@ class FolderCustomizationSheet extends StatefulWidget {
 class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
   String? _selectedColorHex;
   String? _selectedSticker;
+  late FolderIconCategory _selectedCategory;
 
   @override
   void initState() {
     super.initState();
     _selectedColorHex = widget.folder.colorHex;
     _selectedSticker = widget.folder.sticker;
+    _selectedCategory = widget.initialCategory ??
+        FolderCustomizationCatalog.findCategoryForIdentifier(_selectedSticker) ??
+        FolderIconCategory.calendar;
   }
 
   void _showFullColorPicker() {
@@ -961,14 +968,7 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
       "0xFFFFC6FF", // Light Pink
     ];
 
-    final List<String> stickers = [
-      "birds.png",
-      "customer-service.png",
-      "kiss (1).png",
-      "kiss.png",
-      "love.png",
-      "nurse.png",
-    ];
+
 
     // Issue #1 Fix: dynamically prepend or append the selected custom color if it's not one of default presets
     final List<String> displayColorHexes = List<String>.from(defaultColorHexes);
@@ -1118,115 +1118,179 @@ class _FolderCustomizationSheetState extends State<FolderCustomizationSheet> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Visual Changes: Vertical layout grid for stickers store
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      crossAxisSpacing: 12.0,
-                      mainAxisSpacing: 12.0,
-                      childAspectRatio: 1.0,
-                    ),
-                    itemCount: stickers.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        final isSelected = _selectedSticker == null;
+                  // Category Selector Chips
+                  SizedBox(
+                    height: 36,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: FolderIconCategory.values.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (context, catIndex) {
+                        final category = FolderIconCategory.values[catIndex];
+                        final isSelected = _selectedCategory == category;
                         return TactileButton(
                           onTap: () {
                             setState(() {
-                              _selectedSticker = null;
+                              _selectedCategory = category;
                             });
                           },
-                          compressionScale: 0.9,
-                          child: Container(
+                          compressionScale: 0.95,
+                          useAppleSpring: true,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF3A3A3C)
-                                  : const Color(0xFFEFEFF4),
-                              borderRadius: BorderRadius.circular(20.0),
-                              border: Border.all(
-                                color: isSelected
-                                    ? (isDark
-                                        ? const Color(0xFFFFFFFF)
-                                        : const Color(0xFF1C1C1E))
-                                    : Colors.transparent,
-                                width: 2.0,
-                              ),
+                              color: isSelected
+                                  ? (isDark
+                                      ? const Color(0xFF0088FF)
+                                      : const Color(0xFF1C1C1E))
+                                  : (isDark
+                                      ? const Color(0xFF3A3A3C)
+                                      : const Color(0xFFEFEFF4)),
+                              borderRadius: BorderRadius.circular(18),
                             ),
-                            child: Icon(
-                              Icons.block_rounded,
-                              color: isDark
-                                  ? const Color(0xFF757575)
-                                  : const Color(0xFF8E8E93),
-                              size: 24,
+                            child: Text(
+                              category.label,
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isDark
+                                        ? const Color(0xFF8E8E93)
+                                        : const Color(0xFF333333)),
+                              ),
                             ),
                           ),
                         );
-                      }
-                      final sticker = stickers[index - 1];
-                      final isSelected = _selectedSticker == sticker;
-                      return TactileButton(
-                        onTap: () {
-                          setState(() {
-                            _selectedSticker = sticker;
-                          });
-                        },
-                        compressionScale: 0.9,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF2C2C2C)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(20.0),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? (isDark
-                                          ? const Color(0xFFFFFFFF)
-                                          : const Color(0xFF1C1C1E))
-                                      : Colors.transparent,
-                                  width: 2.0,
-                                ),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              padding: const EdgeInsets.all(6.0),
-                              child: Center(
-                                child: Image.asset(
-                                  "assets/stickers/$sticker",
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                            if (isSelected)
-                              Positioned(
-                                top: -2,
-                                right: -2,
-                                child: Container(
-                                  width: 18,
-                                  height: 18,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF34C759),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.check,
-                                    size: 12,
-                                    color: Color(0xFFFFFFFF),
-                                  ),
-                                ),
-                              ),
-                          ],
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // Categorized Icons Grid
+                  Builder(
+                    builder: (context) {
+                      final categoryIcons =
+                          FolderCustomizationCatalog.getByCategory(
+                              _selectedCategory);
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          crossAxisSpacing: 12.0,
+                          mainAxisSpacing: 12.0,
+                          childAspectRatio: 1.0,
                         ),
+                        itemCount: categoryIcons.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            final isSelected = _selectedSticker == null;
+                            return TactileButton(
+                              onTap: () {
+                                setState(() {
+                                  _selectedSticker = null;
+                                });
+                              },
+                              compressionScale: 0.9,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? const Color(0xFF3A3A3C)
+                                      : const Color(0xFFEFEFF4),
+                                  borderRadius: BorderRadius.circular(20.0),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? (isDark
+                                            ? const Color(0xFFFFFFFF)
+                                            : const Color(0xFF1C1C1E))
+                                        : Colors.transparent,
+                                    width: 2.0,
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.block_rounded,
+                                  color: isDark
+                                      ? const Color(0xFF757575)
+                                      : const Color(0xFF8E8E93),
+                                  size: 24,
+                                ),
+                              ),
+                            );
+                          }
+                          final icon = categoryIcons[index - 1];
+                          final isSelected = _selectedSticker != null &&
+                              (_selectedSticker == icon.id ||
+                                  _selectedSticker == icon.assetPath ||
+                                  _selectedSticker ==
+                                      icon.assetPath.split('/').last);
+                          return TactileButton(
+                            onTap: () {
+                              setState(() {
+                                _selectedSticker = icon.id;
+                              });
+                            },
+                            compressionScale: 0.9,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? const Color(0xFF2C2C2C)
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(20.0),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? (isDark
+                                              ? const Color(0xFFFFFFFF)
+                                              : const Color(0xFF1C1C1E))
+                                          : Colors.transparent,
+                                      width: 2.0,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.all(6.0),
+                                  child: Center(
+                                    child: Image.asset(
+                                      icon.assetPath,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Positioned(
+                                    top: -2,
+                                    right: -2,
+                                    child: Container(
+                                      width: 18,
+                                      height: 18,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF34C759),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.check,
+                                        size: 12,
+                                        color: Color(0xFFFFFFFF),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
                       );
                     },
                   ),

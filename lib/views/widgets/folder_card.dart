@@ -14,6 +14,7 @@ import 'dart:math' show pi;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/folder.dart';
+import '../../models/folder_customization_icon.dart';
 import '../widgets/tactile_button.dart';
 
 class FolderGridCard extends StatelessWidget {
@@ -131,39 +132,45 @@ class FolderGridCard extends StatelessWidget {
                       bottom: 8.0,
                       width: 36.0,
                       height: 36.0,
-                      child: folder.sticker != null
-                          ? Image.asset(
-                              "assets/stickers/${folder.sticker}",
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const SizedBox.shrink();
-                              },
-                            )
-                          : (customizeTap != null
-                              ? TactileButton(
-                                  onTap: customizeTap,
-                                  compressionScale: 0.8,
-                                  useAppleSpring: true,
-                                  child: Container(
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black12,
-                                          blurRadius: 4.0,
-                                          offset: Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.add_rounded,
-                                      color: Color(0xFF8E8E93),
-                                      size: 20,
-                                    ),
+                      child: () {
+                        final assetPath =
+                            FolderIconResolver.resolveAssetPath(folder.sticker);
+                        if (assetPath != null) {
+                          return Image.asset(
+                            assetPath,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const SizedBox.shrink();
+                            },
+                          );
+                        }
+                        if (customizeTap != null) {
+                          return TactileButton(
+                            onTap: customizeTap,
+                            compressionScale: 0.8,
+                            useAppleSpring: true,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 4.0,
+                                    offset: Offset(0, 2),
                                   ),
-                                )
-                              : const SizedBox.shrink()),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.add_rounded,
+                                color: Color(0xFF8E8E93),
+                                size: 20,
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      }(),
                     ),
                   ],
                 ),
