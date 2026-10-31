@@ -10,6 +10,7 @@ import 'premium_feature_presentation.dart';
 import 'feature_access.dart';
 import 'purchase_provider_interface.dart';
 import 'premium_entitlement_manager.dart';
+import 'premium_purchase_success_dialog.dart';
 
 /// Launches the presentation & purchase-connected Premium Gate Bottom Sheet.
 ///
@@ -70,7 +71,10 @@ class PremiumGateSheet extends StatefulWidget {
 class _PremiumGateSheetState extends State<PremiumGateSheet> {
   bool _isPurchasing = false;
   bool _isRestoring = false;
+  bool _isPending = false;
+  bool _hasDismissed = false;
   StreamSubscription<PurchaseStateUpdate>? _stateSubscription;
+  PremiumEntitlementManager? _entitlementManager;
 
   @override
   void initState() {
@@ -81,26 +85,54 @@ class _PremiumGateSheetState extends State<PremiumGateSheet> {
   }
 
   void _listenToPurchaseUpdates() {
+    if (!mounted) return;
+
     try {
       final purchaseProvider =
           Provider.of<PurchaseProvider>(context, listen: false);
       _stateSubscription = purchaseProvider.stateStream.listen((state) {
         if (!mounted) return;
 
-        if (state.status == PurchaseActionStatus.purchasing) {
-          setState(() => _isPurchasing = true);
+        if (state.status == PurchaseActionStatus.purchasing ||
+            state.status == PurchaseActionStatus.verifying ||
+            state.status == PurchaseActionStatus.activating) {
+          setState(() {
+            _isPurchasing = true;
+            _isPending = false;
+          });
+        } else if (state.status == PurchaseActionStatus.pending) {
+          setState(() {
+            _isPurchasing = false;
+            _isRestoring = false;
+            _isPending = true;
+          });
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            SnackBar(
+              content: Text(
+                state.errorMessage ??
+                    'Your purchase is pending payment approval. Premium features will unlock once the payment is completed and verified.',
+                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+            ),
+          );
         } else if (state.status == PurchaseActionStatus.restoring) {
-          setState(() => _isRestoring = true);
+          setState(() {
+            _isRestoring = true;
+            _isPending = false;
+          });
         } else {
           setState(() {
             _isPurchasing = false;
             _isRestoring = false;
+            _isPending = false;
           });
         }
 
         if (state.status == PurchaseActionStatus.error &&
             state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
             SnackBar(
               content: Text(
                 state.errorMessage!,
@@ -111,57 +143,79 @@ class _PremiumGateSheetState extends State<PremiumGateSheet> {
             ),
           );
         } else if (state.status == PurchaseActionStatus.success) {
-          _handleSuccessClose();
+          _handleSuccessClose(transactionId: state.transactionId);
         }
       });
     } catch (_) {}
 
     try {
-      final entitlementManager =
+      _entitlementManager =
           Provider.of<PremiumEntitlementManager>(context, listen: false);
-      entitlementManager.addListener(_onEntitlementChanged);
+      _entitlementManager?.addListener(_onEntitlementChanged);
     } catch (_) {}
   }
 
   void _onEntitlementChanged() {
-    if (!mounted) return;
+    if (!mounted || _hasDismissed) return;
     try {
-      final entitlementManager =
+      final manager = _entitlementManager ??
           Provider.of<PremiumEntitlementManager>(context, listen: false);
-      if (entitlementManager.isPremiumActive) {
-        _handleSuccessClose();
+      if (manager.isPremiumActive && _isRestoring) {
+        // Restoring existing purchases dismisses paywall without replaying celebration
+        _handleSilentlyClose();
       }
     } catch (_) {}
   }
 
-  void _handleSuccessClose() {
-    if (!mounted) return;
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Quick Notes Premium Unlocked!',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: const Color(0xFF6366F1),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+  void _handleSilentlyClose() {
+    if (!mounted || _hasDismissed) return;
+    _hasDismissed = true;
+
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      if (route.isCurrent && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    } else if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _handleSuccessClose({String? transactionId}) {
+    if (!mounted || _hasDismissed) return;
+    _hasDismissed = true;
+
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final route = ModalRoute.of(context);
+
+    // Ensure we only dismiss this gate sheet's own modal route and never over-pop underlying routes
+    if (route != null) {
+      if (route.isCurrent && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    } else if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+
+    // Authoritative verification check: ensure entitlement is confirmed active
+    final isPremiumActive = _entitlementManager?.isPremiumActive ??
+        (Provider.of<PremiumEntitlementManager>(navigator.context, listen: false)
+            .isPremiumActive);
+
+    if (isPremiumActive) {
+      showPremiumPurchaseSuccessDialog(
+        context: navigator.context,
+        transactionId: transactionId,
+      );
+    }
   }
 
   @override
   void dispose() {
     _stateSubscription?.cancel();
-    try {
-      final entitlementManager =
-          Provider.of<PremiumEntitlementManager>(context, listen: false);
-      entitlementManager.removeListener(_onEntitlementChanged);
-    } catch (_) {}
+    _stateSubscription = null;
+    _entitlementManager?.removeListener(_onEntitlementChanged);
+    _entitlementManager = null;
     super.dispose();
   }
 
@@ -350,8 +404,24 @@ class _PremiumGateSheetState extends State<PremiumGateSheet> {
               // ── Primary Unlock CTA Button ─────────────────────────────────
               TactileButton(
                 useAppleSpring: true,
-                onTap: _isPurchasing || _isRestoring
-                    ? () {}
+                onTap: _isPurchasing || _isRestoring || _isPending
+                    ? () {
+                        if (_isPending) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Your purchase is pending payment approval. Premium features will unlock once the payment is completed and verified.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                      }
                     : () async {
                         HapticFeedback.mediumImpact();
                         if (widget.onUnlockPressed != null) {
@@ -394,18 +464,82 @@ class _PremiumGateSheetState extends State<PremiumGateSheet> {
                                   AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : Text(
-                            'Unlock Premium',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
+                        : _isPending
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.0,
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Payment Pending...',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Text(
+                                'Unlock Premium',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
                   ),
                 ),
               ),
+              if (_isPending) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B)
+                        .withValues(alpha: isDark ? 0.16 : 0.10),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.hourglass_top_rounded,
+                        size: 16,
+                        color: Color(0xFFF59E0B),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Your purchase is pending payment approval. Premium features will unlock once the payment is completed and verified.',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            height: 1.35,
+                            color: isDark
+                                ? const Color(0xFFFDE68A)
+                                : const Color(0xFF92400E),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
 
               // ── Pricing / Lifetime Subtitle ───────────────────────────────
@@ -485,7 +619,10 @@ class _PremiumGateSheetState extends State<PremiumGateSheet> {
               TactileButton(
                 useAppleSpring: true,
                 onTap: () {
-                  Navigator.of(context).pop();
+                  _hasDismissed = true;
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  }
                 },
                 child: Container(
                   width: double.infinity,

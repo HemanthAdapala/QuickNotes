@@ -1,0 +1,41 @@
+name = "quicknotes-entitlements"
+main = "src/index.ts"
+compatibility_date = "2024-04-01"
+
+[vars]
+PACKAGE_NAME = "com.quicknotes.byhmnth"
+PRODUCT_ID = "quicknotes_premium_lifetime"
+ISSUER_URL = "https://quicknotes-entitlements.placeholder.workers.dev"
+MINIMUM_SUPPORTED_APP_VERSION = 1
+PRIMARY_SIGNING_KEY_ID = "v1"
+SERVER_ALLOWED_SIGNING_KEYS = "v1"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "quicknotes-db"
+database_id = "placeholder-d1-id"
+
+[triggers]
+crons = ["*/30 * * * *"]
+
+# ==============================================================================
+# STAGING ENVIRONMENT (BUG-001 Isolated Verification)
+# ==============================================================================
+[env.staging]
+name = "quicknotes-entitlements-staging"
+
+[env.staging.vars]
+PACKAGE_NAME = "com.quicknotes.byhmnth"
+PRODUCT_ID = "quicknotes_premium_lifetime"
+ISSUER_URL = "https://quicknotes-entitlements-staging.hemanth1-adapala.workers.dev"
+MINIMUM_SUPPORTED_APP_VERSION = 1
+PRIMARY_SIGNING_KEY_ID = "v1"
+SERVER_ALLOWED_SIGNING_KEYS = "v1"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "quicknotes-db-staging"
+database_id = "adc4cc54-1828-49a7-845e-4042c5a8fc88"
+
+[env.staging.triggers]
+crons = ["*/30 * * * *"]

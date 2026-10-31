@@ -1,0 +1,14 @@
+node_modules/
+.wrangler/
+dist/
+package-lock.json
+
+# Production Secrets & Keys (BUG-001)
+*_keyring.json
+*service-account*.json
+*.key
+.secrets/
+**/*_keyring.json
+**/*service-account*.json
+**/*.key
+**/.secrets/

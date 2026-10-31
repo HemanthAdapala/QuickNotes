@@ -7,10 +7,11 @@ import 'premium_product.dart';
 /// before an active entitlement is granted.
 ///
 /// Boundary Note:
-/// In the current client-side implementation, this validates transaction state,
-/// expected product identifier, and platform source. In future server-backed
-/// architectures, this interface allows plugging in remote receipt verification
-/// (e.g. App Store Server API / Google Play Developer API) without altering the
+/// In the current client-side implementation, [DefaultPurchaseVerifier] performs
+/// structural validation (verifying product ID match, non-error status, and runtime platform).
+/// It does NOT perform cryptographic RSA signature verification or query the Google Play
+/// Developer API (purchases.products.get). In future server-backed architectures, this
+/// interface allows plugging in trusted remote receipt verification without altering the
 /// purchase provider or UI layer.
 abstract class PurchaseVerifier {
   /// Validates a [PurchaseDetails] transaction and constructs a verified [PremiumEntitlement].
