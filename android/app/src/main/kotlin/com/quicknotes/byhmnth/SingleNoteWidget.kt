@@ -72,7 +72,19 @@ class SingleNoteWidget : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.single_note_widget_layout)
 
             // 1. Identify selected note ID for this specific widget instance
-            val selectedNoteId = widgetData.getString("note_widget_id_$appWidgetId", null)
+            var selectedNoteId = widgetData.getString("note_widget_id_$appWidgetId", null)
+            if (selectedNoteId.isNullOrEmpty()) {
+                val pendingNoteId = widgetData.getString("pending_pin_note_id", null)
+                val pendingTimestamp = widgetData.getLong("pending_pin_note_timestamp", 0L)
+                if (!pendingNoteId.isNullOrEmpty() && (System.currentTimeMillis() - pendingTimestamp < 300_000L)) {
+                    selectedNoteId = pendingNoteId
+                    widgetData.edit()
+                        .putString("note_widget_id_$appWidgetId", pendingNoteId)
+                        .remove("pending_pin_note_id")
+                        .remove("pending_pin_note_timestamp")
+                        .apply()
+                }
+            }
 
             // 2. Load latest note snapshot (checking live catalog map, then instance cache)
             var noteJson: JSONObject? = null

@@ -340,5 +340,105 @@ void main() {
       await tester.pumpAndSettle();
       expect(undidTask?.id, equals('deck-1'));
     });
+    testWidgets('Test 5 — Slider track continuity, blue thumb backing, and DPR scaling',
+        (tester) async {
+      final task = TaskItem(
+        id: 'gap-test-task',
+        title: 'Gap Test Task',
+        dueDate: DateTime.now().add(const Duration(hours: 4)),
+        priority: 'high',
+        status: TaskStatus.waiting,
+        completed: false,
+      );
+
+      for (final dpr in [1.0, 2.0, 3.0]) {
+        tester.view.physicalSize = Size(390 * dpr, 844 * dpr);
+        tester.view.devicePixelRatio = dpr;
+
+        await tester.pumpWidget(_wrapTaskWidget(
+          child: TaskWidget(
+            tasks: [task],
+          ),
+        ));
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpAndSettle();
+
+        // 1. State A: Idle — outer track is 251x50, white thumb is 40x40, no blue backing
+        final outerTrackFinder = find.byWidgetPredicate((w) {
+          if (w is Container && w.decoration is BoxDecoration) {
+            final dec = w.decoration as BoxDecoration;
+            return dec.borderRadius == BorderRadius.circular(25.0) &&
+                w.clipBehavior == Clip.antiAlias &&
+                (dec.color == const Color(0x33787878) || dec.color == const Color(0xFF5A5A5A));
+          }
+          return false;
+        });
+        expect(outerTrackFinder, findsOneWidget, reason: 'Outer track capsule must have Clip.antiAlias and 25.0 radius');
+
+        final blueBackingFinder = find.byWidgetPredicate((w) {
+          if (w is Container && w.decoration is BoxDecoration) {
+            final dec = w.decoration as BoxDecoration;
+            return dec.color == const Color(0xFF0088FF) && dec.shape == BoxShape.circle;
+          }
+          return false;
+        });
+        expect(blueBackingFinder, findsNothing, reason: 'Blue backing must NOT render in idle state');
+
+        // 2. State B: Pointer Down on the thumb immediately shows 50x50 backing
+        final dragTarget = find.text('Drag to mark done');
+        final gesture = await tester.startGesture(tester.getCenter(dragTarget));
+        await tester.pump();
+
+        expect(blueBackingFinder, findsOneWidget, reason: 'Pointer down immediately displays blue backing circle');
+        final backingPos = tester.widget<Positioned>(
+          find.ancestor(of: blueBackingFinder, matching: find.byType(Positioned)).first,
+        );
+        expect(backingPos.width, equals(50.0), reason: 'Backing must have 50px width matching track height');
+        expect(backingPos.height, equals(50.0), reason: 'Backing must have 50px height matching track height');
+
+        final whiteThumbFinder = find.byWidgetPredicate((w) =>
+            w is Positioned && w.width == 40.0 && w.height == 40.0 && w.top == 5.0);
+        expect(whiteThumbFinder, findsOneWidget, reason: 'White thumb remains 40x40 centered vertically at top: 5');
+
+        // 3. State C: Dragging — Backing follows thumb, blue progress fill renders
+        await gesture.moveBy(const Offset(30.0, 0.0));
+        await tester.pump();
+        await gesture.moveBy(const Offset(20.0, 0.0));
+        await tester.pump();
+
+        final activeThumbPos = tester.widget<Positioned>(whiteThumbFinder);
+        final activeBackingPos = tester.widget<Positioned>(
+          find.ancestor(of: blueBackingFinder, matching: find.byType(Positioned)).first,
+        );
+        // Backing center matches thumb center
+        expect(activeBackingPos.left, equals(activeThumbPos.left! - 5.0));
+
+        final blueFillFinder = find.byWidgetPredicate((w) {
+          if (w is Container && w.decoration is BoxDecoration) {
+            final dec = w.decoration as BoxDecoration;
+            return dec.color == const Color(0xFF0088FF) && dec.shape != BoxShape.circle;
+          }
+          return false;
+        });
+        expect(blueFillFinder, findsOneWidget);
+        final positionedFill = tester.widget<Positioned>(
+          find.ancestor(of: blueFillFinder, matching: find.byType(Positioned)).first,
+        );
+        expect(positionedFill.left, 0.0);
+        expect(positionedFill.width, equals(activeThumbPos.left! + 20.0));
+
+        // 4. State E: Incomplete drag release hides backing and resets state
+        await gesture.up();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpAndSettle();
+
+        expect(blueBackingFinder, findsNothing, reason: 'Blue backing must hide when drag is released');
+        expect(blueFillFinder, findsNothing, reason: 'Blue fill must hide when drag is released');
+      }
+
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
   });
 }

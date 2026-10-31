@@ -55,7 +55,19 @@ class SingleTaskWidget : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.single_task_widget_layout)
 
             // 1. Identify selected task ID for this specific widget instance
-            val selectedTaskId = widgetData.getString("task_widget_id_$appWidgetId", null)
+            var selectedTaskId = widgetData.getString("task_widget_id_$appWidgetId", null)
+            if (selectedTaskId.isNullOrEmpty()) {
+                val pendingTaskId = widgetData.getString("pending_pin_task_id", null)
+                val pendingTimestamp = widgetData.getLong("pending_pin_task_timestamp", 0L)
+                if (!pendingTaskId.isNullOrEmpty() && (System.currentTimeMillis() - pendingTimestamp < 300_000L)) {
+                    selectedTaskId = pendingTaskId
+                    widgetData.edit()
+                        .putString("task_widget_id_$appWidgetId", pendingTaskId)
+                        .remove("pending_pin_task_id")
+                        .remove("pending_pin_task_timestamp")
+                        .apply()
+                }
+            }
 
             // 2. Load latest task snapshot (checking live tasks map, then instance cache)
             var taskJson: JSONObject? = null

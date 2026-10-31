@@ -113,6 +113,11 @@
             </intent-filter>
         </receiver>
 
+        <!-- Widget Pin Placement Success Receiver -->
+        <receiver
+            android:name="com.quicknotes.byhmnth.WidgetPinSuccessReceiver"
+            android:exported="true" />
+
         <!-- Note Selection / Configuration Activity for SingleNoteWidget -->
         <activity
             android:name="com.quicknotes.byhmnth.NoteWidgetConfigureActivity"
