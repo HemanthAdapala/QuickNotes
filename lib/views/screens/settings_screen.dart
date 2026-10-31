@@ -39,7 +39,6 @@ import 'widgets_screen.dart';
 import '../../premium/premium.dart';
 import '../../providers/settings_provider.dart';
 import 'developer/premium_test_mode_screen.dart';
-import '../widgets/fidelity_lab_diagnostic_button.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool? isDarkMode;
@@ -1075,18 +1074,6 @@ We do not sell, trade, or otherwise transfer your personally identifiable inform
             ),
           ),
 
-          // ── TEMPORARY PHYSICAL DIAGNOSTIC: Lab Morph Button (Phase 8C-D Fidelity Reference) ──
-          const Positioned(
-            top: 0,
-            right: 24.0,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: EdgeInsets.only(top: 68.0),
-                child: FidelityLabDiagnosticMorphButton(),
-              ),
-            ),
-          ),
         ],
       ),
     );

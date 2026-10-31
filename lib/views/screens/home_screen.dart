@@ -1,15 +1,12 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_inset_shadow/flutter_inset_shadow.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/app_bottom_navigation_bar.dart';
-import '../widgets/glass_container.dart';
 import '../widgets/tactile_button.dart';
 import '../widgets/primary_screen_surface.dart';
 import '../../themes/glassmorphism_presets.dart';
@@ -33,6 +30,9 @@ import 'settings_screen.dart';
 import 'search_screen.dart';
 import 'calendar_screen.dart';
 import 'create_task_screen.dart';
+import '../widgets/delete_confirmation_dialog.dart';
+import '../widgets/delete_task_confirmation_dialog.dart';
+import '../../models/repeat_rule.dart';
 import '../widgets/celebration_overlay.dart';
 import '../widgets/app_header_bar.dart';
 import '../widgets/notes_and_task_pill.dart';
@@ -87,6 +87,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? _avatarPath;
   final GlobalKey<FolderManagementScreenState> _foldersKey =
       GlobalKey<FolderManagementScreenState>();
+  final GlobalKey<CalendarScreenState> _calendarKey =
+      GlobalKey<CalendarScreenState>();
   final GlobalKey _frontTaskCardKey = GlobalKey();
   final List<OverlayEntry> _overlayEntries = [];
   StreamSubscription<NotificationPayload>? _notificationSub;
@@ -198,6 +200,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     // Build Calendar and Settings once so switching to those tabs is instant.
     _calendarBody = CalendarScreen(
+      key: _calendarKey,
       onBack: () => setState(() => _activeNavIndex = 0),
     );
     _settingsBody = SettingsScreen(
@@ -277,9 +280,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   List<TaskItem> get _filteredTasks {
     final tasksProvider = Provider.of<TasksProvider>(context);
-    final uncompleted =
-        tasksProvider.getUncompletedTasksForFilter(_activeFilter);
-    return AppStatisticsService.sortTasks(uncompleted,
+    final tasks = _activeFilter == 'Completed'
+        ? tasksProvider.getCompletedTasksForFilter()
+        : tasksProvider.getUncompletedTasksForFilter(_activeFilter);
+    return AppStatisticsService.sortTasks(tasks,
         filter: _activeFilter, ascending: _isSortAscending);
   }
 
@@ -299,6 +303,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           .length;
     } else {
       final tasksProvider = Provider.of<TasksProvider>(context);
+      if (filter == 'Completed') {
+        return tasksProvider.getCompletedTasksForFilter().length;
+      }
       return tasksProvider.getUncompletedTasksForFilter(filter).length;
     }
   }
@@ -435,6 +442,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  Future<void> _deleteNote(Note note) async {
+    final confirm = await showDeleteNoteDialog(context);
+    if (confirm == true && mounted) {
+      final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+      await notesProvider.deleteNote(note.id);
+    }
+  }
+
+  Future<void> _deleteTask(TaskItem task) async {
+    final bool isRecurring = task.isRecurring ||
+        task.recurrence != null ||
+        task.repeatRule != RepeatRule.none;
+    final option = await showDeleteTaskDialog(
+      context,
+      isRecurring: isRecurring,
+    );
+    if (mounted && option != null) {
+      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+      if (option == 'today') {
+        await tasksProvider.deleteTaskOccurrence(task.id, task.dueDate);
+      } else if (option == 'forever') {
+        await tasksProvider.deleteTask(task.id);
+      }
     }
   }
 
@@ -614,6 +647,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  Color get _currentScreenAccentColor {
+    switch (_activeNavIndex) {
+      case 1:
+        return AppColors.amber;
+      case 2:
+        return AppColors.taskBlue;
+      case 0:
+      default:
+        return _isNotesActive ? AppColors.amber : AppColors.taskBlue;
+    }
+  }
+
   // ── Root build ───────────────────────────────────────────────────────────
 
   @override
@@ -727,7 +772,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                             'Missed',
                                             'Today',
                                             'Weekly',
-                                            'Monthly'
+                                            'Monthly',
+                                            'Completed',
                                           ];
                                     return SizedBox(
                                       height: 52.0,
@@ -744,13 +790,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                           final String text;
                                           if (filter == 'All') {
                                             text = 'All';
+                                          } else if (filter == 'Completed') {
+                                            text = 'Completed Tasks ${_countForFilter(filter)}';
                                           } else {
                                             final labelText = _isNotesActive
                                                 ? 'Notes'
                                                 : 'Tasks';
                                             text = filter == 'Missed'
                                                 ? "Missed $labelText ${_countForFilter(filter)}"
-                                                : "${filter}'s $labelText ${_countForFilter(filter)}";
+                                                : "$filter's $labelText ${_countForFilter(filter)}";
                                           }
 
                                           return Padding(
@@ -895,11 +943,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                               notes: _filteredNotes,
                                               onEdit: (note) =>
                                                   _openNote(note.id),
+                                               onDelete: _deleteNote,
                                             )
                                           : TaskWidget(
+                                              key: ValueKey('task_widget_$_activeFilter'),
                                               frontCardKey: _frontTaskCardKey,
                                               tasks: _filteredTasks,
                                               onEdit: _openEditTask,
+                                               onDelete: _deleteTask,
+                                              onUndo: (taskItem) async {
+                                                final tasksProvider =
+                                                    Provider.of<TasksProvider>(
+                                                        context,
+                                                        listen: false);
+                                                await tasksProvider
+                                                    .uncompleteTaskOccurrence(
+                                                        taskItem.id,
+                                                        taskItem.dueDate);
+                                              },
                                               onComplete: (taskId) async {
                                                 final tasksProvider =
                                                     Provider.of<TasksProvider>(
@@ -987,13 +1048,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               bottom: 0,
               child: AppBottomNavigationBar(
                 selectedIndex: _activeNavIndex,
-                activeColor: _isNotesActive
-                    ? const Color(0xFFFFCC00)
-                    : const Color(0xFF0088FF),
+                activeColor: _currentScreenAccentColor,
+                isNotesActive: _isNotesActive,
                 onDestinationSelected: (i) {
                   if (i == 4) {
                     if (_activeNavIndex == 1) {
                       _foldersKey.currentState?.showCreateFolderDialog();
+                    } else if (_activeNavIndex == 2) {
+                      if (_calendarKey.currentState != null) {
+                        _calendarKey.currentState!.showAddTaskSheet();
+                      } else {
+                        _openNewTask();
+                      }
+                    } else if (_activeNavIndex == 3) {
+                      // Settings tab has no FAB action
                     } else {
                       if (_isNotesActive) {
                         _openNewNote();
@@ -1020,7 +1088,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   onTap: () => setState(() => _isMoreOptionsOpen = false),
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    color: Color(0xFF333333).withValues(alpha: 0.20),
+                    color: const Color(0xFF333333).withValues(alpha: 0.20),
                   ),
                 ),
               ),

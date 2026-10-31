@@ -44,6 +44,8 @@ class QuickNotesLiquidGlassTabBar extends StatefulWidget {
   final double? width;
   final bool? isDark;
   final Color? activeColor;
+  final bool isNotesActive;
+  final bool? showFab;
 
   // ── Physics Parameters (Forensic Stage 2 Defaults) ─────────────────────────
   final double travelStiffness;
@@ -69,6 +71,8 @@ class QuickNotesLiquidGlassTabBar extends StatefulWidget {
     ValueChanged<int>? onDestinationSelected,
     ValueChanged<int>? onChanged,
     this.folderModeActive = false,
+    this.isNotesActive = true,
+    this.showFab,
     this.onFabPressed,
     this.width,
     this.isDark,
@@ -565,12 +569,20 @@ class _QuickNotesLiquidGlassTabBarState
             height: controlH,
             child: RepaintBoundary(
               key: const ValueKey('fab_repaint_boundary'),
-              child: _QuickNotesNavigationFab(
+              child: Visibility(
+                key: const ValueKey('fab_visibility'),
+                visible: (widget.showFab ?? true) && widget.selectedIndex != 3,
+                maintainSize: true,
+                maintainAnimation: true,
+                maintainState: true,
+                child: _QuickNotesNavigationFab(
                 key: const ValueKey('quick_notes_navigation_fab'),
                 size: controlH,
                 scale: scale,
                 selectedIndex: widget.selectedIndex,
                 folderModeActive: widget.folderModeActive,
+                isNotesActive: widget.isNotesActive,
+                activeColor: widget.activeColor,
                 onFabPressed: widget.onFabPressed,
                 onChanged: widget.onDestinationSelected,
                 onAnimationActiveChanged: widget.onFabAnimationActiveChanged,
@@ -578,6 +590,7 @@ class _QuickNotesLiquidGlassTabBarState
               ),
             ),
           ),
+        ),
 
           // ── Sibling 2: Independent 4px Gap
           Positioned(
@@ -837,23 +850,37 @@ class _QuickNotesMainNavigationBar extends StatelessWidget {
   }
 }
 
-/// Quick Notes Yellow Liquid Glass Selection Pill
-class _QuickNotesYellowGlassPill extends StatelessWidget {
+/// Reusable tinted Liquid Glass surface for Quick Notes navigation elements.
+///
+/// Encapsulates the complete Liquid Glass layer stack:
+/// - Outer S0 drop shadows (inset.BoxDecoration)
+/// - Corner clipping (ClipRRect)
+/// - BackdropFilter glass blur (sigma 3.0)
+/// - CustomPaint flat inner border painter
+/// - Fixed-dimension constraints (SizedBox)
+/// - Tinted color fill with alpha scaling (isDark ? 0.78 : 0.82)
+/// - 4-layer inner inset shadows (GlassmorphismPresets.innerShadows)
+/// - White highlight hairline border (alpha 0.55, width 0.8)
+/// - Top-to-bottom specular white highlight gradient (4 stops)
+/// - Optional inner child (defaults to SizedBox.expand())
+class _QuickNotesTintedGlassSurface extends StatelessWidget {
   final double width;
   final double height;
   final BorderRadius borderRadius;
-  final double scale;
+  final double? scale;
   final bool isDark;
   final Color activeColor;
+  final Widget? child;
 
-  const _QuickNotesYellowGlassPill({
+  const _QuickNotesTintedGlassSurface({
     super.key,
     required this.width,
     required this.height,
     required this.borderRadius,
-    required this.scale,
+    this.scale,
     required this.isDark,
     this.activeColor = const Color(0xFFFFCC00),
+    this.child,
   });
 
   @override
@@ -905,13 +932,47 @@ class _QuickNotesYellowGlassPill extends StatelessWidget {
                       stops: const [0.0, 0.42, 0.78, 1.0],
                     ),
                   ),
-                  child: const SizedBox.expand(),
+                  child: child ?? const SizedBox.expand(),
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Quick Notes Yellow Liquid Glass Selection Pill
+class _QuickNotesYellowGlassPill extends StatelessWidget {
+  final double width;
+  final double height;
+  final BorderRadius borderRadius;
+  final double scale;
+  final bool isDark;
+  final Color activeColor;
+
+  const _QuickNotesYellowGlassPill({
+    super.key,
+    required this.width,
+    required this.height,
+    required this.borderRadius,
+    required this.scale,
+    required this.isDark,
+    this.activeColor = const Color(0xFFFFCC00),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _QuickNotesTintedGlassSurface(
+      key: const ValueKey('quick_notes_tinted_glass_surface'),
+      width: width,
+      height: height,
+      borderRadius: borderRadius,
+      scale: scale,
+      isDark: isDark,
+      activeColor: activeColor,
+      child: const SizedBox.expand(),
     );
   }
 }
@@ -972,6 +1033,8 @@ class _QuickNotesNavigationFab extends StatefulWidget {
   final double scale;
   final int selectedIndex;
   final bool folderModeActive;
+  final bool isNotesActive;
+  final Color? activeColor;
   final VoidCallback? onFabPressed;
   final ValueChanged<int> onChanged;
   final ValueChanged<bool>? onAnimationActiveChanged;
@@ -983,6 +1046,8 @@ class _QuickNotesNavigationFab extends StatefulWidget {
     required this.scale,
     required this.selectedIndex,
     this.folderModeActive = false,
+    this.isNotesActive = true,
+    this.activeColor,
     this.onFabPressed,
     required this.onChanged,
     this.onAnimationActiveChanged,
@@ -1023,7 +1088,7 @@ class _QuickNotesNavigationFabState extends State<_QuickNotesNavigationFab>
   }
 
   void _handleTapDown(bool reduceMotion) {
-    if (reduceMotion) return;
+    if (widget.selectedIndex == 3 || reduceMotion) return;
     _isPressed = true;
     _notifyAnimationActive();
     _scaleController.stop();
@@ -1041,7 +1106,7 @@ class _QuickNotesNavigationFabState extends State<_QuickNotesNavigationFab>
   }
 
   void _handleTapCancel(bool reduceMotion) {
-    if (reduceMotion) return;
+    if (widget.selectedIndex == 3 || reduceMotion) return;
     _isPressed = false;
     _notifyAnimationActive();
     _scaleController.stop();
@@ -1059,6 +1124,7 @@ class _QuickNotesNavigationFabState extends State<_QuickNotesNavigationFab>
   }
 
   void _handleTap(bool reduceMotion) {
+    if (widget.selectedIndex == 3) return;
     QuickNotesHaptics.buttonPress();
     _isPressed = false;
     if (reduceMotion) {
@@ -1089,61 +1155,98 @@ class _QuickNotesNavigationFabState extends State<_QuickNotesNavigationFab>
     widget.onChanged(4);
   }
 
+  Color get _fabAccentColor {
+    if (widget.folderModeActive || widget.selectedIndex == 1) {
+      return const Color(0xFFFFCC00);
+    }
+    if (widget.selectedIndex == 2) {
+      return const Color(0xFF0088FF);
+    }
+    if (widget.selectedIndex == 0) {
+      return widget.isNotesActive
+          ? const Color(0xFFFFCC00)
+          : const Color(0xFF0088FF);
+    }
+    return widget.activeColor ?? const Color(0xFFFFCC00);
+  }
+
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
     final isFolderActive =
         widget.folderModeActive || widget.selectedIndex == 1;
+    const iconColor = Colors.white;
 
-    final fabGlassBody = BottomBarGlassSurface(
+    final Widget iconWidget;
+    if (isFolderActive) {
+      iconWidget = Icon(
+        Icons.add_rounded,
+        key: const ValueKey('plus_icon'),
+        size: 22.0 * widget.scale,
+        color: iconColor,
+      );
+    } else if (widget.selectedIndex == 0 && !widget.isNotesActive) {
+      iconWidget = Icon(
+        Icons.checklist_rounded,
+        key: const ValueKey('checklist_icon'),
+        size: 22.0 * widget.scale,
+        color: iconColor,
+      );
+    } else {
+      iconWidget = SvgPicture.asset(
+        AppBottomNavigationAssets.pencil,
+        key: const ValueKey('pencil_icon'),
+        width: 22.0 * widget.scale,
+        height: 22.0 * widget.scale,
+        colorFilter: const ColorFilter.mode(
+          iconColor,
+          BlendMode.srcIn,
+        ),
+      );
+    }
+
+    final fabGlassBody = _QuickNotesTintedGlassSurface(
       key: const ValueKey('fab_glass_surface'),
       width: widget.size,
       height: widget.size,
       borderRadius: BorderRadius.circular(25.0 * widget.scale),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(25.0 * widget.scale),
-        clipBehavior: Clip.antiAlias,
-        child: Center(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            transitionBuilder: (child, animation) {
-              return ScaleTransition(
-                scale: animation,
-                child: FadeTransition(
-                  opacity: animation,
-                  child: child,
-                ),
-              );
-            },
-            child: isFolderActive
-                ? Icon(
-                    Icons.add_rounded,
-                    key: const ValueKey('plus_icon'),
-                    size: 22.0 * widget.scale,
-                    color:
-                        widget.isDark ? Colors.white : const Color(0xFF333333),
-                  )
-                : SvgPicture.asset(
-                    AppBottomNavigationAssets.pencil,
-                    key: const ValueKey('pencil_icon'),
-                    width: 22.0 * widget.scale,
-                    height: 22.0 * widget.scale,
-                    colorFilter: ColorFilter.mode(
-                      widget.isDark ? Colors.white : const Color(0xFF333333),
-                      BlendMode.srcIn,
-                    ),
-                  ),
-          ),
+      scale: widget.scale,
+      isDark: widget.isDark,
+      activeColor: _fabAccentColor,
+      child: Center(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (child, animation) {
+            return ScaleTransition(
+              scale: animation,
+              child: FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
+            );
+          },
+          child: iconWidget,
         ),
       ),
     );
 
+    final String? semanticLabel;
+    if (widget.selectedIndex == 3) {
+      semanticLabel = null;
+    } else if (isFolderActive) {
+      semanticLabel = 'Add folder';
+    } else if (widget.selectedIndex == 0 && !widget.isNotesActive) {
+      semanticLabel = 'Create task';
+    } else if (widget.selectedIndex == 2) {
+      semanticLabel = 'Create task';
+    } else {
+      semanticLabel = AppBottomNavigationDestination.defaults[4].label;
+    }
+
     return Semantics(
-      button: true,
-      enabled: true,
-      label: isFolderActive
-          ? 'Add folder'
-          : AppBottomNavigationDestination.defaults[4].label,
+      button: widget.selectedIndex != 3,
+      enabled: widget.selectedIndex != 3,
+      label: semanticLabel,
       onTap: () => _handleTap(reduceMotion),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
