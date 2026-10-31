@@ -84,7 +84,9 @@ class TaskItem {
             (recurrence != null
                 ? RepeatRuleExtension.fromDbString(recurrence.type.toDbString())
                 : RepeatRule.none),
-        isRecurring = isRecurring ?? (recurrence != null),
+        isRecurring = (recurrence != null ||
+                (repeatRule != null && repeatRule != RepeatRule.none)) &&
+            (isRecurring ?? true),
         timezone = timezone ?? DateTime.now().timeZoneName;
 
   /// Single authoritative completion property derived strictly from status
@@ -148,7 +150,12 @@ class TaskItem {
         DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now();
 
     final recRule = RecurrenceRule.tryDecode(map['recurrenceRule'] as String?);
-    final rawIsRec = (map['isRecurring'] as int? ?? 0) == 1 || recRule != null;
+    final repRule =
+        RepeatRuleExtension.fromDbString(map['repeatRule'] as String?);
+    final hasValidRecurrence =
+        recRule != null || repRule != RepeatRule.none;
+    final rawIsRec = hasValidRecurrence &&
+        ((map['isRecurring'] as int? ?? (hasValidRecurrence ? 1 : 0)) == 1);
 
     List<String> rawCompletedDates = const [];
     if (map['completedDates'] != null) {
@@ -259,9 +266,11 @@ class TaskItem {
                 : ReminderMode.off)
             : this.reminderMode);
 
-    final bool shouldClearRecurrence = clearRecurrence ||
-        (isRecurring == false && recurrence == null) ||
-        (repeatRule == RepeatRule.none && recurrence == null && isRecurring != true);
+    final bool isExplicitNever =
+        (repeatRule == RepeatRule.none && recurrence == null) ||
+        (isRecurring == false && recurrence == null);
+
+    final bool shouldClearRecurrence = clearRecurrence || isExplicitNever;
 
     final resolvedRecurrence = shouldClearRecurrence
         ? null
@@ -275,9 +284,13 @@ class TaskItem {
                     resolvedRecurrence.type.toDbString())
                 : this.repeatRule));
 
+    final bool hasValidRecurrence = resolvedRecurrence != null ||
+        resolvedRepeatRule != RepeatRule.none;
+
     final resolvedIsRecurring = shouldClearRecurrence
         ? false
-        : (isRecurring ?? (resolvedRecurrence != null || this.isRecurring));
+        : (hasValidRecurrence &&
+            (isRecurring ?? (resolvedRecurrence != null || this.isRecurring)));
 
     return TaskItem(
       id: id ?? this.id,

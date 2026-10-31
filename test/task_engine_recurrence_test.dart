@@ -88,13 +88,15 @@ class MockReminderScheduler implements ReminderScheduler {
   Future<void> initialize() async {}
 
   @override
-  Future<void> scheduleReminder(TaskItem task) async {
+  Future<bool> scheduleReminder(TaskItem task) async {
     scheduled.add(task);
+    return true;
   }
 
   @override
   Future<void> cancelReminder(int notificationId) async {
     cancelled.add(notificationId);
+    scheduled.removeWhere((t) => t.notificationId == notificationId);
   }
 
   @override
@@ -112,15 +114,17 @@ void main() {
   setUp(() async {
     repo = MockTasksRepository();
     scheduler = MockReminderScheduler();
-    clock = TestClock(DateTime(2026, 7, 24, 17, 0, 0));
+    clock = TestClock(DateTime.utc(2026, 7, 24, 8, 0, 0));
     engine = TaskEngine(repository: repo, clock: clock, scheduler: scheduler);
     await engine.initialize();
   });
 
   group('TaskEngine Recurrence Tests', () {
-    test('Completing a recurring task creates next occurrence and preserves history', () async {
-      final initialDueDate = DateTime(2026, 7, 24, 9, 0, 0);
-      final initialReminder = DateTime(2026, 7, 24, 9, 0, 0);
+    test(
+        'Completing a recurring task preserves anchor dueDate, advances reminderTime, and records completion',
+        () async {
+      final initialDueDate = DateTime.utc(2026, 7, 24, 9, 0, 0);
+      final initialReminder = DateTime.utc(2026, 7, 24, 9, 0, 0);
 
       final task = TaskItem(
         id: 'task-1',
@@ -130,27 +134,40 @@ void main() {
         reminderEnabled: true,
         reminderTime: initialReminder,
         isRecurring: true,
-        recurrence: const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+        recurrence:
+            const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
       );
 
       await engine.createTask(task: task);
       expect(engine.tasks.length, equals(1));
+      expect(scheduler.scheduled.length, equals(1));
 
-      // Complete the task at 5 PM
+      // Advance clock to 5 PM on July 24 and complete task
+      clock.advance(const Duration(hours: 9));
       await engine.toggleCompletion('task-1');
 
-      // Check in-place completion: Task 1 toggles completed without spawning extra task row
+      // Check in-place completion: Task 1 preserves anchor dueDate, updates completedDates, advances reminderTime
       final task1 = engine.getTaskById('task-1');
       expect(task1, isNotNull);
-      expect(task1!.completed, isTrue);
-      expect(task1.status, equals(TaskStatus.completed));
+      expect(task1!.completedDates.isNotEmpty, isTrue);
+      expect(task1.dueDate, equals(initialDueDate));
+      expect(task1.reminderTime, equals(DateTime.utc(2026, 7, 25, 9, 0, 0)));
+      expect(task1.status, equals(TaskStatus.waiting));
+      expect(task1.completed, isFalse);
 
-      // Single task row maintained in-place
+      // Single task row maintained in-place (no duplicate rows)
       expect(engine.tasks.length, equals(1));
+
+      // Next occurrence reminder scheduled in scheduler
+      expect(scheduler.cancelled, contains(task.notificationId));
+      expect(scheduler.scheduled.last.reminderTime,
+          equals(DateTime.utc(2026, 7, 25, 9, 0, 0)));
     });
 
-    test('Startup reconciliation generates missing next occurrence after app restart', () async {
-      final initialDueDate = DateTime(2026, 7, 24, 9, 0, 0);
+    test(
+        'Startup reconciliation generates missing next occurrence after app restart for legacy completed tasks',
+        () async {
+      final initialDueDate = DateTime.utc(2026, 7, 24, 9, 0, 0);
 
       final task = TaskItem(
         id: 'task-completed-alone',
@@ -160,29 +177,136 @@ void main() {
         status: TaskStatus.completed,
         completed: true,
         isRecurring: true,
-        recurrence: const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+        recurrence:
+            const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
         recurringSeriesId: 'series-reading-1',
       );
 
-      // Save completed task directly to repo (simulating app killed after completing task)
+      // Save completed task directly to repo (simulating legacy isolated completed row)
       await repo.insertTask(task);
 
       // Re-initialize a fresh engine
-      final newEngine = TaskEngine(repository: repo, clock: clock, scheduler: scheduler);
+      final newEngine =
+          TaskEngine(repository: repo, clock: clock, scheduler: scheduler);
       await newEngine.initialize();
 
-      // Reconciliation should detect missing next occurrence and generate it
+      // Reconciliation detects missing next occurrence and restores active occurrence
       expect(newEngine.tasks.length, equals(2));
-      final newOccurrence = newEngine.tasks.firstWhere((t) => t.id != 'task-completed-alone');
+      final newOccurrence =
+          newEngine.tasks.firstWhere((t) => t.id != 'task-completed-alone');
       expect(newOccurrence.recurringSeriesId, equals('series-reading-1'));
-      expect(newOccurrence.dueDate, equals(DateTime(2026, 7, 25, 9, 0, 0)));
+      expect(newOccurrence.dueDate, equals(DateTime.utc(2026, 7, 25, 9, 0, 0)));
     });
 
-    test('Mutating recurrence cycle between Never, Daily, Weekly, and back to Never', () async {
+    test(
+        'Custom interval recurrence advances reminderTime correctly (every 3 days)',
+        () async {
+      final initialDueDate = DateTime.utc(2026, 7, 24, 9, 0, 0);
+      final task = TaskItem(
+        id: 'task-custom',
+        title: 'Water Plants',
+        dueDate: initialDueDate,
+        priority: 'Medium',
+        reminderEnabled: true,
+        reminderTime: initialDueDate,
+        isRecurring: true,
+        recurrence:
+            const RecurrenceRule(type: RecurrenceType.daily, interval: 3),
+      );
+
+      await engine.createTask(task: task);
+      clock.advance(const Duration(hours: 9));
+      await engine.toggleCompletion('task-custom');
+
+      final rolled = engine.getTaskById('task-custom')!;
+      expect(rolled.dueDate, equals(initialDueDate));
+      expect(rolled.reminderTime, equals(DateTime.utc(2026, 7, 27, 9, 0, 0)));
+      expect(rolled.completedDates.isNotEmpty, isTrue);
+    });
+
+    test('Weekly and monthly recurrence advance reminderTime accurately',
+        () async {
+      // Weekly: July 24 + 7 days = July 31
+      final weeklyDueDate = DateTime.utc(2026, 7, 24, 10, 0, 0);
+      final weeklyTask = TaskItem(
+        id: 'task-weekly',
+        title: 'Weekly Review',
+        dueDate: weeklyDueDate,
+        priority: 'High',
+        reminderEnabled: true,
+        reminderTime: weeklyDueDate,
+        isRecurring: true,
+        recurrence:
+            const RecurrenceRule(type: RecurrenceType.weekly, interval: 1),
+      );
+      await engine.createTask(task: weeklyTask);
+      clock.advance(const Duration(hours: 9));
+      await engine.toggleCompletion('task-weekly');
+      final rolledWeekly = engine.getTaskById('task-weekly')!;
+      expect(rolledWeekly.dueDate, equals(weeklyDueDate));
+      expect(rolledWeekly.reminderTime,
+          equals(DateTime.utc(2026, 7, 31, 10, 0, 0)));
+
+      // Monthly: July 24 + 1 month = August 24
+      final monthlyDueDate = DateTime.utc(2026, 7, 24, 10, 0, 0);
+      final monthlyTask = TaskItem(
+        id: 'task-monthly',
+        title: 'Monthly Rent',
+        dueDate: monthlyDueDate,
+        priority: 'High',
+        reminderEnabled: true,
+        reminderTime: monthlyDueDate,
+        isRecurring: true,
+        recurrence:
+            const RecurrenceRule(type: RecurrenceType.monthly, interval: 1),
+      );
+      await engine.createTask(task: monthlyTask);
+      await engine.toggleCompletion('task-monthly');
+      final rolledMonthly = engine.getTaskById('task-monthly')!;
+      expect(rolledMonthly.dueDate, equals(monthlyDueDate));
+      expect(rolledMonthly.reminderTime,
+          equals(DateTime.utc(2026, 8, 24, 10, 0, 0)));
+    });
+
+    test(
+        'Incomplete recurring task left across midnight advances reminderTime via reconcileTaskStates',
+        () async {
+      final initialDueDate = DateTime.utc(2026, 7, 24, 9, 0, 0);
+      final task = TaskItem(
+        id: 'task-overdue-recurring',
+        title: 'Morning Yoga',
+        dueDate: initialDueDate,
+        priority: 'Low',
+        reminderEnabled: true,
+        reminderTime: initialDueDate,
+        isRecurring: true,
+        recurrence:
+            const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+      );
+
+      await engine.createTask(task: task);
+
+      // Advance clock past midnight into July 25 at 10 AM UTC (26 hours from 8 AM July 24)
+      clock.advance(const Duration(hours: 26));
+      expect(clock.now, equals(DateTime.utc(2026, 7, 25, 10, 0, 0)));
+
+      // Reconcile task states
+      await engine.reconcileTaskStates();
+
+      final rolled = engine.getTaskById('task-overdue-recurring')!;
+      // Series should NOT be stranded in missed state; anchor remains and reminder rolls to July 26
+      expect(rolled.status, equals(TaskStatus.waiting));
+      expect(rolled.dueDate, equals(initialDueDate));
+      expect(rolled.reminderTime, equals(DateTime.utc(2026, 7, 26, 9, 0, 0)));
+    });
+
+    test(
+        'Mutating recurrence cycle between Never, Daily, Weekly, and back to Never',
+        () async {
       // 1. Create a non-recurring task
       final task = await engine.createTask(
         title: 'Recurrence Mutation Task',
-        dueDate: DateTime(2026, 8, 31, 10, 0),
+        dueDate: DateTime.utc(2026, 8, 31, 10, 0),
       );
       expect(task.isRecurring, isFalse);
       expect(task.recurrence, isNull);
@@ -190,7 +314,8 @@ void main() {
       // 2. Edit from Never -> Daily
       final updatedDaily = task.copyWith(
         isRecurring: true,
-        recurrence: const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
+        recurrence:
+            const RecurrenceRule(type: RecurrenceType.daily, interval: 1),
       );
       final savedDaily = await engine.updateTask(updatedDaily);
       expect(savedDaily.isRecurring, isTrue);
@@ -211,7 +336,8 @@ void main() {
       // 4. Edit from Never -> Weekly
       final updatedWeekly = savedNever.copyWith(
         isRecurring: true,
-        recurrence: const RecurrenceRule(type: RecurrenceType.weekly, interval: 1),
+        recurrence:
+            const RecurrenceRule(type: RecurrenceType.weekly, interval: 1),
       );
       final savedWeekly = await engine.updateTask(updatedWeekly);
       expect(savedWeekly.isRecurring, isTrue);

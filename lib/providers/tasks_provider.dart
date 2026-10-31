@@ -11,6 +11,7 @@ import '../models/task_engine_state.dart';
 import '../services/task_engine.dart';
 import '../repositories/tasks_repository.dart';
 import '../services/widget_data_adapter.dart';
+import '../services/recurrence_calculator.dart';
 
 class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
   final TaskEngine _engine;
@@ -200,6 +201,22 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     return id;
   }
 
+  RecurrenceRule? _getEffectiveRecurrence(TaskItem task) {
+    if (task.recurrence != null) return task.recurrence;
+    switch (task.repeatRule) {
+      case RepeatRule.daily:
+        return const RecurrenceRule(type: RecurrenceType.daily);
+      case RepeatRule.weekly:
+        return const RecurrenceRule(type: RecurrenceType.weekly);
+      case RepeatRule.monthly:
+        return const RecurrenceRule(type: RecurrenceType.monthly);
+      case RepeatRule.yearly:
+        return const RecurrenceRule(type: RecurrenceType.yearly);
+      default:
+        return null;
+    }
+  }
+
   Future<void> deleteTask(String id) async {
     await _ensureEngineReady();
     try {
@@ -287,8 +304,7 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
   ///
   /// This operation is idempotent: if [targetDate] is already completed, it remains
   /// completed and is NEVER toggled back to incomplete.
-  Future<void> completeTaskOccurrence(
-      String id, DateTime targetDate) async {
+  Future<void> completeTaskOccurrence(String id, DateTime targetDate) async {
     await _ensureEngineReady();
     try {
       final String realId = _getBaseId(id);
@@ -297,16 +313,18 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         orElse: () => _engine.tasks.firstWhere((t) => t.id.startsWith(realId)),
       );
 
-      final bool isRecurring = task.isRecurring ||
-          task.recurrence != null ||
-          task.repeatRule != RepeatRule.none;
+      final bool isRecurring = (task.recurrence != null ||
+              task.repeatRule != RepeatRule.none) &&
+          task.isRecurring;
 
       if (!isRecurring) {
-        if (!task.completed && task.status != TaskStatus.completed) {
+        if (!task.completed || task.status != TaskStatus.completed) {
+          final now = DateTime.now();
           final updated = task.copyWith(
             completed: true,
             status: TaskStatus.completed,
-            updatedAt: DateTime.now(),
+            completedAt: now,
+            updatedAt: now,
           );
           await updateTask(updated);
         }
@@ -316,7 +334,20 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         final newDates = List<String>.from(task.completedDates);
         if (!newDates.contains(dateStr)) {
           newDates.add(dateStr);
+          DateTime? newReminder = task.reminderTime;
+          if (task.reminderTime != null) {
+            final rule = _getEffectiveRecurrence(task);
+            if (rule != null) {
+              newReminder = RecurrenceCalculator.nextOccurrence(
+                task.reminderTime!,
+                rule,
+                after: DateTime.now(),
+              );
+            }
+          }
+
           final updated = task.copyWith(
+            reminderTime: newReminder,
             completedDates: newDates,
             updatedAt: DateTime.now(),
           );
@@ -334,8 +365,7 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
   ///
   /// This operation is idempotent: if [targetDate] was completed, it is removed
   /// from [completedDates] (or marked waiting for non-recurring) and NEVER toggled back.
-  Future<void> uncompleteTaskOccurrence(
-      String id, DateTime targetDate) async {
+  Future<void> uncompleteTaskOccurrence(String id, DateTime targetDate) async {
     await _ensureEngineReady();
     try {
       final String realId = _getBaseId(id);
@@ -344,17 +374,18 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         orElse: () => _engine.tasks.firstWhere((t) => t.id.startsWith(realId)),
       );
 
-      final bool isRecurring = task.isRecurring ||
-          task.recurrence != null ||
-          task.repeatRule != RepeatRule.none;
+      final bool isRecurring = (task.recurrence != null ||
+              task.repeatRule != RepeatRule.none) &&
+          task.isRecurring;
 
       if (!isRecurring) {
         if (task.completed || task.status == TaskStatus.completed) {
+          final now = DateTime.now();
           final updated = task.copyWith(
             completed: false,
             status: TaskStatus.waiting,
             clearCompletedAt: true,
-            updatedAt: DateTime.now(),
+            updatedAt: now,
           );
           await updateTask(updated);
         }
@@ -366,6 +397,8 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
           newDates.remove(dateStr);
           final updated = task.copyWith(
             completedDates: newDates,
+            status: TaskStatus.waiting,
+            completed: false,
             updatedAt: DateTime.now(),
           );
           await updateTask(updated);
@@ -388,9 +421,9 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         orElse: () => _engine.tasks.firstWhere((t) => t.id.startsWith(realId)),
       );
 
-      final bool isRecurring = task.isRecurring ||
-          task.recurrence != null ||
-          task.repeatRule != RepeatRule.none;
+      final bool isRecurring = (task.recurrence != null ||
+              task.repeatRule != RepeatRule.none) &&
+          task.isRecurring;
 
       if (!isRecurring) {
         await _engine.toggleCompletion(task.id);
@@ -400,15 +433,34 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
         final newDates = List<String>.from(task.completedDates);
         if (newDates.contains(dateStr)) {
           newDates.remove(dateStr);
+          final updated = task.copyWith(
+            completedDates: newDates,
+            status: TaskStatus.waiting,
+            completed: false,
+            updatedAt: DateTime.now(),
+          );
+          await updateTask(updated);
         } else {
           newDates.add(dateStr);
-        }
+          DateTime? newReminder = task.reminderTime;
+          if (task.reminderTime != null) {
+            final rule = _getEffectiveRecurrence(task);
+            if (rule != null) {
+              newReminder = RecurrenceCalculator.nextOccurrence(
+                task.reminderTime!,
+                rule,
+                after: DateTime.now(),
+              );
+            }
+          }
 
-        final updated = task.copyWith(
-          completedDates: newDates,
-          updatedAt: DateTime.now(),
-        );
-        await updateTask(updated);
+          final updated = task.copyWith(
+            reminderTime: newReminder,
+            completedDates: newDates,
+            updatedAt: DateTime.now(),
+          );
+          await updateTask(updated);
+        }
       }
       notifyListeners();
     } catch (e) {
@@ -435,6 +487,20 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
       }
 
       // Recurring task projection logic (up to 6 months horizon)
+      final targetDateStr =
+          '${target.year}-${target.month.toString().padLeft(2, '0')}-${target.day.toString().padLeft(2, '0')}';
+      final bool isCompletedOnThisDay =
+          t.completedDates.contains(targetDateStr);
+
+      if (isCompletedOnThisDay) {
+        result.add(t.copyWith(
+          dueDate: DateTime(target.year, target.month, target.day,
+              localDue.hour, localDue.minute),
+          status: TaskStatus.completed,
+        ));
+        continue;
+      }
+
       if (target.isBefore(taskStart)) continue;
       final daysDiff = target.difference(taskStart).inDays;
       if (daysDiff > 180) continue; // Maximum 6 months horizon
@@ -497,6 +563,53 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     return result;
   }
 
+  /// Returns completed tasks for the Home screen Completed filter.
+  /// Includes completed one-time tasks and recurring tasks whose current occurrence is completed today.
+  List<TaskItem> getCompletedTasksForFilter() {
+    final now = _engine.clock.now;
+    final todayStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+    final result = <TaskItem>[];
+    final seenIds = <String>{};
+
+    for (final t in _engine.tasks) {
+      if (t.isDeleted || t.status == TaskStatus.archived) continue;
+
+      final bool isRecurring = (t.recurrence != null ||
+              t.repeatRule != RepeatRule.none) &&
+          t.isRecurring;
+
+      if (!isRecurring) {
+        if (t.completed || t.status == TaskStatus.completed) {
+          if (seenIds.add(t.id)) {
+            result.add(t);
+          }
+        }
+      } else {
+        if (t.completedDates.contains(todayStr)) {
+          if (seenIds.add(t.id)) {
+            final localDue = t.dueDate.toLocal();
+            final todayDue = DateTime(
+              now.year,
+              now.month,
+              now.day,
+              localDue.hour,
+              localDue.minute,
+            );
+            result.add(t.copyWith(
+              dueDate: todayDue,
+              completed: true,
+              status: TaskStatus.completed,
+            ));
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
   List<TaskItem> getUncompletedTasksForFilter(String filter) {
     final now = _engine.clock.now;
     final today = DateTime(now.year, now.month, now.day);
@@ -513,12 +626,12 @@ class TasksProvider with ChangeNotifier, WidgetsBindingObserver {
     final result = <TaskItem>[];
 
     for (final t in _engine.tasks) {
-      final bool isRecurring = t.isRecurring ||
-          t.recurrence != null ||
-          t.repeatRule != RepeatRule.none;
+      final bool isRecurring = (t.recurrence != null ||
+              t.repeatRule != RepeatRule.none) &&
+          t.isRecurring;
 
       if (!isRecurring) {
-        if (!t.completed) {
+        if (!t.completed && t.status != TaskStatus.completed) {
           final localDue = t.dueDate.toLocal();
           switch (filter) {
             case 'Missed':

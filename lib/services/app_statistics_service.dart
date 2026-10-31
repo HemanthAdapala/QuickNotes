@@ -172,6 +172,15 @@ class AppStatisticsService {
       return ascending ? list.reversed.toList() : list;
     }
 
+    if (filter == 'Completed') {
+      list.sort((a, b) {
+        final aTime = a.completedAt ?? a.updatedAt;
+        final bTime = b.completedAt ?? b.updatedAt;
+        return bTime.compareTo(aTime);
+      });
+      return ascending ? list.reversed.toList() : list;
+    }
+
     final now = DateTime.now().toLocal();
     final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
     final todayStart = DateTime(now.year, now.month, now.day);

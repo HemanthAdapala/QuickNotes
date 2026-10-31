@@ -6,13 +6,11 @@ import '../models/task_item.dart';
 import '../models/reminder_mode.dart';
 import '../models/notification_action.dart';
 import '../models/notification_payload.dart';
+import '../models/recurrence_rule.dart';
 import 'notification_action_handler.dart';
 import 'reminder_scheduler.dart';
-
-@pragma('vm:entry-point')
-void notificationTapBackground(NotificationResponse response) {
-  NotificationActionHandler.handleBackgroundResponse(response);
-}
+import 'recurrence_calculator.dart';
+import 'notification_id_manager.dart';
 
 /// Concrete implementation of ReminderScheduler using flutter_local_notifications
 class AndroidReminderScheduler implements ReminderScheduler {
@@ -29,10 +27,12 @@ class AndroidReminderScheduler implements ReminderScheduler {
       'Full alarm ringtone notifications for task reminders';
 
   bool _isInitialized = false;
+  String? _lastError;
 
   AndroidReminderScheduler._internal();
 
   bool get isInitialized => _isInitialized;
+  String? get lastError => _lastError;
 
   @override
   Future<void> initialize() async {
@@ -149,8 +149,8 @@ class AndroidReminderScheduler implements ReminderScheduler {
   }
 
   @override
-  Future<void> scheduleReminder(TaskItem task) async {
-    if (kIsWeb) return;
+  Future<bool> scheduleReminder(TaskItem task) async {
+    if (kIsWeb) return true;
     if (!_isInitialized) {
       await initialize();
     }
@@ -158,7 +158,7 @@ class AndroidReminderScheduler implements ReminderScheduler {
     if (!task.reminderEnabled ||
         task.reminderMode == ReminderMode.off ||
         task.reminderTime == null) {
-      return;
+      return true;
     }
 
     final reminderUtc = task.reminderTime!.toUtc();
@@ -166,7 +166,7 @@ class AndroidReminderScheduler implements ReminderScheduler {
 
     // Do not schedule past reminders
     if (reminderUtc.isBefore(nowUtc)) {
-      return;
+      return false;
     }
 
     // Defensive cancellation before scheduling to prevent duplicate notifications
@@ -244,6 +244,28 @@ class AndroidReminderScheduler implements ReminderScheduler {
         action: NotificationAction.open,
       ).jsonEncodePayload();
 
+      // Recurrence matching components for standard intervals
+      DateTimeComponents? matchComponents;
+      if (task.isRecurring && task.recurrence != null) {
+        final rec = task.recurrence!;
+        if (rec.interval == 1) {
+          switch (rec.type) {
+            case RecurrenceType.daily:
+              matchComponents = DateTimeComponents.time;
+              break;
+            case RecurrenceType.weekly:
+              matchComponents = DateTimeComponents.dayOfWeekAndTime;
+              break;
+            case RecurrenceType.monthly:
+              matchComponents = DateTimeComponents.dayOfMonthAndTime;
+              break;
+            case RecurrenceType.yearly:
+              matchComponents = DateTimeComponents.dateAndTime;
+              break;
+          }
+        }
+      }
+
       await _notificationsPlugin.zonedSchedule(
         id: task.notificationId,
         title: task.title,
@@ -252,14 +274,48 @@ class AndroidReminderScheduler implements ReminderScheduler {
         notificationDetails: notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: payload,
+        matchDateTimeComponents: matchComponents,
       );
 
+      // For custom intervals (interval > 1) which native repeating cannot express:
+      // Schedule a bounded forward horizon (next 2 occurrences) so alarms fire even if app is closed
+      if (task.isRecurring &&
+          task.recurrence != null &&
+          task.recurrence!.interval > 1) {
+        final rec = task.recurrence!;
+        DateTime nextCandidate = reminderUtc;
+        for (int step = 1; step <= 2; step++) {
+          final nextStep =
+              RecurrenceCalculator.nextOccurrence(nextCandidate, rec);
+          if (nextStep == null) break;
+          nextCandidate = nextStep;
+          final tzHorizonTime = tz.TZDateTime.from(nextCandidate, tz.UTC);
+          final horizonId =
+              NotificationIdManager.getHorizonId(task.notificationId, step);
+          await _notificationsPlugin.zonedSchedule(
+            id: horizonId,
+            title: task.title,
+            body: task.description.isNotEmpty
+                ? task.description
+                : 'Task Reminder',
+            scheduledDate: tzHorizonTime,
+            notificationDetails: notificationDetails,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            payload: payload,
+          );
+        }
+      }
+
+      _lastError = null;
       if (kDebugMode) {
         debugPrint(
-            'SCHEDULER ZONED [Success]: Task "${task.title}" (NotificationID: ${task.notificationId}) scheduled for $tzScheduledTime');
+            'SCHEDULER ZONED [Success]: Task "${task.title}" (NotificationID: ${task.notificationId}) scheduled for $tzScheduledTime (match: $matchComponents)');
       }
+      return true;
     } catch (e) {
+      _lastError = e.toString();
       debugPrint('Error in zonedSchedule for task ${task.id}: $e');
+      return false;
     }
   }
 
@@ -271,10 +327,13 @@ class AndroidReminderScheduler implements ReminderScheduler {
     }
 
     try {
-      await _notificationsPlugin.cancel(id: notificationId);
+      for (final id
+          in NotificationIdManager.getAllAssociatedIds(notificationId)) {
+        await _notificationsPlugin.cancel(id: id);
+      }
       if (kDebugMode) {
         debugPrint(
-            'SCHEDULER CANCEL [Success]: NotificationID $notificationId cancelled.');
+            'SCHEDULER CANCEL [Success]: NotificationID $notificationId (and horizon) cancelled.');
       }
     } catch (e) {
       debugPrint('Error cancelling notification $notificationId: $e');

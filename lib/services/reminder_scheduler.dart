@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart';
 import '../models/task_item.dart';
+import 'notification_id_manager.dart';
 
 abstract class ReminderScheduler {
   Future<void> initialize();
-  Future<void> scheduleReminder(TaskItem task);
+  Future<bool> scheduleReminder(TaskItem task);
   Future<void> cancelReminder(int notificationId);
   Future<List<int>> getPendingNotificationIds();
 }
@@ -25,20 +26,32 @@ class LoggingReminderScheduler implements ReminderScheduler {
   }
 
   @override
-  Future<void> scheduleReminder(TaskItem task) async {
+  Future<bool> scheduleReminder(TaskItem task) async {
     await cancelReminder(task.notificationId);
     _pendingIds.add(task.notificationId);
+    if (task.isRecurring &&
+        task.recurrence != null &&
+        task.recurrence!.interval > 1) {
+      _pendingIds
+          .add(NotificationIdManager.getHorizonId(task.notificationId, 1));
+      _pendingIds
+          .add(NotificationIdManager.getHorizonId(task.notificationId, 2));
+    }
     final msg =
         'SCHEDULER [Schedule]: Task "${task.title}" (ID: ${task.id}, NotificationID: ${task.notificationId}) at ${task.reminderTime}';
     logHistory.add(msg);
     if (kDebugMode) {
       debugPrint(msg);
     }
+    return true;
   }
 
   @override
   Future<void> cancelReminder(int notificationId) async {
-    _pendingIds.remove(notificationId);
+    for (final id
+        in NotificationIdManager.getAllAssociatedIds(notificationId)) {
+      _pendingIds.remove(id);
+    }
     final msg = 'SCHEDULER [Cancel]: NotificationID $notificationId';
     logHistory.add(msg);
     if (kDebugMode) {
