@@ -36,15 +36,38 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
   static const String _driveScope =
       'https://www.googleapis.com/auth/drive.file';
 
+  final bool promptUserForScope;
+
   GoogleDriveBackupService({
     GoogleSignIn? googleSignIn,
     HttpClient? httpClient,
     SessionManager? sessionManager,
     AccessTokenProvider? customTokenProvider,
+    this.promptUserForScope = true,
   })  : _googleSignIn = googleSignIn ?? AuthenticationService().googleSignIn,
         _httpClient = httpClient ?? HttpClient(),
         _sessionManager = sessionManager ?? SessionManager(),
         _customTokenProvider = customTokenProvider;
+
+  /// Checks whether Google Drive authorization has already been granted without prompting.
+  Future<bool> hasDrivePermission() async {
+    try {
+      return await _googleSignIn.canAccessScopes([_driveScope]);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Explicitly prompts the user for Google Drive permission if not already granted.
+  Future<bool> requestDrivePermission() async {
+    try {
+      final alreadyGranted = await _googleSignIn.canAccessScopes([_driveScope]);
+      if (alreadyGranted) return true;
+      return await _googleSignIn.requestScopes([_driveScope]);
+    } catch (_) {
+      return false;
+    }
+  }
 
   // ── 1. Upload Backup ──────────────────────────────────────────────────────
   @override
@@ -387,6 +410,12 @@ class GoogleDriveBackupService implements BackupStorageAdapter {
       try {
         final hasScope = await _googleSignIn.canAccessScopes([_driveScope]);
         if (!hasScope) {
+          if (!promptUserForScope) {
+            throw const DriveStorageException(
+              type: DriveStorageErrorType.permissionDenied,
+              message: 'Google Drive permission scope has not been granted yet',
+            );
+          }
           final granted = await _googleSignIn.requestScopes([_driveScope]);
           if (!granted) {
             throw const DriveStorageException(

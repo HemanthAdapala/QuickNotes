@@ -95,7 +95,7 @@ class SplashController {
           // Phase 1.9.7.3C — Check First-Run Recovery eligibility for authenticated Google session
           final detector = _recoveryDetector ??
               FirstRunRecoveryDetector(
-                  storageAdapter: GoogleDriveBackupService());
+                  storageAdapter: GoogleDriveBackupService(promptUserForScope: false));
           final recResult = await detector.checkEligibility();
           _recoveryResult = recResult;
 
