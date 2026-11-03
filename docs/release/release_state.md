@@ -19,30 +19,40 @@
 - Firebase: VERIFIED
 - Play Distribution: VERIFIED
 
-## Latest Build
+## Current Prepared Release
 
-- Version: 1.1.4
-- Version Code: 6
-- Flutter Version: 1.1.4+6
+- Version: 1.1.6
+- Version Code: 8
+- Flutter Version: 1.1.6+8
 - Track: Internal Testing
-- Status: PREPARED LOCALLY (Ready for Play Console Internal Testing upload)
-- AAB: build/app/outputs/bundle/release/app-release.aab
-- File Size: 99,963,411 bytes (~95.3 MB)
-- SHA-256: 1E596796DDADB0E6E9CF835BA82450A7B059691AECEEB45D116BE34593A02AC4
-- Build Date: 2026-10-27
-- Source Branch: feature/production-data-architecture
-- Source Revision: 30cc03a (working tree contains uncommitted feature & task reminder fixes)
-- Build Command: flutter build appbundle --release
-- Build Result: PASS (Exit code 0, 235.3s)
-- Signing Result: PASS (Signed with quicknotes-upload keystore, Verified via keytool)
-- Analyzer Result: PASS (0 errors, 0 warnings across all modified services and providers)
-- Purpose: Internal-Testing Build containing comprehensive Task Reminder reliability overhaul and collision-free notification partitioning
-- Remaining Blockers / Pending Validation: Physical-device testing on Samsung Galaxy S23 Ultra; Play Console upload pending manual submission
+- Status: PREPARED LOCALLY (Remediated authentication diagnostics and decoupled Drive authorization)
+- Source Branch: sync/coordinated-production-release
+- Source Revision: cd0777cc186b3eb3e58daf3c1b4cb029355452df
+- Purpose: Remediation of Google Sign-In failure on Google Play-distributed build: decoupled sensitive drive.file scope from basic login, added privacy-safe structured diagnostics for PlatformException (handling cancellation, network error, status code 10, and status code 12500), and enabled non-interactive first-run recovery detection.
+- Remaining Blockers / Pending Validation: Local test validation; Google Play Console build and upload pending Phase 9C authorization.
 
 ## Next Available Play Version
 
-- Version Name: 1.1.5
-- Version Code: 7
+- Version Name: 1.1.7
+- Version Code: 9
+
+## Release Notes (Version 1.1.6 / Code 8)
+
+Internal testing release containing Google Sign-In remediation & scope decoupling:
+- Google Sign-In scope decoupling: Basic sign-in requests only identity scopes (email, profile), eliminating sensitive scope restrictions during initial sign-in.
+- Independent Google Drive authorization: Drive access requested strictly on-demand when initiating cloud backup/restore.
+- Diagnostic error handling: Direct mapping of Google Play Services ApiException codes (10, 12500, 7) to informative, actionable messages, replacing generic catch-all connection errors.
+- First-Run Recovery safety: Non-interactive recovery eligibility checks prevent unexpected authorization prompts during onboarding and app startup.
+
+## Release Notes (Version 1.1.5 / Code 7)
+
+Internal testing coordinated production release integrating:
+- Task Reminder & recurrence overhaul: Collision-safe horizon notification scheduling (`NotificationIdManager`), auto-advancement, background action completion ('Mark Done'), and reboot alarm recovery.
+- Rich text editor enhancements: Tri-state formatting toolbar (`FormatState`), cursor and focus stability, and tactile quick-scrolling (`EditorQuickScrollPill` with 220ms spring physics).
+- Android home screen widgets: Instant widget pin placement (`widget_pin` MethodChannel) and interactive card context overflow menus (`CardOverflowButton`).
+- Folder customization: 61 categorized high-resolution icon assets across Calendar, Casual, and Food categories with categorized picker.
+- Premium backend & entitlement verification: Cloudflare Workers D1 backend integration and client-side Ed25519 JWS verification with 7-day offline cryptographic lease lifecycle.
+- Dynamic Liquid Glass navigation: Context-aware tab bar with active glow states, task accent styling (`AppColors.taskBlue`), and contextual FAB.
 
 ## Release Notes (Version 1.1.4 / Code 6)
 
@@ -84,6 +94,27 @@ Internal testing release focused on Google Play Premium Billing verification:
 - None currently recorded for the release baseline.
 
 ## Previous Releases
+
+### Version 1.1.5 (7)
+
+- Track: Internal Testing
+- Status: CONSUMED ON GOOGLE PLAY (Uploaded and installed via Internal Testing on Samsung Galaxy S23 Ultra; Google Sign-In failure investigated in Phase 9A/9B)
+- Purpose: Coordinated production release integrating Task Reminders, Rich Text Editor, Android Widgets, Folder Customization, Cloudflare D1 JWS Verification, and Liquid Glass Navigation.
+- Build Date: 2026-11-02
+- Source Branch: sync/coordinated-production-release
+- Source Revision: cd0777c
+- AAB: app-release.aab (File Size: 102,550,836 bytes, SHA-256: 647725FCDE1713336C5BA1D8CC7A5249661C28DD2B8606986BC7FFAF60E22AB3)
+- APK: app-release.apk (File Size: 107,348,716 bytes, SHA-256: 7ADEFF5E6F78950D0073D2AC8D099ECE40110D4DF8FA96BE2D929BA1893E0E87)
+
+### Version 1.1.4 (6)
+
+- Track: Internal Testing
+- Status: CONSUMED ON GOOGLE PLAY (Upload confirmed; verified unavailable for re-upload via Play Console error: "Version code 6 has already been used. Try another version code.")
+- Purpose: Task Reminder reliability overhaul and collision-free notification partitioning
+- Build Date: 2026-10-27
+- Source Branch: feature/production-data-architecture
+- Source Revision: 30cc03a
+- AAB: app-release.aab (File Size: 99,963,411 bytes, SHA-256: 1E596796DDADB0E6E9CF835BA82450A7B059691AECEEB45D116BE34593A02AC4)
 
 ### Version 1.1.3 (5)
 
