@@ -11,6 +11,18 @@ import '../../core/layout/paragraph_block_behavior.dart';
 
 const bool kImageDebug = true;
 
+/// Represents the formatting state of an attribute over a selection or cursor.
+enum FormatState {
+  /// The attribute is not present on any characters in the selection.
+  inactive,
+
+  /// The attribute is present on all characters in the selection.
+  active,
+
+  /// The attribute is present on some characters in the selection, but not all.
+  mixed,
+}
+
 class Style {
   final bool bold;
   final bool italic;
@@ -182,8 +194,9 @@ class InteractiveCheckbox extends StatelessWidget {
 
     return TactileButton(
       onTap: onTap,
-      compressionScale: 0.7,
-      settleDuration: const Duration(milliseconds: 1000),
+      compressionScale: 0.85,
+      settleDuration: const Duration(milliseconds: 200),
+      scrollSafe: true,
       playSelectionHaptic: true,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -259,7 +272,6 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
   bool _isDeleting = false;
-  int _lastPointerDownTime = 0;
 
   @override
   void initState() {
@@ -457,34 +469,34 @@ class ResizableImageWidgetState extends State<ResizableImageWidget>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Listener(
+        GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onPointerDown: (event) {
+          onTap: () {
+            if (kImageDebug) {
+              debugPrint("[Stage 9 - Tap] Image GestureDetector onTap.");
+            }
+            setState(() {
+              _showControls = !_showControls;
+            });
+            if (widget.onTap != null) {
+              widget.onTap!();
+            }
+          },
+          onDoubleTap: () {
             if (kImageDebug) {
               debugPrint(
-                  "[Stage 9 - PointerDown] Image Listener onPointerDown. Event position: ${event.position}");
+                  "[Stage 9 - DoubleTap] Image GestureDetector onDoubleTap.");
             }
-            final now = DateTime.now().millisecondsSinceEpoch;
-            if (now - _lastPointerDownTime < 300) {
-              Navigator.of(context).push(
-                PageRouteBuilder(
-                  opaque: false,
-                  barrierDismissible: true,
-                  pageBuilder: (context, _, __) => FullscreenImageViewer(
-                    imagePath: widget.imagePath,
-                    heroTag: heroTag,
-                  ),
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                opaque: false,
+                barrierDismissible: true,
+                pageBuilder: (context, _, __) => FullscreenImageViewer(
+                  imagePath: widget.imagePath,
+                  heroTag: heroTag,
                 ),
-              );
-            } else {
-              setState(() {
-                _showControls = !_showControls;
-              });
-              if (widget.onTap != null) {
-                widget.onTap!();
-              }
-            }
-            _lastPointerDownTime = now;
+              ),
+            );
           },
           child: Stack(
             clipBehavior: Clip.none,
@@ -1084,7 +1096,11 @@ class RichTextEditingController extends TextEditingController {
   }
 
   String _getTextOnly() {
-    return styledChars.map((sc) => sc.char).join();
+    final buffer = StringBuffer();
+    for (int i = 0; i < styledChars.length; i++) {
+      buffer.write(styledChars[i].char);
+    }
+    return buffer.toString();
   }
 
   void setMarkdown(String markdown) {
@@ -1128,10 +1144,17 @@ class RichTextEditingController extends TextEditingController {
         return style.listType == 'number';
       case 'checkbox':
         return style.listType == 'checkbox';
+      case 'quote':
+        return style.listType == 'quote';
       case 'color':
-        return style.color == value;
+        return value == null ? style.color != null : style.color == value;
       case 'highlight':
-        return style.highlight == value;
+        return value == null
+            ? style.highlight != null
+            : style.highlight == value;
+      case 'link':
+        return style.linkUrl != null &&
+            (value == null || style.linkUrl == value);
       default:
         return false;
     }
@@ -1156,6 +1179,11 @@ class RichTextEditingController extends TextEditingController {
         return style.copyWith(
             highlight: style.highlight == value ? null : value,
             clearHighlight: style.highlight == value);
+      case 'link':
+        return style.copyWith(
+          linkUrl: style.linkUrl != null ? null : (value as String?),
+          clearLink: style.linkUrl != null,
+        );
       default:
         return style;
     }
@@ -1180,8 +1208,73 @@ class RichTextEditingController extends TextEditingController {
         return enable
             ? style.copyWith(highlight: value)
             : style.copyWith(clearHighlight: true);
+      case 'link':
+        return enable
+            ? style.copyWith(linkUrl: value as String?)
+            : style.copyWith(clearLink: true);
       default:
         return style;
+    }
+  }
+
+  void setLinkForSelection(String url, {String? text}) {
+    final trimmedUrl = url.trim();
+    if (trimmedUrl.isEmpty) return;
+    saveUndoState();
+    final sel = selection;
+
+    if (sel.isValid &&
+        !sel.isCollapsed &&
+        sel.start >= 0 &&
+        sel.end <= styledChars.length) {
+      for (int i = sel.start; i < sel.end; i++) {
+        styledChars[i] = StyledChar(
+          char: styledChars[i].char,
+          style: styledChars[i].style.copyWith(linkUrl: trimmedUrl),
+        );
+      }
+      notifyListeners();
+    } else {
+      final insertText = (text != null && text.trim().isNotEmpty)
+          ? text.trim()
+          : trimmedUrl;
+      final int insertPos = (sel.isValid && sel.start >= 0)
+          ? sel.start.clamp(0, styledChars.length)
+          : styledChars.length;
+
+      final Style linkStyle = currentActiveStyle.copyWith(linkUrl: trimmedUrl);
+      final List<StyledChar> newLinkChars = insertText
+          .split('')
+          .map((c) => StyledChar(char: c, style: linkStyle))
+          .toList();
+
+      final List<StyledChar> updated = List.from(styledChars);
+      updated.insertAll(insertPos, newLinkChars);
+      styledChars = updated;
+
+      final newTextStr = _getTextOnly();
+      value = TextEditingValue(
+        text: newTextStr,
+        selection:
+            TextSelection.collapsed(offset: insertPos + newLinkChars.length),
+      );
+      notifyListeners();
+    }
+  }
+
+  void removeLinkForSelection() {
+    saveUndoState();
+    final sel = selection;
+    if (sel.isValid && !sel.isCollapsed) {
+      for (int i = sel.start; i < sel.end; i++) {
+        if (i >= 0 && i < styledChars.length) {
+          styledChars[i] = StyledChar(
+            char: styledChars[i].char,
+            style: styledChars[i].style.copyWith(clearLink: true),
+          );
+        }
+      }
+      notifyListeners();
     }
   }
 
@@ -1209,6 +1302,29 @@ class RichTextEditingController extends TextEditingController {
 
       // Toggle attribute
       final enable = !allHave;
+      for (int i = sel.start; i < sel.end; i++) {
+        if (i >= 0 && i < styledChars.length) {
+          styledChars[i] = StyledChar(
+            char: styledChars[i].char,
+            style:
+                _setAttribute(styledChars[i].style, attribute, enable, value),
+          );
+        }
+      }
+      notifyListeners();
+    }
+  }
+
+  void setStyleAttribute(String attribute, {bool enable = true, dynamic value}) {
+    saveUndoState();
+    final sel = selection;
+    if (!sel.isValid) return;
+
+    if (sel.isCollapsed) {
+      currentActiveStyle =
+          _setAttribute(currentActiveStyle, attribute, enable, value);
+      if (onStyleChanged != null) onStyleChanged!();
+    } else {
       for (int i = sel.start; i < sel.end; i++) {
         if (i >= 0 && i < styledChars.length) {
           styledChars[i] = StyledChar(
@@ -2004,6 +2120,99 @@ class RichTextEditingController extends TextEditingController {
       indent: common.indent,
       align: align,
     );
+  }
+
+  /// Returns the three-state formatting representation ([FormatState.active],
+  /// [FormatState.inactive], or [FormatState.mixed]) for paragraph [targetAlign].
+  ///
+  /// For collapsed cursors, inspects the paragraph containing the cursor.
+  /// For range selections, inspects all paragraphs overlapping the selection.
+  FormatState getAlignmentFormatState(TextAlign targetAlign) {
+    final sel = selection;
+    if (!sel.isValid) {
+      return (currentActiveStyle.align == targetAlign)
+          ? FormatState.active
+          : FormatState.inactive;
+    }
+
+    final lines = getOverlappingLineRanges(sel);
+    if (lines.isEmpty) {
+      return (currentActiveStyle.align == targetAlign)
+          ? FormatState.active
+          : FormatState.inactive;
+    }
+
+    int matchCount = 0;
+    int totalCount = lines.length;
+
+    for (final line in lines) {
+      final lineAlign = (line.start < styledChars.length)
+          ? styledChars[line.start].style.align
+          : TextAlign.left;
+      if (lineAlign == targetAlign) {
+        matchCount++;
+      }
+    }
+
+    if (totalCount == 0 || matchCount == 0) {
+      return FormatState.inactive;
+    } else if (matchCount == totalCount) {
+      return FormatState.active;
+    } else {
+      return FormatState.mixed;
+    }
+  }
+
+  /// Returns the three-state formatting representation ([FormatState.active],
+  /// [FormatState.inactive], or [FormatState.mixed]) for the given [attribute].
+  ///
+  /// For collapsed cursors, this delegates to [currentActiveStyle].
+  /// For range selections, all selected characters are inspected.
+  FormatState getFormatState(String attribute, {dynamic value}) {
+    if (attribute == 'align') {
+      final targetAlign = value is TextAlign ? value : TextAlign.left;
+      return getAlignmentFormatState(targetAlign);
+    }
+    if (attribute.startsWith('align-')) {
+      TextAlign targetAlign = TextAlign.left;
+      if (attribute == 'align-center') targetAlign = TextAlign.center;
+      if (attribute == 'align-right') targetAlign = TextAlign.right;
+      if (attribute == 'align-justify') targetAlign = TextAlign.justify;
+      return getAlignmentFormatState(targetAlign);
+    }
+
+    final sel = selection;
+    if (!sel.isValid || sel.isCollapsed) {
+      return _hasAttribute(currentActiveStyle, attribute, value)
+          ? FormatState.active
+          : FormatState.inactive;
+    }
+
+    final int start = sel.start;
+    final int end = sel.end.clamp(0, styledChars.length);
+    if (start >= end) {
+      return _hasAttribute(currentActiveStyle, attribute, value)
+          ? FormatState.active
+          : FormatState.inactive;
+    }
+
+    int matchCount = 0;
+    int totalCount = 0;
+
+    for (int i = start; i < end; i++) {
+      totalCount++;
+      if (_hasAttribute(styledChars[i].style, attribute, value)) {
+        matchCount++;
+      }
+    }
+
+    if (totalCount == 0 || matchCount == 0) {
+      return FormatState.inactive;
+    } else if (matchCount == totalCount) {
+      return FormatState.active;
+    } else {
+      return FormatState.mixed;
+    }
   }
 
   @override
@@ -3213,23 +3422,27 @@ List<StyledChar> parseMarkdownToStyledChars(String markdown,
           final tagContent = line.substring(idx, closeTag);
           final colorMatch =
               RegExp(r'color="0x([0-9a-fA-F]+)"').firstMatch(tagContent);
-          if (colorMatch != null) {
-            final colorHex = colorMatch.group(1)!;
-            color = Color(int.parse(colorHex, radix: 16));
-          }
           final highlightMatch =
               RegExp(r'highlight="0x([0-9a-fA-F]+)"').firstMatch(tagContent);
-          if (highlightMatch != null) {
-            final highlightHex = highlightMatch.group(1)!;
-            highlight = Color(int.parse(highlightHex, radix: 16));
+          if (colorMatch != null || highlightMatch != null) {
+            if (colorMatch != null) {
+              final colorHex = colorMatch.group(1)!;
+              color = Color(int.parse(colorHex, radix: 16));
+            }
+            if (highlightMatch != null) {
+              final highlightHex = highlightMatch.group(1)!;
+              highlight = Color(int.parse(highlightHex, radix: 16));
+            }
+            idx = closeTag + 1;
+            continue;
           }
-          idx = closeTag + 1;
-          continue;
         }
       }
 
-      // Parse </span> tags
-      if (idx + 6 < line.length && line.substring(idx, idx + 7) == '</span>') {
+      // Parse </span> tags (only if a color or highlight span is currently active)
+      if ((color != null || highlight != null) &&
+          idx + 6 < line.length &&
+          line.substring(idx, idx + 7) == '</span>') {
         color = null;
         highlight = null;
         idx += 7;

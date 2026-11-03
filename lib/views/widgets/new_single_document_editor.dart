@@ -358,7 +358,34 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
       final alreadyFocused = focusNodes.values.any((n) => n.hasFocus);
       if (alreadyFocused) return;
 
-      if (focusNodes.isNotEmpty) {
+      int? targetSegmentIndex;
+      final parentSel = widget.controller.selection;
+      if (parentSel.isValid) {
+        final targetOffset = parentSel.isCollapsed
+            ? parentSel.baseOffset
+            : parentSel.extentOffset;
+        for (final seg in _segments.whereType<TextSegment>()) {
+          if (targetOffset >= seg.start && targetOffset <= seg.end) {
+            targetSegmentIndex = seg.segmentIndex;
+            break;
+          }
+        }
+        if (targetSegmentIndex == null && _segments.isNotEmpty) {
+          final textSegs = _segments.whereType<TextSegment>().toList();
+          if (textSegs.isNotEmpty) {
+            if (targetOffset >= textSegs.last.start) {
+              targetSegmentIndex = textSegs.last.segmentIndex;
+            } else if (targetOffset <= textSegs.first.start) {
+              targetSegmentIndex = textSegs.first.segmentIndex;
+            }
+          }
+        }
+      }
+
+      if (targetSegmentIndex != null &&
+          focusNodes.containsKey(targetSegmentIndex)) {
+        focusNodes[targetSegmentIndex]?.requestFocus();
+      } else if (focusNodes.isNotEmpty) {
         final firstIndex = focusNodes.keys.reduce((a, b) => a < b ? a : b);
         focusNodes[firstIndex]?.requestFocus();
       }
@@ -419,10 +446,15 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
   void _syncFocusWithParentSelection() {
     if (_selectedImageGlobalIndex != null) return;
-    if (!widget.focusNode.hasFocus)
+    if (!widget.focusNode.hasFocus) {
       return; // Prevent focus stealing during search or external focus
+    }
     final parentSel = widget.controller.selection;
-    if (!parentSel.isValid || !parentSel.isCollapsed) return;
+    if (!parentSel.isValid) return;
+
+    final targetOffset = parentSel.isCollapsed
+        ? parentSel.baseOffset
+        : parentSel.extentOffset;
 
     for (final segment in _segments.whereType<TextSegment>()) {
       final controller = _controllers[segment.segmentIndex];
@@ -430,8 +462,8 @@ class NewSingleDocumentEditorState extends State<NewSingleDocumentEditor> {
 
       final range = controller.getRange();
       if (range.isValid &&
-          parentSel.baseOffset >= range.start &&
-          parentSel.baseOffset <= range.end) {
+          targetOffset >= range.start &&
+          targetOffset <= range.end) {
         final node = focusNodes[segment.segmentIndex];
         if (node != null && !node.hasFocus) {
           node.requestFocus();

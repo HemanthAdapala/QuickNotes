@@ -98,17 +98,8 @@ class TaskEngine {
         }
       }
 
-      // Reschedule active future reminders on startup/reboot
-      for (final task in _tasks) {
-        if (!task.completed &&
-            task.status != TaskStatus.archived &&
-            task.status != TaskStatus.cancelled &&
-            task.reminderEnabled &&
-            task.reminderTime != null &&
-            task.reminderTime!.isAfter(now)) {
-          await _scheduler.scheduleReminder(task);
-        }
-      }
+      // Reconcile and reschedule active future reminders on startup/reboot
+      await reconcileAlarmsWithScheduler();
 
       _state = TaskEngineState.ready;
     } catch (e) {
@@ -127,6 +118,44 @@ class TaskEngine {
     for (final task in List<TaskItem>.from(_tasks)) {
       if (task.isRecurring && task.completed) {
         await _generateNextOccurrence(task, now);
+      }
+    }
+
+    // Reconcile and restore any missing future alarms upon resume
+    await reconcileAlarmsWithScheduler();
+  }
+
+  /// Reconciles persisted task states with registered alarms in the scheduler
+  Future<void> reconcileAlarmsWithScheduler() async {
+    final now = _clock.now;
+    final List<int> pendingIds;
+    try {
+      pendingIds = await _scheduler.getPendingNotificationIds();
+    } catch (e) {
+      debugPrint('Error getting pending notification IDs: $e');
+      return;
+    }
+    final pendingSet = pendingIds.toSet();
+
+    for (final task in _tasks) {
+      final isFutureReminder = !task.completed &&
+          task.status != TaskStatus.archived &&
+          task.status != TaskStatus.cancelled &&
+          task.reminderEnabled &&
+          task.reminderTime != null &&
+          task.reminderTime!.isAfter(now);
+
+      if (isFutureReminder) {
+        if (!pendingSet.contains(task.notificationId)) {
+          await _scheduler.scheduleReminder(task);
+        }
+      } else if (task.completed ||
+          task.status == TaskStatus.archived ||
+          task.status == TaskStatus.cancelled ||
+          !task.reminderEnabled) {
+        if (pendingSet.contains(task.notificationId)) {
+          await _scheduler.cancelReminder(task.notificationId);
+        }
       }
     }
   }
@@ -153,13 +182,50 @@ class TaskEngine {
         continue;
       }
 
-      // Check if task reminder or due date has passed without completion
-      final isReminderMissed =
-          task.reminderTime != null && now.isAfter(task.reminderTime!);
+      // For recurring tasks: apply catch-up policy to reminderTime without stranding series in missed status
+      final bool isRecurring = (task.recurrence != null ||
+              task.repeatRule != RepeatRule.none) &&
+          task.isRecurring;
+
+      if (isRecurring) {
+        if (task.reminderEnabled &&
+            task.reminderTime != null &&
+            now.isAfter(task.reminderTime!)) {
+          final rule = task.recurrence ??
+              (task.repeatRule == RepeatRule.weekly
+                  ? const RecurrenceRule(type: RecurrenceType.weekly)
+                  : task.repeatRule == RepeatRule.monthly
+                      ? const RecurrenceRule(type: RecurrenceType.monthly)
+                      : const RecurrenceRule(type: RecurrenceType.daily));
+
+          final nextReminder = RecurrenceCalculator.nextOccurrence(
+            task.reminderTime!,
+            rule,
+            after: now,
+          );
+
+          if (nextReminder != null && nextReminder != task.reminderTime) {
+            final rolledTask = task.copyWith(
+              reminderTime: nextReminder,
+              status: TaskStatus.waiting,
+              updatedAt: now,
+            );
+            _tasks[i] = rolledTask;
+            await _repository.updateTask(rolledTask);
+            if (rolledTask.reminderEnabled &&
+                rolledTask.reminderTime!.isAfter(now)) {
+              await _scheduler.scheduleReminder(rolledTask);
+            }
+            updatedList.add(rolledTask);
+          }
+        }
+        continue;
+      }
+
+      // For non-recurring tasks: only transition to missed if DUE DATE has elapsed
       final isDueDateMissed = now.isAfter(task.dueDate);
 
-      if ((isReminderMissed || isDueDateMissed) &&
-          task.status != TaskStatus.missed) {
+      if (isDueDateMissed && task.status != TaskStatus.missed) {
         final missedTask = task.copyWith(
           status: TaskStatus.missed,
           updatedAt: now,
@@ -369,6 +435,66 @@ class TaskEngine {
     final oldTask = _tasks[index];
     final now = _clock.now;
 
+    // If completing an active recurring task: roll forward reminderTime and record completion in-place
+    final bool isRecurring = (oldTask.recurrence != null ||
+            oldTask.repeatRule != RepeatRule.none) &&
+        oldTask.isRecurring;
+
+    if (!oldTask.completed && isRecurring) {
+      final localNow = now.toLocal();
+      final dateStr =
+          '${localNow.year}-${localNow.month.toString().padLeft(2, '0')}-${localNow.day.toString().padLeft(2, '0')}';
+      final updatedCompletedDates = List<String>.from(oldTask.completedDates);
+      if (!updatedCompletedDates.contains(dateStr)) {
+        updatedCompletedDates.add(dateStr);
+      }
+
+      final seriesId = oldTask.recurringSeriesId ?? _uuid.v4();
+      final seriesCount =
+          _tasks.where((t) => t.recurringSeriesId == seriesId).length;
+
+      final rule = oldTask.recurrence ??
+          (oldTask.repeatRule == RepeatRule.weekly
+              ? const RecurrenceRule(type: RecurrenceType.weekly)
+              : oldTask.repeatRule == RepeatRule.monthly
+                  ? const RecurrenceRule(type: RecurrenceType.monthly)
+                  : const RecurrenceRule(type: RecurrenceType.daily));
+
+      final nextReminder = oldTask.reminderTime != null
+          ? RecurrenceCalculator.nextOccurrence(
+              oldTask.reminderTime!,
+              rule,
+              after: now,
+              currentOccurrenceCount: seriesCount,
+            )
+          : null;
+
+      final rolledTask = oldTask.copyWith(
+        reminderTime: nextReminder,
+        status: TaskStatus.waiting,
+        completedDates: updatedCompletedDates,
+        updatedAt: now,
+        recurringSeriesId: seriesId,
+      );
+
+      _tasks[index] = rolledTask;
+      await _repository.updateTask(rolledTask);
+
+      await _scheduler.cancelReminder(oldTask.notificationId);
+      if (rolledTask.reminderEnabled &&
+          rolledTask.reminderTime != null &&
+          rolledTask.reminderTime!.isAfter(now)) {
+        await _scheduler.scheduleReminder(rolledTask);
+      }
+
+      _eventController.add(TaskCompletedEvent(
+        eventId: _uuid.v4(),
+        task: rolledTask,
+        timestamp: now,
+      ));
+      return rolledTask;
+    }
+
     final TaskStatus newStatus =
         oldTask.completed ? TaskStatus.waiting : TaskStatus.completed;
     final DateTime? newCompletedAt =
@@ -450,7 +576,8 @@ class TaskEngine {
     }
 
     final String nextId = _uuid.v4();
-    final int nextNotificationId = _uuid.v4().hashCode.abs() % 2147483647;
+    final int nextNotificationId =
+        await _repository.generateUniqueNotificationId();
 
     final nextTask = completedTask.copyWith(
       id: nextId,

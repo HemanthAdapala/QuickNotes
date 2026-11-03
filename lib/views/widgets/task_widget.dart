@@ -11,12 +11,18 @@ import '../../models/task_item.dart';
 import '../../models/task_status.dart';
 import '../../models/recurrence_rule.dart';
 import '../../models/repeat_rule.dart';
+import 'package:provider/provider.dart';
+import '../../providers/tasks_provider.dart';
+import '../../services/widget_data_adapter.dart';
+import 'card_context_menu.dart';
+import 'delete_task_confirmation_dialog.dart';
 import 'tactile_button.dart';
 
 class TaskWidget extends StatefulWidget {
   final ValueChanged<String>? onComplete;
   final ValueChanged<TaskItem>? onUndo;
   final ValueChanged<TaskItem>? onEdit;
+  final ValueChanged<TaskItem>? onDelete;
   final List<TaskItem> tasks;
   final double width;
   final GlobalKey? frontCardKey;
@@ -27,6 +33,7 @@ class TaskWidget extends StatefulWidget {
     this.onComplete,
     this.onUndo,
     this.onEdit,
+    this.onDelete,
     this.width = 322.0,
     this.frontCardKey,
   });
@@ -36,6 +43,9 @@ class TaskWidget extends StatefulWidget {
 }
 
 class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
+  // Overflow Context Menu State
+  bool _isMenuOpen = false;
+
   // Slider Drag State
   double _dragX = 5.0; // Starts with a 5px margin
   final double _minDrag = 5.0;
@@ -168,11 +178,24 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
         _currentTasksList = List.from(widget.tasks);
       });
     } else {
-      for (int i = 0; i < _currentTasksList.length; i++) {
-        final updatedIndex =
-            widget.tasks.indexWhere((t) => t.id == _currentTasksList[i].id);
-        if (updatedIndex != -1) {
-          _currentTasksList[i] = widget.tasks[updatedIndex];
+      bool hasDifferentItems = false;
+      for (final current in _currentTasksList) {
+        if (!widget.tasks.any((t) => t.id == current.id)) {
+          hasDifferentItems = true;
+          break;
+        }
+      }
+      if (hasDifferentItems) {
+        setState(() {
+          _currentTasksList = List.from(widget.tasks);
+        });
+      } else {
+        for (int i = 0; i < _currentTasksList.length; i++) {
+          final updatedIndex =
+              widget.tasks.indexWhere((t) => t.id == _currentTasksList[i].id);
+          if (updatedIndex != -1) {
+            _currentTasksList[i] = widget.tasks[updatedIndex];
+          }
         }
       }
     }
@@ -196,13 +219,14 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
     if (_resetController.isAnimating || _successController.isAnimating) return;
     setState(() {
       _lastHapticCheckpoint = 0;
+      _isDraggingSlider = true;
     });
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {
     if (_resetController.isAnimating || _successController.isAnimating) return;
 
-    final double maxDrag = 206.0;
+    const double maxDrag = 206.0;
     setState(() {
       _dragX = (_dragX + details.delta.dx).clamp(_minDrag, maxDrag);
     });
@@ -225,7 +249,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
   void _handleDragEnd(DragEndDetails details) {
     if (_resetController.isAnimating || _successController.isAnimating) return;
 
-    final double maxDrag = 206.0;
+    const double maxDrag = 206.0;
     final progress = _getDragProgress(maxDrag);
     if (progress >= 0.90) {
       _triggerSuccess(maxDrag);
@@ -297,6 +321,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
 
   // ── Card Swiping Gestures ──────────────────────────────────────────────────
   void _handleCardPanDown(DragDownDetails details) {
+    if (_isMenuOpen) return;
     _isPointerCancelled = false;
     if (_isAnimatingSwipe || _currentTasksList.isEmpty || _isDraggingSlider) {
       return;
@@ -460,6 +485,62 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
         _isAnimatingSwipe = false;
       });
     });
+  }
+
+  Future<void> _handleAddToHomeScreen(TaskItem task) async {
+    try {
+      final success = await WidgetDataAdapter.instance
+          .requestPinSingleTaskWidget(task: task);
+      if (!mounted) return;
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pin request sent. Confirm on your home screen.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Adding home-screen widgets is not supported on this device/launcher.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error requesting pin for task ${task.id}: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to add widget to home screen.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleDelete(TaskItem task) async {
+    if (widget.onDelete != null) {
+      widget.onDelete!(task);
+      return;
+    }
+    final bool isRecurring = task.isRecurring ||
+        task.recurrence != null ||
+        task.repeatRule != RepeatRule.none;
+    final option = await showDeleteTaskDialog(
+      context,
+      isRecurring: isRecurring,
+    );
+    if (mounted && option != null) {
+      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+      if (option == 'today') {
+        await tasksProvider.deleteTaskOccurrence(task.id, task.dueDate);
+      } else if (option == 'forever') {
+        await tasksProvider.deleteTask(task.id);
+      }
+    }
   }
 
   Widget _buildBackgroundCard(int index, int totalCards) {
@@ -644,7 +725,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                 width: 64.0,
                 height: 64.0,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0088FF).withOpacity(0.1),
+                  color: const Color(0xFF0088FF).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -680,8 +761,9 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
       );
     }
 
-    final double maxDrag = 206.0;
+    const double maxDrag = 206.0;
     final progress = _getDragProgress(maxDrag);
+    final bool showBacking = _isDraggingSlider || _successController.isAnimating;
     final double cardScale = 1.0 + (progress * 0.02); // Sensory drag scale lift
     final double cardShadowBlur =
         16.0 + (progress * 8.0); // Shadow lift blur (16 to 24)
@@ -714,9 +796,6 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
             break;
           case RecurrenceType.yearly:
             recurrenceLabel = 'Yearly';
-            break;
-          default:
-            recurrenceLabel = 'Recurring';
             break;
         }
       } else {
@@ -1164,6 +1243,7 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                         child: Container(
                                           width: 251.0,
                                           height: 50.0,
+                                          clipBehavior: Clip.antiAlias,
                                           decoration: BoxDecoration(
                                             color: isDark
                                                 ? const Color(0xFF5A5A5A)
@@ -1173,29 +1253,42 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                           ),
                                           child: Stack(
                                             children: [
-                                              // Blue Slide Fill
-                                              if (progress > 0)
+                                              // Blue Progress Fill
+                                              if (showBacking && (_dragX > _minDrag || _successController.isAnimating))
                                                 Positioned(
                                                   left: 0,
                                                   top: 0,
                                                   bottom: 0,
-                                                  width: _dragX + 40.0,
-                                                  child: Opacity(
-                                                    opacity: progress.clamp(
-                                                        0.0, 1.0),
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                        gradient:
-                                                            const LinearGradient(
-                                                          colors: [
-                                                            Color(0xFF0088FF),
-                                                            Color(0xFF66B2FF),
-                                                          ],
-                                                        ),
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(25.0),
+                                                  width: _dragX + 20.0,
+                                                  child: Container(
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      color:
+                                                          Color(0xFF0088FF),
+                                                      borderRadius:
+                                                          BorderRadius.only(
+                                                        topLeft: Radius.circular(
+                                                            25.0),
+                                                        bottomLeft:
+                                                            Radius.circular(
+                                                                25.0),
                                                       ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              // Blue Circular Backing (50x50 layout size matching outer track height)
+                                              if (showBacking)
+                                                Positioned(
+                                                  left: _dragX - 5.0,
+                                                  top: 0.0,
+                                                  width: 50.0,
+                                                  height: 50.0,
+                                                  child: Container(
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      color:
+                                                          Color(0xFF0088FF),
+                                                      shape: BoxShape.circle,
                                                     ),
                                                   ),
                                                 ),
@@ -1353,6 +1446,33 @@ class _TaskWidgetState extends State<TaskWidget> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
+                                // Full-card dismissal barrier when menu is open
+                                if (_isMenuOpen)
+                                  Positioned.fill(
+                                    child: GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () {
+                                        setState(() => _isMenuOpen = false);
+                                      },
+                                    ),
+                                  ),
+                                // White Content Region with responsive More Options anchor
+                                Positioned(
+                                  left: 0,
+                                  top: 37.0,
+                                  right: 0,
+                                  bottom: 0,
+                                  child: CardMoreOptionsMenu(
+                                    isOpen: _isMenuOpen,
+                                    onOpen: () =>
+                                        setState(() => _isMenuOpen = true),
+                                    onClose: () =>
+                                        setState(() => _isMenuOpen = false),
+                                    onAddToHomeScreen: () =>
+                                        _handleAddToHomeScreen(task),
+                                    onDelete: () => _handleDelete(task),
+                                  ),
+                                ),
                             ],
                           ),
                         ),

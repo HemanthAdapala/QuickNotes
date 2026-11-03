@@ -10,6 +10,9 @@ class AppColors {
   /// Accent amber — "Today" label, active highlights (#FFCC00)
   static const Color amber = Color(0xFFFFCC00);
 
+  /// Task blue — Task highlights and calendar indicators (#0088FF)
+  static const Color taskBlue = Color(0xFF0088FF);
+
   /// Placeholder / muted text — ink at 45% opacity
   static const Color placeholder = Color(0x73333333);
 

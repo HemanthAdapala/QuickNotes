@@ -87,7 +87,7 @@ class MockReminderScheduler implements ReminderScheduler {
   Future<void> initialize() async {}
 
   @override
-  Future<void> scheduleReminder(TaskItem task) async {}
+  Future<bool> scheduleReminder(TaskItem task) async => true;
 
   @override
   Future<void> cancelReminder(int notificationId) async {}

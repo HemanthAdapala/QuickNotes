@@ -76,6 +76,50 @@ class TaskWidgetConfigureActivity : Activity() {
             return
         }
 
+        // Check for recent pending pin request (< 5 minutes)
+        val prefs = getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
+        val pendingTaskId = prefs.getString("pending_pin_task_id", null)
+        val pendingTimestamp = prefs.getLong("pending_pin_task_timestamp", 0L)
+        if (!pendingTaskId.isNullOrEmpty() && (System.currentTimeMillis() - pendingTimestamp < 300_000L)) {
+            val mapRaw = prefs.getString("quicknotes_tasks_map", null)
+            var taskJsonStr: String? = null
+            if (!mapRaw.isNullOrEmpty()) {
+                try {
+                    val map = JSONObject(mapRaw)
+                    if (map.has(pendingTaskId)) {
+                        taskJsonStr = map.getJSONObject(pendingTaskId).toString()
+                    }
+                } catch (_: Exception) {}
+            }
+            val editor = prefs.edit().putString("task_widget_id_$appWidgetId", pendingTaskId)
+            if (taskJsonStr != null) {
+                editor.putString("task_widget_data_$appWidgetId", taskJsonStr)
+            }
+            editor.remove("pending_pin_task_id")
+            editor.remove("pending_pin_task_timestamp")
+            editor.apply()
+
+            val appWidgetManager = AppWidgetManager.getInstance(this)
+            val appWidgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId)
+            val providerClassName = appWidgetInfo?.provider?.className ?: ""
+
+            if (providerClassName.contains("SingleTaskLongWidget")) {
+                SingleTaskLongWidget.updateAppWidget(this, appWidgetManager, appWidgetId, prefs)
+            } else if (providerClassName.contains("SingleTaskWidget")) {
+                SingleTaskWidget.updateAppWidget(this, appWidgetManager, appWidgetId, prefs)
+            } else {
+                SingleTaskWidget.updateAppWidget(this, appWidgetManager, appWidgetId, prefs)
+                SingleTaskLongWidget.updateAppWidget(this, appWidgetManager, appWidgetId, prefs)
+            }
+
+            val resultValue = Intent().apply {
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            }
+            setResult(RESULT_OK, resultValue)
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_task_widget_configure)
 
         listView = findViewById(R.id.tasks_list_view)
@@ -87,7 +131,6 @@ class TaskWidgetConfigureActivity : Activity() {
         listView.adapter = adapter
 
         // 3. Load existing instance mapping if re-configuring
-        val prefs = getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
         selectedTaskId = prefs.getString("task_widget_id_$appWidgetId", null)
 
         // 4. Load sanitized catalog from SharedPreferences

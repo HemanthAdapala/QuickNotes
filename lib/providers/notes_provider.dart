@@ -16,6 +16,7 @@ import '../services/session_manager.dart';
 import '../services/vault_service.dart';
 import '../repositories/notes_repository.dart';
 import '../repositories/folders_repository.dart';
+import '../services/notification_action_handler.dart';
 
 enum SortOption { newest, oldest, alphabetical }
 
@@ -23,6 +24,7 @@ enum NotesViewType { feed, archive, favorites, trash }
 
 class NotesProvider with ChangeNotifier {
   List<Note> _notes = [];
+  List<Note> _trashNotes = [];
   List<Folder> _folders = [];
   bool _isLoading = false;
   bool _isDisposed = false;
@@ -39,6 +41,7 @@ class NotesProvider with ChangeNotifier {
 
   void clearLocalState() {
     _notes.clear();
+    _trashNotes.clear();
     _folders.clear();
     _pageCache.clear();
     _notesSummary.clear();
@@ -87,11 +90,12 @@ class NotesProvider with ChangeNotifier {
   bool get isZenModeEnabled => _isZenModeEnabled;
   int get selectedBgIndex => _selectedBgIndex;
   List<Folder> get folders => _folders;
-  List<Note> get trashNotes => _notes.where((n) => n.isDeleted).toList();
+  List<Note> get trashNotes => List.unmodifiable(_trashNotes);
   List<Note> get allActiveNotes => _notes.where((n) => !n.isDeleted).toList();
 
   void setNotesForTesting(List<Note> testNotes) {
-    _notes = testNotes;
+    _notes = testNotes.where((n) => !n.isDeleted).toList();
+    _trashNotes = testNotes.where((n) => n.isDeleted).toList();
     notifyListeners();
   }
 
@@ -108,7 +112,7 @@ class NotesProvider with ChangeNotifier {
           .where((n) => n.isFavorite && !n.isArchived && !n.isDeleted)
           .toList();
     } else if (_currentView == NotesViewType.trash) {
-      list = _notes.where((n) => n.isDeleted).toList();
+      list = _trashNotes;
     }
 
     // 2. Filter by Folder
@@ -245,6 +249,7 @@ class NotesProvider with ChangeNotifier {
           debugPrint(
               "Note notification tapped. Payload ID: ${details.payload}");
         },
+        onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
       );
     } catch (e) {
       debugPrint("Error initializing notifications: $e");
@@ -547,36 +552,44 @@ class NotesProvider with ChangeNotifier {
       await loadNotesPage(refresh: true);
 
       List<Note> rawNotes = [];
+      List<Note> rawTrashNotes = [];
       if (_searchQuery.trim().isEmpty) {
         rawNotes = await _notesRepository.getNotes();
+        rawTrashNotes = await _notesRepository.getTrashNotes();
       } else {
         if (_isVaultUnlocked) {
           rawNotes = await _notesRepository.getNotes();
+          rawTrashNotes = await _notesRepository.getTrashNotes();
         } else {
           rawNotes = await _notesRepository.searchNotes(_searchQuery);
+          rawTrashNotes = await _notesRepository.getTrashNotes();
         }
       }
 
       // Decrypt notes in memory concurrently if vault is unlocked, else scrub sensitive text
-      final List<Future<Note>> futures = rawNotes.map((note) async {
-        if (note.isLocked) {
-          if (_isVaultUnlocked) {
-            final titleDec =
-                await VaultService.instance.decryptText(note.title);
-            final contentDec =
-                await VaultService.instance.decryptText(note.content);
-            return note.copyWith(title: titleDec, content: contentDec);
+      Future<List<Note>> decryptNotes(List<Note> inputList) async {
+        final List<Future<Note>> futures = inputList.map((note) async {
+          if (note.isLocked) {
+            if (_isVaultUnlocked) {
+              final titleDec =
+                  await VaultService.instance.decryptText(note.title);
+              final contentDec =
+                  await VaultService.instance.decryptText(note.content);
+              return note.copyWith(title: titleDec, content: contentDec);
+            } else {
+              return note.copyWith(
+                  title: "🔐 Locked Note",
+                  content: "[Unlocked with authentication]");
+            }
           } else {
-            return note.copyWith(
-                title: "🔐 Locked Note",
-                content: "[Unlocked with authentication]");
+            return note;
           }
-        } else {
-          return note;
-        }
-      }).toList();
+        }).toList();
+        return await Future.wait(futures);
+      }
 
-      _notes = await Future.wait(futures);
+      _notes = await decryptNotes(rawNotes);
+      _trashNotes = await decryptNotes(rawTrashNotes);
 
       // Apply in-memory search filter if search was conducted while vault is unlocked
       if (_searchQuery.trim().isNotEmpty && _isVaultUnlocked) {
@@ -1033,7 +1046,8 @@ class NotesProvider with ChangeNotifier {
   /// Safely resets habit checklist completion state while preserving all items,
   /// ordering, and structure. Supports both current SDE Markdown and legacy JSON formats.
   /// Guarantees that valid content is never overwritten with empty data.
-  ({String content, bool allCompleted})? _resetChecklistContent(String content) {
+  ({String content, bool allCompleted})? _resetChecklistContent(
+      String content) {
     final trimmed = content.trim();
     if (trimmed.isEmpty) {
       return null;
@@ -1137,7 +1151,8 @@ class NotesProvider with ChangeNotifier {
               decryptedContent =
                   await VaultService.instance.decryptText(note.content);
             } catch (e) {
-              debugPrint("Error decrypting habit note content during reset: $e");
+              debugPrint(
+                  "Error decrypting habit note content during reset: $e");
               continue; // Do not attempt reset on content that failed decryption
             }
           }
@@ -1162,7 +1177,8 @@ class NotesProvider with ChangeNotifier {
               finalContent =
                   await VaultService.instance.encryptText(finalContent);
             } catch (e) {
-              debugPrint("Error encrypting habit note content during reset: $e");
+              debugPrint(
+                  "Error encrypting habit note content during reset: $e");
               continue; // Do not overwrite if re-encryption fails
             }
           }

@@ -2482,6 +2482,10 @@ void main() {
       await tester.tap(pinkSwatch);
       await tester.pumpAndSettle();
 
+      // Switch to Classic Stickers category tab
+      await tester.tap(find.text("Classic Stickers"));
+      await tester.pumpAndSettle();
+
       // 3. Select first sticker (birds.png)
       final birdsSticker = find.byWidgetPredicate((w) =>
           w is Image &&

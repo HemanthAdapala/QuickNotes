@@ -8,3 +8,8 @@ export 'premium_gate_sheet.dart';
 export 'premium_product.dart';
 export 'purchase_verifier.dart';
 export 'in_app_purchase_provider.dart';
+export 'premium_config.dart';
+export 'jws_lease.dart';
+export 'jws_lease_verifier.dart';
+export 'remote_purchase_verifier.dart';
+export 'premium_purchase_success_dialog.dart';

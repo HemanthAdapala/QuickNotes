@@ -7,17 +7,24 @@ import 'package:intl/intl.dart';
 import '../../core/motion/motion_constants.dart';
 import '../../core/motion/quick_notes_haptics.dart';
 import '../../models/note.dart';
+import 'package:provider/provider.dart';
+import '../../providers/notes_provider.dart';
+import '../../services/widget_data_adapter.dart';
+import 'card_context_menu.dart';
+import 'delete_confirmation_dialog.dart';
 import 'tactile_button.dart';
 
 class NotesStackWidget extends StatefulWidget {
   final List<Note> notes;
   final ValueChanged<Note> onEdit;
+  final ValueChanged<Note>? onDelete;
   final double width;
 
   const NotesStackWidget({
     super.key,
     required this.notes,
     required this.onEdit,
+    this.onDelete,
     this.width = 322.0,
   });
 
@@ -27,6 +34,9 @@ class NotesStackWidget extends StatefulWidget {
 
 class _NotesStackWidgetState extends State<NotesStackWidget>
     with TickerProviderStateMixin {
+  // Overflow Context Menu State
+  bool _isMenuOpen = false;
+
   // Swipe Dismiss State
   double _swipeX = 0.0;
   double _swipeY = 0.0;
@@ -140,6 +150,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
   }
 
   void _handlePanDown(DragDownDetails details) {
+    if (_isMenuOpen) return;
     _isPointerCancelled = false;
     if (_isAnimatingSwipe || _currentNotesList.isEmpty) return;
     if (MediaQuery.of(context).disableAnimations) return;
@@ -295,6 +306,64 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
         _isAnimatingSwipe = false;
       });
     });
+  }
+
+  Future<void> _handleAddToHomeScreen(Note note) async {
+    if (note.isLocked) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Locked notes cannot be added to the home screen.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final success = await WidgetDataAdapter.instance
+          .requestPinSingleNoteWidget(note: note);
+      if (!mounted) return;
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pin request sent. Confirm on your home screen.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Adding home-screen widgets is not supported on this device/launcher.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error requesting pin for note ${note.id}: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to add widget to home screen.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleDelete(Note note) async {
+    if (widget.onDelete != null) {
+      widget.onDelete!(note);
+      return;
+    }
+    final confirm = await showDeleteNoteDialog(context);
+    if (confirm == true && mounted) {
+      final provider = Provider.of<NotesProvider>(context, listen: false);
+      await provider.deleteNote(note.id);
+    }
   }
 
   Widget _buildBackgroundCard(int index, int totalCards) {
@@ -572,7 +641,7 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                             width: 322.0,
                             height: 339.0,
                           child: Container(
-                            decoration: const BoxDecoration(
+                                                        decoration: const BoxDecoration(
                               boxShadow: [
                                 BoxShadow(
                                   color: Color(0x3F000000),
@@ -778,6 +847,33 @@ class _NotesStackWidgetState extends State<NotesStackWidget>
                                         ),
                                       ),
                                     ),
+                                  ),
+                                ),
+                                // Full-card dismissal barrier when menu is open
+                                if (_isMenuOpen)
+                                  Positioned.fill(
+                                    child: GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () {
+                                        setState(() => _isMenuOpen = false);
+                                      },
+                                    ),
+                                  ),
+                                // White Content Region with responsive More Options anchor
+                                Positioned(
+                                  left: 0,
+                                  top: 37.0,
+                                  right: 0,
+                                  bottom: 0,
+                                  child: CardMoreOptionsMenu(
+                                    isOpen: _isMenuOpen,
+                                    onOpen: () =>
+                                        setState(() => _isMenuOpen = true),
+                                    onClose: () =>
+                                        setState(() => _isMenuOpen = false),
+                                    onAddToHomeScreen: () =>
+                                        _handleAddToHomeScreen(note),
+                                    onDelete: () => _handleDelete(note),
                                   ),
                                 ),
                               ],

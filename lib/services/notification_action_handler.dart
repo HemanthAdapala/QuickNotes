@@ -124,7 +124,7 @@ class NotificationActionHandler {
 
       final engine = TaskEngine(
         repository: repo,
-        clock: SystemClock(),
+        clock: const SystemClock(),
         scheduler: scheduler,
       );
 

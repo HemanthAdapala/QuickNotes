@@ -1,0 +1,16 @@
+{
+  "name": "quicknotes-entitlements-backend",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers + D1 Backend for QuickNotes Premium Purchase Entitlements",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "npx -y tsx --test test/*.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "npx -y wrangler deploy --dry-run"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240405.0",
+    "@types/node": "^26.6.5",
+    "typescript": "^5.4.0"
+  }
+}

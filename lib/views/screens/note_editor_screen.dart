@@ -46,7 +46,15 @@ import '../widgets/quick_notes_glass_action_morph.dart';
 import 'dart:math';
 import 'dart:ui';
 
-enum _ActiveCategory { none, aa, alignment, list, attachment, headings }
+enum _ActiveCategory {
+  none,
+  aa,
+  alignment,
+  list,
+  attachment,
+  headings,
+  highlight
+}
 
 const bool kImageDebug = true;
 
@@ -1566,6 +1574,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   bool _isZenTyping = false;
   bool _isFormattingBarExpanded = true;
   _ActiveCategory _activeCategory = _ActiveCategory.none;
+  bool _isAaColorPickerOpen = false;
+
+  static const List<Color> _highlightPalette = [
+    Color(0xFFFFE082), // Amber Yellow
+    Color(0xFFA5D6A7), // Soft Green
+    Color(0xFF90CAF9), // Soft Blue
+    Color(0xFFF48FB1), // Soft Pink
+    Color(0xFFFFCC80), // Soft Orange
+  ];
+
+  static const List<Color> _textColorPalette = [
+    Color(0xFFFF3B30), // Red
+    Color(0xFF007AFF), // Blue
+    Color(0xFF34C759), // Green
+    Color(0xFFFF9500), // Amber
+    Color(0xFFAF52DE), // Purple
+  ];
 
   Color get _tintColor => const Color(0xFFFFCC00);
 
@@ -1854,10 +1879,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     _checkSelectionToolbarNavigation();
     setState(() {
       _hasChanges = true;
-      if (_activeCategory != _ActiveCategory.none &&
-          !Platform.environment.containsKey('FLUTTER_TEST')) {
-        _activeCategory = _ActiveCategory.none;
-      }
     });
   }
 
@@ -1865,27 +1886,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     if (!mounted) return;
     final selection = _contentController.selection;
     final isSelectionActive = selection.isValid && !selection.isCollapsed;
-
-    if (isSelectionActive != _wasSelectionActive) {
-      _wasSelectionActive = isSelectionActive;
-      if (isSelectionActive) {
-        if (_pageController.hasClients && _currentPage != 0) {
-          _pageController.animateToPage(
-            0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        }
-      } else {
-        if (_pageController.hasClients && _currentPage == 0) {
-          _pageController.animateToPage(
-            1,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        }
-      }
-    }
+    _wasSelectionActive = isSelectionActive;
   }
 
   void _onCutSelectedText() {
@@ -2978,6 +2979,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
       } else if (prefix.startsWith('<p align="')) {
         final alignName = prefix.split('"')[1];
         controller.toggleParagraphStyle('align-$alignName');
+      } else if (prefix == '[' && suffix == '](url)') {
+        _showInsertLinkDialog();
+        return;
       } else {
         final text = controller.text;
         final selection = controller.selection;
@@ -3000,6 +3004,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
       }
       _calculateCounts();
       _startZenTimer();
+      _restoreContentFocus();
       setState(() {
         _hasChanges = true;
       });
@@ -3027,104 +3032,130 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     _onContentTextChanged();
   }
 
-  void _insertTextAtCursor(String textToInsert) {
-    if (_noteType == 'text') {
-      final controller = _activeController;
-      if (controller == null) return;
+  void _showInsertLinkDialog() {
+    final controller = _activeController;
+    if (controller == null) return;
 
-      if (NoteEditorScreen.useSingleDocumentEditor) {
-        if (textToInsert == '> ') {
-          controller.toggleParagraphStyle('quote');
-        } else if (textToInsert == '# ') {
-          controller.toggleParagraphStyle('h1');
-        } else if (textToInsert == '## ') {
-          controller.toggleParagraphStyle('h2');
-        } else if (textToInsert == '### ') {
-          controller.toggleParagraphStyle('h3');
-        } else if (textToInsert == '- ') {
-          controller.toggleParagraphStyle('bullet');
-        } else if (textToInsert == '1. ') {
-          controller.toggleParagraphStyle('number');
-        } else if (textToInsert == '\u2610') {
-          controller.toggleParagraphStyle('checkbox');
-        } else {
-          final text = controller.text;
-          final selection = controller.selection;
-          int start = selection.start;
-          int end = selection.end;
-          if (start == -1 || end == -1) {
-            start = text.length;
-            end = start;
-          }
-          final newText = text.replaceRange(start, end, textToInsert);
-          controller.value = TextEditingValue(
-            text: newText,
-            selection:
-                TextSelection.collapsed(offset: start + textToInsert.length),
-          );
-        }
-      } else {
-        if (textToInsert == '> ') {
-          final block = _focusedBlock;
-          if (block != null) _toggleBlockType(block, QuoteBlock);
-        } else if (textToInsert == '# ') {
-          final block = _focusedBlock;
-          if (block != null)
-            _toggleBlockType(block, HeadingBlock, headingLevel: 1);
-        } else if (textToInsert == '## ') {
-          final block = _focusedBlock;
-          if (block != null)
-            _toggleBlockType(block, HeadingBlock, headingLevel: 2);
-        } else if (textToInsert == '### ') {
-          final block = _focusedBlock;
-          if (block != null)
-            _toggleBlockType(block, HeadingBlock, headingLevel: 3);
-        } else if (textToInsert == '- ') {
-          controller.toggleParagraphStyle('bullet');
-        } else if (textToInsert == '1. ') {
-          controller.toggleParagraphStyle('number');
-        } else if (textToInsert == '\u2610') {
-          final block = _focusedBlock;
-          if (block != null) _toggleBlockType(block, ChecklistBlock);
-        } else {
-          final text = controller.text;
-          final selection = controller.selection;
-          int start = selection.start;
-          int end = selection.end;
-          if (start == -1 || end == -1) {
-            start = text.length;
-            end = start;
-          }
-          final newText = text.replaceRange(start, end, textToInsert);
-          controller.value = TextEditingValue(
-            text: newText,
-            selection:
-                TextSelection.collapsed(offset: start + textToInsert.length),
-          );
+    final sel = controller.selection;
+    final bool hasSelection = sel.isValid &&
+        !sel.isCollapsed &&
+        sel.start >= 0 &&
+        sel.end <= controller.styledChars.length;
+
+    String initialText = '';
+    String initialUrl = '';
+
+    if (hasSelection) {
+      initialText = controller.styledChars
+          .sublist(sel.start, sel.end)
+          .map((c) => c.char)
+          .join();
+      for (int i = sel.start; i < sel.end; i++) {
+        if (controller.styledChars[i].style.linkUrl != null) {
+          initialUrl = controller.styledChars[i].style.linkUrl!;
+          break;
         }
       }
-      _calculateCounts();
-      _startZenTimer();
-      setState(() {
-        _hasChanges = true;
-      });
-      return;
+    } else {
+      if (sel.isValid &&
+          sel.start > 0 &&
+          sel.start - 1 < controller.styledChars.length) {
+        final style = controller.styledChars[sel.start - 1].style;
+        if (style.linkUrl != null) {
+          initialUrl = style.linkUrl!;
+        }
+      }
     }
 
-    final text = _contentController.text;
-    final selection = _contentController.selection;
-    int start = selection.start;
-    int end = selection.end;
-    if (start == -1 || end == -1) {
-      start = text.length;
-      end = start;
-    }
-    final newText = text.replaceRange(start, end, textToInsert);
-    _contentController.value = TextEditingValue(
-      text: newText,
-      selection: TextSelection.collapsed(offset: start + textToInsert.length),
+    final textController = TextEditingController(text: initialText);
+    final urlController = TextEditingController(text: initialUrl);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF2C2C2C) : null,
+        title: Text(
+          initialUrl.isNotEmpty ? "Edit Link" : "Insert Link",
+          style: TextStyle(color: isDark ? Colors.white : null),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!hasSelection)
+              TextField(
+                controller: textController,
+                autofocus: false,
+                cursorColor: isDark ? const Color(0xFFFFCC00) : null,
+                style: TextStyle(color: isDark ? Colors.white : null),
+                decoration: InputDecoration(
+                  hintText: "Text to display",
+                  hintStyle: TextStyle(
+                    color: isDark ? const Color(0xFF757575) : null,
+                  ),
+                ),
+              ),
+            TextField(
+              controller: urlController,
+              autofocus: true,
+              cursorColor: isDark ? const Color(0xFFFFCC00) : null,
+              style: TextStyle(color: isDark ? Colors.white : null),
+              keyboardType: TextInputType.url,
+              decoration: InputDecoration(
+                hintText: "https://example.com",
+                hintStyle: TextStyle(
+                  color: isDark ? const Color(0xFF757575) : null,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (initialUrl.isNotEmpty)
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                controller.removeLinkForSelection();
+                _restoreContentFocus();
+                setState(() {
+                  _hasChanges = true;
+                });
+              },
+              child: const Text("Remove", style: TextStyle(color: Colors.red)),
+            ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _restoreContentFocus();
+            },
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              final rawUrl = urlController.text.trim();
+              if (rawUrl.isNotEmpty) {
+                String finalUrl = rawUrl;
+                if (!finalUrl.contains('://') &&
+                    !finalUrl.startsWith('mailto:') &&
+                    !finalUrl.startsWith('tel:')) {
+                  finalUrl = 'https://$finalUrl';
+                }
+                final displayText = textController.text.trim().isNotEmpty
+                    ? textController.text.trim()
+                    : null;
+                controller.setLinkForSelection(finalUrl, text: displayText);
+                setState(() {
+                  _hasChanges = true;
+                });
+              }
+              Navigator.of(ctx).pop();
+              _restoreContentFocus();
+            },
+            child: const Text("Apply"),
+          ),
+        ],
+      ),
     );
-    _onContentTextChanged();
   }
 
   Future<void> _pickReminder() async {
@@ -3781,299 +3812,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildFormattingToolbar(Color textColor, Color titleColor) {
-    final theme = Theme.of(context);
-    final buttonColor = titleColor;
-    final isDark = theme.brightness == Brightness.dark;
-
-    final activeStyle = (_contentController is RichTextEditingController)
-        ? (_contentController as RichTextEditingController).currentActiveStyle
-        : const Style();
-
-    // Helper for building toolbar items
-    Widget buildToolbarButton({
-      required IconData icon,
-      required VoidCallback onPressed,
-      required String tooltip,
-      bool isActive = false,
-    }) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2.0),
-        child: Tooltip(
-          message: tooltip,
-          child: TactileButton(
-            useAppleSpring: true,
-            compressionScale: 0.8,
-            settleDuration: const Duration(milliseconds: 1000),
-            onTap: onPressed,
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: isActive
-                    ? theme.colorScheme.primary.withAlpha(40)
-                    : Colors.transparent,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Icon(
-                  icon,
-                  color: isActive
-                      ? theme.colorScheme.primary
-                      : buttonColor.withAlpha(200),
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    Widget buildPageWrapper(List<Widget> children) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: children,
-      );
-    }
-
-    return Container(
-      height: 54,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(27),
-        border: Border.all(
-          color: buttonColor.withAlpha(25),
-          width: 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0xFF333333).withAlpha(20),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Left chevron arrow to navigate back
-          AnimatedOpacity(
-            opacity: _currentPage > 0 ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 200),
-            child: IgnorePointer(
-              ignoring: _currentPage == 0,
-              child: IconButton(
-                icon: Transform(
-                  transform: Matrix4.rotationY(3.14159),
-                  alignment: Alignment.center,
-                  child: Icon(Icons.play_arrow_rounded,
-                      color: buttonColor.withAlpha(180)),
-                ),
-                onPressed: () {
-                  _pageController.previousPage(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
-              ),
-            ),
-          ),
-
-          // Sliding Options
-          Expanded(
-            child: SizedBox(
-              height: 44,
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (page) {
-                  setState(() {
-                    _currentPage = page;
-                  });
-                },
-                children: [
-                  // Page 0: Selection Group
-                  buildPageWrapper([
-                    buildToolbarButton(
-                      icon: Icons.content_cut_rounded,
-                      onPressed: _onCutSelectedText,
-                      tooltip: 'Cut',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.copy_rounded,
-                      onPressed: _onCopySelectedText,
-                      tooltip: 'Copy',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.select_all_rounded,
-                      onPressed: _onSelectAllText,
-                      tooltip: 'Select All',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.delete_outline_rounded,
-                      onPressed: _onDeleteSelectedText,
-                      tooltip: 'Delete',
-                    ),
-                  ]),
-
-                  // Page 1: Styles Group
-                  buildPageWrapper([
-                    buildToolbarButton(
-                      icon: Icons.format_bold_rounded,
-                      onPressed: () => _wrapSelection('**', '**'),
-                      tooltip: 'Bold',
-                      isActive: activeStyle.bold,
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.format_italic_rounded,
-                      onPressed: () => _wrapSelection('*', '*'),
-                      tooltip: 'Italic',
-                      isActive: activeStyle.italic,
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.format_underlined_rounded,
-                      onPressed: () => _wrapSelection('<u>', '</u>'),
-                      tooltip: 'Underline',
-                      isActive: activeStyle.underline,
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.format_strikethrough_rounded,
-                      onPressed: () => _wrapSelection('~~', '~~'),
-                      tooltip: 'Strikethrough',
-                      isActive: activeStyle.strikethrough,
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.border_color_rounded,
-                      onPressed: () => _wrapSelection('highlight', ''),
-                      tooltip: 'Highlight',
-                      isActive: activeStyle.highlight != null,
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.link_rounded,
-                      onPressed: () => _wrapSelection('[', '](url)'),
-                      tooltip: 'Link',
-                    ),
-                  ]),
-
-                  // Page 2: Headings & Lists Group
-                  buildPageWrapper([
-                    buildToolbarButton(
-                      icon: Icons.filter_1_rounded,
-                      onPressed: () => _insertTextAtCursor('# '),
-                      tooltip: 'Heading 1',
-                      isActive: activeStyle.heading == 'h1',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.filter_2_rounded,
-                      onPressed: () => _insertTextAtCursor('## '),
-                      tooltip: 'Heading 2',
-                      isActive: activeStyle.heading == 'h2',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.filter_3_rounded,
-                      onPressed: () => _insertTextAtCursor('### '),
-                      tooltip: 'Heading 3',
-                      isActive: activeStyle.heading == 'h3',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.format_list_bulleted_rounded,
-                      onPressed: () => _insertTextAtCursor('- '),
-                      tooltip: 'Bullet List',
-                      isActive: activeStyle.listType == 'bullet',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.format_list_numbered_rounded,
-                      onPressed: () => _insertTextAtCursor('1. '),
-                      tooltip: 'Numbered List',
-                      isActive: activeStyle.listType == 'number',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.add_task_rounded,
-                      onPressed: () => _insertTextAtCursor('\u2610'),
-                      tooltip: 'Checklist',
-                      isActive: activeStyle.listType == 'checkbox',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.grid_on_rounded,
-                      onPressed: _showPaperSettingsBottomSheet,
-                      tooltip: 'Paper Settings',
-                    ),
-                  ]),
-
-                  // Page 3: Alignments & Actions Group
-                  buildPageWrapper([
-                    buildToolbarButton(
-                      icon: Icons.format_align_left_rounded,
-                      onPressed: () =>
-                          _wrapSelection('<p align="left">', '</p>'),
-                      tooltip: 'Align Left',
-                      isActive: activeStyle.align == TextAlign.left,
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.format_align_center_rounded,
-                      onPressed: () =>
-                          _wrapSelection('<p align="center">', '</p>'),
-                      tooltip: 'Align Center',
-                      isActive: activeStyle.align == TextAlign.center,
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.format_align_right_rounded,
-                      onPressed: () =>
-                          _wrapSelection('<p align="right">', '</p>'),
-                      tooltip: 'Align Right',
-                      isActive: activeStyle.align == TextAlign.right,
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.format_align_justify_rounded,
-                      onPressed: () =>
-                          _wrapSelection('<p align="justify">', '</p>'),
-                      tooltip: 'Align Justify',
-                      isActive: activeStyle.align == TextAlign.justify,
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.camera_alt_outlined,
-                      onPressed: () => _showGalleryBottomSheet(context),
-                      tooltip: 'Attach Image',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.mic_none_rounded,
-                      onPressed: _startRecording,
-                      tooltip: 'Record Audio',
-                    ),
-                    buildToolbarButton(
-                      icon: Icons.keyboard_hide_rounded,
-                      onPressed: () => FocusScope.of(context).unfocus(),
-                      tooltip: 'Hide Keyboard',
-                    ),
-                  ]),
-                ],
-              ),
-            ),
-          ),
-
-          // Right chevron arrow to navigate forward
-          AnimatedOpacity(
-            opacity: _currentPage < 3 ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 200),
-            child: IgnorePointer(
-              ignoring: _currentPage == 3,
-              child: IconButton(
-                icon: Icon(Icons.play_arrow_rounded,
-                    color: buttonColor.withAlpha(180)),
-                onPressed: () {
-                  _pageController.nextPage(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -5169,8 +4907,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             ),
 
             AnimatedPositioned(
-              duration: const Duration(milliseconds: 1000),
-              curve: Curves.elasticOut,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
               bottom: 12,
               left: targetLeft,
               width: targetWidth,
@@ -5184,16 +4922,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                 child: IgnorePointer(
                   ignoring: notesProvider.isZenModeEnabled && _isZenTyping,
                   child: GestureDetector(
-                    onVerticalDragEnd: (details) {
-                      if (details.primaryVelocity != null &&
-                          details.primaryVelocity! > 100) {
-                        if (_activeCategory != _ActiveCategory.none) {
-                          setState(() {
-                            _activeCategory = _ActiveCategory.none;
-                          });
-                        }
-                      }
-                    },
+                    onVerticalDragEnd: _activeCategory != _ActiveCategory.none
+                        ? (details) {
+                            if (details.primaryVelocity != null &&
+                                details.primaryVelocity! > 300) {
+                              setState(() {
+                                _activeCategory = _ActiveCategory.none;
+                              });
+                            }
+                          }
+                        : null,
                     child: RichTextFormattingPillContainer(
                       width: targetWidth,
                       height: targetHeight,
@@ -5201,27 +4939,35 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                           ? BorderRadius.circular(30.0)
                           : null,
                       child: !_isFormattingBarExpanded
-                          ? TactileButton(
-                              useAppleSpring: true,
-                              compressionScale: 0.7,
-                              settleDuration:
-                                  const Duration(milliseconds: 1000),
-                              pressDuration: const Duration(milliseconds: 80),
-                              playSelectionHaptic: true,
-                              onTap: () {
-                                setState(() {
-                                  _isFormattingBarExpanded = true;
-                                });
-                              },
-                              child: SizedBox(
-                                width: 48,
-                                height: 48,
-                                child: Icon(
-                                  Icons.edit_note_rounded,
-                                  color: isDark
-                                      ? const Color(0xFF8E8E93)
-                                      : const Color(0xFF333333),
-                                  size: 24,
+                          ? Tooltip(
+                              message: 'Open formatting toolbar',
+                              child: Semantics(
+                                button: true,
+                                label: 'Open formatting toolbar',
+                                child: TactileButton(
+                                  useAppleSpring: true,
+                                  compressionScale: 0.7,
+                                  settleDuration:
+                                      const Duration(milliseconds: 220),
+                                  pressDuration:
+                                      const Duration(milliseconds: 80),
+                                  playSelectionHaptic: true,
+                                  onTap: () {
+                                    setState(() {
+                                      _isFormattingBarExpanded = true;
+                                    });
+                                  },
+                                  child: SizedBox(
+                                    width: 48,
+                                    height: 48,
+                                    child: Icon(
+                                      Icons.edit_note_rounded,
+                                      color: isDark
+                                          ? const Color(0xFF8E8E93)
+                                          : const Color(0xFF333333),
+                                      size: 24,
+                                    ),
+                                  ),
                                 ),
                               ),
                             )
@@ -5231,9 +4977,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   TweenAnimationBuilder<double>(
-                                    duration:
-                                        const Duration(milliseconds: 1000),
-                                    curve: Curves.elasticOut,
+                                    duration: const Duration(milliseconds: 220),
+                                    curve: Curves.easeOutCubic,
                                     tween: Tween<double>(
                                       begin: _activeCategory !=
                                               _ActiveCategory.none
@@ -5315,10 +5060,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
         child = _buildListSubsection(block);
         break;
       case _ActiveCategory.attachment:
-        child = _buildAttachmentSubsection();
+        child = _buildAttachmentSubsection(activeStyle);
         break;
       case _ActiveCategory.headings:
         child = _buildHeadingsSubsection(block);
+        break;
+      case _ActiveCategory.highlight:
+        child = _buildHighlightSubsection(activeStyle);
         break;
       default:
         child = const SizedBox.shrink();
@@ -5349,6 +5097,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           },
           isActive: false,
           isEnabled: _currentPage > 0,
+          tooltip: 'Previous page',
         ),
 
         // Sliding Categories
@@ -5381,6 +5130,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           },
           isActive: false,
           isEnabled: _currentPage < 2,
+          tooltip: 'Next page',
         ),
       ],
     );
@@ -5397,6 +5147,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           ),
           onTap: _onCutSelectedText,
           isActive: false,
+          tooltip: 'Cut',
         ),
         _buildCategoryIconButton(
           icon: const Icon(
@@ -5405,6 +5156,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           ),
           onTap: _onCopySelectedText,
           isActive: false,
+          tooltip: 'Copy',
         ),
         _buildCategoryIconButton(
           icon: const Icon(
@@ -5413,6 +5165,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           ),
           onTap: _onSelectAllText,
           isActive: false,
+          tooltip: 'Select All',
         ),
         _buildCategoryIconButton(
           icon: const Icon(
@@ -5421,6 +5174,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           ),
           onTap: _onDeleteSelectedText,
           isActive: false,
+          tooltip: 'Delete',
         ),
       ],
     );
@@ -5429,36 +5183,57 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   Widget _buildSubsectionIconButton({
     required IconData icon,
     required VoidCallback onTap,
-    required bool isActive,
+    bool isActive = false,
+    FormatState? formatState,
     required String tooltip,
   }) {
+    final state =
+        formatState ?? (isActive ? FormatState.active : FormatState.inactive);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inactiveColor =
         isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333);
     final activeColor = _tintColor;
     final activeBgColor = activeColor.withValues(alpha: 0.15);
+    final mixedBgColor = activeColor.withValues(alpha: 0.08);
 
-    return Tooltip(
-      message: tooltip,
-      child: TactileButton(
-        useAppleSpring: true,
-        compressionScale: 0.7,
-        settleDuration: const Duration(milliseconds: 1000),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: isActive ? activeBgColor : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: 22,
-            color: isActive ? activeColor : inactiveColor,
+    final isMixed = state == FormatState.mixed;
+    final isFullyActive = state == FormatState.active;
+    final semanticLabel = isMixed ? '$tooltip (Mixed)' : tooltip;
+
+    return Semantics(
+      button: true,
+      selected: isFullyActive,
+      label: semanticLabel,
+      child: Tooltip(
+        message: semanticLabel,
+        child: TactileButton(
+          useAppleSpring: true,
+          compressionScale: 0.7,
+          settleDuration: const Duration(milliseconds: 220),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isFullyActive
+                  ? activeBgColor
+                  : (isMixed ? mixedBgColor : Colors.transparent),
+              shape: BoxShape.circle,
+              border: isMixed
+                  ? Border.all(
+                      color: activeColor.withValues(alpha: 0.45),
+                      width: 1.5,
+                    )
+                  : null,
+            ),
+            child: Icon(
+              icon,
+              size: 22,
+              color: (isFullyActive || isMixed) ? activeColor : inactiveColor,
+            ),
           ),
         ),
       ),
@@ -5468,38 +5243,59 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   Widget _buildSubsectionTextButton({
     required String text,
     required VoidCallback onTap,
-    required bool isActive,
+    bool isActive = false,
+    FormatState? formatState,
     required TextStyle style,
     required String tooltip,
   }) {
+    final state =
+        formatState ?? (isActive ? FormatState.active : FormatState.inactive);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inactiveColor =
         isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333);
     final activeColor = _tintColor;
     final activeBgColor = activeColor.withValues(alpha: 0.15);
+    final mixedBgColor = activeColor.withValues(alpha: 0.08);
 
-    return Tooltip(
-      message: tooltip,
-      child: TactileButton(
-        useAppleSpring: true,
-        compressionScale: 0.7,
-        settleDuration: const Duration(milliseconds: 1000),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Container(
-          width: 36,
-          height: 36,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isActive ? activeBgColor : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-          child: Text(
-            text,
-            style: style.copyWith(
-              color: isActive ? activeColor : inactiveColor,
+    final isMixed = state == FormatState.mixed;
+    final isFullyActive = state == FormatState.active;
+    final semanticLabel = isMixed ? '$tooltip (Mixed)' : tooltip;
+
+    return Semantics(
+      button: true,
+      selected: isFullyActive,
+      label: semanticLabel,
+      child: Tooltip(
+        message: semanticLabel,
+        child: TactileButton(
+          useAppleSpring: true,
+          compressionScale: 0.7,
+          settleDuration: const Duration(milliseconds: 220),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          child: Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isFullyActive
+                  ? activeBgColor
+                  : (isMixed ? mixedBgColor : Colors.transparent),
+              shape: BoxShape.circle,
+              border: isMixed
+                  ? Border.all(
+                      color: activeColor.withValues(alpha: 0.45),
+                      width: 1.5,
+                    )
+                  : null,
+            ),
+            child: Text(
+              text,
+              style: style.copyWith(
+                color: (isFullyActive || isMixed) ? activeColor : inactiveColor,
+              ),
             ),
           ),
         ),
@@ -5508,6 +5304,66 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   }
 
   Widget _buildAaSubsection(Style activeStyle) {
+    final RichTextEditingController? controller = (_noteType == 'text')
+        ? _activeController
+        : (_contentController is RichTextEditingController
+            ? _contentController as RichTextEditingController
+            : null);
+
+    if (_isAaColorPickerOpen) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final defaultTextColor = isDark ? Colors.white : const Color(0xFF1C1C1E);
+
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildSubsectionIconButton(
+            icon: Icons.arrow_back_rounded,
+            onTap: () {
+              setState(() {
+                _isAaColorPickerOpen = false;
+              });
+            },
+            isActive: false,
+            tooltip: 'Back to formatting',
+          ),
+          _buildTextColorDot(
+            color: defaultTextColor,
+            isDefault: true,
+            isSelected: activeStyle.color == null,
+            onTap: () {
+              if (NoteEditorScreen.useSingleDocumentEditor) {
+                controller?.setStyleAttribute('color', enable: false);
+                _restoreContentFocus();
+                setState(() {
+                  _hasChanges = true;
+                });
+              }
+            },
+          ),
+          for (final color in _textColorPalette)
+            _buildTextColorDot(
+              color: color,
+              isSelected: activeStyle.color?.value == color.value,
+              onTap: () {
+                if (NoteEditorScreen.useSingleDocumentEditor) {
+                  if (activeStyle.color?.value == color.value) {
+                    controller?.setStyleAttribute('color', enable: false);
+                  } else {
+                    controller?.setStyleAttribute('color',
+                        enable: true, value: color);
+                  }
+                  _restoreContentFocus();
+                  setState(() {
+                    _hasChanges = true;
+                  });
+                }
+              },
+            ),
+        ],
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -5515,6 +5371,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           text: "B",
           onTap: () => _wrapSelection('**', '**'),
           isActive: activeStyle.bold,
+          formatState: controller?.getFormatState('bold'),
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -5525,6 +5382,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           text: "I",
           onTap: () => _wrapSelection('*', '*'),
           isActive: activeStyle.italic,
+          formatState: controller?.getFormatState('italic'),
           style: GoogleFonts.inter(
             fontSize: 16,
             fontStyle: FontStyle.italic,
@@ -5535,6 +5393,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           text: "U",
           onTap: () => _wrapSelection('<u>', '</u>'),
           isActive: activeStyle.underline,
+          formatState: controller?.getFormatState('underline'),
           style: GoogleFonts.inter(
             fontSize: 16,
             decoration: TextDecoration.underline,
@@ -5545,17 +5404,226 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           text: "T",
           onTap: () => _wrapSelection('~~', '~~'),
           isActive: activeStyle.strikethrough,
+          formatState: controller?.getFormatState('strikethrough'),
           style: GoogleFonts.inter(
             fontSize: 16,
             decoration: TextDecoration.lineThrough,
           ),
           tooltip: 'Strikethrough',
         ),
+        _buildSubsectionIconButton(
+          icon: Icons.format_color_text_rounded,
+          onTap: () {
+            setState(() {
+              _isAaColorPickerOpen = true;
+            });
+          },
+          isActive: activeStyle.color != null,
+          formatState: controller?.getFormatState('color'),
+          tooltip: 'Text Color',
+        ),
       ],
     );
   }
 
+  String _getHighlightColorName(Color color) {
+    if (color == const Color(0xFFFFE082)) return 'Yellow';
+    if (color == const Color(0xFFA5D6A7)) return 'Green';
+    if (color == const Color(0xFF90CAF9)) return 'Blue';
+    if (color == const Color(0xFFF48FB1)) return 'Pink';
+    if (color == const Color(0xFFFFCC80)) return 'Orange';
+    return 'Color';
+  }
+
+  String _getTextColorName(Color color) {
+    if (color == const Color(0xFFFF3B30)) return 'Red';
+    if (color == const Color(0xFF007AFF)) return 'Blue';
+    if (color == const Color(0xFF34C759)) return 'Green';
+    if (color == const Color(0xFFFF9500)) return 'Amber';
+    if (color == const Color(0xFFAF52DE)) return 'Purple';
+    return 'Color';
+  }
+
+  Widget _buildHighlightColorDot({
+    required Color color,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final colorName = _getHighlightColorName(color);
+    final label = 'Highlight $colorName';
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: Tooltip(
+        message: label,
+        child: TactileButton(
+          useAppleSpring: true,
+          compressionScale: 0.75,
+          settleDuration: const Duration(milliseconds: 200),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected
+                    ? _tintColor
+                    : Colors.black.withValues(alpha: 0.15),
+                width: isSelected ? 2.5 : 1.0,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: _tintColor.withValues(alpha: 0.35),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: isSelected
+                ? const Center(
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: 16,
+                      color: Color(0xFF1C1C1E),
+                    ),
+                  )
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHighlightSubsection(Style activeStyle) {
+    final RichTextEditingController? controller = (_noteType == 'text')
+        ? _activeController
+        : (_contentController is RichTextEditingController
+            ? _contentController as RichTextEditingController
+            : null);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        for (final color in _highlightPalette)
+          _buildHighlightColorDot(
+            color: color,
+            isSelected: activeStyle.highlight?.value == color.value,
+            onTap: () {
+              if (NoteEditorScreen.useSingleDocumentEditor) {
+                if (activeStyle.highlight?.value == color.value) {
+                  controller?.setStyleAttribute('highlight', enable: false);
+                } else {
+                  controller?.setStyleAttribute('highlight',
+                      enable: true, value: color);
+                }
+                _restoreContentFocus();
+                setState(() {
+                  _hasChanges = true;
+                });
+              } else {
+                _wrapSelection('highlight', '');
+              }
+            },
+          ),
+        _buildSubsectionIconButton(
+          icon: Icons.format_color_reset_rounded,
+          onTap: () {
+            if (NoteEditorScreen.useSingleDocumentEditor) {
+              controller?.setStyleAttribute('highlight', enable: false);
+              _restoreContentFocus();
+              setState(() {
+                _hasChanges = true;
+              });
+            }
+          },
+          isActive: false,
+          tooltip: 'Clear Highlight',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextColorDot({
+    required Color color,
+    bool isDefault = false,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final label = isDefault
+        ? 'Default Text Color'
+        : 'Text Color: ${_getTextColorName(color)}';
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: Tooltip(
+        message: label,
+        child: TactileButton(
+          useAppleSpring: true,
+          compressionScale: 0.75,
+          settleDuration: const Duration(milliseconds: 200),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          child: Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: isDefault ? Colors.transparent : color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected
+                    ? _tintColor
+                    : (isDefault
+                        ? color.withValues(alpha: 0.6)
+                        : Colors.black.withValues(alpha: 0.15)),
+                width: isSelected ? 2.5 : 1.5,
+              ),
+            ),
+            child: isDefault
+                ? Center(
+                    child: Text(
+                      'A',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                  )
+                : (isSelected
+                    ? const Center(
+                        child: Icon(
+                          Icons.check_rounded,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      )
+                    : null),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAlignmentSubsection(Style activeStyle) {
+    final RichTextEditingController? controller = (_noteType == 'text')
+        ? _activeController
+        : (_contentController is RichTextEditingController
+            ? _contentController as RichTextEditingController
+            : null);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -5563,24 +5631,28 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
           icon: Icons.format_align_left_rounded,
           onTap: () => _wrapSelection('<p align="left">', '</p>'),
           isActive: activeStyle.align == TextAlign.left,
+          formatState: controller?.getAlignmentFormatState(TextAlign.left),
           tooltip: 'Align Left',
         ),
         _buildSubsectionIconButton(
           icon: Icons.format_align_center_rounded,
           onTap: () => _wrapSelection('<p align="center">', '</p>'),
           isActive: activeStyle.align == TextAlign.center,
+          formatState: controller?.getAlignmentFormatState(TextAlign.center),
           tooltip: 'Align Center',
         ),
         _buildSubsectionIconButton(
           icon: Icons.format_align_right_rounded,
           onTap: () => _wrapSelection('<p align="right">', '</p>'),
           isActive: activeStyle.align == TextAlign.right,
+          formatState: controller?.getAlignmentFormatState(TextAlign.right),
           tooltip: 'Align Right',
         ),
         _buildSubsectionIconButton(
           icon: Icons.format_align_justify_rounded,
           onTap: () => _wrapSelection('<p align="justify">', '</p>'),
           isActive: activeStyle.align == TextAlign.justify,
+          formatState: controller?.getAlignmentFormatState(TextAlign.justify),
           tooltip: 'Align Justify',
         ),
       ],
@@ -5588,6 +5660,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   }
 
   Widget _buildListSubsection(NoteBlock? block) {
+    final RichTextEditingController? controller = (_noteType == 'text')
+        ? _activeController
+        : (_contentController is RichTextEditingController
+            ? _contentController as RichTextEditingController
+            : null);
+
     // In SDE, read active style from the content controller; fall back to
     // legacy block inspection when useSingleDocumentEditor is false.
     final Style activeListStyle = NoteEditorScreen.useSingleDocumentEditor
@@ -5622,6 +5700,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             }
           },
           isActive: isBullet,
+          formatState: controller?.getFormatState('bullet'),
           tooltip: 'Bullet List',
         ),
         _buildSubsectionIconButton(
@@ -5637,6 +5716,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             }
           },
           isActive: isNumber,
+          formatState: controller?.getFormatState('number'),
           tooltip: 'Numbered List',
         ),
         _buildSubsectionIconButton(
@@ -5652,6 +5732,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             }
           },
           isActive: isCheckbox,
+          formatState: controller?.getFormatState('checkbox'),
           tooltip: 'Checklist',
         ),
         _buildSubsectionIconButton(
@@ -5667,20 +5748,28 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             }
           },
           isActive: isQuote,
+          formatState: controller?.getFormatState('quote'),
           tooltip: 'Quote Block',
         ),
       ],
     );
   }
 
-  Widget _buildAttachmentSubsection() {
+  Widget _buildAttachmentSubsection(Style activeStyle) {
+    final RichTextEditingController? controller = (_noteType == 'text')
+        ? _activeController
+        : (_contentController is RichTextEditingController
+            ? _contentController as RichTextEditingController
+            : null);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildSubsectionIconButton(
           icon: Icons.link_rounded,
-          onTap: () => _wrapSelection('[', '](url)'),
-          isActive: false,
+          onTap: _showInsertLinkDialog,
+          isActive: activeStyle.linkUrl != null,
+          formatState: controller?.getFormatState('link'),
           tooltip: 'Link',
         ),
         _buildSubsectionIconButton(
@@ -5724,6 +5813,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   }
 
   Widget _buildHeadingsSubsection(NoteBlock? block) {
+    final RichTextEditingController? controller = (_noteType == 'text')
+        ? _activeController
+        : (_contentController is RichTextEditingController
+            ? _contentController as RichTextEditingController
+            : null);
+
     // In SDE, derive heading state from the content controller's active style.
     final Style activeHeadStyle = NoteEditorScreen.useSingleDocumentEditor
         ? _contentController.currentActiveStyle
@@ -5754,6 +5849,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             }
           },
           isActive: isH1,
+          formatState: controller?.getFormatState('h1'),
           style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold),
           tooltip: 'Heading 1',
         ),
@@ -5770,6 +5866,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             }
           },
           isActive: isH2,
+          formatState: controller?.getFormatState('h2'),
           style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold),
           tooltip: 'Heading 2',
         ),
@@ -5786,6 +5883,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             }
           },
           isActive: isH3,
+          formatState: controller?.getFormatState('h3'),
           style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold),
           tooltip: 'Heading 3',
         ),
@@ -5797,45 +5895,79 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
     required Widget icon,
     required VoidCallback onTap,
     required bool isActive,
+    FormatState? formatState,
     bool isEnabled = true,
+    String? tooltip,
   }) {
+    final state =
+        formatState ?? (isActive ? FormatState.active : FormatState.inactive);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inactiveColor =
         isDark ? const Color(0xFF8E8E93) : const Color(0xFF333333);
 
-    return Opacity(
-      opacity: isEnabled ? 1.0 : 0.35,
-      child: Tooltip(
-        message: '',
-        child: TactileButton(
-          useAppleSpring: true,
-          compressionScale: 0.7,
-          settleDuration: const Duration(milliseconds: 1000),
-          onTap: isEnabled ? onTap : () {},
-          child: SizedBox(
-            width: 44,
-            height: 44,
-            child: isActive
-                ? GlassSurface(
-                    borderRadius: BorderRadius.circular(22),
-                    customTintColor: _tintColor,
-                    child: Center(
-                      child: IconTheme.merge(
-                        data: const IconThemeData(
-                          color: Colors.white,
+    final isMixed = state == FormatState.mixed;
+    final isFullyActive = state == FormatState.active;
+    final tooltipMsg = tooltip ?? (isMixed ? 'Mixed' : '');
+
+    return Semantics(
+      button: true,
+      enabled: isEnabled,
+      selected: isFullyActive,
+      label: tooltipMsg.isNotEmpty ? tooltipMsg : null,
+      child: Opacity(
+        opacity: isEnabled ? 1.0 : 0.35,
+        child: Tooltip(
+          message: tooltipMsg,
+          child: TactileButton(
+            enabled: isEnabled,
+            useAppleSpring: true,
+            compressionScale: 0.7,
+            settleDuration: const Duration(milliseconds: 1000),
+            onTap: isEnabled ? onTap : () {},
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: isFullyActive
+                  ? GlassSurface(
+                      borderRadius: BorderRadius.circular(22),
+                      customTintColor: _tintColor,
+                      child: Center(
+                        child: IconTheme.merge(
+                          data: const IconThemeData(
+                            color: Colors.white,
+                          ),
+                          child: icon,
                         ),
-                        child: icon,
                       ),
-                    ),
-                  )
-                : Center(
-                    child: IconTheme.merge(
-                      data: IconThemeData(
-                        color: inactiveColor,
-                      ),
-                      child: icon,
-                    ),
-                  ),
+                    )
+                  : (isMixed
+                      ? Container(
+                          decoration: BoxDecoration(
+                            color: _tintColor.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _tintColor.withValues(alpha: 0.45),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Center(
+                            child: IconTheme.merge(
+                              data: IconThemeData(
+                                color: _tintColor,
+                              ),
+                              child: icon,
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: IconTheme.merge(
+                            data: IconThemeData(
+                              color: inactiveColor,
+                            ),
+                            child: icon,
+                          ),
+                        )),
+            ),
           ),
         ),
       ),
@@ -5843,6 +5975,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
   }
 
   Widget _buildCategoryPage1(Style activeStyle) {
+    final RichTextEditingController? controller = (_noteType == 'text')
+        ? _activeController
+        : (_contentController is RichTextEditingController
+            ? _contentController as RichTextEditingController
+            : null);
+
+    final highlightFormatState = controller?.getFormatState('highlight');
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -5863,12 +6003,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             setState(() {
               if (_activeCategory == _ActiveCategory.aa) {
                 _activeCategory = _ActiveCategory.none;
+                _isAaColorPickerOpen = false;
               } else {
                 _activeCategory = _ActiveCategory.aa;
               }
             });
           },
           isActive: _activeCategory == _ActiveCategory.aa,
+          tooltip: 'Text Formatting',
         ),
         _buildCategoryIconButton(
           icon: const Icon(
@@ -5885,6 +6027,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             });
           },
           isActive: _activeCategory == _ActiveCategory.alignment,
+          tooltip: 'Paragraph Alignment',
         ),
         _buildCategoryIconButton(
           icon: const Icon(
@@ -5901,6 +6044,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             });
           },
           isActive: _activeCategory == _ActiveCategory.list,
+          tooltip: 'Lists and Tasks',
         ),
         _buildCategoryIconButton(
           icon: const RichTextFormattingPillIcon(
@@ -5908,9 +6052,20 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             size: 22,
           ),
           onTap: () {
-            _wrapSelection('highlight', '');
+            setState(() {
+              if (_activeCategory == _ActiveCategory.highlight) {
+                _activeCategory = _ActiveCategory.none;
+              } else {
+                _activeCategory = _ActiveCategory.highlight;
+              }
+            });
           },
-          isActive: activeStyle.highlight != null,
+          isActive: _activeCategory == _ActiveCategory.highlight ||
+              activeStyle.highlight != null,
+          formatState: highlightFormatState,
+          tooltip: highlightFormatState == FormatState.mixed
+              ? 'Highlight (Mixed)'
+              : 'Highlight',
         ),
         _buildCategoryIconButton(
           icon: const RichTextFormattingPillIcon(
@@ -5927,6 +6082,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             });
           },
           isActive: _activeCategory == _ActiveCategory.attachment,
+          tooltip: 'Attachments and Links',
         ),
       ],
     );
@@ -5951,6 +6107,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             });
           },
           isActive: _activeCategory == _ActiveCategory.headings,
+          tooltip: 'Headings',
         ),
         _buildCategoryIconButton(
           icon: const Icon(
@@ -5961,6 +6118,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             _showPaperSettingsBottomSheet();
           },
           isActive: false,
+          tooltip: 'Paper Settings',
         ),
         _buildCategoryIconButton(
           icon: const Icon(
@@ -5971,6 +6129,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             FocusScope.of(context).unfocus();
           },
           isActive: false,
+          tooltip: 'Hide Keyboard',
         ),
         _buildCategoryIconButton(
           icon: const Icon(
@@ -5983,6 +6142,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen>
             });
           },
           isActive: false,
+          tooltip: 'Collapse Toolbar',
         ),
       ],
     );

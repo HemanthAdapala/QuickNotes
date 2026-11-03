@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io' show Platform;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -1195,15 +1194,16 @@ class DatabaseService {
     }).toList();
   }
 
-  /// Generates a collision-free 32-bit positive integer notification ID.
+  /// Generates a collision-free 32-bit positive integer notification ID strictly in [1 .. 700000000]
+  /// to reserve disjoint upper partitions for custom-interval forward horizon alarms.
   Future<int> generateUniqueNotificationId() async {
     final rng = DateTime.now().microsecondsSinceEpoch;
-    int candidate = (rng.abs() % 1073741823) + 1;
+    int candidate = (rng.abs() % 700000000) + 1;
 
     if (kIsWeb) {
       final existingIds = _webTasks.map((t) => t.notificationId).toSet();
       while (existingIds.contains(candidate)) {
-        candidate = (candidate + 1) % 1073741823 + 1;
+        candidate = (candidate % 700000000) + 1;
       }
       return candidate;
     }
@@ -1221,7 +1221,7 @@ class DatabaseService {
       if (result.isEmpty) {
         exists = false;
       } else {
-        candidate = (candidate + 1) % 1073741823 + 1;
+        candidate = (candidate % 700000000) + 1;
       }
     }
     return candidate;

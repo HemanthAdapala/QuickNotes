@@ -245,7 +245,7 @@ class AccountController extends ChangeNotifier {
           try {
             final detector = _recoveryDetector ??
                 FirstRunRecoveryDetector(
-                    storageAdapter: GoogleDriveBackupService());
+                    storageAdapter: GoogleDriveBackupService(promptUserForScope: false));
             final recResult = await detector.checkEligibility();
             _recoveryResult = recResult;
 

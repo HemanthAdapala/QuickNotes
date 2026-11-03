@@ -56,10 +56,12 @@ class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key, this.onBack});
 
   @override
-  State<CalendarScreen> createState() => _CalendarScreenState();
+  State<CalendarScreen> createState() => CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class CalendarScreenState extends State<CalendarScreen> {
+  /// Public entrypoint to launch task creation for the currently selected date.
+  void showAddTaskSheet() => _showAddTaskSheet();
   DateTime _currentMonth = DateTime.now();
   late int _selectedDay;
 

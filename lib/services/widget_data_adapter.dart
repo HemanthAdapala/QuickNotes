@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:home_widget/home_widget.dart' as hw;
 
@@ -42,6 +43,14 @@ class WidgetDataAdapter {
       : _sessionManager = SessionManager(),
         _saveData = hw.HomeWidget.saveWidgetData,
         _updateWidget = hw.HomeWidget.updateWidget;
+
+  /// Resets internal test state and sync queue for isolated unit tests.
+  @visibleForTesting
+  void resetForTesting() {
+    _syncQueue = null;
+    _lastNotes = const [];
+    _lastTasks = const [];
+  }
 
   /// Visible for testing constructor with dependency injection.
   @visibleForTesting
@@ -390,6 +399,135 @@ class WidgetDataAdapter {
       return true;
     } catch (e) {
       debugPrint('WidgetDataAdapter.clearSnapshot error: $e');
+      return false;
+    }
+  }
+
+  static const MethodChannel _pinChannel =
+      MethodChannel('com.quicknotes.byhmnth/widget_pin');
+
+  /// Requests the platform to pin a Single Note Widget to the Android home screen.
+  Future<bool> requestPinSingleNoteWidget({Note? note, String? noteId}) async {
+    final targetId = note?.id ?? noteId;
+    if (note?.isLocked == true) {
+      debugPrint('WidgetDataAdapter.requestPinSingleNoteWidget: Locked notes cannot be pinned');
+      return false;
+    }
+    try {
+      if (note != null) {
+        final existingIndex = _lastNotes.indexWhere((n) => n.id == note.id);
+        final updatedNotes = existingIndex != -1
+            ? [
+                for (int i = 0; i < _lastNotes.length; i++)
+                  if (i == existingIndex) note else _lastNotes[i]
+              ]
+            : [..._lastNotes, note];
+        await sync(notes: updatedNotes);
+      } else {
+        await sync();
+      }
+
+      bool isSupported = false;
+      try {
+        final pinSupported = await _pinChannel
+            .invokeMethod<bool>('isRequestPinWidgetSupported');
+        if (pinSupported != null) {
+          isSupported = pinSupported;
+        } else {
+          isSupported =
+              await hw.HomeWidget.isRequestPinWidgetSupported() ?? false;
+        }
+      } catch (_) {
+        isSupported =
+            await hw.HomeWidget.isRequestPinWidgetSupported() ?? false;
+      }
+      if (!isSupported) {
+        return false;
+      }
+
+      if (targetId != null && targetId.isNotEmpty) {
+        try {
+          final result = await _pinChannel.invokeMethod<bool>(
+            'requestPinNoteWidget',
+            {'noteId': targetId},
+          );
+          if (result != null) {
+            return result;
+          }
+        } catch (_) {
+          // Channel fallback to standard HomeWidget call
+        }
+      }
+
+      await hw.HomeWidget.requestPinWidget(
+        name: singleNoteWidgetName,
+        androidName: singleNoteWidgetName,
+        qualifiedAndroidName: 'com.quicknotes.byhmnth.SingleNoteWidget',
+      );
+      return true;
+    } catch (e) {
+      debugPrint('WidgetDataAdapter.requestPinSingleNoteWidget error: $e');
+      return false;
+    }
+  }
+
+  /// Requests the platform to pin a Single Task Widget to the Android home screen.
+  Future<bool> requestPinSingleTaskWidget({TaskItem? task, String? taskId}) async {
+    final targetId = task?.id ?? taskId;
+    try {
+      if (task != null) {
+        final existingIndex = _lastTasks.indexWhere((t) => t.id == task.id);
+        final updatedTasks = existingIndex != -1
+            ? [
+                for (int i = 0; i < _lastTasks.length; i++)
+                  if (i == existingIndex) task else _lastTasks[i]
+              ]
+            : [..._lastTasks, task];
+        await sync(tasks: updatedTasks);
+      } else {
+        await sync();
+      }
+
+      bool isSupported = false;
+      try {
+        final pinSupported = await _pinChannel
+            .invokeMethod<bool>('isRequestPinWidgetSupported');
+        if (pinSupported != null) {
+          isSupported = pinSupported;
+        } else {
+          isSupported =
+              await hw.HomeWidget.isRequestPinWidgetSupported() ?? false;
+        }
+      } catch (_) {
+        isSupported =
+            await hw.HomeWidget.isRequestPinWidgetSupported() ?? false;
+      }
+      if (!isSupported) {
+        return false;
+      }
+
+      if (targetId != null && targetId.isNotEmpty) {
+        try {
+          final result = await _pinChannel.invokeMethod<bool>(
+            'requestPinTaskWidget',
+            {'taskId': targetId},
+          );
+          if (result != null) {
+            return result;
+          }
+        } catch (_) {
+          // Channel fallback to standard HomeWidget call
+        }
+      }
+
+      await hw.HomeWidget.requestPinWidget(
+        name: singleTaskWidgetName,
+        androidName: singleTaskWidgetName,
+        qualifiedAndroidName: 'com.quicknotes.byhmnth.SingleTaskWidget',
+      );
+      return true;
+    } catch (e) {
+      debugPrint('WidgetDataAdapter.requestPinSingleTaskWidget error: $e');
       return false;
     }
   }

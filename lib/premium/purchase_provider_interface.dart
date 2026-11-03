@@ -6,6 +6,9 @@ enum PurchaseActionStatus {
   idle,
   loadingProduct,
   purchasing,
+  pending,
+  verifying,
+  activating,
   restoring,
   success,
   cancelled,
@@ -17,21 +20,24 @@ class PurchaseStateUpdate {
   final PurchaseActionStatus status;
   final String? errorMessage;
   final ProductDetails? productDetails;
+  final String? transactionId;
 
   const PurchaseStateUpdate({
     required this.status,
     this.errorMessage,
     this.productDetails,
+    this.transactionId,
   });
 
   const PurchaseStateUpdate.idle()
       : status = PurchaseActionStatus.idle,
         errorMessage = null,
-        productDetails = null;
+        productDetails = null,
+        transactionId = null;
 
   @override
   String toString() =>
-      'PurchaseStateUpdate(status: ${status.name}, error: $errorMessage, product: ${productDetails?.id})';
+      'PurchaseStateUpdate(status: ${status.name}, error: $errorMessage, product: ${productDetails?.id}, tx: $transactionId)';
 }
 
 /// PurchaseProvider — Abstract boundary for platform store purchase adapters.
@@ -74,6 +80,15 @@ abstract class PurchaseProvider {
 
   /// Restores previous purchases directly from the platform store.
   Future<bool> restorePurchases();
+
+  /// Reconciles purchase ownership with the platform store.
+  /// When [isUserTriggered] is false, runs silently in the background without
+  /// raising error snackbars or intrusive loading state on failure.
+  Future<bool> reconcilePurchases({bool isUserTriggered = false});
+
+  /// Handles app lifecycle resume events to refresh billing availability
+  /// and reconcile ownership if needed.
+  Future<void> onAppResume();
 
   /// Cleans up active stream subscriptions and controllers.
   void dispose();

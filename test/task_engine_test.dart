@@ -36,7 +36,8 @@ class MockTasksRepository implements TasksRepository {
   }
 
   @override
-  Future<List<TaskItem>> getTrashTasks() async => db.where((t) => t.isDeleted).toList();
+  Future<List<TaskItem>> getTrashTasks() async =>
+      db.where((t) => t.isDeleted).toList();
 
   @override
   Future<int> trashTask(String id) async {
@@ -92,7 +93,9 @@ void main() {
       );
     });
 
-    test('Engine lifecycle guard throws EngineNotReadyException before initialize()', () async {
+    test(
+        'Engine lifecycle guard throws EngineNotReadyException before initialize()',
+        () async {
       expect(engine.state, equals(TaskEngineState.idle));
       expect(
         () => engine.createTask(
@@ -109,7 +112,9 @@ void main() {
       expect(engine.state, equals(TaskEngineState.ready));
     });
 
-    test('Creating a task assigns persistent notificationId and schedules reminder', () async {
+    test(
+        'Creating a task assigns persistent notificationId and schedules reminder',
+        () async {
       await engine.initialize();
 
       final reminder = clock.now.add(const Duration(hours: 2));
@@ -123,10 +128,13 @@ void main() {
       expect(task.notificationId, equals(1000));
       expect(task.status, equals(TaskStatus.scheduled));
       expect(task.completed, isFalse);
-      expect(scheduler.logHistory.any((l) => l.contains('SCHEDULER [Schedule]')), isTrue);
+      expect(
+          scheduler.logHistory.any((l) => l.contains('SCHEDULER [Schedule]')),
+          isTrue);
     });
 
-    test('Derived completion property strictly matches TaskStatus.completed', () async {
+    test('Derived completion property strictly matches TaskStatus.completed',
+        () async {
       await engine.initialize();
 
       final task = await engine.createTask(
@@ -143,7 +151,9 @@ void main() {
       expect(completedTask.status, equals(TaskStatus.completed));
     });
 
-    test('Clock abstraction and reconcileTaskStates transitions overdue tasks to missed', () async {
+    test(
+        'Clock abstraction and reconcileTaskStates transitions overdue tasks to missed',
+        () async {
       await engine.initialize();
 
       final reminder = clock.now.add(const Duration(hours: 1));
@@ -166,6 +176,30 @@ void main() {
       expect(missedTasks.first.isMissed, isTrue);
     });
 
+    test(
+        'Early reminder passing does not mark task missed if due date is still in future',
+        () async {
+      await engine.initialize();
+
+      final reminder = clock.now.add(const Duration(hours: 1));
+      final task = await engine.createTask(
+        title: 'Future Due Task',
+        dueDate: clock.now.add(const Duration(hours: 4)),
+        priority: 'High',
+        reminderTime: reminder,
+      );
+
+      // Advance clock by 2 hours (past reminder at +1h, but before dueDate at +4h)
+      clock.advance(const Duration(hours: 2));
+
+      final missedTasks = await engine.reconcileTaskStates();
+      expect(missedTasks.isEmpty, isTrue);
+
+      final current = engine.getTaskById(task.id);
+      expect(current!.status, isNot(equals(TaskStatus.missed)));
+      expect(current.isMissed, isFalse);
+    });
+
     test('State machine prevents invalid state transitions', () async {
       await engine.initialize();
 
@@ -186,7 +220,8 @@ void main() {
       );
     });
 
-    test('Snoozing a task reschedules reminder and emits ReminderSnoozedEvent', () async {
+    test('Snoozing a task reschedules reminder and emits ReminderSnoozedEvent',
+        () async {
       await engine.initialize();
 
       final task = await engine.createTask(
@@ -196,10 +231,14 @@ void main() {
         reminderTime: clock.now.add(const Duration(minutes: 10)),
       );
 
-      final snoozed = await engine.snoozeTask(task.id, const Duration(minutes: 15));
-      expect(snoozed.reminderTime, equals(clock.now.add(const Duration(minutes: 15))));
+      final snoozed =
+          await engine.snoozeTask(task.id, const Duration(minutes: 15));
+      expect(snoozed.reminderTime,
+          equals(clock.now.add(const Duration(minutes: 15))));
       expect(snoozed.status, equals(TaskStatus.waiting));
-      expect(scheduler.logHistory.any((log) => log.contains('SCHEDULER [Cancel]')), isTrue);
+      expect(
+          scheduler.logHistory.any((log) => log.contains('SCHEDULER [Cancel]')),
+          isTrue);
     });
 
     test('TaskEngine emits sealed TaskEvents over eventStream', () async {

@@ -15,7 +15,9 @@ class AppBottomNavigationBar extends StatelessWidget {
     this.destinations = AppBottomNavigationDestination.defaults,
     this.activeColor,
     this.folderModeActive = false,
+    this.isNotesActive = true,
     this.onFabPressed,
+    this.showFab,
   })  : assert(destinations.length == 5),
         assert(selectedIndex >= 0 && selectedIndex < destinations.length);
 
@@ -24,7 +26,9 @@ class AppBottomNavigationBar extends StatelessWidget {
   final List<AppBottomNavigationDestination> destinations;
   final Color? activeColor;
   final bool folderModeActive;
+  final bool isNotesActive;
   final VoidCallback? onFabPressed;
+  final bool? showFab;
 
   static const double figmaWidth = 318;
   static const double barWidth = 264;
@@ -61,7 +65,9 @@ class AppBottomNavigationBar extends StatelessWidget {
                 selectedIndex: selectedIndex,
                 onDestinationSelected: onDestinationSelected,
                 folderModeActive: folderModeActive || selectedIndex == 1,
+                isNotesActive: isNotesActive,
                 onFabPressed: onFabPressed,
+                showFab: showFab,
                 activeColor: activeColor,
                 width: width,
               ),

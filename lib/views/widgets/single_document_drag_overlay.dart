@@ -9,6 +9,7 @@ import 'new_single_document_editor.dart';
 class _LongPressDragGestureRecognizer extends PanGestureRecognizer {
   Timer? _pressTimer;
   bool _isLongPressAccepted = false;
+  int? _pendingPointer;
   Offset? _initialPosition;
   void Function(Offset position)? onLongPressDetected;
   bool Function(Offset globalPosition)? isTouchOnHandle;
@@ -17,6 +18,7 @@ class _LongPressDragGestureRecognizer extends PanGestureRecognizer {
   void addAllowedPointer(PointerDownEvent event) {
     super.addAllowedPointer(event);
     _isLongPressAccepted = false;
+    _pendingPointer = null;
     _initialPosition = event.position;
     _pressTimer?.cancel();
 
@@ -26,14 +28,27 @@ class _LongPressDragGestureRecognizer extends PanGestureRecognizer {
       return;
     }
 
-    _pressTimer = Timer(const Duration(milliseconds: 200), () {
+    _pressTimer = Timer(const Duration(milliseconds: 450), () {
       _isLongPressAccepted = true;
       HapticFeedback.mediumImpact();
       if (_initialPosition != null) {
         onLongPressDetected?.call(_initialPosition!);
       }
       resolve(GestureDisposition.accepted);
+      if (_pendingPointer != null) {
+        super.acceptGesture(_pendingPointer!);
+        _pendingPointer = null;
+      }
     });
+  }
+
+  @override
+  void acceptGesture(int pointer) {
+    if (!_isLongPressAccepted) {
+      _pendingPointer = pointer;
+      return;
+    }
+    super.acceptGesture(pointer);
   }
 
   @override
@@ -42,10 +57,15 @@ class _LongPressDragGestureRecognizer extends PanGestureRecognizer {
         !_isLongPressAccepted &&
         _initialPosition != null) {
       final delta = (event.position - _initialPosition!).distance;
-      if (delta > 12.0) {
+      if (delta > kTouchSlop) {
         _pressTimer?.cancel();
+        _pendingPointer = null;
         resolve(GestureDisposition.rejected);
+        return;
       }
+    } else if (event is PointerUpEvent || event is PointerCancelEvent) {
+      _pressTimer?.cancel();
+      _pendingPointer = null;
     }
     super.handleEvent(event);
   }
@@ -53,18 +73,14 @@ class _LongPressDragGestureRecognizer extends PanGestureRecognizer {
   @override
   void rejectGesture(int pointer) {
     _pressTimer?.cancel();
+    _pendingPointer = null;
     super.rejectGesture(pointer);
-  }
-
-  @override
-  void acceptGesture(int pointer) {
-    _pressTimer?.cancel();
-    super.acceptGesture(pointer);
   }
 
   @override
   void dispose() {
     _pressTimer?.cancel();
+    _pendingPointer = null;
     super.dispose();
   }
 }
@@ -316,12 +332,15 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     return found;
   }
 
-  int _getGlobalOffsetFromPosition(Offset globalPosition) {
+  static const double _kAdjacentTouchPadding = 48.0;
+  static const double _kTopTouchTolerance = 12.0;
+
+  List<_MountedSegmentInfo> _getMountedSegments() {
     final sdeState = widget.sdeKey.currentState;
-    if (sdeState == null) return widget.controller.text.length;
+    if (sdeState == null) return const [];
 
     final allSegments = sdeState.allSegments;
-    if (allSegments.isEmpty) return widget.controller.text.length;
+    if (allSegments.isEmpty) return const [];
 
     final List<_MountedSegmentInfo> mounted = [];
 
@@ -393,9 +412,52 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
       }
     }
 
-    if (mounted.isEmpty) return widget.controller.text.length;
-
     mounted.sort((a, b) => a.rect.top.compareTo(b.rect.top));
+    return mounted;
+  }
+
+  /// Evaluates whether a touch position falls directly on or immediately adjacent
+  /// to rendered document content (or the visible "Start writing..." hint line).
+  ///
+  /// Distinguishes deliberate taps on the writing line from distant taps in the
+  /// empty ListView viewport space.
+  bool _isTapNearContent(
+      Offset globalPosition, List<_MountedSegmentInfo> mounted) {
+    if (mounted.isEmpty) return false;
+
+    final double highestTop = mounted.first.rect.top;
+    final double lowestBottom = mounted.last.rect.bottom;
+
+    // Taps above the first segment fall in the header/title area or top padding
+    if (globalPosition.dy < highestTop - _kTopTouchTolerance) {
+      return false;
+    }
+    // Taps far below the last segment fall in distant blank viewport space
+    if (globalPosition.dy > lowestBottom + _kAdjacentTouchPadding) {
+      return false;
+    }
+
+    // Horizontal bounds: allow a generous 24.0 tolerance margin outside rendered width
+    double minLeft = double.infinity;
+    double maxRight = -double.infinity;
+    for (final m in mounted) {
+      if (m.rect.left < minLeft) minLeft = m.rect.left;
+      if (m.rect.right > maxRight) maxRight = m.rect.right;
+    }
+    if (minLeft != double.infinity && maxRight != -double.infinity) {
+      if (globalPosition.dx < minLeft - 24.0 ||
+          globalPosition.dx > maxRight + 24.0) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  int _getGlobalOffsetFromPosition(Offset globalPosition,
+      [List<_MountedSegmentInfo>? mountedSegments]) {
+    final mounted = mountedSegments ?? _getMountedSegments();
+    if (mounted.isEmpty) return widget.controller.text.length;
 
     final double highestTop = mounted.first.rect.top;
     final double lowestBottom = mounted.last.rect.bottom;
@@ -717,6 +779,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
 
   void _onLongPressDetected(Offset position) {
     if (!widget.isSelectionMode) return;
+    _isLongPressTriggered = true;
     _lastCurrentPos = position;
 
     _setFocusGated(true);
@@ -1023,6 +1086,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
   }
 
   bool _wasEditorFocusedOnDown = false;
+  bool _isLongPressTriggered = false;
 
   void _handlePointerDown(PointerDownEvent event) {
     if (!widget.isSelectionMode) return;
@@ -1030,14 +1094,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     final selection = widget.controller.selection;
     final hasSelection = selection.isValid && !selection.isCollapsed;
 
-    if (hasSelection ||
-        _isDraggingStartHandle ||
-        _isDraggingEndHandle ||
-        _isTouchOnHandle(event.position)) {
-      _setFocusGated(true);
-      _hideKeyboard();
-    }
-
+    _isLongPressTriggered = false;
     _pointerDownPos = event.position;
     _pointerDownTime = DateTime.now();
     _pointerScrolled = false;
@@ -1046,7 +1103,11 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     debugPrint(
         '[KB_LOG] PointerDown: Editor already focused = $_wasEditorFocusedOnDown');
 
-    if (!_wasEditorFocusedOnDown || hasSelection) {
+    // Only gate focus and hide keyboard if actively dragging handles or touching existing selection
+    if (hasSelection ||
+        _isDraggingStartHandle ||
+        _isDraggingEndHandle ||
+        _isTouchOnHandle(event.position)) {
       _setFocusGated(true);
       _hideKeyboard();
     }
@@ -1073,7 +1134,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
         ? DateTime.now().difference(_pointerDownTime!).inMilliseconds
         : 0;
 
-    if (hasSelection) {
+    if (hasSelection && !_isLongPressTriggered) {
       if (!_isTouchOnHandle(event.position) &&
           !_pointerScrolled &&
           duration < 300) {
@@ -1085,21 +1146,32 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
         widget.controller.selection =
             TextSelection.collapsed(offset: rawOffset);
       }
-    } else {
-      if (duration < 300 && !_pointerScrolled) {
-        final rawOffset = _getGlobalOffsetFromPosition(event.position);
-        final newSelection = TextSelection.collapsed(offset: rawOffset);
+    } else if (!_isLongPressTriggered && !_pointerScrolled) {
+      final mounted = _getMountedSegments();
+      final isNearContent = _isTapNearContent(event.position, mounted);
 
-        if (_wasEditorFocusedOnDown) {
-          // Mode 1 — Editor Already Focused:
-          // Keep focus exactly as-is. Update selection/caret position only.
-          // NO unfocus(), NO requestFocus(), NO TextInput.attach(), NO TextInput.close().
+      if (_wasEditorFocusedOnDown) {
+        // Mode 1 — Editor Already Focused:
+        // Keep focus exactly as-is. Update selection/caret position only.
+        // Taps within content or below content update the caret (e.g. to continue editing at the document end).
+        if (isNearContent ||
+            (mounted.isNotEmpty &&
+                event.position.dy > mounted.last.rect.bottom)) {
+          final rawOffset =
+              _getGlobalOffsetFromPosition(event.position, mounted);
+          final newSelection = TextSelection.collapsed(offset: rawOffset);
           debugPrint(
               '[KB_LOG] PointerUp (Mode 1 - Editor Already Focused): Updating selection only, NO focus change');
           widget.controller.selection = newSelection;
-        } else {
-          // Mode 2 — Editor Not Focused:
-          // Ungate focus and request focus for target segment to open keyboard.
+        }
+      } else {
+        // Mode 2 — Editor Not Focused:
+        // Only ungate focus and request focus for target segment if the tap was
+        // directly on or immediately adjacent to rendered content / writing line.
+        if (isNearContent) {
+          final rawOffset =
+              _getGlobalOffsetFromPosition(event.position, mounted);
+          final newSelection = TextSelection.collapsed(offset: rawOffset);
           debugPrint(
               '[KB_LOG] PointerUp (Mode 2 - Editor Not Focused): Ungating focus & requesting focus for segment');
           _setFocusGated(false);
@@ -1115,6 +1187,9 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
               }
             }
           }
+        } else {
+          debugPrint(
+              '[KB_LOG] PointerUp (Mode 2 - Ignored): Tap outside content hit area (distant empty space or header)');
         }
       }
     }
@@ -1122,6 +1197,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     _pointerDownPos = null;
     _pointerDownTime = null;
     _pointerScrolled = false;
+    _isLongPressTriggered = false;
     _setFocusGated(false);
   }
 
@@ -1132,6 +1208,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
     _pointerDownPos = null;
     _pointerDownTime = null;
     _pointerScrolled = false;
+    _isLongPressTriggered = false;
     _setFocusGated(false);
   }
 
@@ -1168,7 +1245,7 @@ class _SingleDocumentDragOverlayState extends State<SingleDocumentDragOverlay> {
         onPointerMove: _handlePointerMove,
         onPointerUp: _handlePointerUp,
         onPointerCancel: _handlePointerCancel,
-        behavior: HitTestBehavior.translucent,
+        behavior: HitTestBehavior.opaque,
         child: RawGestureDetector(
           key: _overlayKey,
           gestures: {

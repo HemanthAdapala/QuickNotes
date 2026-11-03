@@ -2,7 +2,7 @@ name: quick_notes
 description: "QuickNotes - A luxury, high-performance note-taking app built with Flutter."
 publish_to: 'none'
 
-version: 1.1.1+3
+version: 1.1.6+8
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -26,6 +26,7 @@ dependencies:
   uuid: ^4.3.3
   intl: ^0.20.2
   connectivity_plus: ^6.1.4
+  crypto: ^3.0.7
 
   # Premium UI & Styling
   google_fonts: ^8.1.0
@@ -75,6 +76,9 @@ flutter:
     - assets/Profile Icons/
     - assets/Settings Screen/
     - assets/stickers/
+    - assets/Customization Icons/Calender/
+    - assets/Customization Icons/Casual/
+    - assets/Customization Icons/Food/
     - assets/animations/
     - assets/animations/SplashScreen/
     - DesignCode/LottieFiles/

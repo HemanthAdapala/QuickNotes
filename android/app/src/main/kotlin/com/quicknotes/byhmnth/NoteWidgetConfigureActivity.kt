@@ -22,10 +22,12 @@ import org.json.JSONObject
  *
  * **Flow & Invariants:**
  * 1. Launches when user adds a SingleNoteWidget to their home screen.
- * 2. Loads active, unlocked note items from [HomeWidgetPreferences] (`quicknotes_notes_catalog`).
- * 3. Never touches SQLite directly.
- * 4. Stores note selection per [appWidgetId] upon user tap.
- * 5. Returns [Activity.RESULT_OK] with the [AppWidgetManager.EXTRA_APPWIDGET_ID].
+ * 2. Checks if a pending pinned note was requested (via Add to Home Screen action); if so,
+ *    auto-binds immediately and finishes with RESULT_OK.
+ * 3. Otherwise, loads active, unlocked note items from [HomeWidgetPreferences] (`quicknotes_notes_catalog`).
+ * 4. Never touches SQLite directly.
+ * 5. Stores note selection per [appWidgetId] upon user tap.
+ * 6. Returns [Activity.RESULT_OK] with the [AppWidgetManager.EXTRA_APPWIDGET_ID].
  */
 class NoteWidgetConfigureActivity : Activity() {
 
@@ -62,6 +64,40 @@ class NoteWidgetConfigureActivity : Activity() {
             return
         }
 
+        // 3. Check for recent pending pin request (< 5 minutes)
+        val prefs = getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
+        val pendingNoteId = prefs.getString("pending_pin_note_id", null)
+        val pendingTimestamp = prefs.getLong("pending_pin_note_timestamp", 0L)
+        if (!pendingNoteId.isNullOrEmpty() && (System.currentTimeMillis() - pendingTimestamp < 300_000L)) {
+            val mapRaw = prefs.getString("quicknotes_notes_map", null)
+            var noteJsonStr: String? = null
+            if (!mapRaw.isNullOrEmpty()) {
+                try {
+                    val map = JSONObject(mapRaw)
+                    if (map.has(pendingNoteId)) {
+                        noteJsonStr = map.getJSONObject(pendingNoteId).toString()
+                    }
+                } catch (_: Exception) {}
+            }
+            val editor = prefs.edit().putString("note_widget_id_$appWidgetId", pendingNoteId)
+            if (noteJsonStr != null) {
+                editor.putString("note_widget_data_$appWidgetId", noteJsonStr)
+            }
+            editor.remove("pending_pin_note_id")
+            editor.remove("pending_pin_note_timestamp")
+            editor.apply()
+
+            val appWidgetManager = AppWidgetManager.getInstance(this)
+            SingleNoteWidget.updateAppWidget(this, appWidgetManager, appWidgetId, prefs)
+
+            val resultValue = Intent().apply {
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            }
+            setResult(RESULT_OK, resultValue)
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_note_widget_configure)
 
         listView = findViewById(R.id.notes_list_view)
@@ -71,17 +107,17 @@ class NoteWidgetConfigureActivity : Activity() {
         adapter = NotesAdapter(this, filteredNotes)
         listView.adapter = adapter
 
-        // 3. Load sanitized catalog from SharedPreferences
+        // 4. Load sanitized catalog from SharedPreferences
         loadNotesCatalog()
 
-        // 4. Handle Item Selection
+        // 5. Handle Item Selection
         listView.setOnItemClickListener { _, _, position, _ ->
             if (position in 0 until filteredNotes.size) {
                 selectNote(filteredNotes[position])
             }
         }
 
-        // 5. Real-time Search Filtering
+        // 6. Real-time Search Filtering
         searchInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
